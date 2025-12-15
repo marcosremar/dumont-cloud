@@ -12,7 +12,19 @@ Sistema de backup/restore ultra-rápido para ambientes de GPU cloud (vast.ai, ru
 - Preferir soluções que minimizem latência
 - Paralelizar operações sempre que possível
 
-### 2. Estratégia de Multi-Start para Máquinas
+### 2. Timeout Agressivo de 10 Segundos por Etapa
+- **REGRA CRÍTICA**: Cada etapa de inicialização tem timeout máximo de 10 segundos
+- Se qualquer etapa demorar mais de 10s, a máquina é considerada lenta e deve ser:
+  1. Imediatamente destruída
+  2. Substituída por outra oferta disponível
+- Etapas monitoradas:
+  1. Criação da instância (API vast.ai)
+  2. Instância ficar "running" com SSH disponível
+  3. Conexão SSH estabelecida
+  4. Instalação do restic
+  5. Restore dos dados (timeout maior: 120s)
+
+### 3. Estratégia de Multi-Start para Máquinas
 - Máquinas GPU cloud têm tempos de inicialização imprevisíveis (10s a 3+ min)
 - **Solução**: Iniciar múltiplas máquinas em paralelo, usar a primeira que ficar pronta
 - Algoritmo:
@@ -22,7 +34,7 @@ Sistema de backup/restore ultra-rápido para ambientes de GPU cloud (vast.ai, ru
   4. Repetir até 3 vezes (máximo 15 máquinas)
   5. Usar a primeira que responder, cancelar as outras
 
-### 3. Restore Otimizado
+### 4. Restore Otimizado
 - Usar restic com máximo de conexões paralelas (32+)
 - Considerar cache local para arquivos frequentes
 - Priorizar restauração de arquivos críticos primeiro

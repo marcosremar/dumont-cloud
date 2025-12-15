@@ -30,3 +30,6 @@ gcloud-credentials.json
 # Temp
 *.tmp
 *.bak
+
+# Node
+node_modules/

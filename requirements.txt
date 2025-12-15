@@ -2,9 +2,7 @@
 
 # Web Framework
 flask>=2.0.0
+flask-cors>=4.0.0
 
-# HTTP Requests (para testes)
+# HTTP Requests
 requests>=2.28.0
-
-# Vast.ai API (opcional - pode usar requests diretamente)
-# vastai>=0.1.0

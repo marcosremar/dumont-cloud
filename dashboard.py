@@ -55,6 +55,15 @@ state = {
     "deploy_status": {}
 }
 
+# Gerenciamento de túneis SSH para proxy
+# Formato: {instance_id_port: {"process": subprocess, "local_port": int, "created": datetime}}
+ssh_tunnels = {}
+TUNNEL_PORT_START = 9000
+TUNNEL_PORT_END = 9100
+
+# Chave SSH do VPS para autorização de túneis
+VPS_SSH_KEY = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDI5VNl7OpRdO8MdavBMFI4DPDKpXGKu/UwpJxbGJf3stWKLvv/7q0Z8Jza/ugpNfdYOYK7/Ovg2Mzr838hG4meixuECgcNLGPQWuuA7YObPlelzER65z805L21bv9HCStN1bqlviOrKgNHX+DwttLRNo8d/4MVtbrTtDPrOIoO2pcZyYbm16U3GeJYZgwPnuAufiSErdBpB/R2k+hFRD1b6+BGeHRw7ttT2LiyOvq1507VwSrWfc4mzcb91DhwT54wQYts98+7g552uFpPeZmxisEGh2/yWcn8+T45zYMG0wo0vdgLih0qXVM+mtlMJ9r++K3O1mz9Uit/nPZzRhXDw0rCpzkBTi8EFYg/uoBZYG5pURKlIO1c2GlqBLglIc42ZgwwEoExv+Ktt1Z2eV29Q4Ji1/V9QzuSUxPkhpXUQrLcLkqDVwbzJBY44DDwGUdWVxu0LQAZLK+AMO6sAT25fT2eRXGFZKYPaI840UWvJo6m9sVe2QSzBSvJ13i3BKKIed82/D5cQrgpqRAT8PldWhYsjRlxWhV3HTDT8lQptIRLPfth0miYymDf9ebstbHf4YxTvR7FfJe0T3mnV3oCz/GdxiW1mlm5AtfwnKbfw4TedDnsMVOyh/VPVDNhJ3BLnTsIjlsVVa3En90CNPmpzqKd+bzi801FYMaldSk2Lw== snapgpu-vps"
+
 USERS = {
     "marcoslogin": {
         "email": "marcos@email.com",
@@ -145,6 +154,285 @@ LOGIN_TEMPLATE = """
             <button type="submit" class="btn-login">Entrar</button>
         </form>
     </div>
+</body>
+</html>
+"""
+
+SETTINGS_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <title>SnapGPU - Configuracoes</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --border: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-red: #f85149;
+            --accent-yellow: #d29922;
+            --accent-purple: #a371f7;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; font-size: 14px; }
+
+        .header { background: var(--bg-secondary); padding: 12px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.3em; font-weight: 700; color: var(--accent-blue); text-decoration: none; }
+        .nav-links { display: flex; gap: 16px; align-items: center; }
+        .nav-link { color: var(--text-secondary); text-decoration: none; font-size: 0.9em; padding: 6px 12px; border-radius: 6px; transition: all 0.2s; }
+        .nav-link:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+        .nav-link.active { color: var(--accent-blue); background: rgba(88, 166, 255, 0.1); }
+        .user-info { display: flex; align-items: center; gap: 16px; }
+        .user-name { color: var(--text-secondary); }
+        .btn-logout { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-primary); cursor: pointer; text-decoration: none; font-size: 0.85em; }
+        .btn-logout:hover { border-color: var(--accent-red); color: var(--accent-red); }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 24px; }
+        .page-title { font-size: 1.5em; font-weight: 600; margin-bottom: 24px; color: var(--text-primary); }
+
+        .card { background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 24px; }
+        .card-header { padding: 16px; border-bottom: 1px solid var(--border); }
+        .card-title { font-size: 1em; font-weight: 600; color: var(--text-primary); }
+        .card-description { font-size: 0.85em; color: var(--text-muted); margin-top: 4px; }
+        .card-body { padding: 20px; }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group:last-child { margin-bottom: 0; }
+        .form-label { display: block; color: var(--text-primary); margin-bottom: 8px; font-size: 0.9em; font-weight: 500; }
+        .form-hint { color: var(--text-muted); font-size: 0.8em; margin-top: 4px; }
+        .form-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-primary); color: var(--text-primary); font-size: 0.9em; }
+        .form-input:focus { outline: none; border-color: var(--accent-blue); }
+        .form-input-small { width: 120px; }
+        .form-select { padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-primary); color: var(--text-primary); font-size: 0.9em; min-width: 200px; }
+
+        .form-row { display: flex; gap: 12px; align-items: flex-end; }
+        .form-row .form-group { flex: 1; margin-bottom: 0; }
+
+        .checkbox-group { display: flex; align-items: center; gap: 10px; padding: 12px 0; }
+        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent-blue); cursor: pointer; }
+        .checkbox-label { cursor: pointer; }
+        .checkbox-label .label-text { font-size: 0.9em; color: var(--text-primary); }
+        .checkbox-label .label-hint { font-size: 0.8em; color: var(--text-muted); margin-top: 2px; }
+
+        .btn { padding: 10px 20px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9em; font-weight: 500; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; background: var(--bg-tertiary); color: var(--text-primary); }
+        .btn:hover { border-color: var(--text-secondary); }
+        .btn-primary { background: var(--accent-green); border-color: var(--accent-green); color: #fff; }
+        .btn-primary:hover { background: #2ea043; }
+
+        .alert { padding: 12px 16px; border-radius: 6px; font-size: 0.9em; margin-bottom: 16px; display: none; }
+        .alert-success { background: rgba(63, 185, 80, 0.15); border: 1px solid var(--accent-green); color: var(--accent-green); }
+        .alert-error { background: rgba(248, 81, 73, 0.15); border: 1px solid var(--accent-red); color: var(--accent-red); }
+
+        .divider { border-top: 1px solid var(--border); margin: 20px 0; }
+
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 600px) { .settings-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/" class="logo">SnapGPU</a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Dashboard</a>
+            <a href="/settings" class="nav-link active">Configuracoes</a>
+        </div>
+        <div class="user-info">
+            <span class="user-name">{{ user }}</span>
+            <a href="/logout" class="btn-logout">Sair</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="page-title">Configuracoes</h1>
+
+        <div id="alert-success" class="alert alert-success">Configuracoes salvas com sucesso!</div>
+        <div id="alert-error" class="alert alert-error">Erro ao salvar configuracoes</div>
+
+        <!-- API Key -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">vast.ai API Key</div>
+                <div class="card-description">Chave de acesso para criar e gerenciar instancias GPU</div>
+            </div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <input type="password" id="api-key" class="form-input" placeholder="Sua API Key" value="{{ vast_api_key }}">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveApiKey()">Salvar</button>
+                </div>
+                <div class="form-hint">Obtenha sua API key em <a href="https://cloud.vast.ai/account/" target="_blank" style="color: var(--accent-blue);">vast.ai/account</a></div>
+            </div>
+        </div>
+
+        <!-- Inicializacao -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Inicializacao de Maquinas</div>
+                <div class="card-description">Configuracoes de timeout e comportamento ao criar instancias</div>
+            </div>
+            <div class="card-body">
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label class="form-label">Timeout por Etapa (segundos)</label>
+                        <input type="number" id="stage-timeout" class="form-input form-input-small" value="{{ settings.stage_timeout or 30 }}" min="5" max="120">
+                        <div class="form-hint">Se etapa demorar mais, mata maquina e tenta outra</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Conexoes Paralelas Restic</label>
+                        <input type="number" id="restic-connections" class="form-input form-input-small" value="{{ settings.restic_connections or 32 }}" min="4" max="64">
+                        <div class="form-hint">Mais conexoes = restore mais rapido</div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="remove-tmux" {{ 'checked' if settings.remove_tmux else '' }}>
+                    <label for="remove-tmux" class="checkbox-label">
+                        <div class="label-text">Remover TMUX automaticamente</div>
+                        <div class="label-hint">TMUX causa travamentos em algumas maquinas - usar bash puro</div>
+                    </label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="auto-restore" {{ 'checked' if settings.auto_restore else '' }}>
+                    <label for="auto-restore" class="checkbox-label">
+                        <div class="label-text">Restaurar snapshot automaticamente</div>
+                        <div class="label-hint">Executa restore assim que a maquina ficar pronta</div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Regiao Preferida -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Regiao Preferida</div>
+                <div class="card-description">Prioriza maquinas em determinada regiao geografica</div>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <select id="preferred-region" class="form-select">
+                        <option value="" {{ 'selected' if not settings.preferred_region else '' }}>Qualquer regiao</option>
+                        <option value="EU" {{ 'selected' if settings.preferred_region == 'EU' else '' }}>Europa</option>
+                        <option value="US" {{ 'selected' if settings.preferred_region == 'US' else '' }}>Estados Unidos</option>
+                        <option value="ASIA" {{ 'selected' if settings.preferred_region == 'ASIA' else '' }}>Asia</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Restic/R2 Storage -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Armazenamento (Cloudflare R2)</div>
+                <div class="card-description">Configuracoes do repositorio Restic para backups</div>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">R2 Endpoint URL</label>
+                    <input type="text" id="r2-endpoint" class="form-input" value="{{ settings.r2_endpoint or '' }}" placeholder="https://xxx.r2.cloudflarestorage.com">
+                </div>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label class="form-label">R2 Access Key</label>
+                        <input type="password" id="r2-access-key" class="form-input" value="{{ settings.r2_access_key or '' }}" placeholder="Access Key ID">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">R2 Secret Key</label>
+                        <input type="password" id="r2-secret-key" class="form-input" value="{{ settings.r2_secret_key or '' }}" placeholder="Secret Access Key">
+                    </div>
+                </div>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label class="form-label">Bucket</label>
+                        <input type="text" id="r2-bucket" class="form-input" value="{{ settings.r2_bucket or '' }}" placeholder="nome-do-bucket">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Restic Password</label>
+                        <input type="password" id="restic-password" class="form-input" value="{{ settings.restic_password or '' }}" placeholder="Senha do repositorio">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button class="btn" onclick="resetToDefaults()">Restaurar Padroes</button>
+            <button class="btn btn-primary" onclick="saveAllSettings()">Salvar Todas as Configuracoes</button>
+        </div>
+    </div>
+
+    <script>
+        function showAlert(type) {
+            const alertEl = document.getElementById('alert-' + type);
+            alertEl.style.display = 'block';
+            setTimeout(() => { alertEl.style.display = 'none'; }, 3000);
+        }
+
+        async function saveApiKey() {
+            const apiKey = document.getElementById('api-key').value;
+            try {
+                const resp = await fetch('/api/save-api-key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ api_key: apiKey })
+                });
+                if (resp.ok) {
+                    showAlert('success');
+                } else {
+                    showAlert('error');
+                }
+            } catch (e) {
+                showAlert('error');
+            }
+        }
+
+        async function saveAllSettings() {
+            const settings = {
+                stage_timeout: parseInt(document.getElementById('stage-timeout').value) || 30,
+                restic_connections: parseInt(document.getElementById('restic-connections').value) || 32,
+                remove_tmux: document.getElementById('remove-tmux').checked,
+                auto_restore: document.getElementById('auto-restore').checked,
+                preferred_region: document.getElementById('preferred-region').value,
+                r2_endpoint: document.getElementById('r2-endpoint').value,
+                r2_access_key: document.getElementById('r2-access-key').value,
+                r2_secret_key: document.getElementById('r2-secret-key').value,
+                r2_bucket: document.getElementById('r2-bucket').value,
+                restic_password: document.getElementById('restic-password').value
+            };
+
+            try {
+                const resp = await fetch('/api/save-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                if (resp.ok) {
+                    showAlert('success');
+                } else {
+                    showAlert('error');
+                }
+            } catch (e) {
+                showAlert('error');
+            }
+        }
+
+        function resetToDefaults() {
+            document.getElementById('stage-timeout').value = '30';
+            document.getElementById('restic-connections').value = '32';
+            document.getElementById('remove-tmux').checked = true;
+            document.getElementById('auto-restore').checked = true;
+            document.getElementById('preferred-region').value = 'EU';
+        }
+    </script>
 </body>
 </html>
 """
@@ -370,7 +658,13 @@ DASHBOARD_TEMPLATE = """
 </head>
 <body>
     <div class="header">
-        <div class="logo">SnapGPU <span style="font-size: 0.5em; font-weight: 400; color: var(--text-muted); margin-left: 8px;">Restore rapido para GPU Cloud</span></div>
+        <div style="display: flex; align-items: center; gap: 24px;">
+            <div class="logo">SnapGPU</div>
+            <nav style="display: flex; gap: 8px;">
+                <a href="/" style="color: var(--accent-blue); text-decoration: none; font-size: 0.9em; padding: 6px 12px; border-radius: 6px; background: rgba(88, 166, 255, 0.1);">Dashboard</a>
+                <a href="/settings" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9em; padding: 6px 12px; border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.color='var(--text-primary)';this.style.background='var(--bg-tertiary)'" onmouseout="this.style.color='var(--text-secondary)';this.style.background='transparent'">Configuracoes</a>
+            </nav>
+        </div>
         <div class="user-info">
             <span class="user-name">{{ user }}</span>
             <a href="/logout" class="btn-logout">Sair</a>
@@ -710,6 +1004,46 @@ DASHBOARD_TEMPLATE = """
                                     </div>
                                     <button class="btn" onclick="saveApiKey()">Salvar</button>
                                 </div>
+                            </div>
+
+                            <div style="border-top: 1px solid var(--border); margin: 16px 0; padding-top: 16px;">
+                                <label style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: 12px; display: block;">Configuracoes de Inicializacao</label>
+
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label style="font-size: 0.85em;">Timeout por Etapa (segundos)</label>
+                                    <input type="number" id="stage-timeout" value="30" min="5" max="120" style="width: 100px;">
+                                    <span style="color: var(--text-muted); font-size: 0.8em; margin-left: 8px;">Se etapa demorar mais, mata maquina e tenta outra</span>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                        <input type="checkbox" id="remove-tmux" checked style="width: 16px; height: 16px;">
+                                        <span style="font-size: 0.85em;">Remover TMUX automaticamente</span>
+                                    </label>
+                                    <span style="color: var(--text-muted); font-size: 0.8em; margin-left: 24px;">TMUX causa travamentos - usar bash puro</span>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                        <input type="checkbox" id="auto-restore" checked style="width: 16px; height: 16px;">
+                                        <span style="font-size: 0.85em;">Restaurar snapshot automaticamente</span>
+                                    </label>
+                                </div>
+
+                                <div class="form-group">
+                                    <label style="font-size: 0.85em;">Conexoes Paralelas Restic</label>
+                                    <input type="number" id="restic-connections" value="32" min="4" max="64" style="width: 100px;">
+                                </div>
+                            </div>
+
+                            <div style="border-top: 1px solid var(--border); margin: 16px 0; padding-top: 16px;">
+                                <label style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: 12px; display: block;">Regiao Preferida</label>
+                                <select id="preferred-region" style="padding: 8px; border-radius: 4px; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border);">
+                                    <option value="">Qualquer</option>
+                                    <option value="EU" selected>Europa</option>
+                                    <option value="US">Estados Unidos</option>
+                                    <option value="Asia">Asia</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -1179,12 +1513,31 @@ DASHBOARD_TEMPLATE = """
                 return;
             }
 
-            list.innerHTML = data.machines.map(m => `
-                <div class="offer-item ${selectedMachine?.id === m.id ? 'selected' : ''}" onclick="selectMachine(${m.id}, '${m.ssh_host}', ${m.ssh_port}, '${m.public_ipaddr}')">
-                    <div>
+            list.innerHTML = data.machines.map(m => {
+                return `
+                <div class="offer-item ${selectedMachine?.id === m.id ? 'selected' : ''}" onclick="selectMachine(${m.id}, '${m.ssh_host}', ${m.ssh_port}, '${m.public_ipaddr || ''}')">
+                    <div style="flex: 1;">
                         <div class="offer-gpu">${m.gpu_name} #${m.id}</div>
                         <div class="offer-specs">
                             <span>${m.ssh_host}:${m.ssh_port}</span>
+                        </div>
+                        <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button class="btn btn-sm btn-blue"
+                                    onclick="event.stopPropagation(); openTunnel(${m.id}, '${m.ssh_host}', ${m.ssh_port}, 8080);"
+                                    title="Abrir VS Code via proxy">
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M5.854 4.854a.5.5 0 1 0-.708-.708l-3.5 3.5a.5.5 0 0 0 0 .708l3.5 3.5a.5.5 0 0 0 .708-.708L2.707 8l3.147-3.146zm4.292 0a.5.5 0 0 1 .708-.708l3.5 3.5a.5.5 0 0 1 0 .708l-3.5 3.5a.5.5 0 0 1-.708-.708L13.293 8l-3.147-3.146z"/></svg>
+                                VS Code
+                            </button>
+                            <button class="btn btn-sm"
+                                    onclick="event.stopPropagation(); openTunnel(${m.id}, '${m.ssh_host}', ${m.ssh_port}, 1111);"
+                                    title="Abrir Portal via proxy">
+                                Portal
+                            </button>
+                            <button class="btn btn-sm"
+                                    onclick="event.stopPropagation(); copySSH('${m.ssh_host}', ${m.ssh_port});"
+                                    title="Copiar comando SSH">
+                                SSH
+                            </button>
                         </div>
                     </div>
                     <div style="text-align: right;">
@@ -1192,13 +1545,57 @@ DASHBOARD_TEMPLATE = """
                         <div class="offer-price">$${(m.dph_total || 0).toFixed(3)}/h</div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function selectMachine(id, host, port, ip) {
             selectedMachine = {id, host, port, ip};
             document.querySelectorAll('#my-machines .offer-item').forEach(el => el.classList.remove('selected'));
             event.currentTarget.classList.add('selected');
+        }
+
+        // Copiar comando SSH para clipboard
+        function copySSH(host, port) {
+            const cmd = `ssh -p ${port} root@${host}`;
+            navigator.clipboard.writeText(cmd).then(() => {
+                alert('Comando SSH copiado: ' + cmd);
+            }).catch(() => {
+                prompt('Copie o comando SSH:', cmd);
+            });
+        }
+
+        // Abrir túnel via proxy VPS
+        async function openTunnel(instanceId, sshHost, sshPort, remotePort) {
+            const btn = event.target.closest('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span style="font-size: 0.8em;">Conectando...</span>';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/tunnel', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        instance_id: instanceId,
+                        ssh_host: sshHost,
+                        ssh_port: sshPort,
+                        remote_port: remotePort
+                    })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Abre a URL do túnel
+                    window.open(data.url, '_blank');
+                } else {
+                    alert('Erro ao criar túnel: ' + (data.error || 'Erro desconhecido'));
+                }
+            } catch (e) {
+                alert('Erro de conexão: ' + e.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
 
         // Deploy new machine
@@ -1669,6 +2066,63 @@ def index():
     vast_api_key = get_user_api_key(user)
     return render_template_string(DASHBOARD_TEMPLATE, user=user, vast_api_key=vast_api_key)
 
+@app.route("/settings")
+@login_required
+def settings_page():
+    user = session.get("user")
+    vast_api_key = get_user_api_key(user)
+    # Load user settings
+    config = load_config()
+    user_settings = config.get("users", {}).get(user, {}).get("settings", {})
+    # Set defaults
+    settings = {
+        "stage_timeout": user_settings.get("stage_timeout", 30),
+        "restic_connections": user_settings.get("restic_connections", 32),
+        "remove_tmux": user_settings.get("remove_tmux", True),
+        "auto_restore": user_settings.get("auto_restore", True),
+        "preferred_region": user_settings.get("preferred_region", "EU"),
+        "r2_endpoint": user_settings.get("r2_endpoint", CONFIG.get("R2_ENDPOINT", "")),
+        "r2_access_key": user_settings.get("r2_access_key", ""),
+        "r2_secret_key": user_settings.get("r2_secret_key", ""),
+        "r2_bucket": user_settings.get("r2_bucket", CONFIG.get("R2_BUCKET", "")),
+        "restic_password": user_settings.get("restic_password", "")
+    }
+    # Create a settings object for Jinja
+    class Settings:
+        pass
+    s = Settings()
+    for k, v in settings.items():
+        setattr(s, k, v)
+    return render_template_string(SETTINGS_TEMPLATE, user=user, vast_api_key=vast_api_key, settings=s)
+
+@app.route("/api/save-settings", methods=["POST"])
+@login_required
+def save_settings():
+    user = session.get("user")
+    data = request.get_json()
+
+    config = load_config()
+    if "users" not in config:
+        config["users"] = {}
+    if user not in config["users"]:
+        config["users"][user] = {}
+
+    config["users"][user]["settings"] = {
+        "stage_timeout": data.get("stage_timeout", 30),
+        "restic_connections": data.get("restic_connections", 32),
+        "remove_tmux": data.get("remove_tmux", True),
+        "auto_restore": data.get("auto_restore", True),
+        "preferred_region": data.get("preferred_region", ""),
+        "r2_endpoint": data.get("r2_endpoint", ""),
+        "r2_access_key": data.get("r2_access_key", ""),
+        "r2_secret_key": data.get("r2_secret_key", ""),
+        "r2_bucket": data.get("r2_bucket", ""),
+        "restic_password": data.get("restic_password", "")
+    }
+
+    save_config(config)
+    return jsonify({"success": True})
+
 @app.route("/api/snapshots")
 @login_required
 def get_snapshots():
@@ -2078,10 +2532,17 @@ def create_instance():
         api_key = api_key.strip().split()[0]
         url = f"https://console.vast.ai/api/v0/asks/{offer_id}/?api_key={api_key}"
 
+        # Inclui a chave SSH do VPS para permitir túneis
+        # Onstart: remove tmux (causa travamentos), configura bash como shell padrão
+        onstart_script = "apt-get remove -y tmux 2>/dev/null; chsh -s /bin/bash root 2>/dev/null; touch /root/.ready"
+
         response = requests.put(url, json={
             "client_id": "me",
-            "image": "nvidia/cuda:12.1.0-devel-ubuntu22.04",
-            "disk": 50
+            "image": "pytorch/pytorch:2.1.0-cuda12.1-cudnn8-devel",
+            "disk": 50,
+            "runtype": "ssh",
+            "ssh_key": VPS_SSH_KEY,
+            "onstart": onstart_script
         }, timeout=30)
 
         result = response.json()
@@ -2342,6 +2803,156 @@ def save_api_key():
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
+
+def find_free_port():
+    """Encontra uma porta livre no range de túneis"""
+    import socket
+    used_ports = {t["local_port"] for t in ssh_tunnels.values() if t.get("process") and t["process"].poll() is None}
+    for port in range(TUNNEL_PORT_START, TUNNEL_PORT_END):
+        if port in used_ports:
+            continue
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.bind(('0.0.0.0', port))
+            sock.close()
+            return port
+        except OSError:
+            continue
+    return None
+
+def cleanup_dead_tunnels():
+    """Remove túneis que não estão mais rodando"""
+    dead_keys = []
+    for key, tunnel in ssh_tunnels.items():
+        if tunnel.get("process") and tunnel["process"].poll() is not None:
+            dead_keys.append(key)
+    for key in dead_keys:
+        del ssh_tunnels[key]
+
+@app.route("/api/tunnel", methods=["POST"])
+@login_required
+def create_tunnel():
+    """
+    Cria túnel SSH para acessar serviço na máquina GPU via VPS
+    Body: {"ssh_host": "ssh8.vast.ai", "ssh_port": 27716, "remote_port": 8080, "instance_id": 123}
+    Returns: {"success": true, "url": "http://vps-a84d392b.vps.ovh.net:9001"}
+    """
+    data = request.json or {}
+    ssh_host = data.get("ssh_host")
+    ssh_port = data.get("ssh_port")
+    remote_port = data.get("remote_port", 8080)  # 8080 para Jupyter/VSCode, 1111 para portal
+    instance_id = data.get("instance_id")
+
+    if not ssh_host or not ssh_port:
+        return jsonify({"success": False, "error": "ssh_host e ssh_port são obrigatórios"})
+
+    cleanup_dead_tunnels()
+
+    # Chave única para este túnel
+    tunnel_key = f"{instance_id}_{remote_port}"
+
+    # Verifica se já existe túnel ativo
+    if tunnel_key in ssh_tunnels:
+        tunnel = ssh_tunnels[tunnel_key]
+        if tunnel.get("process") and tunnel["process"].poll() is None:
+            # Túnel ainda ativo
+            local_port = tunnel["local_port"]
+            return jsonify({
+                "success": True,
+                "url": f"http://vps-a84d392b.vps.ovh.net:{local_port}",
+                "local_port": local_port,
+                "reused": True
+            })
+
+    # Encontra porta livre
+    local_port = find_free_port()
+    if not local_port:
+        return jsonify({"success": False, "error": "Sem portas livres disponíveis"})
+
+    # Cria túnel SSH: -L local_port:localhost:remote_port
+    # -N = não executa comando, -f = background (não usamos para poder gerenciar o processo)
+    cmd = [
+        "ssh",
+        "-o", "StrictHostKeyChecking=no",
+        "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "ServerAliveInterval=30",
+        "-o", "ServerAliveCountMax=3",
+        "-N",  # Não executa comando remoto
+        "-L", f"0.0.0.0:{local_port}:localhost:{remote_port}",
+        "-p", str(ssh_port),
+        f"root@{ssh_host}"
+    ]
+
+    try:
+        # Inicia o túnel em background
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True
+        )
+
+        # Aguarda um pouco para verificar se iniciou
+        import time
+        time.sleep(1)
+
+        if process.poll() is not None:
+            # Processo terminou - erro
+            stderr = process.stderr.read().decode() if process.stderr else ""
+            return jsonify({"success": False, "error": f"Túnel falhou: {stderr}"})
+
+        # Salva referência do túnel
+        ssh_tunnels[tunnel_key] = {
+            "process": process,
+            "local_port": local_port,
+            "created": datetime.now().isoformat(),
+            "ssh_host": ssh_host,
+            "ssh_port": ssh_port,
+            "remote_port": remote_port
+        }
+
+        return jsonify({
+            "success": True,
+            "url": f"http://vps-a84d392b.vps.ovh.net:{local_port}",
+            "local_port": local_port,
+            "reused": False
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route("/api/tunnels")
+@login_required
+def list_tunnels():
+    """Lista túneis ativos"""
+    cleanup_dead_tunnels()
+    tunnels = []
+    for key, tunnel in ssh_tunnels.items():
+        if tunnel.get("process") and tunnel["process"].poll() is None:
+            tunnels.append({
+                "key": key,
+                "local_port": tunnel["local_port"],
+                "ssh_host": tunnel.get("ssh_host"),
+                "remote_port": tunnel.get("remote_port"),
+                "created": tunnel.get("created")
+            })
+    return jsonify({"tunnels": tunnels})
+
+@app.route("/api/tunnel/<key>", methods=["DELETE"])
+@login_required
+def delete_tunnel(key):
+    """Fecha um túnel específico"""
+    if key in ssh_tunnels:
+        tunnel = ssh_tunnels[key]
+        if tunnel.get("process"):
+            try:
+                tunnel["process"].terminate()
+                tunnel["process"].wait(timeout=5)
+            except:
+                tunnel["process"].kill()
+        del ssh_tunnels[key]
+        return jsonify({"success": True})
+    return jsonify({"success": False, "error": "Túnel não encontrado"})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8765, debug=False)
