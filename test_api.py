@@ -62,7 +62,7 @@ class APITester:
         self.session = requests.Session()
         self.results = {"passed": 0, "failed": 0, "skipped": 0}
 
-    def login(self, username="marcoslogin", password="M@rcos1234"):
+    def login(self, username="marcoslogin", password="marcos123"):
         """Faz login e obtem cookie de sessao"""
         try:
             resp = self.session.post(
