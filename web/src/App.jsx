@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
 import Login from './pages/Login'
+import MinhasMaquinas from './pages/MinhasMaquinas'
 
 const API_BASE = ''
 
@@ -13,6 +14,12 @@ export default function App() {
 
   useEffect(() => {
     checkAuth()
+    // Registrar Service Worker para notificações
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('Service Worker registrado'))
+        .catch(err => console.error('Erro ao registrar SW:', err))
+    }
   }, [])
 
   const checkAuth = async () => {
@@ -71,6 +78,7 @@ export default function App() {
     <Layout user={user} onLogout={handleLogout}>
       <Routes>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/machines" element={<MinhasMaquinas />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

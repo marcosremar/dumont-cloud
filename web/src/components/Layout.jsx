@@ -5,10 +5,13 @@ export default function Layout({ user, onLogout, children }) {
     <div className="layout">
       <header className="header">
         <div className="header-left">
-          <h1 className="logo">SnapGPU</h1>
+          <h1 className="logo">Dumont Cloud</h1>
           <nav className="nav">
             <NavLink to="/" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
               Dashboard
+            </NavLink>
+            <NavLink to="/machines" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+              Machines
             </NavLink>
             <NavLink to="/settings" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
               Settings

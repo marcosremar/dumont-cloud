@@ -336,6 +336,68 @@ class APITester:
         )
         return result
 
+    def test_agent_settings_get(self):
+        """GET /api/settings/agent - Testa leitura das configuracoes do agente"""
+        result = self.test_endpoint(
+            "GET", "/api/settings/agent",
+            description="Agent Settings (GET)"
+        )
+        if result and isinstance(result, dict):
+            if 'sync_interval' in result and 'keep_last' in result:
+                log_info(f"  -> sync_interval: {result['sync_interval']}s, keep_last: {result['keep_last']}")
+            else:
+                log_warn("  -> Campos esperados nao encontrados")
+        return result
+
+    def test_agent_settings_put(self):
+        """PUT /api/settings/agent - Testa atualizacao das configuracoes do agente"""
+        # Primeiro, salvar as configuracoes atuais
+        current = self.test_endpoint("GET", "/api/settings/agent")
+        original_interval = current.get('sync_interval', 30) if current else 30
+        original_keep = current.get('keep_last', 10) if current else 10
+
+        # Atualizar para valores de teste
+        result = self.test_endpoint(
+            "PUT", "/api/settings/agent",
+            data={"sync_interval": 60, "keep_last": 20},
+            description="Agent Settings (PUT)"
+        )
+        if result and result.get('success'):
+            log_info(f"  -> Salvo: sync_interval=60, keep_last=20")
+
+        # Restaurar valores originais
+        self.test_endpoint(
+            "PUT", "/api/settings/agent",
+            data={"sync_interval": original_interval, "keep_last": original_keep},
+            expected_status=200,
+            description="Restaurar configuracoes originais"
+        )
+        return result
+
+    def test_agent_settings_validation(self):
+        """PUT /api/settings/agent - Testa validacao de parametros"""
+        # Testar intervalo muito baixo
+        result = self.test_endpoint(
+            "PUT", "/api/settings/agent",
+            data={"sync_interval": 5, "keep_last": 10},
+            expected_status=400,
+            description="Agent Settings - validacao intervalo minimo"
+        )
+        if result and 'error' in result:
+            log_info(f"  -> Validacao OK: {result['error']}")
+
+        # Testar keep_last muito baixo
+        result2 = self.test_endpoint(
+            "PUT", "/api/settings/agent",
+            data={"sync_interval": 30, "keep_last": 0},
+            expected_status=400,
+            description="Agent Settings - validacao keep_last minimo"
+        )
+        if result2 and 'error' in result2:
+            log_info(f"  -> Validacao OK: {result2['error']}")
+
+        return result
+
     # ==================== EXECUCAO ====================
 
     def run_all_tests(self):
@@ -389,8 +451,17 @@ class APITester:
         print("\n[13/14] Destroy Inexistente")
         self.test_destroy_nonexistent()
 
-        print("\n[14/14] Save API Key")
+        print("\n[14/17] Save API Key")
         self.test_save_api_key()
+
+        print("\n[15/17] Agent Settings GET")
+        self.test_agent_settings_get()
+
+        print("\n[16/17] Agent Settings PUT")
+        self.test_agent_settings_put()
+
+        print("\n[17/17] Agent Settings Validation")
+        self.test_agent_settings_validation()
 
         # Resumo
         print(f"\n{'='*60}")

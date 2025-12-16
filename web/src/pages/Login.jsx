@@ -22,8 +22,8 @@ export default function Login({ onLogin }) {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1 className="login-title">SnapGPU</h1>
-        <p className="login-subtitle">GPU Snapshot Manager</p>
+        <h1 className="login-title">Dumont Cloud</h1>
+        <p className="login-subtitle">GPU Cloud Manager</p>
 
         <form onSubmit={handleSubmit}>
           {error && <div className="alert alert-error">{error}</div>}

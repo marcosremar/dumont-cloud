@@ -46,12 +46,21 @@ class VastConfig:
 
 
 @dataclass
+class DumontAgentConfig:
+    """Configuracoes do DumontAgent (agente nas maquinas GPU)"""
+    server_url: str = field(default_factory=lambda: os.getenv("DUMONT_SERVER", "https://dumontcloud.com"))
+    sync_interval: int = 30  # segundos entre sincronizacoes
+    sync_dirs: str = "/workspace"
+    keep_last: int = 10  # quantidade de snapshots a manter
+
+
+@dataclass
 class AppConfig:
     """Configuracoes gerais da aplicacao"""
     secret_key: str = field(default_factory=lambda: os.getenv("SECRET_KEY", "snapgpu-secret-key-2024"))
     debug: bool = field(default_factory=lambda: os.getenv("DEBUG", "false").lower() == "true")
     host: str = "0.0.0.0"
-    port: int = 8765
+    port: int = 8766  # Nginx frontend on 8765, Flask backend on 8766
 
     # Path do arquivo de configuracao de usuarios
     config_file: str = "config.json"
@@ -64,6 +73,7 @@ class Settings:
     r2: R2Config = field(default_factory=R2Config)
     restic: ResticConfig = field(default_factory=ResticConfig)
     vast: VastConfig = field(default_factory=VastConfig)
+    agent: DumontAgentConfig = field(default_factory=DumontAgentConfig)
 
 
 # Singleton das configuracoes

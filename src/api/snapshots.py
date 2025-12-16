@@ -3,19 +3,22 @@ API Routes para operacoes com Snapshots
 """
 from flask import Blueprint, jsonify, request, g
 from src.services import ResticService
+from src.config import settings
 
 snapshots_bp = Blueprint('snapshots', __name__, url_prefix='/api')
 
 
 def get_restic_service() -> ResticService:
-    """Factory para criar ResticService com settings do usuario logado"""
+    """Factory para criar ResticService com settings do usuario ou defaults do .env"""
     user_settings = getattr(g, 'user_settings', {})
+
+    # Usar settings do usuario se disponiveis, senao usar do .env
     return ResticService(
-        repo=user_settings.get('restic_repo', ''),
-        password=user_settings.get('restic_password', ''),
-        access_key=user_settings.get('r2_access_key', ''),
-        secret_key=user_settings.get('r2_secret_key', ''),
-        connections=user_settings.get('restic_connections', 32),
+        repo=user_settings.get('restic_repo') or settings.r2.restic_repo,
+        password=user_settings.get('restic_password') or settings.restic.password,
+        access_key=user_settings.get('r2_access_key') or settings.r2.access_key,
+        secret_key=user_settings.get('r2_secret_key') or settings.r2.secret_key,
+        connections=user_settings.get('restic_connections', settings.restic.connections),
     )
 
 

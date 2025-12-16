@@ -69,11 +69,31 @@ export default function DeployWizard({ snapshots, machines, onRefresh }) {
   // Existing machine selection
   const [selectedMachine, setSelectedMachine] = useState(null)
 
+  // Latency state
+  const [latencies, setLatencies] = useState({})
+  const [loadingLatency, setLoadingLatency] = useState(false)
+
   useEffect(() => {
     if (snapshots?.length > 0 && !selectedSnapshot) {
       setSelectedSnapshot(snapshots[0])
     }
   }, [snapshots])
+
+  // Fetch latency on mount
+  useEffect(() => {
+    const fetchLatency = async () => {
+      setLoadingLatency(true)
+      try {
+        const res = await fetch(`${API_BASE}/api/latency`, { credentials: 'include' })
+        const data = await res.json()
+        setLatencies(data)
+      } catch (e) {
+        console.error('Failed to fetch latency:', e)
+      }
+      setLoadingLatency(false)
+    }
+    fetchLatency()
+  }, [])
 
   // Fetch offers based on current filters
   const fetchOffers = async () => {
@@ -274,21 +294,33 @@ export default function DeployWizard({ snapshots, machines, onRefresh }) {
             <>
               {/* Region selector */}
               <div className="filter-section">
-                <label className="filter-label">Regiao</label>
+                <label className="filter-label">Regiao {loadingLatency && <span className="latency-loading">(medindo latencia...)</span>}</label>
                 <div className="region-buttons">
-                  {REGIONS.map(region => (
-                    <button
-                      key={region.id}
-                      className={`region-btn ${selectedRegion === region.id ? 'selected' : ''}`}
-                      onClick={() => setSelectedRegion(region.id)}
-                    >
-                      {region.flag === 'us' && '🇺🇸 '}
-                      {region.flag === 'eu' && '🇪🇺 '}
-                      {region.flag === 'asia' && '🌏 '}
-                      {region.id === 'global' && '🌐 '}
-                      {region.name}
-                    </button>
-                  ))}
+                  {REGIONS.map(region => {
+                    const latencyInfo = latencies[region.id]
+                    const latencyMs = latencyInfo?.latency
+                    const latencyClass = latencyMs ? (latencyMs < 50 ? 'latency-good' : latencyMs < 150 ? 'latency-medium' : 'latency-bad') : ''
+                    return (
+                      <button
+                        key={region.id}
+                        className={`region-btn ${selectedRegion === region.id ? 'selected' : ''}`}
+                        onClick={() => setSelectedRegion(region.id)}
+                      >
+                        <span className="region-flag">
+                          {region.flag === 'us' && '🇺🇸'}
+                          {region.flag === 'eu' && '🇪🇺'}
+                          {region.flag === 'asia' && '🌏'}
+                          {region.id === 'global' && '🌐'}
+                        </span>
+                        <span className="region-name">{region.name}</span>
+                        {latencyMs && (
+                          <span className={`region-latency ${latencyClass}`}>
+                            {Math.round(latencyMs)}ms
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 

@@ -71,6 +71,41 @@ VPS (54.37.225.188)           GPU Cloud (vast.ai)
 - R2 Bucket: musetalk
 - Restic repo: s3:https://....r2.cloudflarestorage.com/musetalk/restic
 
+## Boas Práticas de Desenvolvimento
+
+### Execução de Comandos SSH
+
+**IMPORTANTE**: Evitar comandos inline complexos que podem travar o terminal.
+
+#### ❌ NÃO FAZER:
+```bash
+# Comandos longos inline que podem travar o terminal
+ssh ubuntu@54.37.225.188 'ps aux | grep "python3 app" | grep -v grep && killall -9 python3 2>/dev/null; sleep 2; cd ~/snapgpu/new && python3 app.py > /tmp/app.log 2>&1 & sleep 3...'
+```
+
+#### ✅ FAZER:
+```bash
+# Criar script temporário e executar
+cat > /tmp/deploy.sh << 'EOF'
+#!/bin/bash
+killall python3 2>/dev/null
+sleep 1
+cd ~/snapgpu/new
+nohup python3 app.py > /tmp/app.log 2>&1 &
+sleep 2
+ps aux | grep "python3 app" | grep -v grep
+EOF
+
+scp /tmp/deploy.sh ubuntu@54.37.225.188:/tmp/
+ssh ubuntu@54.37.225.188 'bash /tmp/deploy.sh'
+```
+
+**Razões**:
+- Comandos inline longos podem bloquear o terminal
+- Scripts separados são mais fáceis de debugar
+- Melhor controle sobre timeouts e erros
+- Não trava Claude Code durante execução
+
 ## TODO
 
 - [ ] Implementar multi-start de máquinas (5 paralelas, 10s timeout)

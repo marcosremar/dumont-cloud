@@ -649,6 +649,48 @@ a:hover {
   color: var(--accent-blue);
 }
 
+.region-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.region-flag {
+  font-size: 1.1em;
+}
+
+.region-name {
+  flex: 1;
+}
+
+.region-latency {
+  font-size: 0.75em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.region-latency.latency-good {
+  color: var(--accent-green);
+  background: rgba(63, 185, 80, 0.1);
+}
+
+.region-latency.latency-medium {
+  color: var(--accent-yellow);
+  background: rgba(210, 153, 34, 0.1);
+}
+
+.region-latency.latency-bad {
+  color: var(--accent-red);
+  background: rgba(248, 81, 73, 0.1);
+}
+
+.latency-loading {
+  font-size: 0.8em;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
 /* Speed cards */
 .speed-cards {
   display: grid;
@@ -1301,4 +1343,905 @@ a:hover {
 
 .latency-measuring {
   color: var(--text-muted);
+}
+
+/* Machine Ports Section */
+.machine-ports-section {
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.ports-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.ports-title {
+  font-size: 0.75em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-icon-sm {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon-sm:hover {
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
+
+.ports-loading {
+  display: flex;
+  justify-content: center;
+  padding: 8px;
+}
+
+.spinner-sm {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.ports-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.port-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.7em;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.port-link:hover {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: white;
+}
+
+.port-number {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--accent-blue);
+}
+
+.port-link:hover .port-number {
+  color: white;
+}
+
+.port-desc {
+  color: var(--text-muted);
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.port-link:hover .port-desc {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Port item container (for custom ports with remove button) */
+.port-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.btn-remove-port {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.15s;
+}
+
+.btn-remove-port:hover {
+  background: var(--accent-red);
+  color: white;
+  opacity: 1;
+}
+
+.btn-remove-port:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.spinner-xs {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.ports-empty {
+  text-align: center;
+  padding: 4px;
+}
+
+.ports-add {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.port-input {
+  flex: 1;
+  padding: 4px 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 0.75em;
+  font-family: monospace;
+  width: 60px;
+  min-width: 0;
+}
+
+.port-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+.port-input::placeholder {
+  color: var(--text-muted);
+}
+
+.btn-xs {
+  padding: 4px 8px;
+  font-size: 0.7em;
+}
+
+.btn-primary {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+.btn-primary:hover {
+  background: #0098FF;
+  border-color: #0098FF;
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-secondary);
+  border-color: var(--text-secondary);
+}
+
+.btn-danger:hover {
+  background: #da3633;
+  border-color: #da3633;
+}
+
+/* Confirmation Modal */
+.confirm-modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.confirm-icon {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.confirm-title {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+
+.confirm-message {
+  color: var(--text-secondary);
+  font-size: 0.9em;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.confirm-message strong {
+  color: var(--text-primary);
+  font-family: monospace;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.confirm-actions .btn {
+  min-width: 100px;
+  justify-content: center;
+}
+
+/* Menu item buttons for machine cards */
+.btn-menu-item {
+  width: 100%;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85em;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.btn-menu-item:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  display: block;
+}
+
+.dropdown-item:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Responsive stats grid */
+@media (max-width: 768px) {
+  .container > div:last-child {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===================================
+   DUMONT CLOUD - BRASIL THEMED LAYOUT
+   =================================== */
+
+/* Brasil Colors */
+:root {
+  --brasil-green: #009c3b;
+  --brasil-yellow: #ffdf00;
+  --brasil-blue: #002776;
+  --dumont-bg: #0a0a0f;
+  --dumont-sidebar: #12121a;
+  --dumont-card: #1a1a24;
+  --dumont-border: #2a2a3a;
+  --dumont-text: #e0e0e0;
+  --dumont-text-secondary: #8a8a9a;
+}
+
+/* Main Layout */
+.dumont-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--dumont-bg);
+}
+
+/* Sidebar */
+.dumont-sidebar {
+  width: 220px;
+  background: var(--dumont-sidebar);
+  border-right: 1px solid var(--dumont-border);
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.dumont-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px 24px;
+  border-bottom: 1px solid var(--dumont-border);
+  margin-bottom: 20px;
+}
+
+.dumont-logo-icon {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--brasil-green), var(--brasil-yellow));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dumont-bg);
+}
+
+.dumont-logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--dumont-text);
+  letter-spacing: -0.5px;
+}
+
+.dumont-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 12px;
+}
+
+.dumont-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: var(--dumont-text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.dumont-nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--dumont-text);
+  text-decoration: none;
+}
+
+.dumont-nav-item.active {
+  background: rgba(0, 156, 59, 0.15);
+  color: var(--brasil-green);
+}
+
+.dumont-nav-item.active svg {
+  stroke: var(--brasil-green);
+}
+
+/* Main Content */
+.dumont-main {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* Header */
+.dumont-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.dumont-breadcrumb {
+  font-size: 14px;
+  color: var(--dumont-text-secondary);
+}
+
+.dumont-breadcrumb-current {
+  color: var(--dumont-text);
+  font-weight: 500;
+}
+
+.dumont-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dumont-simulation-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dumont-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+}
+
+.dumont-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.dumont-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--dumont-border);
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.dumont-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--dumont-text-secondary);
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.dumont-toggle input:checked + .dumont-toggle-slider {
+  background-color: var(--brasil-green);
+}
+
+.dumont-toggle input:checked + .dumont-toggle-slider:before {
+  transform: translateX(20px);
+  background-color: white;
+}
+
+.dumont-toggle-label {
+  font-size: 13px;
+  color: var(--dumont-text-secondary);
+}
+
+.dumont-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--dumont-border);
+  background: transparent;
+  color: var(--dumont-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.dumont-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--dumont-text);
+}
+
+.dumont-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--dumont-border);
+  background: transparent;
+  color: var(--dumont-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dumont-user-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--dumont-text);
+}
+
+/* Stats Grid */
+.dumont-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+  .dumont-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .dumont-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dumont-stat-card {
+  background: var(--dumont-card);
+  border: 1px solid var(--dumont-border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dumont-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dumont-stat-green {
+  background: rgba(0, 156, 59, 0.15);
+  color: var(--brasil-green);
+}
+
+.dumont-stat-yellow {
+  background: rgba(255, 223, 0, 0.15);
+  color: var(--brasil-yellow);
+}
+
+.dumont-stat-blue {
+  background: rgba(0, 39, 118, 0.25);
+  color: #5b8def;
+}
+
+.dumont-stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.dumont-stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--dumont-text);
+}
+
+.dumont-stat-label {
+  font-size: 12px;
+  color: var(--dumont-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Section */
+.dumont-section {
+  margin-top: 8px;
+}
+
+.dumont-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dumont-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dumont-text);
+  margin: 0;
+}
+
+.dumont-btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--brasil-green);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.dumont-btn-primary:hover {
+  background: #00b344;
+  text-decoration: none;
+  color: white;
+}
+
+/* Machines Grid */
+.dumont-machines-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+/* Machine Card */
+.dumont-machine-card {
+  background: var(--dumont-card);
+  border: 1px solid var(--dumont-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dumont-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--dumont-border);
+}
+
+.dumont-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--dumont-text);
+}
+
+.dumont-gpu-icon {
+  color: var(--brasil-green);
+}
+
+.dumont-menu-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--dumont-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.dumont-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--dumont-text);
+}
+
+.dumont-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+}
+
+.dumont-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  width: 180px;
+  background: var(--dumont-sidebar);
+  border: 1px solid var(--dumont-border);
+  border-radius: 8px;
+  padding: 8px;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.dumont-dropdown-item {
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: var(--dumont-text-secondary);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.dumont-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--dumont-text);
+}
+
+.dumont-dropdown-item.dumont-danger {
+  color: #ef4444;
+}
+
+.dumont-dropdown-item.dumont-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.dumont-dropdown-divider {
+  height: 1px;
+  background: var(--dumont-border);
+  margin: 8px 0;
+}
+
+/* Metrics Grid */
+.dumont-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 16px;
+}
+
+.dumont-metric {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.dumont-metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.dumont-metric-label {
+  font-size: 11px;
+  color: var(--dumont-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dumont-metric-value {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Controls */
+.dumont-controls {
+  padding: 12px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--dumont-border);
+}
+
+.dumont-control-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dumont-control-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--dumont-text-secondary);
+}
+
+.dumont-select-inline {
+  padding: 4px 8px;
+  background: var(--dumont-bg);
+  border: 1px solid var(--dumont-border);
+  border-radius: 4px;
+  color: var(--brasil-green);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dumont-input-inline {
+  width: 60px;
+  padding: 4px 8px;
+  background: var(--dumont-bg);
+  border: 1px solid var(--dumont-border);
+  border-radius: 4px;
+  color: var(--dumont-text);
+  font-size: 12px;
+}
+
+.dumont-btn-vscode {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #0078d4;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dumont-btn-vscode:hover {
+  background: #0091ff;
+}
+
+.dumont-btn-vscode:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dumont-btn-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--dumont-border);
+  border-radius: 6px;
+  color: var(--dumont-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dumont-btn-dropdown:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--dumont-text);
+}
+
+.dumont-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--dumont-text-secondary);
+  cursor: pointer;
+}
+
+.dumont-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brasil-green);
+}
+
+/* Empty State */
+.dumont-empty-state {
+  background: var(--dumont-card);
+  border: 1px solid var(--dumont-border);
+  border-radius: 12px;
+  padding: 60px 40px;
+  text-align: center;
+  color: var(--dumont-text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dumont-sidebar {
+    display: none;
+  }
+
+  .dumont-machines-grid {
+    grid-template-columns: 1fr;
+  }
 }
