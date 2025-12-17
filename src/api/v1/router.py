@@ -3,8 +3,9 @@ Main API v1 router
 """
 from fastapi import APIRouter
 
-from .endpoints import auth, instances, snapshots, settings
+from .endpoints import auth, instances, snapshots, settings, metrics, ai_wizard, standby
 from .endpoints.settings import balance_router
+from .endpoints.spot import router as spot_router
 
 # Create API v1 router
 api_router = APIRouter()
@@ -15,3 +16,9 @@ api_router.include_router(instances.router)
 api_router.include_router(snapshots.router)
 api_router.include_router(settings.router)
 api_router.include_router(balance_router)
+api_router.include_router(metrics.router)
+api_router.include_router(ai_wizard.router)
+api_router.include_router(standby.router)
+
+# Spot Reports - Relatórios de instâncias spot
+api_router.include_router(spot_router, prefix="/metrics", tags=["Spot Reports"])

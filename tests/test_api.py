@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-SnapGPU API Tests
-Testes automatizados para todas as APIs do dashboard SnapGPU.
+Dumont Cloud API Tests
+Testes automatizados para todas as APIs do dashboard Dumont Cloud.
 
 APIs Testadas:
 - GET  /api/snapshots          - Lista snapshots com deduplicacao
@@ -403,7 +403,7 @@ class APITester:
     def run_all_tests(self):
         """Executa todos os testes"""
         print(f"\n{'='*60}")
-        print(f"SnapGPU API Tests - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Dumont Cloud API Tests - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"Base URL: {self.base_url}")
         print(f"{'='*60}\n")
 

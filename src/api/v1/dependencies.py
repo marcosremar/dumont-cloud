@@ -7,7 +7,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from ...core.config import get_settings
 from ...core.jwt import create_access_token, verify_token
-from ...domain.services import InstanceService, SnapshotService, AuthService
+from ...domain.services import InstanceService, SnapshotService, AuthService, MigrationService, SyncService
 from ...domain.repositories import IGpuProvider, ISnapshotProvider, IUserRepository
 from ...infrastructure.providers import VastProvider, ResticProvider, FileUserRepository
 
@@ -158,3 +158,97 @@ def get_snapshot_service(
         secret_key=secret_key,
     )
     return SnapshotService(snapshot_provider=snapshot_provider)
+
+
+def get_migration_service(
+    user_email: str = Depends(get_current_user_email),
+) -> MigrationService:
+    """Get migration service"""
+    from ...services.vast_service import VastService
+
+    # Get user's settings
+    user_repo = next(get_user_repository())
+    user = user_repo.get_user(user_email)
+
+    if not user or not user.vast_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vast.ai API key not configured. Please update settings.",
+        )
+
+    # Get settings for snapshot provider
+    settings = get_settings()
+    repo = user.settings.get("restic_repo") or settings.r2.restic_repo
+    password = user.settings.get("restic_password") or settings.restic.password
+    access_key = user.settings.get("r2_access_key") or settings.r2.access_key
+    secret_key = user.settings.get("r2_secret_key") or settings.r2.secret_key
+
+    # Create services
+    gpu_provider = VastProvider(api_key=user.vast_api_key)
+    instance_service = InstanceService(gpu_provider=gpu_provider)
+
+    snapshot_provider = ResticProvider(
+        repo=repo,
+        password=password,
+        access_key=access_key,
+        secret_key=secret_key,
+    )
+    snapshot_service = SnapshotService(snapshot_provider=snapshot_provider)
+
+    # Direct vast service for CPU operations
+    vast_service = VastService(api_key=user.vast_api_key)
+
+    return MigrationService(
+        instance_service=instance_service,
+        snapshot_service=snapshot_service,
+        vast_service=vast_service,
+    )
+
+
+# Global sync service instance (to maintain state across requests)
+_sync_service_instance: Optional[SyncService] = None
+
+
+def get_sync_service(
+    user_email: str = Depends(get_current_user_email),
+) -> SyncService:
+    """Get sync service (singleton to maintain sync state)"""
+    global _sync_service_instance
+
+    # Get user's settings
+    user_repo = next(get_user_repository())
+    user = user_repo.get_user(user_email)
+
+    if not user or not user.vast_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vast.ai API key not configured. Please update settings.",
+        )
+
+    # Get settings for providers
+    settings = get_settings()
+    repo = user.settings.get("restic_repo") or settings.r2.restic_repo
+    password = user.settings.get("restic_password") or settings.restic.password
+    access_key = user.settings.get("r2_access_key") or settings.r2.access_key
+    secret_key = user.settings.get("r2_secret_key") or settings.r2.secret_key
+
+    # Create services
+    gpu_provider = VastProvider(api_key=user.vast_api_key)
+    instance_service = InstanceService(gpu_provider=gpu_provider)
+
+    snapshot_provider = ResticProvider(
+        repo=repo,
+        password=password,
+        access_key=access_key,
+        secret_key=secret_key,
+    )
+    snapshot_service = SnapshotService(snapshot_provider=snapshot_provider)
+
+    # Create or reuse sync service
+    if _sync_service_instance is None:
+        _sync_service_instance = SyncService(
+            snapshot_service=snapshot_service,
+            instance_service=instance_service,
+        )
+
+    return _sync_service_instance

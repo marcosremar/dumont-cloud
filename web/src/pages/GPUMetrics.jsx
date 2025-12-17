@@ -11,7 +11,7 @@ import {
   Legend,
   Filler,
 } from 'chart.js'
-import { BarChart3, TrendingUp, TrendingDown, ArrowRight, Package, Cpu, AlertTriangle, Search } from 'lucide-react'
+import { BarChart3, TrendingUp, TrendingDown, ArrowRight, Package, Cpu, AlertTriangle, Shield, Zap, DollarSign, Clock, Server } from 'lucide-react'
 
 ChartJS.register(
   CategoryScale,
@@ -28,111 +28,227 @@ const API_BASE = ''
 
 export default function GPUMetrics() {
   const [loading, setLoading] = useState(true)
-  const [agentStatus, setAgentStatus] = useState(null)
-  const [summary, setSummary] = useState([])
-  const [history, setHistory] = useState([])
-  const [alerts, setAlerts] = useState([])
+  const [activeTab, setActiveTab] = useState('market') // market, providers, efficiency
 
-  // Filtros
-  const [selectedGPUs, setSelectedGPUs] = useState(['all'])
+  // Market data
+  const [marketData, setMarketData] = useState([])
+  const [marketSummary, setMarketSummary] = useState({})
+  const [availableGPUs, setAvailableGPUs] = useState([])
+  const [machineTypes, setMachineTypes] = useState([])
+
+  // Providers data
+  const [providers, setProviders] = useState([])
+
+  // Efficiency data
+  const [efficiency, setEfficiency] = useState([])
+
+  // Predictions
+  const [predictions, setPredictions] = useState(null)
+
+  // Filters
+  const [selectedGPU, setSelectedGPU] = useState('all')
+  const [selectedType, setSelectedType] = useState('all')
   const [timeRange, setTimeRange] = useState(24)
-  const [priceRange, setPriceRange] = useState([0, 2])
-  const [minOffers, setMinOffers] = useState(0)
-  const [showOnlyDrops, setShowOnlyDrops] = useState(false)
 
   useEffect(() => {
-    loadData()
-    const interval = setInterval(loadData, 60000)
-    return () => clearInterval(interval)
-  }, [timeRange])
+    loadInitialData()
+  }, [])
 
-  const loadData = async () => {
+  useEffect(() => {
+    loadMarketData()
+  }, [selectedGPU, selectedType, timeRange])
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('auth_token')
+    return token ? { 'Authorization': `Bearer ${token}` } : {}
+  }
+
+  const loadInitialData = async () => {
     try {
-      // Status do agente
-      const statusRes = await fetch(`${API_BASE}/api/price-monitor/status`, { credentials: 'include' })
-      const statusData = await statusRes.json()
-      if (statusData.success) setAgentStatus(statusData.agent)
+      // Load available GPUs and types
+      const [gpusRes, typesRes] = await Promise.all([
+        fetch(`${API_BASE}/api/v1/metrics/gpus`, {
+          credentials: 'include',
+          headers: getAuthHeaders()
+        }),
+        fetch(`${API_BASE}/api/v1/metrics/types`, {
+          credentials: 'include',
+          headers: getAuthHeaders()
+        })
+      ])
 
-      // Resumo
-      const summaryRes = await fetch(`${API_BASE}/api/price-monitor/summary`, { credentials: 'include' })
-      const summaryData = await summaryRes.json()
-      if (summaryData.success) setSummary(summaryData.summary)
+      if (gpusRes.ok) {
+        const data = await gpusRes.json()
+        setAvailableGPUs(data.gpus || [])
+      }
 
-      // Histórico
-      const historyRes = await fetch(`${API_BASE}/api/price-monitor/history?hours=${timeRange}&limit=200`, { credentials: 'include' })
-      const historyData = await historyRes.json()
-      if (historyData.success) setHistory(historyData.history)
+      if (typesRes.ok) {
+        const data = await typesRes.json()
+        setMachineTypes(data.types || ['on-demand', 'interruptible', 'bid'])
+      }
 
-      // Alertas
-      const alertsRes = await fetch(`${API_BASE}/api/price-monitor/alerts?hours=24&limit=20`, { credentials: 'include' })
-      const alertsData = await alertsRes.json()
-      if (alertsData.success) setAlerts(alertsData.alerts)
-
+      await loadMarketData()
       setLoading(false)
     } catch (error) {
-      console.error('Erro ao carregar métricas:', error)
+      console.error('Erro ao carregar dados iniciais:', error)
       setLoading(false)
     }
   }
 
-  // Filtrar dados
-  const filteredSummary = summary.filter(gpu => {
-    if (selectedGPUs.includes('all')) return true
-    return selectedGPUs.includes(gpu.gpu_name)
-  }).filter(gpu => {
-    return gpu.current.avg_price >= priceRange[0] && gpu.current.avg_price <= priceRange[1]
-  }).filter(gpu => {
-    return gpu.current.total_offers >= minOffers
-  }).filter(gpu => {
-    if (!showOnlyDrops) return true
-    return gpu.trend_24h?.direction === 'down'
+  const loadMarketData = async () => {
+    try {
+      const params = new URLSearchParams()
+      if (selectedGPU !== 'all') params.append('gpu_name', selectedGPU)
+      if (selectedType !== 'all') params.append('machine_type', selectedType)
+      params.append('hours', timeRange)
+      params.append('limit', 100)
+
+      const [marketRes, summaryRes] = await Promise.all([
+        fetch(`${API_BASE}/api/v1/metrics/market?${params}`, {
+          credentials: 'include',
+          headers: getAuthHeaders()
+        }),
+        fetch(`${API_BASE}/api/v1/metrics/market/summary?${params}`, {
+          credentials: 'include',
+          headers: getAuthHeaders()
+        })
+      ])
+
+      if (marketRes.ok) {
+        const data = await marketRes.json()
+        // API returns array directly for /market
+        setMarketData(Array.isArray(data) ? data : (data.data || []))
+      }
+
+      if (summaryRes.ok) {
+        const data = await summaryRes.json()
+        // /market/summary returns { data: {...} }
+        setMarketSummary(data.data || {})
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados de mercado:', error)
+    }
+  }
+
+  const loadProviders = async () => {
+    try {
+      const params = new URLSearchParams()
+      params.append('limit', 50)
+
+      const res = await fetch(`${API_BASE}/api/v1/metrics/providers?${params}`, {
+        credentials: 'include',
+        headers: getAuthHeaders()
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        // API returns array directly, not { data: [...] }
+        setProviders(Array.isArray(data) ? data : (data.data || []))
+      }
+    } catch (error) {
+      console.error('Erro ao carregar provedores:', error)
+    }
+  }
+
+  const loadEfficiency = async () => {
+    try {
+      const params = new URLSearchParams()
+      if (selectedGPU !== 'all') params.append('gpu_name', selectedGPU)
+      if (selectedType !== 'all') params.append('machine_type', selectedType)
+      params.append('limit', 50)
+
+      const res = await fetch(`${API_BASE}/api/v1/metrics/efficiency?${params}`, {
+        credentials: 'include',
+        headers: getAuthHeaders()
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        // API returns array directly, not { data: [...] }
+        setEfficiency(Array.isArray(data) ? data : (data.data || []))
+      }
+    } catch (error) {
+      console.error('Erro ao carregar eficiência:', error)
+    }
+  }
+
+  const loadPredictions = async (gpuName) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/metrics/predictions/${encodeURIComponent(gpuName)}`, {
+        credentials: 'include',
+        headers: getAuthHeaders()
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setPredictions(data.predictions)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar previsões:', error)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === 'providers') loadProviders()
+    if (activeTab === 'efficiency') loadEfficiency()
+  }, [activeTab, selectedGPU, selectedType])
+
+  const formatPrice = (price) => price ? `$${price.toFixed(4)}/h` : '-'
+  const formatPercent = (value) => value ? `${(value * 100).toFixed(1)}%` : '-'
+  const formatTime = (timestamp) => new Date(timestamp).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
   })
 
-  const filteredAlerts = showOnlyDrops
-    ? alerts.filter(a => a.alert_type === 'price_drop')
-    : alerts
-
-  // Preparar dados do gráfico
-  const getChartData = (gpuName) => {
-    const gpuHistory = history
-      .filter(h => h.gpu_name === gpuName)
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-      .slice(-20)
-
-    return {
-      labels: gpuHistory.map(h => {
-        const date = new Date(h.timestamp)
-        return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`
-      }),
-      datasets: [
-        {
-          label: 'Preço Médio',
-          data: gpuHistory.map(h => h.avg_price),
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          fill: true,
-          tension: 0.4,
-        },
-        {
-          label: 'Preço Mín',
-          data: gpuHistory.map(h => h.min_price),
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.05)',
-          fill: false,
-          tension: 0.4,
-          borderDash: [5, 5],
-        },
-        {
-          label: 'Preço Máx',
-          data: gpuHistory.map(h => h.max_price),
-          borderColor: '#ef4444',
-          backgroundColor: 'rgba(239, 68, 68, 0.05)',
-          fill: false,
-          tension: 0.4,
-          borderDash: [5, 5],
-        },
-      ],
+  const getMachineTypeLabel = (type) => {
+    const labels = {
+      'on-demand': 'On-Demand',
+      'interruptible': 'Spot/Interruptible',
+      'bid': 'Bid'
     }
+    return labels[type] || type
+  }
+
+  const getMachineTypeColor = (type) => {
+    const colors = {
+      'on-demand': '#3b82f6',
+      'interruptible': '#22c55e',
+      'bid': '#f59e0b'
+    }
+    return colors[type] || '#6b7280'
+  }
+
+  // Chart data for market summary
+  const getMarketChartData = () => {
+    const gpuData = {}
+
+    marketData.forEach(record => {
+      const key = record.gpu_name
+      if (!gpuData[key]) gpuData[key] = []
+      gpuData[key].push(record)
+    })
+
+    const datasets = Object.entries(gpuData).map(([gpu, records], index) => {
+      const colors = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
+      const color = colors[index % colors.length]
+
+      return {
+        label: gpu,
+        data: records.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).map(r => r.avg_price),
+        borderColor: color,
+        backgroundColor: `${color}20`,
+        fill: false,
+        tension: 0.4,
+      }
+    })
+
+    const labels = marketData.length > 0
+      ? [...new Set(marketData.map(r => formatTime(r.timestamp)))].slice(-20)
+      : []
+
+    return { labels, datasets }
   }
 
   const chartOptions = {
@@ -142,72 +258,24 @@ export default function GPUMetrics() {
       legend: {
         display: true,
         position: 'bottom',
-        labels: {
-          color: '#9ca3af',
-          font: { size: 11 },
-          usePointStyle: true,
-        },
+        labels: { color: '#9ca3af', font: { size: 11 }, usePointStyle: true },
       },
       tooltip: {
         callbacks: {
-          label: (context) => `${context.dataset.label}: $${context.parsed.y.toFixed(4)}/h`,
+          label: (context) => `${context.dataset.label}: $${context.parsed.y?.toFixed(4)}/h`,
         },
       },
     },
     scales: {
       y: {
-        ticks: {
-          color: '#9ca3af',
-          callback: (value) => `$${value.toFixed(2)}`,
-        },
-        grid: {
-          color: '#30363d',
-        },
+        ticks: { color: '#9ca3af', callback: (value) => `$${value.toFixed(2)}` },
+        grid: { color: '#30363d' },
       },
       x: {
-        ticks: {
-          color: '#9ca3af',
-          maxRotation: 0,
-        },
-        grid: {
-          display: false,
-        },
+        ticks: { color: '#9ca3af', maxRotation: 45 },
+        grid: { display: false },
       },
     },
-  }
-
-  const formatPrice = (price) => `$${price.toFixed(4)}/h`
-  const formatTime = (timestamp) => new Date(timestamp).toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-
-  const getTrendIcon = (direction) => {
-    if (direction === 'up') return <TrendingUp size={20} />
-    if (direction === 'down') return <TrendingDown size={20} />
-    return <ArrowRight size={20} />
-  }
-
-  const getTrendColor = (direction) => {
-    if (direction === 'up') return '#ef4444'
-    if (direction === 'down') return '#22c55e'
-    return '#6b7280'
-  }
-
-  const toggleGPU = (gpu) => {
-    if (gpu === 'all') {
-      setSelectedGPUs(['all'])
-    } else {
-      const newSelection = selectedGPUs.filter(g => g !== 'all')
-      if (newSelection.includes(gpu)) {
-        const filtered = newSelection.filter(g => g !== gpu)
-        setSelectedGPUs(filtered.length === 0 ? ['all'] : filtered)
-      } else {
-        setSelectedGPUs([...newSelection, gpu])
-      }
-    }
   }
 
   if (loading) {
@@ -226,42 +294,64 @@ export default function GPUMetrics() {
       {/* Header */}
       <div className="metrics-header">
         <div>
-          <h1 className="metrics-title"><BarChart3 size={28} style={{display: 'inline', verticalAlign: 'middle', marginRight: '12px'}} /> Métricas de GPU</h1>
-          <p className="metrics-subtitle">Análise de preços em tempo real da Vast.ai</p>
+          <h1 className="metrics-title">
+            <BarChart3 size={28} style={{display: 'inline', verticalAlign: 'middle', marginRight: '12px'}} />
+            Métricas de GPU
+          </h1>
+          <p className="metrics-subtitle">Análise completa de preços, provedores e eficiência - Vast.ai</p>
         </div>
-        {agentStatus && (
-          <div className="agent-status-badge">
-            <span className={`status-dot ${agentStatus.running ? 'status-active' : 'status-inactive'}`}></span>
-            <span>{agentStatus.running ? 'Monitorando' : 'Parado'}</span>
-            <span className="status-interval">• {agentStatus.interval_minutes}min</span>
-          </div>
-        )}
       </div>
 
-      {/* Filtros Avançados */}
+      {/* Tabs */}
+      <div className="metrics-tabs">
+        <button
+          className={`metrics-tab ${activeTab === 'market' ? 'active' : ''}`}
+          onClick={() => setActiveTab('market')}
+        >
+          <TrendingUp size={18} /> Mercado
+        </button>
+        <button
+          className={`metrics-tab ${activeTab === 'providers' ? 'active' : ''}`}
+          onClick={() => setActiveTab('providers')}
+        >
+          <Shield size={18} /> Provedores
+        </button>
+        <button
+          className={`metrics-tab ${activeTab === 'efficiency' ? 'active' : ''}`}
+          onClick={() => setActiveTab('efficiency')}
+        >
+          <Zap size={18} /> Eficiência
+        </button>
+      </div>
+
+      {/* Filters */}
       <div className="filters-panel">
         <div className="filter-section">
-          <label className="filter-label">GPUs</label>
-          <div className="filter-chips">
-            <button
-              className={`filter-chip ${selectedGPUs.includes('all') ? 'active' : ''}`}
-              onClick={() => toggleGPU('all')}
-            >
-              Todas
-            </button>
-            <button
-              className={`filter-chip ${selectedGPUs.includes('RTX 4090') ? 'active' : ''}`}
-              onClick={() => toggleGPU('RTX 4090')}
-            >
-              RTX 4090
-            </button>
-            <button
-              className={`filter-chip ${selectedGPUs.includes('RTX 4080') ? 'active' : ''}`}
-              onClick={() => toggleGPU('RTX 4080')}
-            >
-              RTX 4080
-            </button>
-          </div>
+          <label className="filter-label">GPU</label>
+          <select
+            className="filter-select"
+            value={selectedGPU}
+            onChange={(e) => setSelectedGPU(e.target.value)}
+          >
+            <option value="all">Todas as GPUs</option>
+            {availableGPUs.map(gpu => (
+              <option key={gpu} value={gpu}>{gpu}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-section">
+          <label className="filter-label">Tipo de Máquina</label>
+          <select
+            className="filter-select"
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+          >
+            <option value="all">Todos os Tipos</option>
+            {machineTypes.map(type => (
+              <option key={type} value={type}>{getMachineTypeLabel(type)}</option>
+            ))}
+          </select>
         </div>
 
         <div className="filter-section">
@@ -278,181 +368,238 @@ export default function GPUMetrics() {
             ))}
           </div>
         </div>
-
-        <div className="filter-section">
-          <label className="filter-label">Preço ($/h): ${priceRange[0].toFixed(2)} - ${priceRange[1].toFixed(2)}</label>
-          <div className="filter-range">
-            <input
-              type="range"
-              min="0"
-              max="2"
-              step="0.05"
-              value={priceRange[0]}
-              onChange={(e) => setPriceRange([parseFloat(e.target.value), priceRange[1]])}
-            />
-            <input
-              type="range"
-              min="0"
-              max="2"
-              step="0.05"
-              value={priceRange[1]}
-              onChange={(e) => setPriceRange([priceRange[0], parseFloat(e.target.value)])}
-            />
-          </div>
-        </div>
-
-        <div className="filter-section">
-          <label className="filter-label">Min. Ofertas: {minOffers}</label>
-          <input
-            type="range"
-            min="0"
-            max="50"
-            value={minOffers}
-            onChange={(e) => setMinOffers(parseInt(e.target.value))}
-            className="filter-slider"
-          />
-        </div>
-
-        <div className="filter-section">
-          <label className="filter-checkbox">
-            <input
-              type="checkbox"
-              checked={showOnlyDrops}
-              onChange={(e) => setShowOnlyDrops(e.target.checked)}
-            />
-            <span style={{display: 'flex', alignItems: 'center', gap: '6px'}}>Apenas Quedas de Preço <TrendingDown size={16} /></span>
-          </label>
-        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="stats-grid">
-        {filteredSummary.map((gpu) => (
-          <div key={gpu.gpu_name} className="stat-card">
-            <div className="stat-card-header">
-              <h3>{gpu.gpu_name}</h3>
-              <div className="stat-trend" style={{ color: getTrendColor(gpu.trend_24h?.direction) }}>
-                <span className="trend-icon">{getTrendIcon(gpu.trend_24h?.direction)}</span>
-                {gpu.trend_24h?.change_percent !== null && (
-                  <span className="trend-value">
-                    {gpu.trend_24h.change_percent > 0 ? '+' : ''}
-                    {gpu.trend_24h.change_percent.toFixed(1)}%
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="stat-main-price">
-              <div className="price-label">Preço Médio</div>
-              <div className="price-value">{formatPrice(gpu.current.avg_price)}</div>
-            </div>
-
-            <div className="stat-price-range">
-              <div className="price-range-item">
-                <span className="range-label">Mínimo</span>
-                <span className="range-value green">{formatPrice(gpu.current.min_price)}</span>
-              </div>
-              <div className="price-range-divider"></div>
-              <div className="price-range-item">
-                <span className="range-label">Máximo</span>
-                <span className="range-value red">{formatPrice(gpu.current.max_price)}</span>
-              </div>
-            </div>
-
-            <div className="stat-chart">
-              <Line data={getChartData(gpu.gpu_name)} options={chartOptions} />
-            </div>
-
-            <div className="stat-footer">
-              <div className="stat-footer-item">
-                <span className="footer-icon"><Package size={18} /></span>
-                <span className="footer-value">{gpu.current.total_offers}</span>
-                <span className="footer-label">Ofertas</span>
-              </div>
-              <div className="stat-footer-item">
-                <span className="footer-icon"><Cpu size={18} /></span>
-                <span className="footer-value">{gpu.current.available_gpus}</span>
-                <span className="footer-label">GPUs</span>
-              </div>
-              <div className="stat-footer-item">
-                <span className="footer-icon"><BarChart3 size={18} /></span>
-                <span className="footer-value">{formatPrice(gpu.current.median_price)}</span>
-                <span className="footer-label">Mediana</span>
-              </div>
-            </div>
-
-            <div className="stat-updated">
-              Atualizado {formatTime(gpu.current.timestamp)}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {filteredSummary.length === 0 && (
-        <div className="empty-state">
-          <div className="empty-icon"><Search size={64} /></div>
-          <h3>Nenhum resultado encontrado</h3>
-          <p>Ajuste os filtros para ver os dados</p>
-        </div>
-      )}
-
-      {/* Alertas */}
-      {filteredAlerts.length > 0 && (
-        <div className="alerts-section">
-          <h2 className="section-title"><AlertTriangle size={22} style={{display: 'inline', verticalAlign: 'middle', marginRight: '8px'}} /> Alertas Recentes (24h)</h2>
-          <div className="alerts-grid">
-            {filteredAlerts.slice(0, 6).map((alert) => (
-              <div key={alert.id} className={`alert-card ${alert.alert_type}`}>
-                <div className="alert-header">
-                  <span className="alert-gpu">{alert.gpu_name}</span>
-                  <span className="alert-change" style={{
-                    color: alert.alert_type === 'price_drop' ? '#22c55e' : '#ef4444'
-                  }}>
-                    {alert.change_percent > 0 ? '+' : ''}{alert.change_percent.toFixed(1)}%
-                  </span>
+      {/* Market Tab */}
+      {activeTab === 'market' && (
+        <>
+          {/* Market Summary Cards */}
+          <div className="market-summary-grid">
+            {Object.entries(marketSummary).map(([gpuName, types]) => (
+              <div key={gpuName} className="summary-card">
+                <h3 className="summary-card-title">{gpuName}</h3>
+                <div className="summary-types">
+                  {Object.entries(types).map(([type, data]) => (
+                    <div key={type} className="summary-type-row">
+                      <span
+                        className="type-badge"
+                        style={{ backgroundColor: getMachineTypeColor(type) }}
+                      >
+                        {getMachineTypeLabel(type)}
+                      </span>
+                      <div className="type-prices">
+                        <span className="price-min">{formatPrice(data.min_price)}</span>
+                        <span className="price-avg">{formatPrice(data.avg_price)}</span>
+                        <span className="price-max">{formatPrice(data.max_price)}</span>
+                      </div>
+                      <span className="type-offers">{data.total_offers || 0} ofertas</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="alert-message">{alert.message}</div>
-                <div className="alert-time">{formatTime(alert.timestamp)}</div>
               </div>
             ))}
           </div>
+
+          {Object.keys(marketSummary).length === 0 && (
+            <div className="empty-state">
+              <BarChart3 size={64} style={{ opacity: 0.5 }} />
+              <h3>Coletando dados de mercado...</h3>
+              <p>O monitor de métricas coleta dados das GPUs periodicamente. Aguarde alguns minutos.</p>
+            </div>
+          )}
+
+          {/* Price Chart */}
+          {marketData.length > 0 && (
+            <div className="chart-section">
+              <h2 className="section-title">
+                <TrendingUp size={22} style={{display: 'inline', verticalAlign: 'middle', marginRight: '8px'}} />
+                Histórico de Preços
+              </h2>
+              <div className="chart-container" style={{ height: '300px' }}>
+                <Line data={getMarketChartData()} options={chartOptions} />
+              </div>
+            </div>
+          )}
+
+          {/* Market Data Table */}
+          {marketData.length > 0 && (
+            <div className="history-section">
+              <h2 className="section-title">Dados Detalhados</h2>
+              <div className="history-table-container">
+                <table className="history-table">
+                  <thead>
+                    <tr>
+                      <th>GPU</th>
+                      <th>Tipo</th>
+                      <th>Data/Hora</th>
+                      <th>Preço Médio</th>
+                      <th>Mínimo</th>
+                      <th>Máximo</th>
+                      <th>Ofertas</th>
+                      <th>$/TFLOPS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {marketData.slice(0, 50).map((record, idx) => (
+                      <tr key={idx}>
+                        <td className="table-gpu">{record.gpu_name}</td>
+                        <td>
+                          <span
+                            className="type-badge-small"
+                            style={{ backgroundColor: getMachineTypeColor(record.machine_type) }}
+                          >
+                            {getMachineTypeLabel(record.machine_type)}
+                          </span>
+                        </td>
+                        <td className="table-time">{formatTime(record.timestamp)}</td>
+                        <td className="table-price-main">{formatPrice(record.avg_price)}</td>
+                        <td className="table-price green">{formatPrice(record.min_price)}</td>
+                        <td className="table-price red">{formatPrice(record.max_price)}</td>
+                        <td className="table-number">{record.total_offers}</td>
+                        <td className="table-number">{formatPrice(record.min_cost_per_tflops)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Providers Tab */}
+      {activeTab === 'providers' && (
+        <div className="providers-section">
+          <h2 className="section-title">
+            <Shield size={22} style={{display: 'inline', verticalAlign: 'middle', marginRight: '8px'}} />
+            Ranking de Provedores por Confiabilidade
+          </h2>
+
+          {providers.length > 0 ? (
+            <div className="providers-table-container">
+              <table className="providers-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Host</th>
+                    <th>Localização</th>
+                    <th>Confiabilidade</th>
+                    <th>Disponibilidade</th>
+                    <th>Estabilidade Preço</th>
+                    <th>Observações</th>
+                    <th>Verificado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {providers.map((provider, idx) => (
+                    <tr key={provider.machine_id}>
+                      <td className="rank-number">{idx + 1}</td>
+                      <td className="provider-host">
+                        <Server size={16} style={{ marginRight: '8px', opacity: 0.6 }} />
+                        {provider.hostname || `Host ${provider.machine_id}`}
+                      </td>
+                      <td>{provider.geolocation || '-'}</td>
+                      <td>
+                        <div className="score-bar">
+                          <div
+                            className="score-fill"
+                            style={{
+                              width: `${(provider.reliability_score || 0) * 100}%`,
+                              backgroundColor: provider.reliability_score > 0.8 ? '#22c55e' : provider.reliability_score > 0.5 ? '#f59e0b' : '#ef4444'
+                            }}
+                          />
+                          <span>{formatPercent(provider.reliability_score)}</span>
+                        </div>
+                      </td>
+                      <td>{formatPercent(provider.availability_score)}</td>
+                      <td>{formatPercent(provider.price_stability_score)}</td>
+                      <td className="table-number">{provider.total_observations}</td>
+                      <td>
+                        {provider.verified ? (
+                          <span className="verified-badge">Verificado</span>
+                        ) : (
+                          <span className="unverified-badge">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <Shield size={64} style={{ opacity: 0.5 }} />
+              <h3>Coletando dados de provedores...</h3>
+              <p>Os dados de confiabilidade são calculados com base em múltiplas observações ao longo do tempo.</p>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Histórico Completo */}
-      <div className="history-section">
-        <h2 className="section-title"><TrendingUp size={22} style={{display: 'inline', verticalAlign: 'middle', marginRight: '8px'}} /> Histórico Completo</h2>
-        <div className="history-table-container">
-          <table className="history-table">
-            <thead>
-              <tr>
-                <th>GPU</th>
-                <th>Data/Hora</th>
-                <th>Preço Médio</th>
-                <th>Mínimo</th>
-                <th>Máximo</th>
-                <th>Mediana</th>
-                <th>Ofertas</th>
-                <th>GPUs</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.slice(0, 50).map((record) => (
-                <tr key={record.id}>
-                  <td className="table-gpu">{record.gpu_name}</td>
-                  <td className="table-time">{formatTime(record.timestamp)}</td>
-                  <td className="table-price-main">{formatPrice(record.avg_price)}</td>
-                  <td className="table-price green">{formatPrice(record.min_price)}</td>
-                  <td className="table-price red">{formatPrice(record.max_price)}</td>
-                  <td className="table-price">{formatPrice(record.median_price)}</td>
-                  <td className="table-number">{record.total_offers}</td>
-                  <td className="table-number">{record.available_gpus}</td>
-                </tr>
+      {/* Efficiency Tab */}
+      {activeTab === 'efficiency' && (
+        <div className="efficiency-section">
+          <h2 className="section-title">
+            <Zap size={22} style={{display: 'inline', verticalAlign: 'middle', marginRight: '8px'}} />
+            Ranking de Custo-Benefício
+          </h2>
+
+          {efficiency.length > 0 ? (
+            <div className="efficiency-grid">
+              {efficiency.slice(0, 20).map((item, idx) => (
+                <div key={item.offer_id} className="efficiency-card">
+                  <div className="efficiency-rank">#{idx + 1}</div>
+                  <div className="efficiency-header">
+                    <h4>{item.gpu_name}</h4>
+                    <span
+                      className="type-badge-small"
+                      style={{ backgroundColor: getMachineTypeColor(item.machine_type) }}
+                    >
+                      {getMachineTypeLabel(item.machine_type)}
+                    </span>
+                  </div>
+                  <div className="efficiency-score">
+                    <div className="score-circle" style={{
+                      background: `conic-gradient(#22c55e ${item.efficiency_score}%, #1f2937 0)`
+                    }}>
+                      <span>{item.efficiency_score?.toFixed(0) || 0}</span>
+                    </div>
+                    <span className="score-label">Score</span>
+                  </div>
+                  <div className="efficiency-details">
+                    <div className="detail-row">
+                      <DollarSign size={14} />
+                      <span>Preço:</span>
+                      <strong>{formatPrice(item.dph_total)}</strong>
+                    </div>
+                    <div className="detail-row">
+                      <Cpu size={14} />
+                      <span>TFLOPS:</span>
+                      <strong>{item.total_flops?.toFixed(1) || '-'}</strong>
+                    </div>
+                    <div className="detail-row">
+                      <Zap size={14} />
+                      <span>$/TFLOPS:</span>
+                      <strong>{formatPrice(item.cost_per_tflops)}</strong>
+                    </div>
+                    <div className="detail-row">
+                      <Package size={14} />
+                      <span>VRAM:</span>
+                      <strong>{item.gpu_ram?.toFixed(0) || '-'} GB</strong>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <Zap size={64} style={{ opacity: 0.5 }} />
+              <h3>Calculando rankings de eficiência...</h3>
+              <p>Os rankings são calculados com base em preço, performance e confiabilidade.</p>
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   )
 }

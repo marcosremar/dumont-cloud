@@ -21,7 +21,7 @@ test('Screenshot machines page', async ({ page }) => {
   await page.screenshot({ path: '/tmp/screenshot_1_login.png' });
   console.log('Screenshot 1: Login page saved');
 
-  // Fazer login usando seletores da versão SnapGPU (servidor atual)
+  // Fazer login usando seletores da versão Dumont Cloud
   console.log('2. Fazendo login...');
   await page.locator('input[placeholder="Usuario"]').fill('marcosremar@gmail.com');
   await page.locator('input[placeholder="Senha"]').fill('marcos123');

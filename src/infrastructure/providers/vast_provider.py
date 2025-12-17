@@ -22,6 +22,9 @@ class VastProvider(IGpuProvider):
     Handles all communication with vast.ai API.
     """
 
+    # Tipos de máquina suportados pelo VAST.ai
+    MACHINE_TYPES = ["on-demand", "interruptible", "bid"]
+
     def __init__(self, api_key: str, api_url: str = VAST_API_URL, timeout: int = VAST_DEFAULT_TIMEOUT):
         """
         Initialize Vast provider
@@ -59,8 +62,7 @@ class VastProvider(IGpuProvider):
         """Search for available GPU offers"""
         logger.debug(f"Searching offers: gpu={gpu_name}, region={region}, max_price={max_price}")
 
-        # Build query for vast.ai API - minimal filters
-        # NOTE: Excessive filters eliminate valid offers like RTX 5090
+        # Build query for vast.ai API
         query = {
             "rentable": {"eq": True},
             "num_gpus": {"eq": num_gpus},
@@ -68,6 +70,21 @@ class VastProvider(IGpuProvider):
             "inet_down": {"gte": min_inet_down},
             "dph_total": {"lte": max_price},
         }
+
+        # Add GPU RAM filter if specified
+        if min_gpu_ram > 0:
+            query["gpu_ram"] = {"gte": min_gpu_ram * 1024}  # Convert GB to MB
+
+        # Add CPU filters if specified
+        if min_cpu_cores > 1:
+            query["cpu_cores_effective"] = {"gte": min_cpu_cores}
+
+        if min_cpu_ram > 1:
+            query["cpu_ram"] = {"gte": min_cpu_ram * 1024}  # Convert GB to MB
+
+        # Add reliability filter if specified
+        if min_reliability > 0:
+            query["reliability2"] = {"gte": min_reliability}
 
         if verified_only:
             query["verified"] = {"eq": True}
@@ -122,6 +139,144 @@ class VastProvider(IGpuProvider):
         except Exception as e:
             logger.error(f"Unexpected error searching offers: {e}")
             raise VastAPIException(f"Failed to search offers: {e}")
+
+    def search_offers_by_type(
+        self,
+        machine_type: str = "on-demand",
+        gpu_name: Optional[str] = None,
+        num_gpus: int = 1,
+        min_gpu_ram: float = 0,
+        min_reliability: float = 0.0,
+        region: Optional[str] = None,
+        verified_only: bool = False,
+        max_price: float = 10.0,
+        limit: int = 100,
+    ) -> List[GpuOffer]:
+        """
+        Busca ofertas por tipo de máquina (on-demand, interruptible, bid).
+
+        Args:
+            machine_type: Tipo de máquina ("on-demand", "interruptible", "bid", ou None para todas)
+            gpu_name: Nome específico da GPU (ex: "RTX 4090")
+            num_gpus: Quantidade de GPUs por oferta
+            min_gpu_ram: RAM mínima de GPU em GB
+            min_reliability: Score mínimo de confiabilidade (0-1)
+            region: Região ("US", "EU", "ASIA")
+            verified_only: Apenas provedores verificados
+            max_price: Preço máximo por hora
+            limit: Limite de resultados
+
+        Returns:
+            Lista de ofertas com campos expandidos de performance
+        """
+        logger.debug(f"Searching offers by type: type={machine_type}, gpu={gpu_name}, max_price={max_price}")
+
+        # Build query para API VAST.ai
+        query = {
+            "rentable": {"eq": True},
+            "num_gpus": {"eq": num_gpus},
+            "dph_total": {"lte": max_price},
+        }
+
+        if min_gpu_ram > 0:
+            query["gpu_ram"] = {"gte": min_gpu_ram * 1024}  # GB para MB
+        if min_reliability > 0:
+            query["reliability2"] = {"gte": min_reliability}
+        if verified_only:
+            query["verified"] = {"eq": True}
+        if gpu_name:
+            query["gpu_name"] = {"eq": gpu_name}
+
+        params = {
+            "q": json.dumps(query),
+            "order": "dph_total",
+            "limit": limit,
+        }
+
+        # Adicionar tipo se especificado
+        if machine_type and machine_type != "all":
+            params["type"] = machine_type
+
+        try:
+            resp = requests.get(
+                f"{self.api_url}/bundles",
+                params=params,
+                headers=self.headers,
+                timeout=self.timeout,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            offers_data = data.get("offers", []) if isinstance(data, dict) else data
+
+            # Filtrar por região
+            if region:
+                region_codes = self._get_region_codes(region)
+                offers_data = [
+                    o for o in offers_data
+                    if any(code in str(o.get("geolocation", "")) for code in region_codes)
+                ]
+
+            # Converter para domain models com campos expandidos
+            offers = []
+            for offer_data in offers_data:
+                try:
+                    offer = self._parse_offer_extended(offer_data, machine_type or "on-demand")
+                    offers.append(offer)
+                except Exception as e:
+                    logger.warning(f"Failed to parse offer: {e}")
+                    continue
+
+            logger.debug(f"Found {len(offers)} offers for type={machine_type}")
+            return offers
+
+        except requests.RequestException as e:
+            logger.error(f"Failed to search offers by type: {e}")
+            raise ServiceUnavailableException(f"Vast.ai API unreachable: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error searching offers by type: {e}")
+            raise VastAPIException(f"Failed to search offers by type: {e}")
+
+    def fetch_all_market_data(
+        self,
+        gpus_to_monitor: List[str],
+        machine_types: Optional[List[str]] = None,
+        max_price: float = 100.0,
+        limit_per_query: int = 200,
+    ) -> Dict[str, List[GpuOffer]]:
+        """
+        Busca dados de mercado completos para todas as GPUs e tipos.
+
+        Args:
+            gpus_to_monitor: Lista de GPUs para monitorar
+            machine_types: Lista de tipos de máquina (padrão: todos)
+            max_price: Preço máximo por hora
+            limit_per_query: Limite de resultados por query
+
+        Returns:
+            Dict agrupado por "gpu_name:machine_type" -> List[GpuOffer]
+        """
+        machine_types = machine_types or self.MACHINE_TYPES
+        all_offers = {}
+
+        for gpu_name in gpus_to_monitor:
+            for machine_type in machine_types:
+                key = f"{gpu_name}:{machine_type}"
+                try:
+                    offers = self.search_offers_by_type(
+                        machine_type=machine_type,
+                        gpu_name=gpu_name,
+                        max_price=max_price,
+                        limit=limit_per_query,
+                    )
+                    all_offers[key] = offers
+                    logger.debug(f"Fetched {len(offers)} offers for {key}")
+                except Exception as e:
+                    logger.warning(f"Failed to fetch {key}: {e}")
+                    all_offers[key] = []
+
+        total = sum(len(v) for v in all_offers.values())
+        logger.info(f"Total market data fetched: {total} offers across {len(all_offers)} GPU/type combinations")
+        return all_offers
 
     def create_instance(
         self,
@@ -368,7 +523,7 @@ class VastProvider(IGpuProvider):
             dph_total=data.get("dph_total", 0),
             geolocation=data.get("geolocation", "Unknown"),
             reliability=data.get("reliability2", 0),
-            cuda_version=data.get("cuda_max_good", "Unknown"),
+            cuda_version=str(data.get("cuda_max_good", "Unknown")),
             verified=data.get("verified", False),
             static_ip=data.get("static_ip", False),
             storage_cost=data.get("storage_cost"),
@@ -377,6 +532,80 @@ class VastProvider(IGpuProvider):
             machine_id=data.get("machine_id"),
             hostname=data.get("hostname"),
         )
+
+    def _parse_offer_extended(self, data: Dict[str, Any], machine_type: str) -> GpuOffer:
+        """
+        Parse offer data com todos os campos de performance expandidos.
+
+        Args:
+            data: Dados brutos da API VAST.ai
+            machine_type: Tipo de máquina (on-demand, interruptible, bid)
+
+        Returns:
+            GpuOffer com campos de performance preenchidos
+        """
+        # GPU RAM pode vir em MB ou GB dependendo do endpoint
+        gpu_ram_raw = data.get("gpu_ram", 0)
+        gpu_ram_gb = gpu_ram_raw / 1024 if gpu_ram_raw > 100 else gpu_ram_raw
+
+        # Extrair métricas de performance
+        total_flops = data.get("total_flops", 0)
+        dlperf = data.get("dlperf", 0)
+        dph = data.get("dph_total", 0)
+
+        # Calcular métricas de custo-benefício
+        cost_per_tflops = None
+        cost_per_gb_vram = None
+        dlperf_per_dphtotal = None
+
+        if total_flops and total_flops > 0 and dph > 0:
+            cost_per_tflops = dph / total_flops
+
+        if gpu_ram_gb and gpu_ram_gb > 0 and dph > 0:
+            cost_per_gb_vram = dph / gpu_ram_gb
+
+        if dlperf and dlperf > 0 and dph > 0:
+            dlperf_per_dphtotal = dlperf / dph
+
+        offer = GpuOffer(
+            id=data.get("id", 0),
+            gpu_name=data.get("gpu_name", "Unknown"),
+            num_gpus=data.get("num_gpus", 1),
+            gpu_ram=gpu_ram_gb,
+            cpu_cores=data.get("cpu_cores", 0),
+            cpu_ram=data.get("cpu_ram", 0) / 1024 if data.get("cpu_ram", 0) > 100 else data.get("cpu_ram", 0),
+            disk_space=data.get("disk_space", 0),
+            inet_down=data.get("inet_down", 0),
+            inet_up=data.get("inet_up", 0),
+            dph_total=dph,
+            geolocation=data.get("geolocation", "Unknown"),
+            reliability=data.get("reliability2", 0),
+            cuda_version=str(data.get("cuda_max_good", "Unknown")),
+            verified=data.get("verified", False),
+            static_ip=data.get("static_ip", False),
+            # Custos adicionais
+            storage_cost=data.get("storage_cost"),
+            inet_up_cost=data.get("inet_up_cost"),
+            inet_down_cost=data.get("inet_down_cost"),
+            # Identificadores
+            machine_id=data.get("machine_id"),
+            hostname=data.get("hostname"),
+            # Campos de performance (novos)
+            total_flops=total_flops,
+            dlperf=dlperf,
+            dlperf_per_dphtotal=dlperf_per_dphtotal,
+            gpu_mem_bw=data.get("gpu_mem_bw"),
+            pcie_bw=data.get("pcie_bw"),
+            # Tipo de máquina
+            machine_type=machine_type,
+            min_bid=data.get("min_bid"),
+            duration=data.get("duration"),
+            # Métricas calculadas
+            cost_per_tflops=cost_per_tflops,
+            cost_per_gb_vram=cost_per_gb_vram,
+        )
+
+        return offer
 
     def _parse_instance(self, data: Dict[str, Any]) -> Instance:
         """Parse instance data from vast.ai API"""
@@ -422,5 +651,5 @@ class VastProvider(IGpuProvider):
             hostname=data.get("hostname"),
             geolocation=data.get("geolocation"),
             reliability=data.get("reliability2"),
-            cuda_version=data.get("cuda_max_good"),
+            cuda_version=str(data.get("cuda_max_good") or "Unknown"),
         )

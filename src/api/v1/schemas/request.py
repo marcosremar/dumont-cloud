@@ -74,6 +74,26 @@ class PruneSnapshotsRequest(BaseModel):
     keep_last: int = Field(10, ge=1, description="Number of snapshots to keep")
 
 
+# Migration Requests
+
+class MigrateInstanceRequest(BaseModel):
+    """Migrate instance request (GPU <-> CPU)"""
+    target_type: str = Field(..., description="Target type: 'gpu' or 'cpu'")
+    gpu_name: Optional[str] = Field(None, description="GPU model (required if target_type='gpu')")
+    max_price: float = Field(2.0, ge=0, description="Maximum price per hour ($)")
+    region: Optional[str] = Field(None, description="Region filter (US, EU, ASIA)")
+    disk_size: int = Field(100, ge=50, description="Disk size (GB)")
+    auto_destroy_source: bool = Field(True, description="Destroy source instance after migration")
+
+
+class MigrationEstimateRequest(BaseModel):
+    """Migration estimate request"""
+    target_type: str = Field(..., description="Target type: 'gpu' or 'cpu'")
+    gpu_name: Optional[str] = Field(None, description="GPU model (required if target_type='gpu')")
+    max_price: float = Field(2.0, ge=0, description="Maximum price per hour ($)")
+    region: Optional[str] = Field(None, description="Region filter (US, EU, ASIA)")
+
+
 # Settings Requests
 
 class UpdateSettingsRequest(BaseModel):

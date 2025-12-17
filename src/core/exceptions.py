@@ -55,3 +55,8 @@ class ConfigurationException(DumontCloudException):
 class ServiceUnavailableException(DumontCloudException):
     """Raised when external service is unavailable"""
     pass
+
+
+class MigrationException(DumontCloudException):
+    """Raised when instance migration fails"""
+    pass

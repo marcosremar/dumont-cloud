@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SnapGPU - GPU Snapshot Manager
+Dumont Cloud - GPU Cloud Manager
 Aplicacao principal Flask
 """
 import os
@@ -21,6 +21,7 @@ from src.api.gpu_checkpoints import gpu_bp
 from src.api.price_reports import price_reports_bp
 from src.api.snapshots_ans import snapshots_ans_bp
 from src.api.hibernation import hibernation_bp
+from src.api.cpu_standby import cpu_standby_bp, init_standby_service
 
 
 def create_app():
@@ -45,6 +46,7 @@ def create_app():
     app.register_blueprint(deploy_bp)
     app.register_blueprint(gpu_bp)
     app.register_blueprint(price_reports_bp)
+    app.register_blueprint(cpu_standby_bp)
 
     # Inicializar sistema de agentes
     def init_agents():
@@ -98,6 +100,35 @@ def create_app():
                 logger.info("✓ Agente de auto-hibernacao iniciado (check_interval=30s)")
             except Exception as e:
                 logger.error(f"Erro ao iniciar agente de auto-hibernacao: {e}")
+
+            # Inicializar CPU Standby Service (GCP)
+            try:
+                gcp_creds_path = os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)),
+                    'credentials', 'gcp-service-account.json'
+                )
+                if os.path.exists(gcp_creds_path):
+                    with open(gcp_creds_path, 'r') as f:
+                        gcp_credentials = json.load(f)
+
+                    standby_service = init_standby_service(
+                        vast_api_key=vast_api_key,
+                        gcp_credentials=gcp_credentials,
+                        config={
+                            'gcp_zone': 'europe-west1-b',
+                            'gcp_machine_type': 'e2-medium',
+                            'gcp_disk_size': 100,
+                            'sync_interval': 30,
+                        }
+                    )
+
+                    # Salvar referência no app
+                    app.cpu_standby_service = standby_service
+                    logger.info("✓ CPU Standby service inicializado (GCP europe-west1-b)")
+                else:
+                    logger.warning("GCP credentials not found - CPU Standby disabled")
+            except Exception as e:
+                logger.error(f"Erro ao iniciar CPU Standby service: {e}")
         else:
             logger.warning("Nenhuma API key configurada - agentes nao iniciados")
 
@@ -140,10 +171,10 @@ def create_app():
         with open(config_path, 'w') as f:
             json.dump(config, f, indent=2)
 
-    # Usuarios (temporario - depois mover para DB)
-    USERS = {
-        "marcosremar@gmail.com": {"password": "marcos123"}
-    }
+    # Usuarios carregados do config.json
+    def get_users():
+        config = load_user_config()
+        return config.get('users', {})
 
     def login_required(f):
         @wraps(f)
@@ -174,13 +205,18 @@ def create_app():
 
     @app.route('/api/auth/login', methods=['POST'])
     def api_login():
+        import hashlib
         data = request.get_json()
         username = data.get('username')
         password = data.get('password')
 
-        if username in USERS and USERS[username]['password'] == password:
-            session['user'] = username
-            return {"success": True, "user": username}
+        users = get_users()
+        if username in users:
+            stored_hash = users[username].get('password', '')
+            password_hash = hashlib.sha256(password.encode()).hexdigest()
+            if stored_hash == password_hash:
+                session['user'] = username
+                return {"success": True, "user": username}
         return {"error": "Usuario ou senha incorretos"}, 401
 
     @app.route('/api/auth/logout', methods=['POST'])
@@ -513,17 +549,22 @@ def create_app():
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
+        import hashlib
         if request.method == 'POST':
             username = request.form.get('username')
             password = request.form.get('password')
-            if username in USERS and USERS[username]['password'] == password:
-                session['user'] = username
-                return redirect('/')
+            users = get_users()
+            if username in users:
+                stored_hash = users[username].get('password', '')
+                password_hash = hashlib.sha256(password.encode()).hexdigest()
+                if stored_hash == password_hash:
+                    session['user'] = username
+                    return redirect('/')
         # Retorna pagina de login simples (sera substituida pelo React)
         return '''
         <!DOCTYPE html>
         <html>
-        <head><title>SnapGPU Login</title>
+        <head><title>Dumont Cloud Login</title>
         <style>
             body { font-family: system-ui; background: #0d1117; color: #c9d1d9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
             .login { background: #161b22; padding: 40px; border-radius: 12px; border: 1px solid #30363d; width: 320px; }
@@ -535,7 +576,7 @@ def create_app():
         </head>
         <body>
             <form class="login" method="POST">
-                <div class="logo">SnapGPU</div>
+                <div class="logo">Dumont Cloud</div>
                 <input name="username" placeholder="Usuario" required>
                 <input name="password" type="password" placeholder="Senha" required>
                 <button type="submit">Entrar</button>
@@ -1093,7 +1134,7 @@ server {{
                         break
 
             # Se temos info da instancia, fazer redirect APENAS para /code/
-            # A raiz / e outras rotas mostram o dashboard SnapGPU normalmente
+            # A raiz / e outras rotas mostram o dashboard Dumont Cloud normalmente
             cache_entry = instance_cache.get(instance_id)
             if cache_entry and request.path.startswith('/code'):
                 public_ip = cache_entry.get('public_ip')
@@ -1308,7 +1349,7 @@ server {{
         return '''
         <!DOCTYPE html>
         <html>
-        <head><title>SnapGPU</title>
+        <head><title>Dumont Cloud</title>
         <style>
             body { font-family: system-ui; background: #0d1117; color: #c9d1d9; margin: 0; padding: 24px; }
             .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
@@ -1320,7 +1361,7 @@ server {{
         </head>
         <body>
             <div class="header">
-                <div class="logo">SnapGPU</div>
+                <div class="logo">Dumont Cloud</div>
                 <a href="/logout" class="btn" style="background: #21262d;">Sair</a>
             </div>
             <div class="card">

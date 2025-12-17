@@ -1,5 +1,5 @@
 """
-Configuracoes centralizadas do SnapGPU.
+Configuracoes centralizadas do Dumont Cloud.
 Carrega variaveis de ambiente e define defaults.
 """
 import os
@@ -57,7 +57,7 @@ class DumontAgentConfig:
 @dataclass
 class AppConfig:
     """Configuracoes gerais da aplicacao"""
-    secret_key: str = field(default_factory=lambda: os.getenv("SECRET_KEY", "snapgpu-secret-key-2024"))
+    secret_key: str = field(default_factory=lambda: os.getenv("SECRET_KEY", "dumont-cloud-secret-key-2024"))
     debug: bool = field(default_factory=lambda: os.getenv("DEBUG", "false").lower() == "true")
     host: str = "0.0.0.0"
     port: int = 8766  # Nginx frontend on 8765, Flask backend on 8766

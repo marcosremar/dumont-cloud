@@ -406,3 +406,144 @@ tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &
         except Exception as e:
             print(f"Erro ao buscar saldo: {e}")
             return {"error": str(e), "credit": 0}
+
+    def search_cpu_offers(
+        self,
+        min_cpu_cores: int = 4,
+        min_cpu_ram: float = 8,
+        min_disk: float = 50,
+        min_inet_down: float = 100,
+        max_price: float = 0.10,
+        region: Optional[str] = None,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """
+        Busca ofertas de instâncias CPU-only (sem GPU).
+
+        Args:
+            min_cpu_cores: Mínimo de cores de CPU
+            min_cpu_ram: Mínimo de RAM em GB
+            min_disk: Mínimo de disco em GB
+            min_inet_down: Mínimo de download em Mbps
+            max_price: Preço máximo por hora em USD
+            region: Filtro de região (US, EU, ASIA)
+            limit: Máximo de resultados
+
+        Returns:
+            Lista de ofertas CPU-only
+        """
+        import json
+
+        print(f"[DEBUG search_cpu_offers] min_cpu_cores={min_cpu_cores}, min_cpu_ram={min_cpu_ram}, "
+              f"max_price={max_price}, min_disk={min_disk}, region={region}")
+
+        # Query para instâncias CPU-only (num_gpus = 0)
+        query = {
+            "rentable": {"eq": True},
+            "num_gpus": {"eq": 0},  # CPU-only
+            "cpu_cores_effective": {"gte": min_cpu_cores},
+            "cpu_ram": {"gte": min_cpu_ram * 1024},  # API usa MB
+            "disk_space": {"gte": min_disk},
+            "inet_down": {"gte": min_inet_down},
+            "dph_total": {"lte": max_price},
+        }
+
+        params = {
+            "q": json.dumps(query),
+            "order": "dph_total",
+            "type": "on-demand",
+            "limit": limit,
+        }
+
+        try:
+            resp = requests.get(
+                f"{self.API_URL}/bundles",
+                params=params,
+                headers=self.headers,
+                timeout=30,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            offers = data.get("offers", []) if isinstance(data, dict) else data
+
+            # Filtrar por região se especificado
+            if region:
+                region_codes = self._get_region_codes(region)
+                offers = [
+                    o for o in offers
+                    if any(code in str(o.get("geolocation", "")) for code in region_codes)
+                ]
+
+            print(f"[DEBUG search_cpu_offers] API retornou {len(offers)} ofertas CPU-only")
+            return offers
+        except Exception as e:
+            print(f"Erro ao buscar ofertas CPU: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+
+    def create_cpu_instance(
+        self,
+        offer_id: int,
+        disk: int = 50,
+        instance_id_hint: Optional[int] = None,
+        ports: Optional[List[int]] = None,
+    ) -> Optional[int]:
+        """
+        Cria uma instância CPU-only (sem GPU).
+
+        Args:
+            offer_id: ID da oferta CPU
+            disk: Espaço em disco (GB)
+            instance_id_hint: Hint para hostname
+            ports: Lista de portas TCP para abrir
+
+        Returns:
+            ID da instância criada ou None
+        """
+        import os
+
+        # Usar portas padrão se não especificado
+        if ports is None:
+            default_ports_str = os.environ.get("VAST_DEFAULT_PORTS", "3000,5173,7860,8000,8080")
+            ports = [int(p.strip()) for p in default_ports_str.split(",") if p.strip()]
+
+        # Script de startup para CPU instance
+        onstart_script = """#!/bin/bash
+touch ~/.no_auto_tmux
+# Install basic tools for CPU instance
+apt-get update -qq && apt-get install -y -qq rsync rclone restic
+"""
+
+        try:
+            # Montar extra_env com portas
+            extra_env = []
+            for port in ports:
+                extra_env.append([f"-p {port}:{port}", "1"])
+
+            payload = {
+                "client_id": "me",
+                "image": "ubuntu:22.04",
+                "disk": disk,
+                "onstart": onstart_script,
+                "extra_env": extra_env,
+            }
+
+            print(f"[DEBUG create_cpu_instance] offer_id={offer_id}, disk={disk}, ports={ports}")
+
+            resp = requests.put(
+                f"{self.API_URL}/asks/{offer_id}/",
+                json=payload,
+                headers=self.headers,
+                timeout=30,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            instance_id = data.get("new_contract")
+            print(f"[DEBUG create_cpu_instance] Criada instância CPU {instance_id}")
+            return instance_id
+        except Exception as e:
+            print(f"Erro ao criar instância CPU: {e}")
+            import traceback
+            traceback.print_exc()
+            return None

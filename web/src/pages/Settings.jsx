@@ -1,6 +1,111 @@
 import { useState, useEffect, useMemo } from 'react'
+import { Eye, EyeOff, Check, X, AlertCircle } from 'lucide-react'
+import { useToast } from '../components/Toast'
 
 const API_BASE = ''
+
+// Validadores para campos
+const validators = {
+  vast_api_key: (value) => {
+    if (!value) return null // Não validar vazios
+    if (value.length < 20) return { valid: false, message: 'API key muito curta' }
+    return { valid: true, message: 'Formato válido' }
+  },
+  r2_access_key: (value) => {
+    if (!value) return null
+    if (value.length < 10) return { valid: false, message: 'Access key muito curta' }
+    return { valid: true, message: 'Formato válido' }
+  },
+  r2_secret_key: (value) => {
+    if (!value) return null
+    if (value.length < 20) return { valid: false, message: 'Secret key muito curta' }
+    return { valid: true, message: 'Formato válido' }
+  },
+  r2_endpoint: (value) => {
+    if (!value) return null
+    if (!value.startsWith('https://')) return { valid: false, message: 'Deve começar com https://' }
+    if (!value.includes('r2.cloudflarestorage.com')) return { valid: false, message: 'Deve ser um endpoint R2 válido' }
+    return { valid: true, message: 'URL válida' }
+  },
+  r2_bucket: (value) => {
+    if (!value) return null
+    if (value.length < 3) return { valid: false, message: 'Nome muito curto (min. 3 caracteres)' }
+    if (!/^[a-z0-9-]+$/.test(value)) return { valid: false, message: 'Apenas letras minúsculas, números e hífens' }
+    return { valid: true, message: 'Nome válido' }
+  },
+  restic_password: (value) => {
+    if (!value) return null
+    if (value.length < 8) return { valid: false, message: 'Senha muito curta (min. 8 caracteres)' }
+    return { valid: true, message: 'Senha válida' }
+  }
+}
+
+// Indicador de validação
+function ValidationIndicator({ validation }) {
+  if (!validation) return null
+
+  return (
+    <div className={`validation-indicator flex items-center gap-1.5 mt-1.5 text-xs ${
+      validation.valid ? 'text-green-400' : 'text-red-400'
+    }`}>
+      {validation.valid ? (
+        <Check className="w-3.5 h-3.5" />
+      ) : (
+        <AlertCircle className="w-3.5 h-3.5" />
+      )}
+      <span>{validation.message}</span>
+    </div>
+  )
+}
+
+// Componente para inputs de campos sensíveis com toggle show/hide e validação
+function SecretInput({ name, value, onChange, placeholder, validation }) {
+  const [show, setShow] = useState(false)
+
+  return (
+    <div>
+      <div className={`secret-input-wrapper ${validation ? (validation.valid ? 'border-green-500/30' : 'border-red-500/30') : ''}`}
+        style={validation ? { borderColor: validation.valid ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)' } : {}}>
+        <input
+          type={show ? "text" : "password"}
+          name={name}
+          className="form-input"
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          style={validation ? { borderColor: 'transparent' } : {}}
+        />
+        <button
+          type="button"
+          className="secret-toggle-btn"
+          onClick={() => setShow(!show)}
+          title={show ? "Ocultar" : "Mostrar"}
+        >
+          {show ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
+      <ValidationIndicator validation={validation} />
+    </div>
+  )
+}
+
+// Input com validação
+function ValidatedInput({ name, value, onChange, placeholder, type = 'text', validation }) {
+  return (
+    <div>
+      <input
+        type={type}
+        name={name}
+        className="form-input"
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        style={validation ? { borderColor: validation.valid ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)' } : {}}
+      />
+      <ValidationIndicator validation={validation} />
+    </div>
+  )
+}
 
 // Precos Cloudflare R2 (dezembro 2024)
 const R2_PRICING = {
@@ -126,6 +231,7 @@ function Toast({ message, title = 'Saldo Baixo!', type = 'warning', onClose }) {
 }
 
 export default function Settings() {
+  const toast = useToast()
   const [settings, setSettings] = useState({
     vast_api_key: '',
     r2_access_key: '',
@@ -145,8 +251,25 @@ export default function Settings() {
   const [message, setMessage] = useState(null)
   const [showToast, setShowToast] = useState(false)
 
+  // Validação real-time
+  const validations = useMemo(() => {
+    return {
+      vast_api_key: validators.vast_api_key(settings.vast_api_key),
+      r2_access_key: validators.r2_access_key(settings.r2_access_key),
+      r2_secret_key: validators.r2_secret_key(settings.r2_secret_key),
+      r2_endpoint: validators.r2_endpoint(settings.r2_endpoint),
+      r2_bucket: validators.r2_bucket(settings.r2_bucket),
+      restic_password: validators.restic_password(settings.restic_password),
+    }
+  }, [settings])
+
+  // Verificar se formulário é válido (campos preenchidos passam validação)
+  const isFormValid = useMemo(() => {
+    return Object.values(validations).every(v => v === null || v.valid)
+  }, [validations])
+
   const testNotification = () => {
-    setShowToast(true)
+    toast.success('Notificações estão funcionando!')
   }
 
   useEffect(() => {
@@ -198,11 +321,14 @@ export default function Settings() {
       const data = await res.json()
 
       if (data.success) {
+        toast.success('Configurações do agente salvas!')
         setMessage({ type: 'success', text: 'Configuracoes do agente salvas!' })
       } else {
+        toast.error(data.error || 'Falha ao salvar configurações do agente')
         setMessage({ type: 'error', text: data.error || 'Falha ao salvar configuracoes do agente' })
       }
     } catch (e) {
+      toast.error('Erro de conexão')
       setMessage({ type: 'error', text: 'Erro de conexao' })
     }
     setSavingAgent(false)
@@ -250,11 +376,14 @@ export default function Settings() {
       const data = await res.json()
 
       if (data.success) {
+        toast.success('Configurações salvas com sucesso!')
         setMessage({ type: 'success', text: 'Settings saved successfully' })
       } else {
+        toast.error(data.error || 'Falha ao salvar configurações')
         setMessage({ type: 'error', text: data.error || 'Failed to save settings' })
       }
     } catch (e) {
+      toast.error('Erro de conexão')
       setMessage({ type: 'error', text: 'Connection error' })
     }
     setSaving(false)
@@ -296,13 +425,12 @@ export default function Settings() {
           <div className="card-body">
             <div className="form-group">
               <label className="form-label">API Key</label>
-              <input
-                type="password"
+              <SecretInput
                 name="vast_api_key"
-                className="form-input"
                 value={settings.vast_api_key}
                 onChange={handleChange}
                 placeholder="Enter your vast.ai API key"
+                validation={validations.vast_api_key}
               />
             </div>
           </div>
@@ -316,44 +444,40 @@ export default function Settings() {
             <div className="grid grid-2">
               <div className="form-group">
                 <label className="form-label">Access Key</label>
-                <input
-                  type="password"
+                <SecretInput
                   name="r2_access_key"
-                  className="form-input"
                   value={settings.r2_access_key}
                   onChange={handleChange}
+                  validation={validations.r2_access_key}
                 />
               </div>
               <div className="form-group">
                 <label className="form-label">Secret Key</label>
-                <input
-                  type="password"
+                <SecretInput
                   name="r2_secret_key"
-                  className="form-input"
                   value={settings.r2_secret_key}
                   onChange={handleChange}
+                  validation={validations.r2_secret_key}
                 />
               </div>
             </div>
             <div className="form-group">
               <label className="form-label">Endpoint URL</label>
-              <input
-                type="text"
+              <ValidatedInput
                 name="r2_endpoint"
-                className="form-input"
                 value={settings.r2_endpoint}
                 onChange={handleChange}
                 placeholder="https://xxx.r2.cloudflarestorage.com"
+                validation={validations.r2_endpoint}
               />
             </div>
             <div className="form-group">
               <label className="form-label">Bucket Name</label>
-              <input
-                type="text"
+              <ValidatedInput
                 name="r2_bucket"
-                className="form-input"
                 value={settings.r2_bucket}
                 onChange={handleChange}
+                validation={validations.r2_bucket}
               />
             </div>
           </div>
@@ -366,12 +490,11 @@ export default function Settings() {
           <div className="card-body">
             <div className="form-group">
               <label className="form-label">Repository Password</label>
-              <input
-                type="password"
+              <SecretInput
                 name="restic_password"
-                className="form-input"
                 value={settings.restic_password}
                 onChange={handleChange}
+                validation={validations.restic_password}
               />
             </div>
           </div>
@@ -398,10 +521,16 @@ export default function Settings() {
           </div>
         </div>
 
-        <div style={{ marginTop: '24px' }}>
-          <button type="submit" className="btn btn-primary" disabled={saving}>
+        <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button type="submit" className="btn btn-primary" disabled={saving || !isFormValid}>
             {saving ? <span className="spinner" /> : 'Save Settings'}
           </button>
+          {!isFormValid && (
+            <span className="text-red-400 text-sm flex items-center gap-1.5">
+              <AlertCircle className="w-4 h-4" />
+              Corrija os erros de validação antes de salvar
+            </span>
+          )}
         </div>
       </form>
 

@@ -6,6 +6,7 @@ import Settings from './pages/Settings'
 import Login from './pages/Login'
 import Machines from './pages/Machines'
 import GPUMetrics from './pages/GPUMetrics'
+import { ToastProvider } from './components/Toast'
 
 const API_BASE = ''
 
@@ -100,14 +101,16 @@ export default function App() {
   }
 
   return (
-    <Layout user={user} onLogout={handleLogout}>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/machines" element={<Machines />} />
-        <Route path="/metrics" element={<GPUMetrics />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Layout>
+    <ToastProvider>
+      <Layout user={user} onLogout={handleLogout}>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/machines" element={<Machines />} />
+          <Route path="/metrics" element={<GPUMetrics />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Layout>
+    </ToastProvider>
   )
 }

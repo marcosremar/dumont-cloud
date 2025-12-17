@@ -23,6 +23,10 @@ class CodeServerConfig:
     font_size: int = 14
     auto_save: bool = True
     user: str = "root"
+    # Dumont Cloud integration
+    dumont_api_url: str = ""
+    dumont_auth_token: str = ""
+    dumont_machine_id: str = ""
 
 
 class CodeServerService:
@@ -222,13 +226,111 @@ pgrep -f code-server > /dev/null && echo "RUNNING" || echo "FAILED"
 
         return {"running": False, "output": output}
 
-    def setup_full(self, config: Optional[CodeServerConfig] = None) -> Dict[str, Any]:
+    def install_machine_switcher_extension(self, config: CodeServerConfig) -> Dict[str, Any]:
+        """
+        Instala a extensao Dumont Machine Switcher no code-server.
+
+        A extensao permite trocar entre maquinas GPU diretamente do VS Code.
+
+        Args:
+            config: Configuracao com credenciais do Dumont Cloud
+
+        Returns:
+            Dict com status da instalacao
+        """
+        import json
+
+        # URL do .vsix hospedado (pode ser local ou remoto)
+        # Por enquanto, vamos criar a configuracao para a extensao funcionar
+
+        # Determinar diretorio home baseado no usuario
+        if config.user == "root":
+            home_dir = "/root"
+        else:
+            home_dir = f"/home/{config.user}"
+
+        # Criar arquivo de configuracao do Dumont
+        dumont_config = {
+            "api_url": config.dumont_api_url,
+            "auth_token": config.dumont_auth_token,
+            "machine_id": config.dumont_machine_id
+        }
+        dumont_config_json = json.dumps(dumont_config, indent=2)
+
+        setup_script = f"""
+# Criar diretorio de configuracao do Dumont
+mkdir -p {home_dir}/.dumont
+
+# Salvar configuracao
+cat > {home_dir}/.dumont/config.json << 'DUMONT_CONFIG_EOF'
+{dumont_config_json}
+DUMONT_CONFIG_EOF
+
+# Configurar variaveis de ambiente para code-server
+mkdir -p {home_dir}/.config/code-server
+
+# Adicionar variaveis ao profile para persistencia
+cat >> {home_dir}/.bashrc << 'BASHRC_EOF'
+
+# Dumont Cloud Environment
+export DUMONT_API_URL="{config.dumont_api_url}"
+export DUMONT_AUTH_TOKEN="{config.dumont_auth_token}"
+export DUMONT_MACHINE_ID="{config.dumont_machine_id}"
+BASHRC_EOF
+
+echo "Dumont Machine Switcher configurado"
+"""
+
+        success, output = self._ssh_cmd(setup_script, timeout=30)
+
+        if not success:
+            return {"success": False, "error": f"Falha ao configurar extensao: {output}"}
+
+        return {
+            "success": True,
+            "message": "Dumont Machine Switcher configurado",
+            "config_path": f"{home_dir}/.dumont/config.json"
+        }
+
+    def install_vsix_extension(self, vsix_url: str) -> Dict[str, Any]:
+        """
+        Instala uma extensao .vsix no code-server.
+
+        Args:
+            vsix_url: URL do arquivo .vsix para download
+
+        Returns:
+            Dict com status da instalacao
+        """
+        install_script = f"""
+# Baixar extensao
+cd /tmp
+curl -fsSL -o extension.vsix "{vsix_url}"
+
+# Instalar via code-server
+~/.local/bin/code-server --install-extension /tmp/extension.vsix
+
+# Limpar
+rm -f /tmp/extension.vsix
+
+echo "Extensao instalada"
+"""
+
+        success, output = self._ssh_cmd(install_script, timeout=120)
+
+        if not success:
+            return {"success": False, "error": f"Falha ao instalar extensao: {output}"}
+
+        return {"success": True, "message": "Extensao instalada com sucesso"}
+
+    def setup_full(self, config: Optional[CodeServerConfig] = None, vsix_url: Optional[str] = None) -> Dict[str, Any]:
         """
         Instalacao e configuracao completa do code-server.
-        Metodo conveniente que executa install + configure + start.
+        Metodo conveniente que executa install + configure + start + extensao.
 
         Args:
             config: Configuracao do code-server
+            vsix_url: URL opcional do .vsix da extensao Machine Switcher
 
         Returns:
             Dict com status de cada etapa
@@ -254,7 +356,17 @@ pgrep -f code-server > /dev/null && echo "RUNNING" || echo "FAILED"
             results["error"] = "Falha na configuracao"
             return results
 
-        # 3. Iniciar
+        # 3. Configurar Machine Switcher (se credenciais fornecidas)
+        if config.dumont_api_url and config.dumont_auth_token:
+            switcher_result = self.install_machine_switcher_extension(config)
+            results["steps"].append({"step": "machine_switcher_config", **switcher_result})
+
+            # Instalar extensao .vsix se URL fornecida
+            if vsix_url:
+                vsix_result = self.install_vsix_extension(vsix_url)
+                results["steps"].append({"step": "machine_switcher_vsix", **vsix_result})
+
+        # 4. Iniciar
         start_result = self.start(config)
         results["steps"].append({"step": "start", **start_result})
 
@@ -277,6 +389,10 @@ def setup_codeserver_on_instance(
     code_port: int = 8080,
     workspace: str = "/workspace",
     theme: str = "Default Dark+",
+    dumont_api_url: str = "",
+    dumont_auth_token: str = "",
+    dumont_machine_id: str = "",
+    vsix_url: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Funcao helper para setup rapido do code-server.
@@ -288,6 +404,10 @@ def setup_codeserver_on_instance(
         code_port: Porta do code-server
         workspace: Diretorio workspace
         theme: Tema do VS Code
+        dumont_api_url: URL da API do Dumont Cloud (para Machine Switcher)
+        dumont_auth_token: Token JWT do Dumont Cloud
+        dumont_machine_id: ID da maquina atual
+        vsix_url: URL do arquivo .vsix da extensao Machine Switcher
 
     Returns:
         Dict com resultado do setup
@@ -297,7 +417,10 @@ def setup_codeserver_on_instance(
         workspace=workspace,
         theme=theme,
         user=ssh_user,
+        dumont_api_url=dumont_api_url,
+        dumont_auth_token=dumont_auth_token,
+        dumont_machine_id=dumont_machine_id,
     )
 
     service = CodeServerService(ssh_host, ssh_port, ssh_user)
-    return service.setup_full(config)
+    return service.setup_full(config, vsix_url=vsix_url)

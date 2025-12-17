@@ -1,8 +1,8 @@
 """
 API Response Schemas (Pydantic models)
 """
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+from typing import Optional, List, Dict, Any, Union
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 
 
@@ -54,6 +54,14 @@ class GpuOfferResponse(BaseModel):
     cuda_version: str
     verified: bool
     static_ip: bool
+
+    @field_validator('cuda_version', mode='before')
+    @classmethod
+    def convert_cuda_version(cls, v):
+        """Convert cuda_version to string if it's a float"""
+        if v is None:
+            return "0.0"
+        return str(v)
 
 
 class SearchOffersResponse(BaseModel):
@@ -152,3 +160,55 @@ class BalanceResponse(BaseModel):
     balance: float = Field(..., description="Account balance")
     balance_threshold: float = Field(..., description="Balance threshold")
     email: str = Field(..., description="User email")
+
+
+# Migration Responses
+
+class MigrationResponse(BaseModel):
+    """Migration result response"""
+    success: bool = Field(..., description="Migration success status")
+    new_instance_id: Optional[int] = Field(None, description="New instance ID")
+    old_instance_id: Optional[int] = Field(None, description="Old instance ID")
+    snapshot_id: Optional[str] = Field(None, description="Snapshot ID used")
+    error: Optional[str] = Field(None, description="Error message if failed")
+    steps_completed: List[str] = Field(default_factory=list, description="Steps completed")
+
+
+class MigrationEstimateResponse(BaseModel):
+    """Migration estimate response"""
+    available: bool = Field(..., description="Migration available")
+    error: Optional[str] = Field(None, description="Error if not available")
+    source: Optional[Dict[str, Any]] = Field(None, description="Source instance info")
+    target: Optional[Dict[str, Any]] = Field(None, description="Target type info")
+    estimated_time_minutes: Optional[int] = Field(None, description="Estimated time")
+    offers_available: Optional[int] = Field(None, description="Number of offers")
+
+
+# Sync Responses
+
+class SyncResponse(BaseModel):
+    """Sync operation response"""
+    success: bool = Field(..., description="Sync success status")
+    instance_id: int = Field(..., description="Instance ID")
+    snapshot_id: Optional[str] = Field(None, description="Snapshot ID created")
+    files_new: int = Field(0, description="New files")
+    files_changed: int = Field(0, description="Changed files")
+    files_unmodified: int = Field(0, description="Unchanged files")
+    data_added: str = Field("0 B", description="Data added (human readable)")
+    data_added_bytes: int = Field(0, description="Data added in bytes")
+    duration_seconds: float = Field(0, description="Duration in seconds")
+    is_incremental: bool = Field(True, description="Was incremental sync")
+    error: Optional[str] = Field(None, description="Error message if failed")
+
+
+class SyncStatusResponse(BaseModel):
+    """Sync status response"""
+    instance_id: int = Field(..., description="Instance ID")
+    synced: bool = Field(False, description="Has been synced")
+    is_syncing: bool = Field(False, description="Currently syncing")
+    last_sync: Optional[str] = Field(None, description="Last sync timestamp")
+    last_sync_ago: str = Field("Never", description="Time since last sync")
+    last_snapshot_id: Optional[str] = Field(None, description="Last snapshot ID")
+    sync_count: int = Field(0, description="Total sync count")
+    last_stats: Optional[Dict[str, Any]] = Field(None, description="Last sync statistics")
+    error: Optional[str] = Field(None, description="Last error if any")

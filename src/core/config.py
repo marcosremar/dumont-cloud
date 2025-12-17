@@ -57,7 +57,7 @@ class AppSettings(BaseSettings):
     debug: bool = Field(default=False, env="DEBUG")
 
     # Security
-    secret_key: str = Field(default="snapgpu-secret-key-2024", env="SECRET_KEY")
+    secret_key: str = Field(default="dumont-cloud-secret-key-2024", env="SECRET_KEY")
     demo_mode: bool = Field(default=False, env="DEMO_MODE")
 
     # CORS

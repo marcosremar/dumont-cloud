@@ -1,4 +1,4 @@
-# SnapGPU - Sistema de Snapshot para GPU Cloud
+# Dumont Cloud - Sistema de Gerenciamento de GPU Cloud
 
 ## Objetivo Principal
 
@@ -80,7 +80,7 @@ VPS (54.37.225.188)           GPU Cloud (vast.ai)
 #### ❌ NÃO FAZER:
 ```bash
 # Comandos longos inline que podem travar o terminal
-ssh ubuntu@54.37.225.188 'ps aux | grep "python3 app" | grep -v grep && killall -9 python3 2>/dev/null; sleep 2; cd ~/snapgpu/new && python3 app.py > /tmp/app.log 2>&1 & sleep 3...'
+ssh ubuntu@54.37.225.188 'ps aux | grep "python3 app" | grep -v grep && killall -9 python3 2>/dev/null; sleep 2; cd ~/dumont-cloud && python3 app.py > /tmp/app.log 2>&1 & sleep 3...'
 ```
 
 #### ✅ FAZER:
@@ -90,7 +90,7 @@ cat > /tmp/deploy.sh << 'EOF'
 #!/bin/bash
 killall python3 2>/dev/null
 sleep 1
-cd ~/snapgpu/new
+cd ~/dumont-cloud
 nohup python3 app.py > /tmp/app.log 2>&1 &
 sleep 2
 ps aux | grep "python3 app" | grep -v grep
