@@ -7,6 +7,8 @@ import os
 from typing import List, Dict, Any, Optional
 from collections import defaultdict
 
+from .codeserver_service import CodeServerService, CodeServerConfig
+
 
 class ResticService:
     """Service para gerenciar backups/restores com Restic"""
@@ -247,7 +249,7 @@ do_backup() {{
     log "INFO" "Iniciando backup de $SYNC_DIRS..."
     send_status "syncing" "Backup em progresso" ""
 
-    if restic backup "$SYNC_DIRS" --tag auto --tag "instance:$INSTANCE_ID" --quiet -o s3.connections=16 2>&1 | tee -a "$LOG_FILE"; then
+    if restic backup "$SYNC_DIRS" --tag auto --tag "instance:$INSTANCE_ID" --quiet -o s3.connections=32 2>&1 | tee -a "$LOG_FILE"; then
         local duration=$(($(date +%s) - start_time))
         log "INFO" "Backup concluido em ${{duration}}s"
 
@@ -373,7 +375,7 @@ case "$1" in
     backup)
         echo "Forcando backup manual..."
         source "$INSTALL_DIR/config.env"
-        restic backup "$SYNC_DIRS" --tag manual -o s3.connections=16
+        restic backup "$SYNC_DIRS" --tag manual -o s3.connections=32
         ;;
     config)
         echo "=== Configuracao Atual ==="
@@ -460,6 +462,7 @@ fi
         target_path: str,
         ssh_host: str,
         ssh_port: int,
+        ssh_user: str = "root",
         install_codeserver: bool = True,
         install_agent: bool = True,
         instance_id: str = "",
@@ -467,32 +470,25 @@ fi
         sync_interval: int = 30,
         keep_last: int = 10,
     ) -> Dict[str, Any]:
-        """Executa restore em uma maquina remota via SSH"""
-        # Script para instalar e iniciar code-server
-        codeserver_install = ""
-        if install_codeserver:
-            codeserver_install = """
-# Instalar code-server se nao existir
-if ! command -v code-server &> /dev/null; then
-    echo "Instalando code-server..."
-    curl -fsSL https://code-server.dev/install.sh | sh -s -- --method=standalone 2>/dev/null
-fi
+        """
+        Executa restore em uma maquina remota via SSH.
 
-# Iniciar code-server em background se nao estiver rodando
-if ! pgrep -x "code-server" > /dev/null; then
-    echo "Iniciando code-server..."
-    mkdir -p ~/.config/code-server
-    cat > ~/.config/code-server/config.yaml << 'CSCFG'
-bind-addr: 0.0.0.0:8080
-auth: none
-cert: false
-CSCFG
-    nohup code-server --auth none --bind-addr 0.0.0.0:8080 /root/workspace > /tmp/code-server.log 2>&1 &
-    sleep 2
-    echo "code-server iniciado na porta 8080"
-fi
-"""
+        Args:
+            snapshot_id: ID do snapshot a restaurar
+            target_path: Caminho de destino (ex: /workspace)
+            ssh_host: IP do servidor
+            ssh_port: Porta SSH
+            ssh_user: Usuario SSH (padrao: root, recomendado: ubuntu)
+            install_codeserver: Instalar code-server?
+            install_agent: Instalar DumontAgent?
+            instance_id: ID da instancia (para tags)
+            dumont_server: URL do servidor Dumont
+            sync_interval: Intervalo de sync em segundos
+            keep_last: Quantos backups manter
 
+        Returns:
+            Dict com resultado do restore
+        """
         # Script para instalar DumontAgent
         agent_install = ""
         if install_agent:
@@ -513,7 +509,6 @@ mkdir -p {target_path}
 restic restore {snapshot_id} --target {target_path} -o s3.connections={self.connections} 2>&1
 echo "RESTORE_COMPLETED"
 du -sh {target_path}/* 2>/dev/null | head -5
-{codeserver_install}
 {agent_install}
 """
         try:
@@ -523,7 +518,7 @@ du -sh {target_path}/* 2>/dev/null | head -5
                     "-o", "StrictHostKeyChecking=no",
                     "-o", "ConnectTimeout=30",
                     "-p", str(ssh_port),
-                    f"root@{ssh_host}",
+                    f"{ssh_user}@{ssh_host}",
                     cmd,
                 ],
                 capture_output=True,
@@ -531,12 +526,33 @@ du -sh {target_path}/* 2>/dev/null | head -5
                 timeout=300,  # 5 minutos max
             )
 
-            success = "RESTORE_COMPLETED" in result.stdout
+            restore_success = "RESTORE_COMPLETED" in result.stdout
+            output = result.stdout
+            error = result.stderr if not restore_success else None
+
+            # Instalar e configurar code-server usando o servico dedicado
+            codeserver_result = None
+            if install_codeserver and restore_success:
+                try:
+                    config = CodeServerConfig(
+                        port=8080,
+                        workspace=target_path,
+                        theme="Default Dark+",
+                        trust_enabled=False,
+                        user=ssh_user,
+                    )
+                    codeserver_svc = CodeServerService(ssh_host, ssh_port, ssh_user)
+                    codeserver_result = codeserver_svc.setup_full(config)
+                    output += f"\n\n=== Code-Server Setup ===\n{codeserver_result}"
+                except Exception as e:
+                    codeserver_result = {"success": False, "error": str(e)}
+                    output += f"\n\nCode-server setup failed: {e}"
 
             return {
-                "success": success,
-                "output": result.stdout,
-                "error": result.stderr if not success else None,
+                "success": restore_success,
+                "output": output,
+                "error": error,
+                "codeserver": codeserver_result,
             }
 
         except subprocess.TimeoutExpired:

@@ -1,0 +1,29 @@
+{
+  "users": {
+    "marcosremar@gmail.com": {
+      "vast_api_key": "a9df8f732d9b1b8a6bb54fd43c477824254552b0d964c58bd92b16c6f25ca3dd",
+      "settings": {
+        "stage_timeout": 30,
+        "restic_connections": 32,
+        "remove_tmux": true,
+        "auto_restore": true,
+        "preferred_region": "EU",
+        "r2_access_key": "f0a6f424064e46c903c76a447f5e73d2",
+        "r2_secret_key": "1dcf325fe8556fca221cf8b383e277e7af6660a246148d5e11e4fc67e822c9b5",
+        "r2_endpoint": "https://142ed673a5cc1a9e91519c099af3d791.r2.cloudflarestorage.com",
+        "r2_bucket": "musetalk",
+        "restic_password": "musetalk123",
+        "restic_repo": "s3:https://142ed673a5cc1a9e91519c099af3d791.r2.cloudflarestorage.com/musetalk/restic",
+        "tailscale_authkey": "tskey-auth-kQmnJuii4411CNTRL-bjWkofSrsnQNAfYo4WPRnQEfFC2aoPnN",
+        "tailscale_vps_ip": "100.66.203.60"
+      },
+      "agent_settings": {
+        "sync_interval": 30,
+        "keep_last": 10
+      }
+    }
+  },
+  "locked_instances": {
+    "28864630": true
+  }
+}

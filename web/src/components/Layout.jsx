@@ -1,6 +1,10 @@
 import { NavLink } from 'react-router-dom'
+import { useState } from 'react'
+import { ChevronDown, BarChart3 } from 'lucide-react'
 
 export default function Layout({ user, onLogout, children }) {
+  const [metricsOpen, setMetricsOpen] = useState(false)
+
   return (
     <div className="layout">
       <header className="header">
@@ -13,6 +17,24 @@ export default function Layout({ user, onLogout, children }) {
             <NavLink to="/machines" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
               Machines
             </NavLink>
+            <div
+              className="nav-dropdown"
+              onMouseEnter={() => setMetricsOpen(true)}
+              onMouseLeave={() => setMetricsOpen(false)}
+            >
+              <span className="nav-link">
+                Métricas
+                <ChevronDown size={14} style={{ marginLeft: '4px' }} />
+              </span>
+              {metricsOpen && (
+                <div className="dropdown-menu">
+                  <NavLink to="/metrics" className="dropdown-item">
+                    <BarChart3 size={16} />
+                    Métricas de GPU
+                  </NavLink>
+                </div>
+              )}
+            </div>
             <NavLink to="/settings" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
               Settings
             </NavLink>

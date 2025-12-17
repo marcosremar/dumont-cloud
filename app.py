@@ -17,6 +17,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from src.config import settings
 from src.api import snapshots_bp, instances_bp
 from src.api.deploy import deploy_bp
+from src.api.gpu_checkpoints import gpu_bp
+from src.api.price_reports import price_reports_bp
+from src.api.snapshots_ans import snapshots_ans_bp
+from src.api.hibernation import hibernation_bp
 
 
 def create_app():
@@ -35,8 +39,84 @@ def create_app():
 
     # Registrar blueprints da API
     app.register_blueprint(snapshots_bp)
+    app.register_blueprint(snapshots_ans_bp)
+    app.register_blueprint(hibernation_bp)
     app.register_blueprint(instances_bp)
     app.register_blueprint(deploy_bp)
+    app.register_blueprint(gpu_bp)
+    app.register_blueprint(price_reports_bp)
+
+    # Inicializar sistema de agentes
+    def init_agents():
+        """Inicializa agentes automaticos (monitoramento de precos, auto-hibernacao, etc)."""
+        import logging
+        import os
+        from src.services.agent_manager import agent_manager
+        from src.services.price_monitor_agent import PriceMonitorAgent
+        from src.services.auto_hibernation_manager import AutoHibernationManager
+
+        logger = logging.getLogger(__name__)
+        logger.info("Inicializando agentes automaticos...")
+
+        # Carregar config do primeiro usuario para obter API key
+        config = load_user_config()
+        vast_api_key = None
+        for user_data in config.get('users', {}).values():
+            vast_api_key = user_data.get('vast_api_key')
+            if vast_api_key:
+                break
+
+        if vast_api_key:
+            # Registrar agente de monitoramento de precos
+            try:
+                agent_manager.register_agent(
+                    PriceMonitorAgent,
+                    vast_api_key=vast_api_key,
+                    interval_minutes=30,
+                    gpus_to_monitor=['RTX 4090', 'RTX 4080']
+                )
+                logger.info("✓ Agente de monitoramento de precos iniciado (RTX 4090, RTX 4080)")
+            except Exception as e:
+                logger.error(f"Erro ao iniciar agente de monitoramento: {e}")
+
+            # Registrar agente de auto-hibernacao
+            try:
+                r2_endpoint = os.getenv('R2_ENDPOINT', 'https://142ed673a5cc1a9e91519c099af3d791.r2.cloudflarestorage.com')
+                r2_bucket = os.getenv('R2_BUCKET', 'musetalk')
+
+                hibernation_manager = agent_manager.register_agent(
+                    AutoHibernationManager,
+                    vast_api_key=vast_api_key,
+                    r2_endpoint=r2_endpoint,
+                    r2_bucket=r2_bucket,
+                    check_interval=30
+                )
+
+                # Salvar referência no app para uso nos endpoints
+                app.hibernation_manager = hibernation_manager
+
+                logger.info("✓ Agente de auto-hibernacao iniciado (check_interval=30s)")
+            except Exception as e:
+                logger.error(f"Erro ao iniciar agente de auto-hibernacao: {e}")
+        else:
+            logger.warning("Nenhuma API key configurada - agentes nao iniciados")
+
+    # Shutdown handler para parar agentes
+    import atexit
+    def shutdown_agents():
+        """Para todos os agentes ao desligar o servidor."""
+        import logging
+        from src.services.agent_manager import agent_manager
+        logger = logging.getLogger(__name__)
+        logger.info("Parando agentes...")
+        agent_manager.stop_all()
+        logger.info("Agentes parados")
+
+    atexit.register(shutdown_agents)
+
+    # Inicializar agentes apos criar app (mas antes de retornar)
+    # Vamos fazer isso no final, antes do return
+    app._init_agents = init_agents
 
     # Carregar config de usuarios
     def load_user_config():
@@ -68,6 +148,12 @@ def create_app():
     def login_required(f):
         @wraps(f)
         def decorated(*args, **kwargs):
+            # Modo demo - bypass authentication using marcosremar@gmail.com
+            if os.getenv('DEMO_MODE', 'false').lower() == 'true' or request.args.get('demo') == 'true':
+                if 'user' not in session:
+                    session['user'] = 'marcosremar@gmail.com'
+                return f(*args, **kwargs)
+
             if 'user' not in session:
                 if request.path.startswith('/api/'):
                     return {"error": "Nao autenticado"}, 401
@@ -275,6 +361,18 @@ def create_app():
             'received_at': __import__('datetime').datetime.now().isoformat(),
         }
 
+        # Integrar com AutoHibernationManager se disponível
+        if hasattr(app, 'hibernation_manager'):
+            try:
+                gpu_utilization = data.get('gpu_utilization', 0)
+                app.hibernation_manager.update_instance_status(
+                    instance_id=instance_id,
+                    gpu_utilization=gpu_utilization
+                )
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Erro ao atualizar status no hibernation manager: {e}")
+
         return jsonify({'success': True})
 
     @app.route('/api/agent/status/<instance_id>', methods=['GET'])
@@ -298,6 +396,118 @@ def create_app():
             return jsonify({'agents': {}})
 
         return jsonify({'agents': app.agent_statuses})
+
+    # ========== CPU STANDBY ROUTES ==========
+
+    @app.route('/api/standby/status', methods=['GET'])
+    @login_required
+    def get_standby_status():
+        """Retorna status do sistema de CPU Standby"""
+        if not hasattr(app, 'cpu_standby_service'):
+            return jsonify({
+                'enabled': False,
+                'message': 'CPU Standby service nao inicializado'
+            })
+
+        return jsonify(app.cpu_standby_service.get_status())
+
+    @app.route('/api/standby/enable', methods=['POST'])
+    @login_required
+    def enable_standby():
+        """Ativa o sistema de CPU Standby para o usuario"""
+        from src.services.cpu_standby_service import CPUStandbyService, CPUStandbyConfig
+
+        api_key = getattr(g, 'vast_api_key', '')
+        if not api_key:
+            return jsonify({'error': 'API key nao configurada'}), 400
+
+        # Criar/obter instancia do servico
+        if not hasattr(app, 'cpu_standby_service'):
+            config = CPUStandbyConfig()
+            app.cpu_standby_service = CPUStandbyService(api_key, config)
+
+        # Provisionar CPU standby
+        instance_id = app.cpu_standby_service.provision_cpu_standby(session['user'])
+
+        if instance_id:
+            # Iniciar monitoramento
+            app.cpu_standby_service.start_monitoring()
+            return jsonify({
+                'success': True,
+                'cpu_standby_instance': instance_id,
+                'message': 'CPU Standby provisionada. Aguardando ficar pronta...'
+            })
+        else:
+            return jsonify({
+                'error': 'Falha ao provisionar CPU Standby',
+                'hint': 'Verifique se ha ofertas disponiveis na regiao'
+            }), 500
+
+    @app.route('/api/standby/disable', methods=['POST'])
+    @login_required
+    def disable_standby():
+        """Desativa o sistema de CPU Standby"""
+        if not hasattr(app, 'cpu_standby_service'):
+            return jsonify({'error': 'CPU Standby nao esta ativo'}), 400
+
+        app.cpu_standby_service.stop_monitoring()
+        return jsonify({'success': True, 'message': 'CPU Standby desativado'})
+
+    @app.route('/api/standby/register-gpu', methods=['POST'])
+    @login_required
+    def register_gpu_for_standby():
+        """Registra uma GPU no sistema de monitoramento para failover"""
+        from src.services.cpu_standby_service import CPUStandbyService, CPUStandbyConfig
+
+        data = request.get_json()
+        instance_id = data.get('instance_id')
+        is_interruptible = data.get('is_interruptible', True)
+
+        if not instance_id:
+            return jsonify({'error': 'instance_id obrigatorio'}), 400
+
+        api_key = getattr(g, 'vast_api_key', '')
+        if not api_key:
+            return jsonify({'error': 'API key nao configurada'}), 400
+
+        # Criar servico se nao existir
+        if not hasattr(app, 'cpu_standby_service'):
+            config = CPUStandbyConfig()
+            app.cpu_standby_service = CPUStandbyService(api_key, config)
+
+        # Registrar GPU
+        success = app.cpu_standby_service.register_gpu_instance(instance_id, is_interruptible)
+
+        if success:
+            # Iniciar monitoramento se ainda nao estiver rodando
+            app.cpu_standby_service.start_monitoring()
+            return jsonify({
+                'success': True,
+                'instance_id': instance_id,
+                'is_interruptible': is_interruptible,
+                'message': 'GPU registrada para monitoramento de failover'
+            })
+        else:
+            return jsonify({'error': 'Falha ao registrar GPU'}), 500
+
+    @app.route('/api/standby/active-endpoint', methods=['GET'])
+    @login_required
+    def get_active_endpoint():
+        """Retorna o endpoint ativo atual (GPU ou CPU fallback)"""
+        if not hasattr(app, 'cpu_standby_service'):
+            return jsonify({
+                'error': 'CPU Standby nao configurado',
+                'hint': 'Use /api/standby/enable para ativar'
+            }), 400
+
+        endpoint = app.cpu_standby_service.get_active_endpoint()
+        if endpoint:
+            return jsonify(endpoint)
+        else:
+            return jsonify({
+                'error': 'Nenhuma maquina ativa',
+                'hint': 'Registre uma GPU com /api/standby/register-gpu'
+            }), 404
 
     # ========== FRONTEND ROUTES ==========
 
@@ -1150,6 +1360,9 @@ server {{
             return send_from_directory(build_dir, 'index.html')
 
         return redirect('/')
+
+    # Inicializar agentes antes de retornar
+    app._init_agents()
 
     return app
 

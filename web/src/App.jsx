@@ -4,7 +4,8 @@ import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
 import Login from './pages/Login'
-import MinhasMaquinas from './pages/MinhasMaquinas'
+import Machines from './pages/Machines'
+import GPUMetrics from './pages/GPUMetrics'
 
 const API_BASE = ''
 
@@ -13,6 +14,14 @@ export default function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Check if demo mode
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('demo') === 'true') {
+      setUser({ username: 'marcosremar@gmail.com' })
+      setLoading(false)
+      return
+    }
+
     checkAuth()
     // Registrar Service Worker para notificações
     if ('serviceWorker' in navigator) {
@@ -78,7 +87,8 @@ export default function App() {
     <Layout user={user} onLogout={handleLogout}>
       <Routes>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/machines" element={<MinhasMaquinas />} />
+        <Route path="/machines" element={<Machines />} />
+        <Route path="/metrics" element={<GPUMetrics />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

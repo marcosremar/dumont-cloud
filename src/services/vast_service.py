@@ -255,6 +255,36 @@ tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &
             print(f"Erro ao destruir instancia: {e}")
             return False
 
+    def pause_instance(self, instance_id: int) -> bool:
+        """Pausa uma instancia (stop sem destruir)"""
+        try:
+            resp = requests.put(
+                f"{self.API_URL}/instances/{instance_id}/",
+                headers={"Accept": "application/json"},
+                params={"api_key": self.api_key},
+                json={"paused": True},
+                timeout=30,
+            )
+            return resp.status_code == 200 and resp.json().get("success", False)
+        except Exception as e:
+            print(f"Erro ao pausar instancia: {e}")
+            return False
+
+    def resume_instance(self, instance_id: int) -> bool:
+        """Resume uma instancia pausada"""
+        try:
+            resp = requests.put(
+                f"{self.API_URL}/instances/{instance_id}/",
+                headers={"Accept": "application/json"},
+                params={"api_key": self.api_key},
+                json={"paused": False},
+                timeout=30,
+            )
+            return resp.status_code == 200 and resp.json().get("success", False)
+        except Exception as e:
+            print(f"Erro ao resumir instancia: {e}")
+            return False
+
     def get_instance_logs(self, instance_id: int) -> str:
         """Retorna logs de uma instancia usando endpoint correto vast.ai"""
         try:
