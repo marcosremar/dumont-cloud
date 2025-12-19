@@ -32,7 +32,9 @@
     "test@test.com": {
       "password": "ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae",
       "vast_api_key": "a9df8f732d9b1b8a6bb54fd43c477824254552b0d964c58bd92b16c6f25ca3dd",
-      "settings": {}
+      "settings": {
+        "has_completed_onboarding": true
+      }
     },
     "test_user_1766108322@example.com": {
       "password": "85777f270ad7cf2a790981bbae3c4e484a1dc55e24a77390d692fbf1cffa12fa",

@@ -72,13 +72,16 @@ function SparklineChart({ data, color }) {
 }
 
 // Compact Machine Card - Similar to Dashboard tier cards
-function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onSnapshot, onRestore, onMigrate, syncStatus, syncStats }) {
+function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onSnapshot, onRestore, onMigrate, onSimulateFailover, syncStatus, syncStats, failoverProgress }) {
   const [showConfigModal, setShowConfigModal] = useState(false)
   const [showSSHInstructions, setShowSSHInstructions] = useState(false)
   const [alertDialog, setAlertDialog] = useState({ open: false, title: '', description: '', action: null })
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false)
   const [copiedField, setCopiedField] = useState(null) // Track which field was copied
   const [showBackupInfo, setShowBackupInfo] = useState(false) // Show CPU backup info popover
+
+  // Failover progress from parent
+  const isInFailover = failoverProgress && failoverProgress.phase !== 'idle'
 
   // Historical data for sparklines
   const [gpuHistory] = useState(() => Array.from({ length: 15 }, () => Math.random() * 40 + 30))
@@ -168,51 +171,204 @@ function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onS
   const ram = machine.cpu_ram ? (machine.cpu_ram > 1000 ? Math.round(machine.cpu_ram / 1024) : Math.round(machine.cpu_ram)) : 16
   const disk = Math.round(machine.disk_space || 100)
 
+  // Get border color based on failover phase
+  const getFailoverBorderColor = () => {
+    if (!isInFailover) return ''
+    if (failoverProgress.phase === 'gpu_lost') return 'border-red-500/50 bg-[#1f1414]'
+    if (failoverProgress.phase === 'failover_active') return 'border-yellow-500/50 bg-[#1f1a14]'
+    if (failoverProgress.phase === 'searching') return 'border-blue-500/50 bg-[#14171f]'
+    if (failoverProgress.phase === 'provisioning') return 'border-purple-500/50 bg-[#1a141f]'
+    if (failoverProgress.phase === 'restoring') return 'border-cyan-500/50 bg-[#141f1f]'
+    if (failoverProgress.phase === 'complete') return 'border-green-500/50 bg-[#141f14]'
+    return ''
+  }
+
   return (
     <div
-      className={`flex flex-col p-3 md:p-4 rounded-lg border transition-all ${
-        isRunning
-          ? 'border-green-500/30 bg-[#1a2418]'
-          : 'border-gray-700/30 bg-[#161a16] hover:border-gray-600/50'
+      className={`flex flex-col p-4 md:p-5 rounded-xl border transition-all bg-white dark:bg-gray-900 shadow-theme-sm ${
+        isInFailover
+          ? getFailoverBorderColor()
+          : isRunning
+            ? 'border-success-200 dark:border-success-500/30'
+            : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
       }`}
     >
+      {/* Failover Progress Panel - Shows during failover */}
+      {isInFailover && (
+        <div className="mb-3 p-3 rounded-lg bg-gray-900/50 border border-gray-700/50" data-testid="failover-progress-panel">
+          <div className="flex items-center gap-2 mb-3">
+            <Zap className={`w-4 h-4 ${
+              failoverProgress.phase === 'gpu_lost' ? 'text-red-400 animate-pulse' :
+              failoverProgress.phase === 'complete' ? 'text-green-400' :
+              'text-yellow-400 animate-pulse'
+            }`} />
+            <span className="text-sm font-semibold text-white">Failover em Progresso</span>
+          </div>
+
+          {/* Progress Steps */}
+          <div className="space-y-1.5 text-xs">
+            <div className={`flex items-center gap-2 ${
+              failoverProgress.phase === 'gpu_lost' ? 'text-red-400' :
+              ['failover_active', 'searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? 'text-green-400' :
+              'text-gray-500'
+            }`} data-testid="failover-step-gpu-lost">
+              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
+                failoverProgress.phase === 'gpu_lost' ? 'border-red-400 bg-red-500/20' :
+                ['failover_active', 'searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? 'border-green-400 bg-green-500/20' :
+                'border-gray-600'
+              }`}>
+                {['failover_active', 'searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? '✓' : '1'}
+              </div>
+              <span>GPU Interrompida</span>
+              {failoverProgress.phase === 'gpu_lost' && <RefreshCw className="w-3 h-3 animate-spin ml-auto" />}
+              {failoverProgress.metrics?.detection_time_ms && <span className="ml-auto text-gray-500">{failoverProgress.metrics.detection_time_ms}ms</span>}
+            </div>
+
+            <div className={`flex items-center gap-2 ${
+              failoverProgress.phase === 'failover_active' ? 'text-yellow-400' :
+              ['searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? 'text-green-400' :
+              'text-gray-500'
+            }`} data-testid="failover-step-active">
+              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
+                failoverProgress.phase === 'failover_active' ? 'border-yellow-400 bg-yellow-500/20' :
+                ['searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? 'border-green-400 bg-green-500/20' :
+                'border-gray-600'
+              }`}>
+                {['searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? '✓' : '2'}
+              </div>
+              <span>Failover para CPU Standby</span>
+              {failoverProgress.phase === 'failover_active' && <RefreshCw className="w-3 h-3 animate-spin ml-auto" />}
+              {failoverProgress.metrics?.failover_time_ms && <span className="ml-auto text-gray-500">{failoverProgress.metrics.failover_time_ms}ms</span>}
+            </div>
+
+            <div className={`flex items-center gap-2 ${
+              failoverProgress.phase === 'searching' ? 'text-blue-400' :
+              ['provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? 'text-green-400' :
+              'text-gray-500'
+            }`} data-testid="failover-step-searching">
+              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
+                failoverProgress.phase === 'searching' ? 'border-blue-400 bg-blue-500/20' :
+                ['provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? 'border-green-400 bg-green-500/20' :
+                'border-gray-600'
+              }`}>
+                {['provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? '✓' : '3'}
+              </div>
+              <span>Buscando Nova GPU</span>
+              {failoverProgress.phase === 'searching' && <RefreshCw className="w-3 h-3 animate-spin ml-auto" />}
+              {failoverProgress.metrics?.search_time_ms && <span className="ml-auto text-gray-500">{(failoverProgress.metrics.search_time_ms / 1000).toFixed(1)}s</span>}
+            </div>
+
+            <div className={`flex items-center gap-2 ${
+              failoverProgress.phase === 'provisioning' ? 'text-purple-400' :
+              ['restoring', 'complete'].includes(failoverProgress.phase) ? 'text-green-400' :
+              'text-gray-500'
+            }`} data-testid="failover-step-provisioning">
+              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
+                failoverProgress.phase === 'provisioning' ? 'border-purple-400 bg-purple-500/20' :
+                ['restoring', 'complete'].includes(failoverProgress.phase) ? 'border-green-400 bg-green-500/20' :
+                'border-gray-600'
+              }`}>
+                {['restoring', 'complete'].includes(failoverProgress.phase) ? '✓' : '4'}
+              </div>
+              <span>Provisionando {failoverProgress.newGpu || 'Nova GPU'}</span>
+              {failoverProgress.phase === 'provisioning' && <RefreshCw className="w-3 h-3 animate-spin ml-auto" />}
+              {failoverProgress.metrics?.provisioning_time_ms && <span className="ml-auto text-gray-500">{(failoverProgress.metrics.provisioning_time_ms / 1000).toFixed(1)}s</span>}
+            </div>
+
+            <div className={`flex items-center gap-2 ${
+              failoverProgress.phase === 'restoring' ? 'text-cyan-400' :
+              failoverProgress.phase === 'complete' ? 'text-green-400' :
+              'text-gray-500'
+            }`} data-testid="failover-step-restoring">
+              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
+                failoverProgress.phase === 'restoring' ? 'border-cyan-400 bg-cyan-500/20' :
+                failoverProgress.phase === 'complete' ? 'border-green-400 bg-green-500/20' :
+                'border-gray-600'
+              }`}>
+                {failoverProgress.phase === 'complete' ? '✓' : '5'}
+              </div>
+              <span>Restaurando Dados</span>
+              {failoverProgress.phase === 'restoring' && <RefreshCw className="w-3 h-3 animate-spin ml-auto" />}
+              {failoverProgress.metrics?.restore_time_ms && <span className="ml-auto text-gray-500">{(failoverProgress.metrics.restore_time_ms / 1000).toFixed(1)}s</span>}
+            </div>
+
+            <div className={`flex items-center gap-2 ${
+              failoverProgress.phase === 'complete' ? 'text-green-400' : 'text-gray-500'
+            }`} data-testid="failover-step-complete">
+              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
+                failoverProgress.phase === 'complete' ? 'border-green-400 bg-green-500/20' : 'border-gray-600'
+              }`}>
+                {failoverProgress.phase === 'complete' ? '✓' : '6'}
+              </div>
+              <span>Recuperação Completa</span>
+              {failoverProgress.metrics?.total_time_ms && failoverProgress.phase === 'complete' && (
+                <span className="ml-auto text-green-400 font-medium">{(failoverProgress.metrics.total_time_ms / 1000).toFixed(1)}s total</span>
+              )}
+            </div>
+          </div>
+
+          {/* Status Message */}
+          {failoverProgress.message && (
+            <div className="mt-3 pt-2 border-t border-gray-700/50">
+              <p className="text-xs text-gray-300" data-testid="failover-message">{failoverProgress.message}</p>
+            </div>
+          )}
+
+          {/* Detailed Metrics (when complete) */}
+          {failoverProgress.phase === 'complete' && failoverProgress.metrics && (
+            <div className="mt-3 pt-2 border-t border-gray-700/50 grid grid-cols-3 gap-2 text-[10px]">
+              <div className="text-center">
+                <div className="text-gray-500">Arquivos</div>
+                <div className="text-white font-medium">{failoverProgress.metrics.files_synced?.toLocaleString() || '0'}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-gray-500">Dados</div>
+                <div className="text-white font-medium">{failoverProgress.metrics.data_restored_mb || '0'} MB</div>
+              </div>
+              <div className="text-center">
+                <div className="text-gray-500">Status</div>
+                <div className="text-green-400 font-medium">Sucesso</div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Header Row */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-white font-semibold text-sm">{gpuName}</span>
-          <StatusBadge status={isRunning ? 'running' : 'stopped'} />
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-gray-900 dark:text-white font-semibold text-base">{gpuName}</span>
+          <span className={`ta-badge ${isRunning ? 'ta-badge-success' : 'ta-badge-gray'}`}>
+            {isRunning ? 'Online' : 'Offline'}
+          </span>
           {/* Provider badges */}
-          <span className="px-1.5 py-0.5 rounded text-[9px] bg-purple-500/20 text-purple-400 border border-purple-500/30">
+          <span className="ta-badge ta-badge-primary">
             Vast.ai
           </span>
           {/* CPU Backup Mirror Icon - clickable */}
           <div className="relative">
             <button
               onClick={() => setShowBackupInfo(!showBackupInfo)}
-              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] border transition-all ${
-                hasCpuStandby
-                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30'
-                  : 'bg-gray-700/30 text-gray-500 border-gray-600/30 hover:bg-gray-700/50'
-              }`}
+              className={`ta-badge ${hasCpuStandby ? 'ta-badge-primary' : 'ta-badge-gray'} cursor-pointer hover:opacity-80`}
               title={hasCpuStandby ? 'Ver backup CPU' : 'Backup CPU não configurado'}
             >
-              <Layers className="w-2.5 h-2.5" />
+              <Layers className="w-3 h-3 mr-1" />
               {hasCpuStandby ? 'Backup' : 'Sem backup'}
             </button>
 
             {/* Backup Info Popover */}
             {showBackupInfo && (
-              <div className="absolute top-full left-0 mt-2 z-50 w-64 p-3 rounded-lg border border-gray-700/50 bg-[#1a1f1a] shadow-xl">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-white flex items-center gap-1.5">
-                    <Layers className="w-4 h-4 text-blue-400" />
+              <div className="absolute top-full left-0 mt-2 z-50 w-72 ta-dropdown p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-brand-500" />
                     CPU Backup (Espelho)
                   </span>
                   <button
                     onClick={() => setShowBackupInfo(false)}
-                    className="p-0.5 rounded hover:bg-gray-700/50 text-gray-500 hover:text-gray-300"
+                    className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -489,6 +645,18 @@ function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onS
 
           {/* Action Buttons Row */}
           <div className="flex gap-2">
+            {/* Simulate Failover Button (Demo only, requires CPU Standby) */}
+            {onSimulateFailover && hasCpuStandby && !isInFailover && (
+              <button
+                onClick={() => onSimulateFailover(machine)}
+                className="flex-1 py-2 rounded-lg bg-red-600/20 border border-red-500/30 text-red-400 text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-red-600/30 transition-colors"
+                title="Simular roubo de GPU e failover automático"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                Simular Failover
+              </button>
+            )}
+
             {/* Migration Button */}
             <button
               onClick={() => onMigrate && onMigrate(machine)}
@@ -763,6 +931,8 @@ export default function Machines() {
   const [migrationTarget, setMigrationTarget] = useState(null) // machine to migrate
   const [syncStats, setSyncStats] = useState({}) // machineId -> { files_new, files_changed, data_added, ... }
   const [demoToast, setDemoToast] = useState(null) // Toast message for demo actions
+  const [failoverProgress, setFailoverProgress] = useState({}) // machineId -> { phase, message, newGpu, metrics }
+  const [failoverHistory, setFailoverHistory] = useState([]) // Array of completed failover events
 
   // Show demo toast
   const showDemoToast = (message, type = 'success') => {
@@ -1007,6 +1177,154 @@ export default function Machines() {
     setMigrationTarget(null)
   }
 
+  // Simulate GPU failover (demo mode only) - with enriched metrics
+  const handleSimulateFailover = async (machine) => {
+    if (!machine.cpu_standby?.enabled) {
+      showDemoToast('Esta máquina não tem CPU Standby configurado', 'error')
+      return
+    }
+
+    // Initialize failover metrics
+    const failoverMetrics = {
+      id: `fo-${Date.now()}`,
+      machine_id: machine.id,
+      gpu_name: machine.gpu_name,
+      started_at: new Date().toISOString(),
+      detection_time_ms: 0,
+      failover_time_ms: 0,
+      search_time_ms: 0,
+      provisioning_time_ms: 0,
+      restore_time_ms: 0,
+      total_time_ms: 0,
+      files_synced: 0,
+      data_restored_mb: 0,
+      new_gpu_name: null,
+      cpu_standby_ip: machine.cpu_standby.ip,
+      reason: 'spot_preemption',
+      status: 'in_progress',
+      phases: []
+    }
+
+    // Helper to update failover progress with metrics
+    const updateProgress = (phase, message, newGpu = null, phaseMetrics = {}) => {
+      const timestamp = Date.now()
+      failoverMetrics.phases.push({ phase, timestamp, ...phaseMetrics })
+
+      setFailoverProgress(prev => ({
+        ...prev,
+        [machine.id]: {
+          phase,
+          message,
+          newGpu,
+          metrics: { ...failoverMetrics, ...phaseMetrics }
+        }
+      }))
+    }
+
+    // Phase 1: GPU Lost - Detect the interruption
+    const phaseStart = Date.now()
+    const detectionTime = Math.floor(Math.random() * 500) + 500 // 500-1000ms
+    updateProgress('gpu_lost', `GPU ${machine.gpu_name} foi interrompida (Spot Preemption)`)
+    showDemoToast(`⚠️ GPU ${machine.gpu_name} foi interrompida!`, 'warning')
+
+    // Update machine status
+    setMachines(prev => prev.map(m =>
+      m.id === machine.id ? {
+        ...m,
+        actual_status: 'failover',
+        status: 'failover',
+        cpu_standby: { ...m.cpu_standby, state: 'failover_active' }
+      } : m
+    ))
+
+    await new Promise(r => setTimeout(r, 2000))
+    failoverMetrics.detection_time_ms = detectionTime
+
+    // Phase 2: Failover to CPU Standby
+    const failoverTime = Math.floor(Math.random() * 300) + 800 // 800-1100ms
+    updateProgress('failover_active', `Redirecionando tráfego para CPU Standby (${machine.cpu_standby.ip})`, null, { detection_time_ms: detectionTime })
+    showDemoToast(`🔄 Failover automático: usando CPU Standby (${machine.cpu_standby.ip})`, 'info')
+    await new Promise(r => setTimeout(r, 2500))
+    failoverMetrics.failover_time_ms = failoverTime
+
+    // Phase 3: Searching for new GPU
+    const searchTime = Math.floor(Math.random() * 2000) + 2000 // 2-4 seconds
+    updateProgress('searching', 'Pesquisando GPUs disponíveis em Vast.ai...', null, { failover_time_ms: failoverTime })
+    showDemoToast('🔍 Buscando nova GPU disponível...', 'info')
+    await new Promise(r => setTimeout(r, 3000))
+    failoverMetrics.search_time_ms = searchTime
+
+    // Phase 4: Provisioning new GPU
+    const gpuOptions = ['RTX 4090', 'RTX 4080', 'RTX 3090', 'A100 40GB', 'A100 80GB', 'H100 80GB']
+    const newGpu = gpuOptions[Math.floor(Math.random() * gpuOptions.length)]
+    const provisioningTime = Math.floor(Math.random() * 20000) + 30000 // 30-50 seconds
+    failoverMetrics.new_gpu_name = newGpu
+    updateProgress('provisioning', `Provisionando ${newGpu}...`, newGpu, { search_time_ms: searchTime })
+    showDemoToast(`🚀 Provisionando nova GPU: ${newGpu}`, 'info')
+    await new Promise(r => setTimeout(r, 3500))
+    failoverMetrics.provisioning_time_ms = provisioningTime
+
+    // Phase 5: Restoring data
+    const filesCount = Math.floor(Math.random() * 3000) + 1000
+    const dataSize = Math.floor(Math.random() * 2000) + 500 // 500-2500 MB
+    const restoreTime = Math.floor(Math.random() * 20000) + 20000 // 20-40 seconds
+    failoverMetrics.files_synced = filesCount
+    failoverMetrics.data_restored_mb = dataSize
+    failoverMetrics.restore_time_ms = restoreTime
+    updateProgress('restoring', `Restaurando ${filesCount.toLocaleString()} arquivos (${dataSize} MB) do CPU Standby...`, newGpu, { provisioning_time_ms: provisioningTime })
+    showDemoToast(`📦 Restaurando ${filesCount.toLocaleString()} arquivos para nova GPU...`, 'info')
+    await new Promise(r => setTimeout(r, 4000))
+
+    // Phase 6: Complete
+    const totalTime = Date.now() - phaseStart
+    failoverMetrics.total_time_ms = totalTime
+    failoverMetrics.status = 'success'
+    failoverMetrics.completed_at = new Date().toISOString()
+
+    updateProgress('complete', `Recuperação completa! Nova GPU ${newGpu} operacional.`, newGpu, {
+      restore_time_ms: restoreTime,
+      total_time_ms: totalTime,
+      files_synced: filesCount,
+      data_restored_mb: dataSize
+    })
+
+    // Update machine with new GPU
+    setMachines(prev => prev.map(m =>
+      m.id === machine.id ? {
+        ...m,
+        gpu_name: newGpu,
+        actual_status: 'running',
+        status: 'running',
+        cpu_standby: { ...m.cpu_standby, state: 'ready', sync_count: (m.cpu_standby.sync_count || 0) + 1 },
+        public_ipaddr: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`
+      } : m
+    ))
+
+    showDemoToast(`✅ Recuperação completa em ${(totalTime / 1000).toFixed(1)}s! Nova GPU: ${newGpu}`, 'success')
+
+    // Save to failover history
+    setFailoverHistory(prev => [...prev, failoverMetrics])
+
+    // Also save to localStorage for persistence
+    try {
+      const existingHistory = JSON.parse(localStorage.getItem('failover_history') || '[]')
+      existingHistory.push(failoverMetrics)
+      // Keep only last 100 entries
+      if (existingHistory.length > 100) existingHistory.shift()
+      localStorage.setItem('failover_history', JSON.stringify(existingHistory))
+    } catch (e) {
+      console.error('Failed to save failover history:', e)
+    }
+
+    // Clear progress after 5 seconds
+    setTimeout(() => {
+      setFailoverProgress(prev => ({
+        ...prev,
+        [machine.id]: { phase: 'idle' }
+      }))
+    }, 5000)
+  }
+
   const activeMachines = machines.filter(m => m.actual_status === 'running')
   const inactiveMachines = machines.filter(m => m.actual_status !== 'running')
 
@@ -1022,8 +1340,8 @@ export default function Machines() {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-4 md:p-6 lg:p-8" style={{ backgroundColor: '#0e110e' }}>
-        <div className="w-full max-w-6xl mx-auto rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl p-6" style={{ backgroundColor: '#131713' }}>
+      <div className="page-container">
+        <div className="ta-card p-6">
           <SkeletonList count={4} type="machine" />
         </div>
       </div>
@@ -1031,73 +1349,102 @@ export default function Machines() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-8" style={{ backgroundColor: '#0e110e', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-      `}</style>
-
-      <div className="w-full max-w-6xl mx-auto rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl" style={{ backgroundColor: '#131713' }}>
-        {/* Header - Like Dashboard */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center px-4 md:px-6 py-3 md:py-4 border-b border-gray-800/50 gap-3 sm:gap-0">
-          <div className="flex items-center gap-2 mr-4">
-            <div className="w-6 h-6 md:w-7 md:h-7 rounded-md bg-green-500/20 flex items-center justify-center">
-              <Server className="w-4 h-4 md:w-5 md:h-5 text-green-400" />
-            </div>
-            <span className="text-white text-base md:text-lg font-semibold tracking-tight">Minhas Máquinas</span>
+    <div className="page-container">
+      {/* Page Header - TailAdmin Style */}
+      <div className="page-header">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="page-title flex items-center gap-3">
+              <div className="stat-card-icon stat-card-icon-success">
+                <Server className="w-5 h-5" />
+              </div>
+              Minhas Máquinas
+            </h1>
+            <p className="page-subtitle">Gerencie suas instâncias de GPU e CPU</p>
           </div>
+          <Link
+            to={isDemo ? "/demo-app" : "/app"}
+            className="ta-btn ta-btn-primary"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Máquina
+          </Link>
+        </div>
+      </div>
 
-          {/* Filter Tabs - Like Dashboard region tabs */}
-          <div className="flex flex-wrap gap-1 sm:ml-auto">
-            {[
-              { id: 'all', label: 'Todas', count: machines.length },
-              { id: 'online', label: 'Online', count: activeMachines.length },
-              { id: 'offline', label: 'Offline', count: inactiveMachines.length },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setFilter(tab.id)}
-                className={`px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-medium transition-all rounded border ${
-                  filter === tab.id
-                    ? 'text-gray-200 bg-gray-600/30 border-gray-500/40'
-                    : 'text-gray-500 hover:text-gray-300 border-transparent'
-                }`}
-              >
-                {tab.label} ({tab.count})
-              </button>
-            ))}
-            <Link
-              to={isDemo ? "/demo-app" : "/app"}
-              className="ml-2 px-3 py-1.5 md:px-4 md:py-2 rounded-lg bg-gray-600/50 hover:bg-gray-600/70 text-gray-200 text-xs md:text-sm font-medium flex items-center gap-1.5 transition-all border border-gray-500/40"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Nova
-            </Link>
+      {/* Stats Summary - TailAdmin Cards */}
+      <div className="stats-grid mb-6">
+        <div className="stat-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="stat-card-label">GPUs Ativas</p>
+              <p className="stat-card-value">{activeMachines.length}</p>
+            </div>
+            <div className="stat-card-icon stat-card-icon-success">
+              <Server className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+        {totalCpuStandbyCount > 0 && (
+          <div className="stat-card">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="stat-card-label">CPU Backup</p>
+                <p className="stat-card-value">{totalCpuStandbyCount}</p>
+              </div>
+              <div className="stat-card-icon stat-card-icon-primary">
+                <Shield className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="stat-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="stat-card-label">VRAM Total</p>
+              <p className="stat-card-value">{Math.round(totalGpuMem / 1024)} GB</p>
+            </div>
+            <div className="stat-card-icon stat-card-icon-warning">
+              <Cpu className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="stat-card-label">Custo/Hora</p>
+              <p className="stat-card-value">${totalCostPerHour.toFixed(2)}</p>
+            </div>
+            <div className="stat-card-icon stat-card-icon-error">
+              <Activity className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Tabs - TailAdmin Style */}
+      <div className="ta-card">
+        <div className="ta-card-header">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="ta-tabs">
+              {[
+                { id: 'all', label: 'Todas', count: machines.length },
+                { id: 'online', label: 'Online', count: activeMachines.length },
+                { id: 'offline', label: 'Offline', count: inactiveMachines.length },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setFilter(tab.id)}
+                  className={`ta-tab ${filter === tab.id ? 'ta-tab-active' : ''}`}
+                >
+                  {tab.label} ({tab.count})
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="p-4 md:p-6">
-          {/* Summary Stats - Compact inline */}
-          <div className="flex flex-wrap items-center gap-4 mb-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Server className="w-4 h-4 text-green-400" />
-              <span className="text-gray-400">{activeMachines.length} GPU ativas</span>
-            </div>
-            {totalCpuStandbyCount > 0 && (
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-blue-400" />
-                <span className="text-gray-400">{totalCpuStandbyCount} CPU backup</span>
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-yellow-400" />
-              <span className="text-gray-400">{Math.round(totalGpuMem / 1024)} GB VRAM</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-purple-400" />
-              <span className="text-gray-400">${totalCostPerHour.toFixed(2)}/h</span>
-            </div>
-          </div>
+        <div className="ta-card-body">
 
           {/* Error */}
           {error && (
@@ -1124,7 +1471,7 @@ export default function Machines() {
               actionText="Criar máquina"
             />
           ) : !error && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {filteredMachines.map((machine) => (
                 <MachineCard
                   key={machine.id}
@@ -1135,8 +1482,10 @@ export default function Machines() {
                   onRestoreToNew={handleRestoreToNew}
                   onSnapshot={handleSnapshot}
                   onMigrate={handleMigrate}
+                  onSimulateFailover={isDemo ? handleSimulateFailover : null}
                   syncStatus={syncStatus[machine.id] || 'idle'}
                   syncStats={syncStats[machine.id]}
+                  failoverProgress={failoverProgress[machine.id] || { phase: 'idle' }}
                 />
               ))}
             </div>

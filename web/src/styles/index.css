@@ -1,4 +1,5 @@
 @import './spot.css';
+@import './tailadmin.css';
 
 @tailwind base;
 @tailwind components;

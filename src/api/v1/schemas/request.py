@@ -100,3 +100,30 @@ class UpdateSettingsRequest(BaseModel):
     """Update user settings request"""
     vast_api_key: Optional[str] = Field(None, description="Vast.ai API key")
     settings: Optional[Dict[str, Any]] = Field(None, description="User settings")
+
+
+# Fine-Tuning Requests
+
+class FineTuneConfigRequest(BaseModel):
+    """Fine-tuning configuration"""
+    lora_rank: int = Field(16, ge=4, le=128, description="LoRA rank")
+    lora_alpha: int = Field(16, ge=4, le=128, description="LoRA alpha")
+    learning_rate: float = Field(2e-4, ge=1e-6, le=1e-2, description="Learning rate")
+    epochs: int = Field(1, ge=1, le=10, description="Number of epochs")
+    batch_size: int = Field(2, ge=1, le=32, description="Batch size per GPU")
+    gradient_accumulation_steps: int = Field(4, ge=1, le=32, description="Gradient accumulation steps")
+    max_seq_length: int = Field(2048, ge=256, le=8192, description="Maximum sequence length")
+    warmup_steps: int = Field(5, ge=0, le=1000, description="Warmup steps")
+    weight_decay: float = Field(0.01, ge=0, le=1, description="Weight decay")
+
+
+class CreateFineTuneJobRequest(BaseModel):
+    """Create fine-tuning job request"""
+    name: str = Field(..., min_length=1, max_length=100, description="Job name")
+    base_model: str = Field(..., description="Base model ID (e.g., unsloth/llama-3-8b-bnb-4bit)")
+    dataset_source: str = Field(..., description="Dataset source: upload, url, huggingface")
+    dataset_path: str = Field(..., description="Dataset path (local path or URL)")
+    dataset_format: str = Field("alpaca", description="Dataset format: alpaca, sharegpt, raw")
+    config: Optional[FineTuneConfigRequest] = Field(None, description="Fine-tuning configuration")
+    gpu_type: str = Field("A100", description="GPU type")
+    num_gpus: int = Field(1, ge=1, le=8, description="Number of GPUs")

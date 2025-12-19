@@ -80,7 +80,7 @@ async def lifespan(app: FastAPI):
                 standby_mgr.configure(
                     gcp_credentials=gcp_creds,
                     vast_api_key=vast_api_key,
-                    auto_standby_enabled=os.environ.get("AUTO_STANDBY_ENABLED", "false").lower() == "true",
+                    auto_standby_enabled=os.environ.get("AUTO_STANDBY_ENABLED", "true").lower() == "true",
                     config={
                         "gcp_zone": os.environ.get("GCP_ZONE", "europe-west1-b"),
                         "gcp_machine_type": os.environ.get("GCP_MACHINE_TYPE", "e2-medium"),

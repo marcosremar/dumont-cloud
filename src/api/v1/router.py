@@ -3,7 +3,7 @@ Main API v1 router
 """
 from fastapi import APIRouter
 
-from .endpoints import auth, instances, snapshots, settings, metrics, ai_wizard, standby, agent, savings, advisor, hibernation
+from .endpoints import auth, instances, snapshots, settings, metrics, ai_wizard, standby, agent, savings, advisor, hibernation, finetune
 from .endpoints.settings import balance_router
 from .endpoints.spot import router as spot_router
 
@@ -23,6 +23,7 @@ api_router.include_router(hibernation.router, prefix="/hibernation", tags=["Auto
 api_router.include_router(standby.router)
 api_router.include_router(agent.router)
 api_router.include_router(savings.router, prefix="/savings", tags=["Savings Dashboard"])
+api_router.include_router(finetune.router)
 
 # Spot Reports - Relatórios de instâncias spot
 api_router.include_router(spot_router, prefix="/metrics", tags=["Spot Reports"])

@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import StandbyConfig from '../components/StandbyConfig'
+import FailoverReport from '../components/FailoverReport'
 import { AlertInline, Card, CardHeader, CardTitle, CardContent, Button } from '../components/ui/dumont-ui'
 
 const API_BASE = ''
@@ -234,7 +236,9 @@ const SETTINGS_MENU = [
 
 export default function Settings() {
   const toast = useToast()
-  const [activeTab, setActiveTab] = useState('apis')
+  const [searchParams] = useSearchParams()
+  const tabFromUrl = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'apis')
   const [settings, setSettings] = useState({
     vast_api_key: '',
     r2_access_key: '',
@@ -394,16 +398,16 @@ export default function Settings() {
 
   if (loading) {
     return (
-      <div className="container">
-        <div className="empty-state">
-          <div className="spinner" />
+      <div className="page-container">
+        <div className="flex items-center justify-center py-20">
+          <div className="ta-spinner" />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0e110e] to-[#131713]">
+    <div className="page-container">
       {/* Toast de notificação */}
       {showToast && (
         <Toast
@@ -414,33 +418,26 @@ export default function Settings() {
         />
       )}
 
-      <div className="max-w-7xl mx-auto p-6 md:p-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Configurações</h1>
-          <p className="text-gray-400">Gerencie suas APIs, armazenamento e preferências</p>
-        </div>
+      {/* Page Header - TailAdmin Style */}
+      <div className="page-header">
+        <h1 className="page-title">Configurações</h1>
+        <p className="page-subtitle">Gerencie suas APIs, armazenamento e preferências</p>
+      </div>
 
-        {/* Layout: Sidebar + Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar Menu */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-6 space-y-2">
+      {/* Layout: Sidebar + Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Sidebar Menu */}
+        <div className="lg:col-span-1">
+          <div className="ta-card sticky top-6">
+            <div className="p-2">
               {SETTINGS_MENU.map((item) => {
                 const MenuIcon = item.icon
-                const colorClasses = {
-                  green: 'border-green-500/20 hover:bg-green-500/10',
-                  blue: 'border-blue-500/20 hover:bg-blue-500/10',
-                  cyan: 'border-cyan-500/20 hover:bg-cyan-500/10',
-                  yellow: 'border-yellow-500/20 hover:bg-yellow-500/10',
-                  red: 'border-red-500/20 hover:bg-red-500/10',
-                }
                 const iconColorClasses = {
-                  green: 'text-green-400',
-                  blue: 'text-blue-400',
-                  cyan: 'text-cyan-400',
-                  yellow: 'text-yellow-400',
-                  red: 'text-red-400',
+                  green: 'stat-card-icon-success',
+                  blue: 'stat-card-icon-primary',
+                  cyan: 'stat-card-icon-primary',
+                  yellow: 'stat-card-icon-warning',
+                  red: 'stat-card-icon-error',
                 }
                 const isActive = activeTab === item.id
 
@@ -448,30 +445,26 @@ export default function Settings() {
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-all text-left ${
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left mb-1 ${
                       isActive
-                        ? `${colorClasses[item.color]} border-opacity-50 bg-opacity-20`
-                        : 'border-gray-700/50 hover:border-gray-600/50'
+                        ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }`}
                   >
-                    <MenuIcon className={`w-5 h-5 flex-shrink-0 ${isActive ? iconColorClasses[item.color] : 'text-gray-500'}`} />
-                    <div className="flex-1">
-                      <div className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-400'}`}>
-                        {item.label}
-                      </div>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconColorClasses[item.color]}`}>
+                      <MenuIcon className="w-4 h-4" />
                     </div>
-                    {isActive && (
-                      <div className={`w-1.5 h-1.5 rounded-full ${item.color === 'green' ? 'bg-green-400' : item.color === 'blue' ? 'bg-blue-400' : item.color === 'cyan' ? 'bg-cyan-400' : item.color === 'yellow' ? 'bg-yellow-400' : 'bg-red-400'}`} />
-                    )}
+                    <span className="text-sm font-medium">{item.label}</span>
                   </button>
                 )
               })}
             </div>
           </div>
+        </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Main Content */}
+        <div className="lg:col-span-3">
+          <form onSubmit={handleSubmit} className="space-y-6">
           {message && (
             <AlertInline variant={message.type === 'success' ? 'success' : 'error'}>
               {message.text}
@@ -842,10 +835,12 @@ export default function Settings() {
           const token = localStorage.getItem('auth_token')
           return token ? { 'Authorization': `Bearer ${token}` } : {}
         }} />
-            </div>
-          )}
-            </form>
+
+        {/* Failover Report - Histórico e Métricas */}
+        <FailoverReport isDemo={localStorage.getItem('demo_mode') === 'true'} />
           </div>
+        )}
+          </form>
         </div>
       </div>
     </div>

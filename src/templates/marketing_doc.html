@@ -333,7 +333,10 @@
                 'API': '🔌',
                 'Engineering': '🛠️',
                 'Operations': '⚙️',
-                'Business': '💼'
+                'Business': '💼',
+                'Research': '🔬',
+                'Sprints': '🏃',
+                'Analise Mercado': '📊'
             };
             const cleanedName = cleanName(name);
             return icons[cleanedName] || '📁';
@@ -379,12 +382,25 @@
         }
 
         function renderFileItem(item, container) {
-            const btn = document.createElement('button');
-            btn.onclick = () => loadDoc(item.id);
-            btn.id = `nav-${item.id}`;
-            btn.className = 'nav-item w-full text-left px-3 py-2 text-sm mb-1 flex items-center gap-2';
-            btn.innerHTML = `<span class="text-emerald-500">•</span> ${cleanName(item.name)}`;
-            container.appendChild(btn);
+            // Use anchor tag for URL navigation
+            const link = document.createElement('a');
+            const docPath = item.id.replace('.md', '');
+            link.href = `#${docPath}`;
+            link.onclick = (e) => {
+                e.preventDefault();
+                window.location.hash = docPath;
+                loadDoc(item.id);
+            };
+            link.id = `nav-${item.id}`;
+            link.className = 'nav-item w-full text-left px-3 py-2 text-sm mb-1 flex items-center gap-2 block no-underline';
+            link.innerHTML = `<span class="text-emerald-500">•</span> ${cleanName(item.name)}`;
+            container.appendChild(link);
+        }
+
+        // Get shareable URL for current document
+        function getDocUrl(docId) {
+            const docPath = docId.replace('.md', '');
+            return `${window.location.origin}${window.location.pathname}#${docPath}`;
         }
 
         function findFirstDoc(items) {
@@ -466,6 +482,13 @@
                     });
 
                     await mermaid.run();
+
+                    // Update URL hash and show copy button
+                    const docPath = id.replace('.md', '');
+                    if (window.location.hash !== `#${docPath}`) {
+                        history.pushState(null, '', `#${docPath}`);
+                    }
+                    addCopyUrlButton(id);
                 } else {
                     contentDiv.innerHTML = '<h1>Documento não encontrado</h1>';
                 }
@@ -478,8 +501,59 @@
             if (window.innerWidth < 768) sidebar.classList.add('-translate-x-full');
         }
 
+        // Handle URL hash navigation
+        function getDocIdFromHash() {
+            const hash = window.location.hash.slice(1); // Remove #
+            if (hash) {
+                return hash + '.md';
+            }
+            return null;
+        }
+
+        // Listen for hash changes (back/forward navigation)
+        window.addEventListener('hashchange', () => {
+            const docId = getDocIdFromHash();
+            if (docId) {
+                loadDoc(docId);
+            }
+        });
+
+        // Add copy URL button after loading doc
+        function addCopyUrlButton(docId) {
+            const existingBtn = document.getElementById('copy-url-btn');
+            if (existingBtn) existingBtn.remove();
+
+            const contentDiv = document.getElementById('content');
+            const btn = document.createElement('button');
+            btn.id = 'copy-url-btn';
+            btn.className = 'fixed bottom-4 right-4 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm flex items-center gap-2 transition-all';
+            btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Copiar URL`;
+            btn.onclick = () => {
+                const url = getDocUrl(docId);
+                navigator.clipboard.writeText(url).then(() => {
+                    btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Copiado!`;
+                    setTimeout(() => {
+                        btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Copiar URL`;
+                    }, 2000);
+                });
+            };
+            document.body.appendChild(btn);
+        }
+
+        // Modified loadMenu to handle initial hash
+        async function initDocs() {
+            await loadMenu();
+
+            // Check if there's a hash in the URL
+            const docId = getDocIdFromHash();
+            if (docId) {
+                // Small delay to ensure menu is rendered
+                setTimeout(() => loadDoc(docId), 100);
+            }
+        }
+
         // Init
-        document.addEventListener('DOMContentLoaded', loadMenu);
+        document.addEventListener('DOMContentLoaded', initDocs);
     </script>
 </body>
 

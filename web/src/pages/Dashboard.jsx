@@ -164,11 +164,11 @@ const WorldMap = ({ activeRegion, onRegionClick }) => {
   };
 
   return (
-    <div className="relative w-full h-full overflow-hidden rounded-lg" style={{ backgroundColor: '#1c211c' }}>
+    <div className="relative w-full h-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
       <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
         <defs>
           <pattern id="dotGrid" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
-            <circle cx="4" cy="4" r="0.8" fill="#2a352a" />
+            <circle cx="4" cy="4" r="0.8" fill="#d1d5db" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#dotGrid)" />
@@ -200,8 +200,8 @@ const WorldMap = ({ activeRegion, onRegionClick }) => {
                           <Geography
                             key={geo.rsmKey}
                             geography={geo}
-                            fill={isActive ? '#4ade80' : '#1a1f1a'}
-                            stroke="#0a0d0a"
+                            fill={isActive ? '#22c55e' : '#f3f4f6'}
+                            stroke="#d1d5db"
                             strokeWidth={0.3}
                             style={{
                               default: { outline: 'none' },
@@ -214,7 +214,7 @@ const WorldMap = ({ activeRegion, onRegionClick }) => {
                     );
                   })}
                   {geographies.filter((geo) => !getRegionForCountry(geo.id)).map((geo) => (
-                    <Geography key={geo.rsmKey} geography={geo} fill="#0f120f" stroke="#1c211c" strokeWidth={0.5}
+                    <Geography key={geo.rsmKey} geography={geo} fill="#e5e7eb" stroke="#d1d5db" strokeWidth={0.5}
                       style={{ default: { outline: 'none', pointerEvents: 'none' } }} />
                   ))}
                 </>
@@ -253,49 +253,49 @@ const TierCard = ({ tier, isSelected, onClick }) => (
   <Popover>
     <PopoverTrigger asChild>
       <button onClick={onClick}
-        className={`flex flex-col p-3 md:p-4 rounded-lg border text-left transition-all ${isSelected ? 'border-green-500/50 bg-[#1a2418]' : 'border-gray-700/30 bg-[#161a16] hover:border-gray-600'}`}
+        className={`flex flex-col p-3 md:p-4 rounded-lg border text-left transition-all shadow-theme-sm ${isSelected ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-brand-300 dark:hover:border-brand-500/50'}`}
         style={{ minHeight: '160px' }}
       >
         <div className="flex items-center justify-between mb-2">
-          <span className="text-white font-semibold text-xs md:text-sm tracking-tight">{tier.name}</span>
+          <span className="text-gray-900 dark:text-gray-900 dark:text-white font-semibold text-xs md:text-sm tracking-tight">{tier.name}</span>
           <SpeedBars level={tier.level} color={tier.color} />
         </div>
         <div className="text-green-400 text-[10px] md:text-xs font-mono font-medium tracking-tight">{tier.speed}</div>
-        <div className="text-gray-400 text-[9px] md:text-[10px] mb-1.5">{tier.time}</div>
-        <div className="text-gray-500 text-[9px] md:text-[10px] leading-relaxed">{tier.gpu}</div>
-        <div className="text-gray-500 text-[9px] md:text-[10px] leading-relaxed">{tier.vram}</div>
+        <div className="text-gray-500 dark:text-gray-400 text-[9px] md:text-[10px] mb-1.5">{tier.time}</div>
+        <div className="text-gray-600 dark:text-gray-500 text-[9px] md:text-[10px] leading-relaxed">{tier.gpu}</div>
+        <div className="text-gray-600 dark:text-gray-500 text-[9px] md:text-[10px] leading-relaxed">{tier.vram}</div>
         <div className="text-yellow-400/80 text-[9px] md:text-[10px] font-mono font-medium mt-1.5">{tier.priceRange}</div>
-        <div className="mt-auto pt-2 border-t border-gray-700/30">
-          <p className="text-gray-500 text-[8px] md:text-[9px] leading-relaxed">{tier.description}</p>
+        <div className="mt-auto pt-2 border-t border-gray-200 dark:border-gray-200 dark:border-gray-700/30">
+          <p className="text-gray-500 dark:text-gray-400 text-[8px] md:text-[9px] leading-relaxed">{tier.description}</p>
         </div>
       </button>
     </PopoverTrigger>
     <PopoverContent align="start" className="w-64">
       <div className="space-y-3">
         <div className="flex items-center gap-2 mb-3">
-          <Cpu className="w-5 h-5 text-green-400" />
-          <span className="text-sm font-semibold text-white">{tier.name}</span>
+          <Cpu className="w-5 h-5 text-brand-500" />
+          <span className="text-sm font-semibold text-gray-900 dark:text-white">{tier.name}</span>
         </div>
 
         <div className="space-y-2">
           <div className="flex justify-between items-center text-xs">
-            <span className="text-gray-400">GPU:</span>
-            <span className="text-white font-medium">{tier.gpu}</span>
+            <span className="text-gray-500 dark:text-gray-400">GPU:</span>
+            <span className="text-gray-900 dark:text-white font-medium">{tier.gpu}</span>
           </div>
 
           <div className="flex justify-between items-center text-xs">
-            <span className="text-gray-400">VRAM:</span>
-            <span className="text-white font-medium">{tier.vram}</span>
+            <span className="text-gray-500 dark:text-gray-400">VRAM:</span>
+            <span className="text-gray-900 dark:text-white font-medium">{tier.vram}</span>
           </div>
 
           <div className="flex justify-between items-center text-xs">
-            <span className="text-gray-400">Velocidade:</span>
-            <span className="text-green-400 font-medium">{tier.speed}</span>
+            <span className="text-gray-500 dark:text-gray-400">Velocidade:</span>
+            <span className="text-brand-500 font-medium">{tier.speed}</span>
           </div>
 
           <div className="flex justify-between items-center text-xs">
-            <span className="text-gray-400">Tempo Treino:</span>
-            <span className="text-white font-medium">{tier.time}</span>
+            <span className="text-gray-500 dark:text-gray-400">Tempo Treino:</span>
+            <span className="text-gray-900 dark:text-white font-medium">{tier.time}</span>
           </div>
 
           <div className="flex justify-between items-center text-xs">
@@ -304,8 +304,8 @@ const TierCard = ({ tier, isSelected, onClick }) => (
           </div>
         </div>
 
-        <div className="pt-2 border-t border-gray-700/30">
-          <p className="text-xs text-gray-400 leading-relaxed">{tier.description}</p>
+        <div className="pt-2 border-t border-gray-200 dark:border-gray-200 dark:border-gray-700/30">
+          <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{tier.description}</p>
         </div>
       </div>
     </PopoverContent>
@@ -317,7 +317,7 @@ const GPUSelector = ({ selectedGPU, onSelectGPU, selectedCategory, onSelectCateg
   const [isExpanded, setIsExpanded] = useState(false);
 
   const getCategoryIcon = (iconType, isActive) => {
-    const colorClass = isActive ? 'text-white' : 'text-gray-400';
+    const colorClass = isActive ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400';
     switch (iconType) {
       case 'auto':
         return <Zap className={`w-4 h-4 ${colorClass}`} />;
@@ -333,11 +333,11 @@ const GPUSelector = ({ selectedGPU, onSelectGPU, selectedCategory, onSelectCateg
   };
 
   const getCategoryBgColor = (color, isActive) => {
-    if (!isActive) return 'bg-[#1a1f1a]';
+    if (!isActive) return 'bg-gray-100 dark:bg-gray-800';
     switch (color) {
-      case 'green': return 'bg-green-600/30 border-green-500/50';
-      case 'blue': return 'bg-blue-600/30 border-blue-500/50';
-      default: return 'bg-gray-600/30 border-gray-500/50';
+      case 'green': return 'bg-success-50 dark:bg-success-600/30 border-success-500';
+      case 'blue': return 'bg-brand-50 dark:bg-brand-600/30 border-brand-500';
+      default: return 'bg-gray-100 dark:bg-gray-600/30 border-gray-400';
     }
   };
 
@@ -355,16 +355,16 @@ const GPUSelector = ({ selectedGPU, onSelectGPU, selectedCategory, onSelectCateg
     : [];
 
   return (
-    <div className="rounded-xl border border-gray-800/50 bg-[#161a16] overflow-hidden">
+    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden shadow-theme-sm">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-800/50 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
-            <Cpu className="w-4 h-4 text-green-400" />
+          <div className="stat-card-icon stat-card-icon-success">
+            <Cpu className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-white text-sm font-medium">GPU</p>
-            <p className="text-gray-500 text-[10px]">Selecione o tipo</p>
+            <p className="text-gray-900 dark:text-gray-900 dark:text-white text-sm font-medium">GPU</p>
+            <p className="text-gray-500 dark:text-gray-400 text-[10px]">Selecione o tipo</p>
           </div>
         </div>
         {selectedGPU !== 'any' && (
@@ -394,7 +394,7 @@ const GPUSelector = ({ selectedGPU, onSelectGPU, selectedCategory, onSelectCateg
                 className={`p-3 rounded-lg border transition-all text-left ${
                   isActive
                     ? getCategoryBgColor(cat.color, true)
-                    : 'border-gray-800/50 hover:border-gray-700 bg-[#1a1f1a]'
+                    : 'border-gray-800/50 hover:border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
@@ -418,7 +418,7 @@ const GPUSelector = ({ selectedGPU, onSelectGPU, selectedCategory, onSelectCateg
           <div className="mt-3 pt-3 border-t border-gray-800/50">
             <Label className="text-[10px] text-gray-400 mb-2 block">Modelo Específico (opcional)</Label>
             <Select value={selectedGPU} onValueChange={onSelectGPU}>
-              <SelectTrigger className="bg-[#1a1f1a] border-gray-700/50 h-9 text-xs">
+              <SelectTrigger className="bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700/50 h-9 text-xs">
                 <SelectValue placeholder="Qualquer modelo da categoria" />
               </SelectTrigger>
               <SelectContent>
@@ -547,7 +547,7 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
         <div className="px-2 py-2">
           <div className="flex items-center gap-2 mb-1">
             <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-            <h3 className="text-white font-semibold text-xs">AI Advisor</h3>
+            <h3 className="text-gray-900 dark:text-white font-semibold text-xs">AI Advisor</h3>
           </div>
           <p className="text-gray-500 text-[9px]">Descreva seu projeto</p>
         </div>
@@ -565,7 +565,7 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
                   <button
                     key={ex}
                     onClick={() => setInputValue(ex)}
-                    className="px-1.5 py-0.5 text-[9px] text-gray-400 bg-gray-800/40 rounded hover:bg-gray-700/50 transition-colors text-left"
+                    className="px-1.5 py-0.5 text-[9px] text-gray-400 bg-gray-100 dark:bg-gray-800/40 rounded hover:bg-gray-200 dark:bg-gray-700/50 transition-colors text-left"
                   >
                     {ex}
                   </button>
@@ -588,13 +588,13 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
                 : 'ai-wizard-message-assistant'
             }`}>
               {/* Text content - Compact */}
-              <div className="prose prose-invert prose-sm max-w-none prose-p:my-0.5 prose-headings:my-1 prose-strong:text-green-400 prose-ul:my-0.5 prose-li:my-0 prose-hr:border-gray-700 prose-h2:text-xs prose-h3:text-[9px] prose-h4:text-[8px]">
+              <div className="prose prose-invert prose-sm max-w-none prose-p:my-0.5 prose-headings:my-1 prose-strong:text-green-400 prose-ul:my-0.5 prose-li:my-0 prose-hr:border-gray-200 dark:border-gray-700 prose-h2:text-xs prose-h3:text-[9px] prose-h4:text-[8px]">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
               </div>
 
               {/* Interactive Stage Displays - Minimal in compact mode */}
               {msg.showCards && (
-                <div className="mt-1 pt-1 border-t border-gray-700/30">
+                <div className="mt-1 pt-1 border-t border-gray-200 dark:border-gray-700/30">
                   {/* Legacy Recommendation */}
                   {(msg.stage === 'recommendation' || (!msg.stage && msg.recommendation?.gpu_options)) && (
                     <GPUWizardDisplay
@@ -605,7 +605,7 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
 
                   {/* Research Stage */}
                   {msg.stage === 'research' && msg.data?.research_results && (
-                    <div className="bg-gray-800/50 rounded-lg p-3 text-xs space-y-2">
+                    <div className="bg-gray-100 dark:bg-gray-800/50 rounded-lg p-3 text-xs space-y-2">
                       <div className="font-semibold text-blue-400">Resultados da Pesquisa:</div>
                       {msg.data.research_results.findings && (
                         <div><span className="text-gray-400">Descobertas:</span> {msg.data.research_results.findings}</div>
@@ -625,9 +625,9 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
                       <div className="font-semibold text-blue-400 text-xs mb-2">Opções de Preço Encontradas:</div>
                       <div className="grid grid-cols-1 gap-2">
                         {msg.data.price_options.map((opt, idx) => (
-                          <div key={idx} className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 hover:border-blue-500/50 transition-colors">
+                          <div key={idx} className="bg-gray-100 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-500/50 transition-colors">
                             <div className="flex justify-between items-start mb-1">
-                              <span className="font-bold text-white text-sm">{opt.tier}</span>
+                              <span className="font-bold text-gray-900 dark:text-white text-sm">{opt.tier}</span>
                               <span className="text-green-400 font-mono text-xs">{opt.price_per_hour}</span>
                             </div>
                             <div className="text-gray-400 text-xs mb-1">{opt.gpus.join(', ')}</div>
@@ -653,9 +653,9 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
                       <div className="font-semibold text-green-400 text-xs mb-2">Máquinas Disponíveis:</div>
                       <div className="grid grid-cols-1 gap-2">
                         {msg.data.machines.map((machine, idx) => (
-                          <div key={idx} className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 hover:border-green-500/50 transition-colors">
+                          <div key={idx} className="bg-gray-100 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-green-500/50 transition-colors">
                             <div className="flex justify-between items-center mb-1">
-                              <span className="font-bold text-white text-xs">{machine.gpu}</span>
+                              <span className="font-bold text-gray-900 dark:text-white text-xs">{machine.gpu}</span>
                               <span className="text-green-400 font-mono text-xs">{machine.price_per_hour}</span>
                             </div>
                             <div className="flex justify-between text-[10px] text-gray-500 mb-2">
@@ -770,7 +770,7 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
           <Sparkles className="w-5 h-5 text-blue-400" />
         </div>
         <div>
-          <h3 className="text-white font-semibold text-sm">AI GPU Advisor</h3>
+          <h3 className="text-gray-900 dark:text-white font-semibold text-sm">AI GPU Advisor</h3>
           <p className="text-gray-500 text-[10px]">Descreva seu projeto e receba recomendações</p>
         </div>
       </div>
@@ -789,7 +789,7 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
                   <button
                     key={ex}
                     onClick={() => setInputValue(ex)}
-                    className="px-2 py-1 text-[10px] text-gray-400 bg-gray-800/50 rounded hover:bg-gray-700/50 transition-colors"
+                    className="px-2 py-1 text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-800/50 rounded hover:bg-gray-200 dark:bg-gray-700/50 transition-colors"
                   >
                     {ex}
                   </button>
@@ -812,13 +812,13 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
                 : 'ai-wizard-message-assistant'
             }`}>
               {/* Text content */}
-              <div className="text-xs prose prose-invert prose-sm max-w-none prose-p:my-1 prose-headings:my-2 prose-strong:text-green-400 prose-ul:my-1 prose-li:my-0 prose-hr:border-gray-700 prose-h2:text-base prose-h3:text-sm prose-h4:text-xs mb-3">
+              <div className="text-xs prose prose-invert prose-sm max-w-none prose-p:my-1 prose-headings:my-2 prose-strong:text-green-400 prose-ul:my-1 prose-li:my-0 prose-hr:border-gray-200 dark:border-gray-700 prose-h2:text-base prose-h3:text-sm prose-h4:text-xs mb-3">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
               </div>
 
               {/* Interactive Stage Displays */}
               {msg.showCards && (
-                <div className="mt-3 pt-3 border-t border-gray-700/30">
+                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700/30">
                   {/* Legacy Recommendation */}
                   {(msg.stage === 'recommendation' || (!msg.stage && msg.recommendation?.gpu_options)) && (
                     <GPUWizardDisplay
@@ -829,7 +829,7 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
 
                   {/* Research Stage */}
                   {msg.stage === 'research' && msg.data?.research_results && (
-                    <div className="bg-gray-800/50 rounded-lg p-3 text-xs space-y-2">
+                    <div className="bg-gray-100 dark:bg-gray-800/50 rounded-lg p-3 text-xs space-y-2">
                       <div className="font-semibold text-blue-400">Resultados da Pesquisa:</div>
                       {msg.data.research_results.findings && (
                         <div><span className="text-gray-400">Descobertas:</span> {msg.data.research_results.findings}</div>
@@ -849,9 +849,9 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
                       <div className="font-semibold text-blue-400 text-xs mb-2">Opções de Preço Encontradas:</div>
                       <div className="grid grid-cols-1 gap-2">
                         {msg.data.price_options.map((opt, idx) => (
-                          <div key={idx} className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 hover:border-blue-500/50 transition-colors">
+                          <div key={idx} className="bg-gray-100 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-500/50 transition-colors">
                             <div className="flex justify-between items-start mb-1">
-                              <span className="font-bold text-white text-sm">{opt.tier}</span>
+                              <span className="font-bold text-gray-900 dark:text-white text-sm">{opt.tier}</span>
                               <span className="text-green-400 font-mono text-xs">{opt.price_per_hour}</span>
                             </div>
                             <div className="text-gray-400 text-xs mb-1">{opt.gpus.join(', ')}</div>
@@ -877,9 +877,9 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
                       <div className="font-semibold text-green-400 text-xs mb-2">Máquinas Disponíveis:</div>
                       <div className="grid grid-cols-1 gap-2">
                         {msg.data.machines.map((machine, idx) => (
-                          <div key={idx} className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 hover:border-green-500/50 transition-colors">
+                          <div key={idx} className="bg-gray-100 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-green-500/50 transition-colors">
                             <div className="flex justify-between items-center mb-1">
-                              <span className="font-bold text-white text-xs">{machine.gpu}</span>
+                              <span className="font-bold text-gray-900 dark:text-white text-xs">{machine.gpu}</span>
                               <span className="text-green-400 font-mono text-xs">{machine.price_per_hour}</span>
                             </div>
                             <div className="flex justify-between text-[10px] text-gray-500 mb-2">
@@ -1003,9 +1003,9 @@ const GPURecommendationCard = ({ option, onSearch }) => {
   // Cores mais suaves e elegantes
   const tierColors = {
     'mínima': {
-      bg: 'bg-gray-800/40',
+      bg: 'bg-gray-100 dark:bg-gray-800/40',
       border: 'border-gray-600/20',
-      badge: 'bg-gray-700/50 text-gray-400',
+      badge: 'bg-gray-200 dark:bg-gray-700/50 text-gray-400',
       button: 'bg-gray-600/40 hover:bg-gray-600/60'
     },
     'recomendada': {
@@ -1035,7 +1035,7 @@ const GPURecommendationCard = ({ option, onSearch }) => {
 
       {/* GPU Info */}
       <div className="mb-2">
-        <div className="text-white font-semibold text-sm">{option.gpu}</div>
+        <div className="text-gray-900 dark:text-white font-semibold text-sm">{option.gpu}</div>
         <div className="text-gray-400 text-[11px]">VRAM: {option.vram}</div>
         {option.quantization && (
           <div className="text-gray-500 text-[10px]">Quantização: {option.quantization}</div>
@@ -1049,7 +1049,7 @@ const GPURecommendationCard = ({ option, onSearch }) => {
           <table className="w-full text-[10px]">
             <tbody>
               {Object.entries(option.frameworks).map(([framework, perf]) => (
-                <tr key={framework} className="border-b border-gray-700/20">
+                <tr key={framework} className="border-b border-gray-200 dark:border-gray-700/20">
                   <td className="py-0.5 text-gray-400">{framework}</td>
                   <td className="py-0.5 text-emerald-400/80 font-mono text-right">{perf}</td>
                 </tr>
@@ -1124,9 +1124,9 @@ const GPUWizardDisplay = ({ recommendation, onSearch }) => {
   return (
     <div className={`rounded-xl border ${style.border} ${style.bg} p-4 transition-all duration-300`}>
       {/* Model Header */}
-      <div className="text-center mb-4 pb-3 border-b border-gray-700/30">
+      <div className="text-center mb-4 pb-3 border-b border-gray-200 dark:border-gray-700/30">
         <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Modelo</div>
-        <div className="text-white font-bold text-lg">{modelName}</div>
+        <div className="text-gray-900 dark:text-white font-bold text-lg">{modelName}</div>
         {modelSize && <div className="text-gray-400 text-xs">{modelSize}</div>}
       </div>
 
@@ -1139,7 +1139,7 @@ const GPUWizardDisplay = ({ recommendation, onSearch }) => {
           className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all ${
             currentIndex === 0
               ? 'bg-gray-800/30 text-gray-600 cursor-not-allowed'
-              : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50 hover:text-white'
+              : 'bg-gray-200 dark:bg-gray-700/50 text-gray-300 hover:bg-gray-600/50 hover:text-white'
           }`}
           title="Mais barato"
         >
@@ -1154,7 +1154,7 @@ const GPUWizardDisplay = ({ recommendation, onSearch }) => {
           </div>
 
           {/* GPU Name */}
-          <div className="text-white font-bold text-xl mb-1">{currentOption.gpu}</div>
+          <div className="text-gray-900 dark:text-white font-bold text-xl mb-1">{currentOption.gpu}</div>
 
           {/* VRAM & Quantization */}
           <div className="flex items-center justify-center gap-2 text-xs text-gray-400 mb-3">
@@ -1217,7 +1217,7 @@ const GPUWizardDisplay = ({ recommendation, onSearch }) => {
           className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all ${
             currentIndex === options.length - 1
               ? 'bg-gray-800/30 text-gray-600 cursor-not-allowed'
-              : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50 hover:text-white'
+              : 'bg-gray-200 dark:bg-gray-700/50 text-gray-300 hover:bg-gray-600/50 hover:text-white'
           }`}
           title="Mais rápido"
         >
@@ -1231,7 +1231,7 @@ const GPUWizardDisplay = ({ recommendation, onSearch }) => {
           <span>💰 Economia</span>
           <span>Performance 🚀</span>
         </div>
-        <div className="relative h-2 bg-gray-700/50 rounded-full">
+        <div className="relative h-2 bg-gray-200 dark:bg-gray-700/50 rounded-full">
           {/* Track gradient */}
           <div className="absolute inset-0 rounded-full bg-gradient-to-r from-gray-600 via-emerald-600 to-violet-600 opacity-30" />
           {/* Dots */}
@@ -1320,11 +1320,11 @@ const GPUCarousel = ({ options, onSearch }) => {
 };
 
 const OfferCard = ({ offer, onSelect }) => (
-  <div className="p-4 rounded-lg border border-gray-700/40 bg-[#161a16] hover:border-green-500/30 transition-all">
+  <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700/40 bg-white dark:bg-gray-900 hover:border-green-500/30 transition-all">
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center gap-2">
         <Cpu className="w-5 h-5 text-green-400" />
-        <span className="text-white font-semibold text-sm">{offer.gpu_name}</span>
+        <span className="text-gray-900 dark:text-white font-semibold text-sm">{offer.gpu_name}</span>
         {offer.num_gpus > 1 && <span className="text-xs text-gray-400">x{offer.num_gpus}</span>}
       </div>
       <div className="text-green-400 font-mono font-semibold text-sm">
@@ -1359,13 +1359,13 @@ const OfferCard = ({ offer, onSelect }) => (
 const FilterSection = ({ title, icon: Icon, children, defaultOpen = true }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
-    <div className="border border-gray-700/40 rounded-lg bg-[#0f1210] overflow-hidden hover:border-gray-600/50 transition-all">
+    <div className="border border-gray-200 dark:border-gray-700/40 rounded-lg bg-[#0f1210] overflow-hidden hover:border-gray-600/50 transition-all">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between p-3.5 text-left hover:bg-gray-900/30 transition-colors group"
       >
         <div className="flex items-center gap-3">
-          <div className="p-1.5 rounded-md bg-gray-800/50 group-hover:bg-gray-700/50 transition-colors">
+          <div className="p-1.5 rounded-md bg-gray-100 dark:bg-gray-800/50 group-hover:bg-gray-200 dark:bg-gray-700/50 transition-colors">
             <Icon className="w-4 h-4 text-gray-400" />
           </div>
           <span className="text-sm font-medium text-gray-200">{title}</span>
@@ -1373,7 +1373,7 @@ const FilterSection = ({ title, icon: Icon, children, defaultOpen = true }) => {
         <ChevronDown className={`w-4 h-4 text-gray-500 transition-all ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
-        <div className="p-3.5 pt-2 border-t border-gray-700/30 bg-gray-900/10">
+        <div className="p-3.5 pt-2 border-t border-gray-200 dark:border-gray-700/30 bg-gray-900/10">
           {children}
         </div>
       )}
@@ -1607,7 +1607,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-8" style={{ backgroundColor: '#0e110e', fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen p-4 md:p-6 lg:p-8 bg-gray-50 dark:bg-gray-950" style={{ fontFamily: "'Inter', sans-serif" }}>
       {showOnboarding && (
         <OnboardingWizard
           user={user}
@@ -1625,7 +1625,7 @@ export default function Dashboard() {
               <AvatarFallback>{user.name?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-3xl font-bold text-white">Bem-vindo, {user.name || 'User'}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Bem-vindo, {user.name || 'User'}</h1>
               <p className="text-gray-400 mt-1">Aqui está um resumo das suas máquinas</p>
             </div>
           </div>
@@ -1680,7 +1680,7 @@ export default function Dashboard() {
             <span className="text-white text-lg font-semibold tracking-tight">Deploy</span>
           </div>
 
-          <div className="flex gap-1 p-1 rounded-lg bg-[#1a1f1a]">
+          <div className="flex gap-1 p-1 rounded-lg bg-gray-100 dark:bg-gray-800">
             <button
               onClick={() => { setMode('wizard'); setShowResults(false); }}
               className={`px-3 py-1.5 text-xs font-medium rounded transition-all flex items-center gap-1.5 ${
@@ -1814,7 +1814,7 @@ export default function Dashboard() {
         {mode === 'ai' && !showResults && (
           <div className="p-4 md:p-6 lg:p-8">
             <div className="max-w-2xl mx-auto">
-              <div className="rounded-xl border border-gray-800/50 bg-[#161a16] overflow-hidden">
+              <div className="rounded-xl border border-gray-800/50 bg-white dark:bg-gray-900 overflow-hidden">
                 <AIWizardChat
                   onRecommendation={(rec) => {
                     console.log('AI Recommendation:', rec);
@@ -1852,7 +1852,7 @@ export default function Dashboard() {
                     <Sliders className="w-6 h-6 text-emerald-400" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-white">Busca Avançada</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Busca Avançada</h2>
                     <p className="text-gray-400 text-sm mt-0.5">Ajuste os filtros para encontrar as melhores máquinas disponíveis</p>
                   </div>
                 </div>
@@ -1883,8 +1883,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">Quantidade de GPUs</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.num_gpus}</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">Quantidade de GPUs</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.num_gpus}</span>
                     </div>
                     <Slider
                       value={[advancedFilters.num_gpus]}
@@ -1894,7 +1894,7 @@ export default function Dashboard() {
                       step={1}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>1</span>
                       <span>4</span>
                       <span>8</span>
@@ -1903,8 +1903,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">VRAM Mínima (GB)</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.min_gpu_ram.toFixed(0)} GB</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">VRAM Mínima (GB)</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_gpu_ram.toFixed(0)} GB</span>
                     </div>
                     <Slider
                       value={[advancedFilters.min_gpu_ram]}
@@ -1914,7 +1914,7 @@ export default function Dashboard() {
                       step={4}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>0 GB</span>
                       <span>40 GB</span>
                       <span>80 GB</span>
@@ -1923,8 +1923,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">Fração de GPU</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.gpu_frac.toFixed(1)}</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">Fração de GPU</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.gpu_frac.toFixed(1)}</span>
                     </div>
                     <Slider
                       value={[advancedFilters.gpu_frac]}
@@ -1934,7 +1934,7 @@ export default function Dashboard() {
                       step={0.1}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>0.1</span>
                       <span>0.5</span>
                       <span>1.0</span>
@@ -1943,8 +1943,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">Largura de Banda Memória (GB/s)</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.gpu_mem_bw.toFixed(0)}</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">Largura de Banda Memória (GB/s)</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.gpu_mem_bw.toFixed(0)}</span>
                     </div>
                     <Slider
                       value={[advancedFilters.gpu_mem_bw]}
@@ -1954,7 +1954,7 @@ export default function Dashboard() {
                       step={10}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>0 GB/s</span>
                       <span>500 GB/s</span>
                       <span>1000 GB/s</span>
@@ -1963,8 +1963,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">Potência Máxima (W)</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.gpu_max_power.toFixed(0)} W</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">Potência Máxima (W)</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.gpu_max_power.toFixed(0)} W</span>
                     </div>
                     <Slider
                       value={[advancedFilters.gpu_max_power]}
@@ -1974,7 +1974,7 @@ export default function Dashboard() {
                       step={10}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>0 W</span>
                       <span>250 W</span>
                       <span>500 W</span>
@@ -1983,8 +1983,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">Largura de Banda NVLink (GB/s)</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.bw_nvlink.toFixed(0)}</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">Largura de Banda NVLink (GB/s)</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.bw_nvlink.toFixed(0)}</span>
                     </div>
                     <Slider
                       value={[advancedFilters.bw_nvlink]}
@@ -1994,7 +1994,7 @@ export default function Dashboard() {
                       step={10}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>0 GB/s</span>
                       <span>300 GB/s</span>
                       <span>600 GB/s</span>
@@ -2008,8 +2008,8 @@ export default function Dashboard() {
                 <div className="space-y-4 mt-3">
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">CPU Cores Mínimos</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.min_cpu_cores}</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">CPU Cores Mínimos</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_cpu_cores}</span>
                     </div>
                     <Slider
                       value={[advancedFilters.min_cpu_cores]}
@@ -2019,7 +2019,7 @@ export default function Dashboard() {
                       step={1}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>1</span>
                       <span>32</span>
                       <span>64</span>
@@ -2028,8 +2028,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">RAM CPU Mínima (GB)</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.min_cpu_ram.toFixed(0)} GB</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">RAM CPU Mínima (GB)</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_cpu_ram.toFixed(0)} GB</span>
                     </div>
                     <Slider
                       value={[advancedFilters.min_cpu_ram]}
@@ -2039,7 +2039,7 @@ export default function Dashboard() {
                       step={2}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>1 GB</span>
                       <span>128 GB</span>
                       <span>256 GB</span>
@@ -2048,8 +2048,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">Disco Mínimo (GB)</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.min_disk.toFixed(0)} GB</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">Disco Mínimo (GB)</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_disk.toFixed(0)} GB</span>
                     </div>
                     <Slider
                       value={[advancedFilters.min_disk]}
@@ -2059,7 +2059,7 @@ export default function Dashboard() {
                       step={10}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>10 GB</span>
                       <span>1000 GB</span>
                       <span>2000 GB</span>
@@ -2068,8 +2068,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">Velocidade CPU Mínima (GHz)</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.cpu_ghz.toFixed(1)} GHz</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">Velocidade CPU Mínima (GHz)</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.cpu_ghz.toFixed(1)} GHz</span>
                     </div>
                     <Slider
                       value={[advancedFilters.cpu_ghz]}
@@ -2079,7 +2079,7 @@ export default function Dashboard() {
                       step={0.1}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>0 GHz</span>
                       <span>2.5 GHz</span>
                       <span>5.0 GHz</span>
@@ -2093,8 +2093,8 @@ export default function Dashboard() {
                 <div className="space-y-4 mt-3">
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">DLPerf Mínimo</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.min_dlperf.toFixed(1)}</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">DLPerf Mínimo</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_dlperf.toFixed(1)}</span>
                     </div>
                     <Slider
                       value={[advancedFilters.min_dlperf]}
@@ -2104,7 +2104,7 @@ export default function Dashboard() {
                       step={1}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>0</span>
                       <span>50</span>
                       <span>100</span>
@@ -2113,8 +2113,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">PCIe BW Mínima (GB/s)</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.min_pcie_bw.toFixed(1)} GB/s</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">PCIe BW Mínima (GB/s)</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_pcie_bw.toFixed(1)} GB/s</span>
                     </div>
                     <Slider
                       value={[advancedFilters.min_pcie_bw]}
@@ -2124,7 +2124,7 @@ export default function Dashboard() {
                       step={1}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>0 GB/s</span>
                       <span>50 GB/s</span>
                       <span>100 GB/s</span>
@@ -2133,8 +2133,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">TFLOPs Totais Mínimos</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.total_flops.toFixed(0)} TFLOP</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">TFLOPs Totais Mínimos</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.total_flops.toFixed(0)} TFLOP</span>
                     </div>
                     <Slider
                       value={[advancedFilters.total_flops]}
@@ -2144,7 +2144,7 @@ export default function Dashboard() {
                       step={100}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>0 TFLOP</span>
                       <span>5000 TFLOP</span>
                       <span>10000 TFLOP</span>
@@ -2153,8 +2153,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">Compute Capability Mínimo</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{(advancedFilters.compute_cap / 10).toFixed(1)}</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">Compute Capability Mínimo</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{(advancedFilters.compute_cap / 10).toFixed(1)}</span>
                     </div>
                     <Slider
                       value={[advancedFilters.compute_cap]}
@@ -2164,7 +2164,7 @@ export default function Dashboard() {
                       step={10}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>3.0</span>
                       <span>6.0</span>
                       <span>9.0</span>
@@ -2188,8 +2188,8 @@ export default function Dashboard() {
                 <div className="space-y-4 mt-3">
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">Download Mínimo (Mbps)</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.min_inet_down.toFixed(0)} Mbps</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">Download Mínimo (Mbps)</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_inet_down.toFixed(0)} Mbps</span>
                     </div>
                     <Slider
                       value={[advancedFilters.min_inet_down]}
@@ -2199,7 +2199,7 @@ export default function Dashboard() {
                       step={10}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>10 Mbps</span>
                       <span>500 Mbps</span>
                       <span>1000 Mbps</span>
@@ -2208,8 +2208,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">Upload Mínimo (Mbps)</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.min_inet_up.toFixed(0)} Mbps</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">Upload Mínimo (Mbps)</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_inet_up.toFixed(0)} Mbps</span>
                     </div>
                     <Slider
                       value={[advancedFilters.min_inet_up]}
@@ -2219,7 +2219,7 @@ export default function Dashboard() {
                       step={10}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>10 Mbps</span>
                       <span>500 Mbps</span>
                       <span>1000 Mbps</span>
@@ -2228,8 +2228,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">Portas Diretas Mínimas</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{advancedFilters.direct_port_count}</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">Portas Diretas Mínimas</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.direct_port_count}</span>
                     </div>
                     <Slider
                       value={[advancedFilters.direct_port_count]}
@@ -2239,7 +2239,7 @@ export default function Dashboard() {
                       step={1}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>0</span>
                       <span>16</span>
                       <span>32</span>
@@ -2253,8 +2253,8 @@ export default function Dashboard() {
                 <div className="space-y-4 mt-3">
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">Preço Máximo</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">${advancedFilters.max_price.toFixed(2)}/hr</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">Preço Máximo</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">${advancedFilters.max_price.toFixed(2)}/hr</span>
                     </div>
                     <Slider
                       value={[advancedFilters.max_price]}
@@ -2264,7 +2264,7 @@ export default function Dashboard() {
                       step={0.05}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>$0.05</span>
                       <span>$7.50</span>
                       <span>$15.00</span>
@@ -2298,8 +2298,8 @@ export default function Dashboard() {
 
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-400">Confiabilidade Mínima</Label>
-                      <span className="text-sm text-gray-200 font-mono font-medium">{(advancedFilters.min_reliability * 100).toFixed(0)}%</span>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400">Confiabilidade Mínima</Label>
+                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{(advancedFilters.min_reliability * 100).toFixed(0)}%</span>
                     </div>
                     <Slider
                       value={[advancedFilters.min_reliability]}
@@ -2309,14 +2309,14 @@ export default function Dashboard() {
                       step={0.05}
                       className="w-full"
                     />
-                    <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
+                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
                       <span>0%</span>
                       <span>50%</span>
                       <span>100%</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between border border-gray-700/30 rounded-lg p-3 bg-gray-900/20">
+                  <div className="flex items-center justify-between border border-gray-200 dark:border-gray-700/30 rounded-lg p-3 bg-gray-900/20">
                     <Label className="text-sm text-gray-300">Apenas Datacenters Certificados</Label>
                     <Switch
                       checked={advancedFilters.datacenter}
@@ -2379,7 +2379,7 @@ export default function Dashboard() {
               </button>
               <button
                 onClick={() => setMode('wizard')}
-                className="px-6 py-3 rounded-lg text-gray-300 hover:text-white text-sm font-semibold transition-all border border-gray-600/40 hover:border-gray-500/40 bg-gray-900/50 hover:bg-gray-800/50 flex items-center justify-center gap-2"
+                className="px-6 py-3 rounded-lg text-gray-300 hover:text-white text-sm font-semibold transition-all border border-gray-600/40 hover:border-gray-500/40 bg-gray-900/50 hover:bg-gray-100 dark:bg-gray-800/50 flex items-center justify-center gap-2"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Voltar ao Wizard
@@ -2398,7 +2398,7 @@ export default function Dashboard() {
               </div>
               <button
                 onClick={() => setShowResults(false)}
-                className="px-3 py-1.5 text-xs text-gray-400 hover:text-white border border-gray-700 rounded transition-colors"
+                className="px-3 py-1.5 text-xs text-gray-400 hover:text-white border border-gray-200 dark:border-gray-700 rounded transition-colors"
               >
                 ← Voltar
               </button>

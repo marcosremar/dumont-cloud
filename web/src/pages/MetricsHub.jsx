@@ -26,7 +26,7 @@ const metricsCategories = [
         icon: BarChart3,
         title: 'Mercado de GPUs',
         description: 'Histórico de preços, tendências e comparação entre tipos de máquinas (On-Demand, Spot, Bid)',
-        color: '#3b82f6',
+        color: 'brand',
         link: '/metrics?tab=market'
       },
       {
@@ -34,7 +34,7 @@ const metricsCategories = [
         icon: Shield,
         title: 'Ranking de Provedores',
         description: 'Classificação de provedores por confiabilidade, disponibilidade e estabilidade de preços',
-        color: '#8b5cf6',
+        color: 'primary',
         link: '/metrics?tab=providers'
       },
       {
@@ -42,7 +42,7 @@ const metricsCategories = [
         icon: Zap,
         title: 'Eficiência de Custo',
         description: 'Rankings de custo-benefício considerando $/TFLOPS, $/VRAM e performance',
-        color: '#f59e0b',
+        color: 'warning',
         link: '/metrics?tab=efficiency'
       }
     ]
@@ -56,7 +56,7 @@ const metricsCategories = [
         icon: TrendingUp,
         title: 'Monitor de Preços Spot',
         description: 'Acompanhamento em tempo real dos preços Spot com tendências e comparação vs On-Demand',
-        color: '#22c55e',
+        color: 'success',
         link: '/metrics?tab=spot&report=monitor'
       },
       {
@@ -64,7 +64,7 @@ const metricsCategories = [
         icon: DollarSign,
         title: 'Calculadora de Economia',
         description: 'Calcule quanto você pode economizar usando Spot ao invés de On-Demand por GPU',
-        color: '#10b981',
+        color: 'success',
         link: '/metrics?tab=spot&report=savings'
       },
       {
@@ -72,7 +72,7 @@ const metricsCategories = [
         icon: Activity,
         title: 'Disponibilidade Instantânea',
         description: 'Visualize quais GPUs estão disponíveis agora no mercado Spot com preços atuais',
-        color: '#06b6d4',
+        color: 'primary',
         link: '/metrics?tab=spot&report=availability'
       },
       {
@@ -80,7 +80,7 @@ const metricsCategories = [
         icon: Target,
         title: 'Previsão de Preços',
         description: 'Previsões de preço por hora e dia da semana usando Machine Learning para encontrar o melhor momento',
-        color: '#6366f1',
+        color: 'primary',
         link: '/metrics?tab=spot&report=prediction'
       },
       {
@@ -88,7 +88,7 @@ const metricsCategories = [
         icon: Clock,
         title: 'Janelas Seguras',
         description: 'Identifique os horários com menor risco de interrupção para rodar workloads Spot',
-        color: '#0ea5e9',
+        color: 'brand',
         link: '/metrics?tab=spot&report=safe-windows'
       }
     ]
@@ -102,7 +102,7 @@ const metricsCategories = [
         icon: Shield,
         title: 'Score de Confiabilidade',
         description: 'Avaliação detalhada de provedores com scores de disponibilidade, estabilidade e verificação',
-        color: '#14b8a6',
+        color: 'success',
         link: '/metrics?tab=spot&report=reliability'
       },
       {
@@ -110,7 +110,7 @@ const metricsCategories = [
         icon: AlertTriangle,
         title: 'Taxa de Interrupção',
         description: 'Histórico de interrupções por provedor para escolher os mais estáveis para Spot',
-        color: '#f97316',
+        color: 'warning',
         link: '/metrics?tab=spot&report=interruption'
       },
       {
@@ -118,7 +118,7 @@ const metricsCategories = [
         icon: Cpu,
         title: 'Melhor GPU para LLM',
         description: 'Ranking de GPUs por $/token para inferência de modelos como Llama, Mistral e outros',
-        color: '#ec4899',
+        color: 'error',
         link: '/metrics?tab=spot&report=llm'
       },
       {
@@ -126,7 +126,7 @@ const metricsCategories = [
         icon: PieChart,
         title: 'Custo por Treinamento',
         description: 'Estime o custo total de treinamento por horas, comparando Spot vs On-Demand',
-        color: '#a855f7',
+        color: 'primary',
         link: '/metrics?tab=spot&report=training'
       },
       {
@@ -134,72 +134,125 @@ const metricsCategories = [
         icon: Server,
         title: 'Estratégia de Fleet',
         description: 'Recomendações de composição de fleet Spot com diversificação e análise de risco',
-        color: '#64748b',
+        color: 'gray',
         link: '/metrics?tab=spot&report=fleet'
+      }
+    ]
+  },
+  {
+    title: 'CPU Failover & Backup',
+    description: 'Monitoramento e relatórios do sistema de failover automático',
+    items: [
+      {
+        id: 'failover-report',
+        icon: Shield,
+        title: 'Relatório de Failover',
+        description: 'Histórico completo de failovers: taxa de sucesso, MTTR, latências e detalhes de cada recuperação',
+        color: 'error',
+        link: '/app/failover-report'
+      },
+      {
+        id: 'cpu-standby',
+        icon: Cpu,
+        title: 'CPU Standby Status',
+        description: 'Status das máquinas CPU backup: sincronização, custos e prontidão para failover',
+        color: 'brand',
+        link: '/app/machines'
+      },
+      {
+        id: 'failover-config',
+        icon: Zap,
+        title: 'Configurar Failover',
+        description: 'Configure auto-failover, auto-recovery e políticas de backup para suas máquinas GPU',
+        color: 'warning',
+        link: '/app/failover-report'
       }
     ]
   }
 ]
 
+const getIconColorClass = (color) => {
+  switch (color) {
+    case 'brand': return 'stat-card-icon-primary'
+    case 'primary': return 'stat-card-icon-primary'
+    case 'success': return 'stat-card-icon-success'
+    case 'warning': return 'stat-card-icon-warning'
+    case 'error': return 'stat-card-icon-error'
+    default: return 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+  }
+}
+
 export default function MetricsHub() {
   const navigate = useNavigate()
 
   return (
-    <div className="metrics-hub">
-      <div className="metrics-hub-header">
-        <h1>
-          <BarChart3 size={32} />
-          Central de Métricas
-        </h1>
-        <p>Explore relatórios detalhados do mercado de GPUs VAST.ai para tomar decisões inteligentes</p>
+    <div className="page-container">
+      {/* Page Header - TailAdmin Style */}
+      <div className="page-header">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="page-title flex items-center gap-3">
+              <div className="stat-card-icon stat-card-icon-primary">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              Central de Métricas
+            </h1>
+            <p className="page-subtitle">Explore relatórios detalhados do mercado de GPUs VAST.ai para tomar decisões inteligentes</p>
+          </div>
+        </div>
       </div>
 
-      <div className="metrics-hub-content">
+      {/* Metrics Categories */}
+      <div className="space-y-8">
         {metricsCategories.map((category, catIdx) => (
-          <div key={catIdx} className="metrics-category">
-            <div className="category-header">
-              <h2>{category.title}</h2>
-              <p>{category.description}</p>
+          <div key={catIdx} className="ta-card">
+            <div className="ta-card-header">
+              <h2 className="ta-card-title">{category.title}</h2>
+              <p className="ta-card-subtitle">{category.description}</p>
             </div>
 
-            <div className="metrics-cards-grid">
-              {category.items.map((item) => {
-                const Icon = item.icon
-                return (
-                  <div
-                    key={item.id}
-                    className="metric-card"
-                    onClick={() => navigate(item.link)}
-                    style={{ '--accent-color': item.color }}
-                  >
-                    <div className="metric-card-icon" style={{ backgroundColor: `${item.color}20` }}>
-                      <Icon size={24} style={{ color: item.color }} />
+            <div className="ta-card-body">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {category.items.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => navigate(item.link)}
+                      className="group p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-brand-300 dark:hover:border-brand-500/50 hover:shadow-lg transition-all cursor-pointer"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className={`stat-card-icon ${getIconColorClass(item.color)} flex-shrink-0`}>
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                            {item.title}
+                          </h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                            {item.description}
+                          </p>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-brand-500 group-hover:translate-x-1 transition-all flex-shrink-0" />
+                      </div>
                     </div>
-                    <div className="metric-card-content">
-                      <h3>{item.title}</h3>
-                      <p>{item.description}</p>
-                    </div>
-                    <div className="metric-card-arrow">
-                      <ArrowRight size={20} />
-                    </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="metrics-hub-footer">
-        <div className="quick-stats">
-          <div className="quick-stat">
-            <Sparkles size={20} />
-            <span>10 Relatórios Spot disponíveis</span>
-          </div>
-          <div className="quick-stat">
-            <Activity size={20} />
-            <span>Dados atualizados em tempo real</span>
-          </div>
+      {/* Footer Stats */}
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-brand-500" />
+          <span>10 Relatórios Spot disponíveis</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Activity className="w-4 h-4 text-success-500" />
+          <span>Dados atualizados em tempo real</span>
         </div>
       </div>
     </div>

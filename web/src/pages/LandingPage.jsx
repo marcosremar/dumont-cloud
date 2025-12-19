@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Zap, Cloud, DollarSign, Shield, Clock, Cpu, Globe, 
-  ChevronRight, Check, Play, ArrowRight, Sparkles, 
+  Zap, Cloud, DollarSign, Shield, Clock, Cpu, Globe,
+  ChevronRight, Check, Play, ArrowRight, Sparkles,
   Server, Smartphone, Code, TrendingUp, PiggyBank,
   Lock, Rocket, BarChart3, Users, Star, Calculator
 } from 'lucide-react'
@@ -11,7 +11,7 @@ import {
 const PriceComparison = () => {
   const [selectedGPU, setSelectedGPU] = useState('RTX 4090')
   const [hoursPerMonth, setHoursPerMonth] = useState(160)
-  
+
   const gpuData = {
     'RTX 4090': {
       dumont: 0.44,
@@ -67,12 +67,12 @@ const PriceComparison = () => {
         </div>
         <div className="control-group">
           <label>Horas por mês: {hoursPerMonth}h</label>
-          <input 
-            type="range" 
-            min="40" 
-            max="720" 
+          <input
+            type="range"
+            min="40"
+            max="720"
             step="40"
-            value={hoursPerMonth} 
+            value={hoursPerMonth}
             onChange={(e) => setHoursPerMonth(parseInt(e.target.value))}
           />
         </div>
@@ -85,7 +85,7 @@ const PriceComparison = () => {
           <div className="monthly">Custo/mês</div>
           <div className="savings">Economia</div>
         </div>
-        
+
         <div className="comparison-row dumont highlight">
           <div className="provider">
             <Cloud size={18} />
@@ -222,7 +222,7 @@ export default function LandingPage({ onLogin }) {
     const duration = 2000
     const steps = 60
     const increment = duration / steps
-    
+
     let current = 0
     const interval = setInterval(() => {
       current++
@@ -269,23 +269,23 @@ export default function LandingPage({ onLogin }) {
           <div className="hero-gradient" />
           <div className="hero-grid" />
         </div>
-        
+
         <div className="hero-content">
           <div className="hero-badge">
-            <Sparkles size={14} />
-            <span>Economize até 89% em GPU Cloud</span>
+            <DollarSign size={14} />
+            <span>Você pode economizar R$ 8.500/mês em GPU Cloud</span>
           </div>
-          
+
           <h1>
-            Desenvolvimento com GPU
-            <span className="gradient-text"> até 10x mais barato</span>
-            que AWS, GCP e Azure
+            Pare de pagar caro por GPU.
+            <span className="gradient-text">Economize até R$ 102.000/ano</span>
+            com a mesma performance.
           </h1>
-          
+
           <p className="hero-description">
-            Acesse GPUs de alta performance de qualquer lugar. 
-            Deploy em segundos, pague apenas pelo que usar. 
-            Com IA integrada para escolher a melhor máquina para seu workload.
+            Mesmas GPUs que você usa na AWS. Até 89% mais barato.
+            Deploy em 2 minutos. Sem dor de cabeça.
+            Nossa IA escolhe a GPU certa e você vê a economia em reais, não em planilhas.
           </p>
 
           <div className="hero-stats">
@@ -305,12 +305,12 @@ export default function LandingPage({ onLogin }) {
 
           <div className="hero-ctas">
             <button className="cta-primary" onClick={() => setShowLogin(true)}>
-              <Rocket size={18} />
-              Começar 7 Dias Grátis
+              <DollarSign size={18} />
+              Ver Quanto Eu Economizo
             </button>
-            <button className="cta-secondary">
-              <Play size={18} />
-              Ver Demo
+            <button className="cta-secondary" onClick={() => document.getElementById('calculator').scrollIntoView({ behavior: 'smooth' })}>
+              <Calculator size={18} />
+              Calcular Minha Economia
             </button>
           </div>
 
@@ -401,26 +401,26 @@ export default function LandingPage({ onLogin }) {
         </div>
 
         <div className="features-grid">
-          <FeatureCard 
+          <FeatureCard
             icon={DollarSign}
-            title="Economia Real"
-            description="Comparamos preços em tempo real com AWS, GCP e Azure. Economize até 89% automaticamente."
+            title="Você economiza R$ 8.500/mês"
+            description="Com 10 GPUs rodando 160h/mês, você paga R$ 1.500 em vez de R$ 10.000 na AWS. A diferença vai pro seu bolso."
             highlight
           />
-          <FeatureCard 
-            icon={Smartphone}
-            title="Acesso de Qualquer Lugar"
-            description="Desenvolva do celular, tablet ou qualquer computador. VS Code integrado no browser."
-          />
-          <FeatureCard 
-            icon={Sparkles}
-            title="IA para Escolher GPU"
-            description="Descreva seu projeto e nossa IA recomenda a GPU ideal para seu workload e orçamento."
-          />
-          <FeatureCard 
+          <FeatureCard
             icon={Zap}
-            title="Auto-Hibernação Inteligente"
-            description="Economize automaticamente. Máquinas hibernam quando ociosas e acordam quando você precisa."
+            title="Auto-economia: +R$ 2.400/mês grátis"
+            description="Máquinas hibernam quando ociosas. Você esquece, o sistema economiza automático. Sem precisar lembrar de desligar nada."
+          />
+          <FeatureCard
+            icon={Sparkles}
+            title="IA escolhe a GPU mais barata"
+            description="Descreva seu projeto. A IA recomenda a GPU certa e mostra: 'Use RTX 3090, economize R$ 1.200/mês vs RTX 4090'."
+          />
+          <FeatureCard
+            icon={Smartphone}
+            title="Acesse de qualquer lugar"
+            description="Deploy do celular, tablet ou computador. Tudo no browser, zero instalação. Você não fica preso na mesa."
           />
         </div>
 
@@ -461,7 +461,7 @@ export default function LandingPage({ onLogin }) {
             <span className="section-badge purple">Powered by AI</span>
             <h2>Deixe a IA escolher a melhor GPU para você</h2>
             <p>
-              Descreva seu projeto em linguagem natural e nossa IA analisa 
+              Descreva seu projeto em linguagem natural e nossa IA analisa
               seu workload, compara preços e recomenda a configuração ideal.
             </p>
             <ul className="ai-features">
@@ -523,7 +523,7 @@ export default function LandingPage({ onLogin }) {
               </div>
               <p className="plan-subtitle">Ideal para começar</p>
             </div>
-            
+
             <div className="plan-hours">
               <h4><Clock size={16} /> Horas incluídas:</h4>
               <div className="hours-list">
@@ -572,7 +572,7 @@ export default function LandingPage({ onLogin }) {
               </div>
               <p className="plan-subtitle">Para projetos sérios</p>
             </div>
-            
+
             <div className="plan-hours">
               <h4><Clock size={16} /> Horas incluídas:</h4>
               <div className="hours-list">
@@ -626,7 +626,7 @@ export default function LandingPage({ onLogin }) {
               </div>
               <p className="plan-subtitle">Para equipes e produção</p>
             </div>
-            
+
             <div className="plan-hours">
               <h4><Clock size={16} /> Horas incluídas:</h4>
               <div className="hours-list">
@@ -771,7 +771,7 @@ export default function LandingPage({ onLogin }) {
             <span className="section-badge green">Portabilidade</span>
             <h2>Desenvolva de qualquer dispositivo</h2>
             <p>
-              Acesse seu ambiente de desenvolvimento do celular, tablet ou 
+              Acesse seu ambiente de desenvolvimento do celular, tablet ou
               qualquer computador. VS Code no browser com todas as extensões.
             </p>
             <ul className="portability-features">
@@ -803,13 +803,13 @@ export default function LandingPage({ onLogin }) {
               <div className="testimonial-stars">
                 {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="#fbbf24" color="#fbbf24" />)}
               </div>
-              <p>"Estava pagando $2000/mês na AWS. Com Dumont Cloud, pago menos de $300 pelo mesmo workload. Impressionante."</p>
+              <p>"Economizei R$ 6.700 no primeiro mês. Rodava 8 A100s na AWS por R$ 8.200/mês. Na Dumont pago R$ 1.500. Mesma performance, deploy mais fácil."</p>
             </div>
             <div className="testimonial-author">
               <div className="author-avatar">ML</div>
               <div>
                 <strong>Marco Lima</strong>
-                <span>ML Engineer @ Startup AI</span>
+                <span>ML Engineer @ Startup IA (São Paulo)</span>
               </div>
             </div>
           </div>
@@ -818,13 +818,13 @@ export default function LandingPage({ onLogin }) {
               <div className="testimonial-stars">
                 {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="#fbbf24" color="#fbbf24" />)}
               </div>
-              <p>"A IA que recomenda GPU é genial. Descrevo o projeto e ela já me dá a configuração ideal. Economizo tempo e dinheiro."</p>
+              <p>"A IA Advisor me salvou R$ 1.800/mês. Eu ia pegar H100, ela sugeriu RTX 4090 que faz o mesmo job. Fine-tuning de LLaMA 7B roda perfeito."</p>
             </div>
             <div className="testimonial-author">
               <div className="author-avatar">AS</div>
               <div>
                 <strong>Ana Santos</strong>
-                <span>Data Scientist</span>
+                <span>Data Scientist (Rio de Janeiro)</span>
               </div>
             </div>
           </div>
@@ -833,13 +833,13 @@ export default function LandingPage({ onLogin }) {
               <div className="testimonial-stars">
                 {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="#fbbf24" color="#fbbf24" />)}
               </div>
-              <p>"A auto-hibernação é perfeita. Não preciso me preocupar em desligar máquinas. O sistema faz tudo sozinho."</p>
+              <p>"Auto-hibernação é dinheiro grátis. Esquecia máquinas ligadas, gastava R$ 500/mês a toa. Agora zero preocupação, economizo R$ 400/mês sem fazer nada."</p>
             </div>
             <div className="testimonial-author">
               <div className="author-avatar">RC</div>
               <div>
                 <strong>Rafael Costa</strong>
-                <span>Full Stack Developer</span>
+                <span>Full Stack Developer (Remoto)</span>
               </div>
             </div>
           </div>
@@ -849,21 +849,21 @@ export default function LandingPage({ onLogin }) {
       {/* CTA Section */}
       <section className="final-cta-section">
         <div className="cta-container">
-          <h2>Pronto para economizar até 89% em GPU Cloud?</h2>
-          <p>Comece grátis por 7 dias. Sem cartão de crédito para trial.</p>
+          <h2>Quer economizar R$ 8.500/mês em GPU Cloud?</h2>
+          <p>Faça o cálculo agora e veja quanto você vai economizar. Deploy em 2 minutos. Sem complicação.</p>
           <div className="cta-buttons">
-            <button className="cta-primary large" onClick={() => setShowLogin(true)}>
-              <Rocket size={20} />
-              Começar 7 Dias Grátis
+            <button className="cta-primary large" onClick={() => document.getElementById('calculator').scrollIntoView({ behavior: 'smooth' })}>
+              <Calculator size={20} />
+              Calcular Minha Economia
             </button>
-            <button className="cta-secondary large">
-              Agendar Demo
+            <button className="cta-secondary large" onClick={() => setShowLogin(true)}>
+              Começar Agora (Trial Grátis)
             </button>
           </div>
           <div className="cta-features">
-            <span><Check size={14} /> Setup em 2 minutos</span>
-            <span><Check size={14} /> Sem lock-in</span>
-            <span><Check size={14} /> Suporte brasileiro</span>
+            <span><Check size={14} /> Deploy em 2 minutos</span>
+            <span><Check size={14} /> Cancele quando quiser</span>
+            <span><Check size={14} /> Sem cartão no trial</span>
           </div>
         </div>
       </section>
@@ -942,7 +942,7 @@ export default function LandingPage({ onLogin }) {
               <button className="modal-close-btn" onClick={() => setShowLogin(false)}>
                 ×
               </button>
-              
+
               <div className="form-panel-content">
                 <div className="form-header">
                   <h3>Entrar na sua conta</h3>
@@ -1005,7 +1005,7 @@ function LoginForm({ onLogin, onClose }) {
           <span>{error}</span>
         </div>
       )}
-      
+
       <div className="form-field">
         <label htmlFor="email">Email</label>
         <div className="field-input-wrap">
@@ -1021,7 +1021,7 @@ function LoginForm({ onLogin, onClose }) {
           />
         </div>
       </div>
-      
+
       <div className="form-field">
         <div className="field-label-row">
           <label htmlFor="password">Senha</label>
@@ -1038,8 +1038,8 @@ function LoginForm({ onLogin, onClose }) {
             autoComplete="current-password"
             required
           />
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="password-toggle"
             onClick={() => setShowPassword(!showPassword)}
             tabIndex={-1}
@@ -1048,7 +1048,7 @@ function LoginForm({ onLogin, onClose }) {
           </button>
         </div>
       </div>
-      
+
       <button type="submit" className="login-submit" disabled={loading}>
         {loading ? (
           <>
@@ -1062,11 +1062,11 @@ function LoginForm({ onLogin, onClose }) {
           </>
         )}
       </button>
-      
+
       <div className="login-footer">
         <p>Não tem conta? <a href="#">Criar conta grátis</a></p>
       </div>
-      
+
       <div className="demo-credentials">
         <div className="demo-label">
           <Sparkles size={12} />

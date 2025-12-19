@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Debug Iniciar Button</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #0e110e;
+      color: white;
+    }
+    .debug-section {
+      background: #131713;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .debug-section h2 {
+      margin-top: 0;
+      color: #4ade80;
+    }
+    .log {
+      background: #000;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      margin: 2px 0;
+      padding: 2px 4px;
+    }
+    .log-entry.info { color: #60a5fa; }
+    .log-entry.success { color: #4ade80; }
+    .log-entry.error { color: #f87171; }
+    .log-entry.warn { color: #fbbf24; }
+    button {
+      background: #4ade80;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 5px;
+    }
+    button:hover {
+      background: #22c55e;
+    }
+    button.disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    iframe {
+      width: 100%;
+      height: 800px;
+      border: 2px solid #4ade80;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 Debugging Iniciar Button on Machines Page</h1>
+
+  <div class="debug-section">
+    <h2>Instructions</h2>
+    <ol>
+      <li>Make sure the dev server is running on http://localhost:5173</li>
+      <li>Click "Start Debug Session" to load the Machines page</li>
+      <li>The debug console will log all interactions</li>
+      <li>Try clicking the "Iniciar" button on a stopped machine</li>
+    </ol>
+    <button onclick="startDebug()">Start Debug Session</button>
+    <button onclick="clearLogs()">Clear Logs</button>
+  </div>
+
+  <div class="debug-section">
+    <h2>Debug Console</h2>
+    <div class="log" id="debugLog"></div>
+  </div>
+
+  <div class="debug-section">
+    <h2>Application View</h2>
+    <iframe id="appFrame" src="about:blank"></iframe>
+  </div>
+
+  <script>
+    const logs = [];
+
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const entry = { timestamp, message, type };
+      logs.push(entry);
+
+      const logDiv = document.getElementById('debugLog');
+      const logEntry = document.createElement('div');
+      logEntry.className = `log-entry ${type}`;
+      logEntry.textContent = `[${timestamp}] ${message}`;
+      logDiv.appendChild(logEntry);
+      logDiv.scrollTop = logDiv.scrollHeight;
+
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+
+    function clearLogs() {
+      logs.length = 0;
+      document.getElementById('debugLog').innerHTML = '';
+      log('Logs cleared', 'info');
+    }
+
+    function startDebug() {
+      log('Starting debug session...', 'info');
+
+      // Navigate to demo app machines page
+      const url = 'http://localhost:5173/demo-app/machines';
+      log(`Loading: ${url}`, 'info');
+
+      const iframe = document.getElementById('appFrame');
+      iframe.src = url;
+
+      // Set up iframe monitoring
+      iframe.onload = function() {
+        log('Page loaded successfully', 'success');
+        monitorIframe();
+      };
+
+      iframe.onerror = function(e) {
+        log(`Error loading page: ${e.message}`, 'error');
+      };
+    }
+
+    function monitorIframe() {
+      try {
+        const iframe = document.getElementById('appFrame');
+        const iframeWindow = iframe.contentWindow;
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+        log('Setting up iframe monitoring...', 'info');
+
+        // Monitor console logs from iframe
+        const originalLog = iframeWindow.console.log;
+        const originalError = iframeWindow.console.error;
+        const originalWarn = iframeWindow.console.warn;
+
+        iframeWindow.console.log = function(...args) {
+          log(`[APP] ${args.join(' ')}`, 'info');
+          originalLog.apply(console, args);
+        };
+
+        iframeWindow.console.error = function(...args) {
+          log(`[APP ERROR] ${args.join(' ')}`, 'error');
+          originalError.apply(console, args);
+        };
+
+        iframeWindow.console.warn = function(...args) {
+          log(`[APP WARN] ${args.join(' ')}`, 'warn');
+          originalWarn.apply(console, args);
+        };
+
+        // Monitor clicks
+        iframeDoc.addEventListener('click', function(e) {
+          const target = e.target;
+          const tagName = target.tagName.toLowerCase();
+          const text = target.textContent?.trim().substring(0, 50);
+          const className = target.className;
+
+          log(`Click on <${tagName}> "${text}" (class: ${className})`, 'info');
+
+          // Specifically monitor "Iniciar" button clicks
+          if (text && text.includes('Iniciar')) {
+            log('🎯 INICIAR BUTTON CLICKED!', 'warn');
+
+            // Check if the button has an onClick handler
+            setTimeout(() => {
+              log('Checking for state changes...', 'info');
+
+              // Check for toast
+              const toast = iframeDoc.querySelector('[class*="fixed bottom-6 right-6"]');
+              if (toast) {
+                log(`✅ Toast found: ${toast.textContent}`, 'success');
+              } else {
+                log('❌ No toast found', 'error');
+              }
+
+              // Check for status change
+              const statusBadges = iframeDoc.querySelectorAll('[class*="StatusBadge"]');
+              log(`Found ${statusBadges.length} status badges`, 'info');
+              statusBadges.forEach((badge, i) => {
+                log(`  Badge ${i}: ${badge.textContent}`, 'info');
+              });
+            }, 500);
+          }
+        }, true);
+
+        // Check for stopped machines
+        setTimeout(() => {
+          const machineCards = iframeDoc.querySelectorAll('[class*="flex flex-col p-3"]');
+          log(`Found ${machineCards.length} machine cards`, 'info');
+
+          machineCards.forEach((card, i) => {
+            const statusBadge = card.querySelector('[class*="StatusBadge"]');
+            const machineName = card.querySelector('span.text-white.font-semibold')?.textContent;
+            const iniciarBtn = Array.from(card.querySelectorAll('button')).find(btn =>
+              btn.textContent?.includes('Iniciar')
+            );
+
+            if (statusBadge) {
+              log(`  Card ${i}: ${machineName} - Status: ${statusBadge.textContent} - Has Iniciar: ${!!iniciarBtn}`, 'info');
+            }
+          });
+        }, 2000);
+
+      } catch (e) {
+        log(`Cannot monitor iframe (CORS): ${e.message}`, 'warn');
+        log('This is expected if the app is on a different origin', 'warn');
+      }
+    }
+
+    log('Debug tool ready. Click "Start Debug Session" to begin.', 'success');
+  </script>
+</body>
+</html>

@@ -238,3 +238,80 @@ class SyncStatusResponse(BaseModel):
     sync_count: int = Field(0, description="Total sync count")
     last_stats: Optional[Dict[str, Any]] = Field(None, description="Last sync statistics")
     error: Optional[str] = Field(None, description="Last error if any")
+
+
+# Fine-Tuning Responses
+
+class FineTuneJobResponse(BaseModel):
+    """Fine-tuning job response"""
+    id: str = Field(..., description="Job ID")
+    user_id: str = Field(..., description="User ID")
+    name: str = Field(..., description="Job name")
+    status: str = Field(..., description="Job status")
+    base_model: str = Field(..., description="Base model ID")
+    dataset_source: str = Field(..., description="Dataset source")
+    dataset_path: str = Field(..., description="Dataset path")
+    dataset_format: str = Field(..., description="Dataset format")
+    gpu_type: str = Field(..., description="GPU type")
+    num_gpus: int = Field(..., description="Number of GPUs")
+    config: Dict[str, Any] = Field(..., description="Fine-tuning config")
+
+    # Progress
+    current_epoch: int = Field(0, description="Current epoch")
+    current_step: int = Field(0, description="Current step")
+    total_steps: int = Field(0, description="Total steps")
+    loss: Optional[float] = Field(None, description="Current loss")
+    progress_percent: float = Field(0.0, description="Progress percentage")
+
+    # Timestamps
+    created_at: str = Field(..., description="Creation timestamp")
+    started_at: Optional[str] = Field(None, description="Start timestamp")
+    completed_at: Optional[str] = Field(None, description="Completion timestamp")
+
+    # Output
+    output_model_path: Optional[str] = Field(None, description="Output model path")
+    error_message: Optional[str] = Field(None, description="Error message if failed")
+
+    @classmethod
+    def from_domain(cls, job) -> "FineTuneJobResponse":
+        """Create from domain model"""
+        return cls(
+            id=job.id,
+            user_id=job.user_id,
+            name=job.name,
+            status=job.status.value,
+            base_model=job.config.base_model,
+            dataset_source=job.dataset_source.value,
+            dataset_path=job.dataset_path,
+            dataset_format=job.dataset_format,
+            gpu_type=job.gpu_type,
+            num_gpus=job.num_gpus,
+            config=job.config.to_dict(),
+            current_epoch=job.current_epoch,
+            current_step=job.current_step,
+            total_steps=job.total_steps,
+            loss=job.loss,
+            progress_percent=job.progress_percent,
+            created_at=job.created_at.isoformat() if job.created_at else None,
+            started_at=job.started_at.isoformat() if job.started_at else None,
+            completed_at=job.completed_at.isoformat() if job.completed_at else None,
+            output_model_path=job.output_model_path,
+            error_message=job.error_message,
+        )
+
+
+class ListFineTuneJobsResponse(BaseModel):
+    """List fine-tuning jobs response"""
+    jobs: List[FineTuneJobResponse] = Field(..., description="List of jobs")
+    count: int = Field(..., description="Number of jobs")
+
+
+class FineTuneJobLogsResponse(BaseModel):
+    """Fine-tuning job logs response"""
+    job_id: str = Field(..., description="Job ID")
+    logs: str = Field(..., description="Log output")
+
+
+class FineTuneModelsResponse(BaseModel):
+    """Supported models response"""
+    models: List[Dict[str, Any]] = Field(..., description="List of supported models")

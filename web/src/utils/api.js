@@ -6,10 +6,32 @@ const API_BASE = ''
 
 /**
  * Check if currently in demo mode
+ * Demo mode is active if:
+ * 1. URL starts with /demo-app
+ * 2. URL has ?demo=true parameter
+ * 3. User is logged in with demo credentials (test@test.com or demo@dumont.cloud)
+ * 4. localStorage has demo_mode flag set
  */
 export function isDemoMode() {
-  return window.location.pathname.startsWith('/demo-app') ||
-         new URLSearchParams(window.location.search).get('demo') === 'true'
+  // Check URL-based demo mode
+  if (window.location.pathname.startsWith('/demo-app')) return true
+  if (new URLSearchParams(window.location.search).get('demo') === 'true') return true
+
+  // Check if demo mode flag is set in localStorage
+  if (localStorage.getItem('demo_mode') === 'true') return true
+
+  return false
+}
+
+/**
+ * Set demo mode flag (called after login with demo credentials)
+ */
+export function setDemoMode(isDemo) {
+  if (isDemo) {
+    localStorage.setItem('demo_mode', 'true')
+  } else {
+    localStorage.removeItem('demo_mode')
+  }
 }
 
 /**
