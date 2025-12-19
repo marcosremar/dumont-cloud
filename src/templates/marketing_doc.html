@@ -241,7 +241,23 @@
         // Fetch Menu
         async function loadMenu() {
             try {
-                const res = await fetch('/api/menu');
+                // Try multiple API paths for compatibility
+                let res;
+                const paths = ['/api/menu', '/api/v1/admin/doc/menu'];
+
+                for (const path of paths) {
+                    try {
+                        res = await fetch(path);
+                        if (res.ok) break;
+                    } catch (e) {
+                        // Continue to next path
+                    }
+                }
+
+                if (!res || !res.ok) {
+                    throw new Error('Failed to fetch menu from all available paths');
+                }
+
                 const data = await res.json();
                 renderMenu(data.menu, navContainer);
 
@@ -255,6 +271,7 @@
 
             } catch (err) {
                 console.error("Menu Load Error:", err);
+                document.getElementById('content').innerHTML = '<div class="p-8 text-center text-red-500"><h2>Erro ao carregar menu</h2><p>' + err.message + '</p></div>';
             }
         }
 
@@ -329,10 +346,25 @@
             if (activeBtn) activeBtn.classList.add('active');
 
             try {
-                // Encode path components (preserves slashes, encodes spaces)
-                const res = await fetch(`/api/content/${encodeURI(id)}`);
+                // Try multiple API paths for compatibility
+                let res;
+                const paths = [
+                    `/api/content/${encodeURI(id)}`,
+                    `/api/v1/admin/doc/content/${encodeURI(id)}`
+                ];
 
-                if (!res.ok) throw new Error("Doc not found");
+                for (const path of paths) {
+                    try {
+                        res = await fetch(path);
+                        if (res.ok) break;
+                    } catch (e) {
+                        // Continue to next path
+                    }
+                }
+
+                if (!res || !res.ok) {
+                    throw new Error("Doc not found");
+                }
 
                 const data = await res.json();
 
@@ -355,7 +387,7 @@
                 }
             } catch (err) {
                 console.error(err);
-                contentDiv.innerHTML = `<div class="text-red-500 p-4">Erro ao carregar documento: ${id}</div>`;
+                contentDiv.innerHTML = `<div class="text-red-500 p-4">Erro ao carregar documento: ${id}<br><small>${err.message}</small></div>`;
             }
 
             contentDiv.style.opacity = '1';
