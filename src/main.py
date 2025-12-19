@@ -209,7 +209,71 @@ def create_app() -> FastAPI:
         if os.path.exists(template_path):
             with open(template_path, "r", encoding="utf-8") as f:
                 return f.read()
-        return "<h1>Template not found</h1>", 404
+        from fastapi.responses import Response
+        return Response("<h1>Template not found</h1>", status_code=404, media_type="text/html")
+
+    # Live Docs API - Menu structure
+    def get_menu_structure(path):
+        """
+        Recursively scans the directory to build the menu structure.
+        Returns a list of dicts: {name: str, type: 'file'|'dir', path: str, children: []}
+        """
+        items = []
+        content_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Live-Doc", "content")
+
+        if not os.path.exists(path):
+            return items
+
+        for entry in sorted(os.listdir(path)):
+            if entry.startswith('.'):
+                continue
+
+            full_path = os.path.join(path, entry)
+            relative_path = os.path.relpath(full_path, content_dir)
+
+            if os.path.isdir(full_path):
+                items.append({
+                    "name": entry,
+                    "type": "dir",
+                    "path": relative_path,
+                    "children": get_menu_structure(full_path)
+                })
+            elif entry.endswith(".md"):
+                # Remove extension for display, keep relative path for ID
+                display_name = os.path.splitext(entry)[0].replace('_', ' ')
+                items.append({
+                    "name": display_name,
+                    "type": "file",
+                    "path": relative_path,  # e.g., "Strategy/Marketing_Plan.md"
+                    "id": relative_path     # used for fetching content
+                })
+
+        return items
+
+    @app.get("/api/menu")
+    async def get_menu():
+        """Returns the directory structure as JSON for the sidebar"""
+        content_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Live-Doc", "content")
+        return {"menu": get_menu_structure(content_dir)}
+
+    @app.get("/api/content/{path:path}")
+    async def get_content(path: str):
+        """Fetches markdown content by relative path"""
+        from fastapi.exceptions import HTTPException
+
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        content_dir = os.path.join(base_dir, "Live-Doc", "content")
+
+        # Security: Prevent directory traversal
+        safe_path = os.path.normpath(os.path.join(content_dir, path))
+        if not safe_path.startswith(content_dir):
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        if os.path.exists(safe_path) and os.path.isfile(safe_path):
+            with open(safe_path, "r", encoding="utf-8") as f:
+                return {"content": f.read()}
+
+        raise HTTPException(status_code=404, detail="Document not found")
 
     # Mount static files (React build) - for JS, CSS, images
     assets_path = os.path.join(static_path, "assets")
