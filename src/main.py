@@ -298,8 +298,8 @@ def create_app() -> FastAPI:
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
         """Serve React SPA for all non-API routes"""
-        # Skip API routes
-        if full_path.startswith("api/") or full_path in ["docs", "redoc", "openapi.json", "health"]:
+        # Skip special routes - note: API routes are handled above, don't block them here
+        if full_path in ["docs", "redoc", "openapi.json", "health"]:
             return JSONResponse({"error": "Not Found"}, status_code=404)
 
         # Check if it's a static file request
