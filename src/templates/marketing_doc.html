@@ -241,24 +241,65 @@
         // Fetch Menu
         async function loadMenu() {
             try {
-                // Try multiple API paths for compatibility
-                let res;
-                const paths = ['/api/menu', '/api/v1/admin/doc/menu'];
+                // Construct API paths with better compatibility
+                const baseUrl = window.location.origin;
+                const currentPath = window.location.pathname;
+
+                let res = null;
+                let lastError = null;
+
+                // Try different API endpoint paths
+                const paths = [
+                    '/api/menu',  // Root-based path
+                    `${baseUrl}/api/menu`,  // Full URL
+                ];
+
+                // If we're under /admin/doc/live, also try relative to that
+                if (currentPath.includes('/admin/doc/')) {
+                    paths.unshift('/api/menu');  // Try root first
+                }
+
+                console.log(`Current URL: ${currentPath}`);
+                console.log(`Base URL: ${baseUrl}`);
+                console.log(`Paths to try: ${JSON.stringify(paths)}`);
 
                 for (const path of paths) {
                     try {
-                        res = await fetch(path);
-                        if (res.ok) break;
+                        console.log(`Attempting to fetch menu from: ${path}`);
+                        const fetchOptions = {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                            },
+                            credentials: 'include'  // Include cookies if needed
+                        };
+
+                        res = await fetch(path, fetchOptions);
+                        console.log(`Response status for ${path}: ${res.status} ${res.statusText}`);
+
+                        if (res.ok) {
+                            console.log(`✓ Successfully loaded from ${path}`);
+                            break;
+                        } else {
+                            lastError = `${path} returned ${res.status} ${res.statusText}`;
+                            console.warn(lastError);
+                            // Log response body for debugging
+                            const text = await res.text();
+                            console.warn(`Response body: ${text.substring(0, 200)}`);
+                        }
                     } catch (e) {
-                        // Continue to next path
+                        lastError = `${path} fetch error: ${e.message}`;
+                        console.error(lastError, e);
                     }
                 }
 
                 if (!res || !res.ok) {
-                    throw new Error('Failed to fetch menu from all available paths');
+                    throw new Error(`Failed to fetch menu from all available paths. Last error: ${lastError}`);
                 }
 
                 const data = await res.json();
+                console.log('Menu data received:', data);
+
                 renderMenu(data.menu, navContainer);
 
                 // Load first available doc by default
@@ -271,7 +312,7 @@
 
             } catch (err) {
                 console.error("Menu Load Error:", err);
-                document.getElementById('content').innerHTML = '<div class="p-8 text-center text-red-500"><h2>Erro ao carregar menu</h2><p>' + err.message + '</p></div>';
+                document.getElementById('content').innerHTML = '<div class="p-8 text-center text-red-500"><h2>Erro ao carregar menu</h2><p>' + err.message + '</p><p style="font-size: 0.85em; color: #999; margin-top: 1rem;">Abra o Console (F12 ou Ctrl+Shift+I) para detalhes completos.</p></div>';
             }
         }
 
@@ -347,23 +388,42 @@
 
             try {
                 // Try multiple API paths for compatibility
-                let res;
+                let res = null;
+                let lastError = null;
+                const baseUrl = window.location.origin;
+
                 const paths = [
                     `/api/content/${encodeURI(id)}`,
+                    `${baseUrl}/api/content/${encodeURI(id)}`,
                     `/api/v1/admin/doc/content/${encodeURI(id)}`
                 ];
 
+                console.log(`Loading doc: ${id}`);
+                console.log(`Trying paths: ${JSON.stringify(paths)}`);
+
                 for (const path of paths) {
                     try {
-                        res = await fetch(path);
-                        if (res.ok) break;
+                        console.log(`Fetching from: ${path}`);
+                        res = await fetch(path, {
+                            headers: {
+                                'Accept': 'application/json',
+                            },
+                            credentials: 'include'
+                        });
+                        console.log(`Response for ${path}: ${res.status}`);
+                        if (res.ok) {
+                            console.log(`✓ Loaded from ${path}`);
+                            break;
+                        }
+                        lastError = `${path} returned ${res.status}`;
                     } catch (e) {
-                        // Continue to next path
+                        lastError = `${path} error: ${e.message}`;
+                        console.error(lastError);
                     }
                 }
 
                 if (!res || !res.ok) {
-                    throw new Error("Doc not found");
+                    throw new Error(`Failed to load document. ${lastError}`);
                 }
 
                 const data = await res.json();
