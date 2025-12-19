@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Cloud } from 'lucide-react'
+import { Cloud, Moon, Sun } from 'lucide-react'
+import { useTheme } from '../context/ThemeContext'
 
 // Logo do Dumont Cloud para a página de login
 function DumontLogo() {
@@ -45,6 +46,7 @@ export default function Login({ onLogin }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const { theme, toggleTheme } = useTheme()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -61,6 +63,15 @@ export default function Login({ onLogin }) {
 
   return (
     <div className="login-container">
+      {/* Theme toggle button */}
+      <button
+        onClick={toggleTheme}
+        className="fixed top-4 right-4 flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800"
+        aria-label="Toggle Dark Mode"
+      >
+        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+      </button>
+
       <div className="login-card">
         <DumontLogo />
         <h1 className="login-title">Dumont Cloud</h1>

@@ -152,6 +152,35 @@ After generating each test:
 5. **ALWAYS report metrics** - Time each action
 6. **NEVER assume state** - Check current state before acting
 7. **NEVER hardcode data** - Fetch real data from API/UI
+8. **NEVER do graceful skips** - Create resources if they don't exist
+9. **ALWAYS create real machines** - VAST.ai GPUs cost money, that's OK
+
+# Resource Creation Policy
+
+**CRITICAL**: When a test requires a resource (GPU machine, CPU Standby, etc):
+- DO NOT skip the test with "graceful skip"
+- DO NOT use demo/mock data
+- DO create the real resource via API or UI
+- DO wait for provisioning (may take 1-5 minutes)
+- DO clean up after test (destroy machines created for testing)
+
+Example - if failover test needs a machine with CPU Standby:
+```javascript
+// BAD - graceful skip
+if (!hasMachineWithCpuStandby) {
+  console.log('No machines found, skipping...')
+  test.skip()  // ❌ NEVER DO THIS
+}
+
+// GOOD - create the resource
+if (!hasMachineWithCpuStandby) {
+  console.log('Creating GPU machine with CPU Standby...')
+  await createRealGpuMachine()  // ✅ CREATE IT
+  await waitForProvisioning()   // ✅ WAIT FOR IT
+}
+```
+
+The user pays for VAST.ai resources - that's expected. Tests must exercise REAL infrastructure.
 
 # Reference Files
 

@@ -934,6 +934,9 @@ export default function Machines() {
   const [failoverProgress, setFailoverProgress] = useState({}) // machineId -> { phase, message, newGpu, metrics }
   const [failoverHistory, setFailoverHistory] = useState([]) // Array of completed failover events
 
+  // Create machine modal state
+  const [createModal, setCreateModal] = useState({ open: false, offer: null, creating: false, error: null })
+
   // Show demo toast
   const showDemoToast = (message, type = 'success') => {
     setDemoToast({ message, type })
@@ -947,6 +950,17 @@ export default function Machines() {
       return () => clearInterval(interval)
     }
   }, [])
+
+  // Handle selectedOffer from Dashboard navigation
+  useEffect(() => {
+    console.log('[Machines] location.state:', location.state, 'isDemo:', isDemo)
+    if (location.state?.selectedOffer) {
+      console.log('[Machines] Opening create modal for offer:', location.state.selectedOffer)
+      setCreateModal({ open: true, offer: location.state.selectedOffer, creating: false, error: null })
+      // Clear the state to prevent reopening on refresh
+      window.history.replaceState({}, document.title)
+    }
+  }, [location.state])
 
   // Auto-sync every 30 seconds for running machines
   useEffect(() => {
@@ -1011,6 +1025,59 @@ export default function Machines() {
       fetchMachines()
     } catch (err) {
       alert(err.message)
+    }
+  }
+
+  // Create instance from offer (called from Dashboard or Nova Máquina)
+  const handleCreateInstance = async (offer) => {
+    if (isDemo) {
+      showDemoToast('Criando máquina demo...', 'info')
+      await new Promise(r => setTimeout(r, 2000))
+      const newMachine = {
+        id: Date.now(),
+        gpu_name: offer.gpu_name,
+        num_gpus: offer.num_gpus || 1,
+        gpu_ram: offer.gpu_ram,
+        cpu_cores: offer.cpu_cores,
+        cpu_ram: offer.cpu_ram,
+        disk_space: offer.disk_space,
+        dph_total: offer.dph_total,
+        actual_status: 'running',
+        status: 'running',
+        start_date: new Date().toISOString(),
+        public_ipaddr: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+        ssh_host: 'ssh.vast.ai',
+        ssh_port: 22000 + Math.floor(Math.random() * 1000),
+        cpu_standby: { enabled: true, state: 'syncing' }
+      }
+      setMachines(prev => [newMachine, ...prev])
+      setCreateModal({ open: false, offer: null, creating: false, error: null })
+      showDemoToast(`${offer.gpu_name} criada com CPU Standby!`, 'success')
+      return
+    }
+
+    setCreateModal(prev => ({ ...prev, creating: true, error: null }))
+    try {
+      const res = await apiPost('/api/v1/instances', {
+        offer_id: offer.id,
+        disk_size: offer.disk_space || 100,
+        label: `${offer.gpu_name} - ${new Date().toLocaleDateString()}`
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.detail || data.error || 'Erro ao criar instância')
+      }
+
+      const data = await res.json()
+      setCreateModal({ open: false, offer: null, creating: false, error: null })
+      fetchMachines()
+
+      // Show success message
+      showDemoToast(`${offer.gpu_name} criada! CPU Standby sendo provisionado...`, 'success')
+
+    } catch (err) {
+      setCreateModal(prev => ({ ...prev, creating: false, error: err.message }))
     }
   }
 
@@ -1510,6 +1577,71 @@ export default function Machines() {
         onClose={() => setMigrationTarget(null)}
         onSuccess={handleMigrationSuccess}
       />
+
+      {/* Create Instance Modal */}
+      <AlertDialog open={createModal.open} onOpenChange={(open) => !createModal.creating && setCreateModal(prev => ({ ...prev, open }))}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-green-400" />
+              Criar Máquina GPU
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4 pt-2">
+                {createModal.offer && (
+                  <div className="p-4 rounded-lg border border-gray-700 bg-gray-800/50">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-white font-semibold">{createModal.offer.gpu_name}</span>
+                      <span className="text-green-400 font-mono">${createModal.offer.dph_total?.toFixed(3)}/hr</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
+                      <div>VRAM: {Math.round((createModal.offer.gpu_ram || 24000) / 1024)} GB</div>
+                      <div>CPU: {createModal.offer.cpu_cores || 4} cores</div>
+                      <div>RAM: {Math.round((createModal.offer.cpu_ram || 16000) / 1024)} GB</div>
+                      <div>Disk: {Math.round(createModal.offer.disk_space || 100)} GB</div>
+                    </div>
+                  </div>
+                )}
+                <div className="p-3 rounded-lg border border-blue-700/50 bg-blue-900/20">
+                  <div className="flex items-center gap-2 text-blue-300 text-sm">
+                    <Shield className="w-4 h-4" />
+                    <span>CPU Standby será criado automaticamente</span>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1 ml-6">
+                    Uma VM de backup será provisionada para proteção contra interrupções.
+                  </p>
+                </div>
+                {createModal.error && (
+                  <div className="p-3 rounded-lg border border-red-700/50 bg-red-900/20 text-red-300 text-sm">
+                    {createModal.error}
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={createModal.creating}>Cancelar</AlertDialogCancel>
+            <button
+              onClick={() => handleCreateInstance(createModal.offer)}
+              disabled={createModal.creating}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed rounded-md transition-colors"
+              data-testid="confirm-create-instance"
+            >
+              {createModal.creating ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Criando...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" />
+                  Criar Máquina
+                </>
+              )}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Demo Toast Notification */}
       {demoToast && (

@@ -10,7 +10,8 @@ import {
   ChevronDown,
   MoreHorizontal,
   Cloud,
-  Brain
+  Brain,
+  BookOpen
 } from "lucide-react";
 import { useSidebar } from "../../context/SidebarContext";
 
@@ -58,6 +59,11 @@ const AppSidebar = ({ isDemo = false }) => {
       icon: Settings,
       name: "Settings",
       path: `${basePath}/settings`,
+    },
+    {
+      icon: BookOpen,
+      name: "Documentação",
+      path: isDemo ? "/demo-docs" : "/docs",
     },
   ];
 

@@ -545,6 +545,71 @@ def create_app():
                 'hint': 'Registre uma GPU com /api/standby/register-gpu'
             }), 404
 
+    # ========== DOCUMENTATION API ROUTES ==========
+
+    @app.route('/api/docs/menu')
+    def docs_menu():
+        """Returns the documentation directory structure as JSON for the sidebar"""
+        import os
+        import json
+
+        docs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Live-Doc', 'content')
+
+        def get_menu_structure(path):
+            """
+            Recursively scans the documentation directory to build the menu structure.
+            Returns a list of dicts: {name: str, type: 'file'|'dir', path: str, children: []}
+            """
+            items = []
+            if not os.path.exists(path):
+                return items
+
+            for entry in sorted(os.listdir(path)):
+                if entry.startswith('.'):
+                    continue
+
+                full_path = os.path.join(path, entry)
+                relative_path = os.path.relpath(full_path, docs_dir)
+
+                if os.path.isdir(full_path):
+                    items.append({
+                        "name": entry,
+                        "type": "dir",
+                        "path": relative_path,
+                        "children": get_menu_structure(full_path)
+                    })
+                elif entry.endswith(".md"):
+                    # Remove extension for display, keep relative path for ID
+                    display_name = os.path.splitext(entry)[0].replace('_', ' ')
+                    items.append({
+                        "name": display_name,
+                        "type": "file",
+                        "path": relative_path,  # e.g., "Strategy/Marketing_Plan.md"
+                        "id": relative_path     # used for fetching content
+                    })
+
+            return items
+
+        return jsonify({"menu": get_menu_structure(docs_dir)})
+
+    @app.route('/api/docs/content/<path:doc_path>')
+    def docs_content(doc_path: str):
+        """Fetches documentation content by relative path"""
+        import os
+
+        docs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Live-Doc', 'content')
+
+        # Security: Prevent directory traversal
+        safe_path = os.path.normpath(os.path.join(docs_dir, doc_path))
+        if not safe_path.startswith(docs_dir):
+            return jsonify({"error": "Access denied"}), 403
+
+        if os.path.exists(safe_path) and os.path.isfile(safe_path):
+            with open(safe_path, "r", encoding="utf-8") as f:
+                return jsonify({"content": f.read()})
+
+        return jsonify({"error": "Document not found"}), 404
+
     # ========== FRONTEND ROUTES ==========
 
     @app.route('/login', methods=['GET', 'POST'])

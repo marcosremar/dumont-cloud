@@ -15,6 +15,9 @@ import {
   AlertCircle,
   Cpu,
   Database,
+  Rocket,
+  Download,
+  Server,
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Progress } from '../components/ui/progress';
@@ -45,10 +48,11 @@ function formatTimeAgo(dateStr) {
 }
 
 // Job Card Component
-function JobCard({ job, onRefresh, onViewLogs, onCancel }) {
+function JobCard({ job, onRefresh, onViewLogs, onCancel, onDeploy, onDownload }) {
   const status = STATUS_CONFIG[job.status] || STATUS_CONFIG.pending;
   const StatusIcon = status.icon;
   const isRunning = job.status === 'running' || job.status === 'queued';
+  const isCompleted = job.status === 'completed';
 
   return (
     <div className="bg-[#1e2536] rounded-xl border border-gray-700/50 p-5 hover:border-gray-600/50 transition-all">
@@ -117,7 +121,7 @@ function JobCard({ job, onRefresh, onViewLogs, onCancel }) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2 pt-3 border-t border-gray-700/50">
+      <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-700/50">
         <Button
           variant="ghost"
           size="sm"
@@ -136,6 +140,28 @@ function JobCard({ job, onRefresh, onViewLogs, onCancel }) {
           <RefreshCw className="w-4 h-4 mr-1" />
           Refresh
         </Button>
+        {isCompleted && (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDeploy(job)}
+              className="text-green-400 hover:text-green-300"
+            >
+              <Rocket className="w-4 h-4 mr-1" />
+              Deploy
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDownload(job)}
+              className="text-blue-400 hover:text-blue-300"
+            >
+              <Download className="w-4 h-4 mr-1" />
+              Download
+            </Button>
+          </>
+        )}
         {isRunning && (
           <Button
             variant="ghost"
@@ -211,6 +237,148 @@ function LogsModal({ job, isOpen, onClose }) {
   );
 }
 
+// Deploy Modal Component
+function DeployModal({ job, isOpen, onClose, onSuccess }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedGpu, setSelectedGpu] = useState('RTX4090');
+  const [instanceName, setInstanceName] = useState('');
+
+  useEffect(() => {
+    if (job) {
+      setInstanceName(`inference-${job.name.slice(0, 20)}`);
+    }
+  }, [job]);
+
+  const GPU_OPTIONS = [
+    { id: 'RTX4090', name: 'RTX 4090', vram: '24GB', price: '~$0.35/hr' },
+    { id: 'A100', name: 'A100 40GB', vram: '40GB', price: '~$1.50/hr' },
+    { id: 'A100-80GB', name: 'A100 80GB', vram: '80GB', price: '~$2.00/hr' },
+    { id: 'H100', name: 'H100 80GB', vram: '80GB', price: '~$3.50/hr' },
+  ];
+
+  const handleDeploy = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(`/api/finetune/jobs/${job.id}/deploy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          gpu_type: selectedGpu,
+          instance_name: instanceName,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to deploy model');
+      }
+      onSuccess(data);
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-[#1a1f2e] rounded-xl border border-gray-700 w-full max-w-lg">
+        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Rocket className="w-5 h-5 text-green-400" />
+            Deploy Model
+          </h3>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            ✕
+          </Button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Model Info */}
+          <div className="bg-[#0f1219] rounded-lg p-4 border border-gray-700/50">
+            <div className="flex items-center gap-3 mb-2">
+              <Brain className="w-5 h-5 text-purple-400" />
+              <span className="text-white font-medium">{job?.name}</span>
+            </div>
+            <div className="text-sm text-gray-400">
+              Base: {job?.config?.base_model?.split('/').pop() || 'Unknown'}
+            </div>
+            <div className="text-sm text-gray-400">
+              LoRA Rank: {job?.config?.lora_rank || 16}
+            </div>
+          </div>
+
+          {/* Instance Name */}
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">Instance Name</label>
+            <input
+              type="text"
+              value={instanceName}
+              onChange={(e) => setInstanceName(e.target.value)}
+              className="w-full bg-[#0f1219] border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none"
+              placeholder="my-inference-instance"
+            />
+          </div>
+
+          {/* GPU Selection */}
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">Select GPU</label>
+            <div className="grid grid-cols-2 gap-3">
+              {GPU_OPTIONS.map((gpu) => (
+                <button
+                  key={gpu.id}
+                  onClick={() => setSelectedGpu(gpu.id)}
+                  className={`p-3 rounded-lg border transition-all text-left ${
+                    selectedGpu === gpu.id
+                      ? 'border-green-500 bg-green-500/10'
+                      : 'border-gray-700 hover:border-gray-600'
+                  }`}
+                >
+                  <div className="font-medium text-white">{gpu.name}</div>
+                  <div className="text-xs text-gray-400">{gpu.vram} • {gpu.price}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {error && (
+            <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-3">
+            <Button variant="ghost" onClick={onClose} className="flex-1">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeploy}
+              disabled={loading || !instanceName}
+              className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Server className="w-4 h-4 mr-2" />
+              )}
+              Deploy Instance
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Main Page Component
 export default function FineTuning() {
   const [jobs, setJobs] = useState([]);
@@ -218,6 +386,7 @@ export default function FineTuning() {
   const [showModal, setShowModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showLogs, setShowLogs] = useState(false);
+  const [showDeploy, setShowDeploy] = useState(false);
   const [filter, setFilter] = useState('all');
 
   // Fetch jobs

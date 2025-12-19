@@ -26,6 +26,8 @@
     "clsx": "^2.1.1",
     "flatpickr": "^4.6.13",
     "lucide-react": "^0.561.0",
+    "marked": "^17.0.1",
+    "mermaid": "^11.12.2",
     "react": "^18.2.0",
     "react-apexcharts": "^1.9.0",
     "react-chartjs-2": "^5.3.1",

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useSidebar } from "../../context/SidebarContext";
+import { useTheme } from "../../context/ThemeContext";
 import {
   Menu,
   X,
@@ -23,9 +24,9 @@ function useBasePath() {
 const AppHeader = ({ user, onLogout, isDemo = false }) => {
   const [isNotificationOpen, setNotificationOpen] = useState(false);
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
+  const { theme, toggleTheme } = useTheme();
   const basePath = useBasePath();
 
   const notificationRef = useRef(null);
@@ -37,11 +38,6 @@ const AppHeader = ({ user, onLogout, isDemo = false }) => {
     } else {
       toggleMobileSidebar();
     }
-  };
-
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark');
   };
 
   // Close dropdowns on outside click
@@ -98,11 +94,11 @@ const AppHeader = ({ user, onLogout, isDemo = false }) => {
         <div className="flex items-center gap-2">
           {/* Dark Mode Toggle */}
           <button
-            onClick={toggleDarkMode}
+            onClick={toggleTheme}
             className="flex items-center justify-center w-10 h-10 text-gray-500 rounded-lg hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
             aria-label="Toggle Dark Mode"
           >
-            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
           {/* Notifications */}

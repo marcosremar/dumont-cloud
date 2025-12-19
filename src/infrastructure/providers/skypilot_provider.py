@@ -13,7 +13,9 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-SKYPILOT_CLI = "/home/ubuntu/.local/bin/sky"
+# Find sky binary - try multiple locations
+import shutil
+SKYPILOT_CLI = shutil.which("sky") or "/home/ubuntu/.pyenv/shims/sky"
 TEMPLATE_PATH = Path(__file__).parent.parent.parent / "templates"
 
 

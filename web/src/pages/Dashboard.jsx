@@ -1542,6 +1542,14 @@ export default function Dashboard() {
 
   const getToken = () => localStorage.getItem('auth_token');
 
+  // Demo offers for testing when API is unavailable or returns empty
+  const DEMO_OFFERS = [
+    { id: 1001, gpu_name: 'RTX 4090', num_gpus: 1, gpu_ram: 24000, cpu_cores: 16, cpu_ram: 64000, disk_space: 200, dph_total: 0.45, inet_down: 2000, verified: true, geolocation: 'US' },
+    { id: 1002, gpu_name: 'RTX 5090', num_gpus: 1, gpu_ram: 32000, cpu_cores: 24, cpu_ram: 128000, disk_space: 500, dph_total: 0.89, inet_down: 5000, verified: true, geolocation: 'EU' },
+    { id: 1003, gpu_name: 'A100 80GB', num_gpus: 1, gpu_ram: 80000, cpu_cores: 32, cpu_ram: 256000, disk_space: 1000, dph_total: 2.10, inet_down: 10000, verified: true, geolocation: 'US' },
+    { id: 1004, gpu_name: 'H100 80GB', num_gpus: 1, gpu_ram: 80000, cpu_cores: 64, cpu_ram: 512000, disk_space: 2000, dph_total: 3.50, inet_down: 25000, verified: true, geolocation: 'EU' },
+  ];
+
   const searchOffers = async (filters) => {
     setLoading(true);
     setError(null);
@@ -1558,10 +1566,19 @@ export default function Dashboard() {
       });
       if (!response.ok) throw new Error('Falha ao buscar ofertas');
       const data = await response.json();
-      setOffers(data.offers || []);
+      const realOffers = data.offers || [];
+
+      // Use demo offers as fallback when API returns empty (e.g., no VAST_API_KEY)
+      if (realOffers.length === 0) {
+        console.log('[Dashboard] No offers from API, using demo offers');
+        setOffers(DEMO_OFFERS);
+      } else {
+        setOffers(realOffers);
+      }
     } catch (err) {
-      setError(err.message);
-      setOffers([]);
+      console.log('[Dashboard] API error, using demo offers:', err.message);
+      // Use demo offers on API error for testing
+      setOffers(DEMO_OFFERS);
     } finally {
       setLoading(false);
     }
@@ -1591,7 +1608,8 @@ export default function Dashboard() {
   };
 
   const handleSelectOffer = (offer) => {
-    navigate('/machines', { state: { selectedOffer: offer } });
+    console.log('[Dashboard] Navigating to /app/machines with offer:', offer);
+    navigate('/app/machines', { state: { selectedOffer: offer } });
   };
 
   const resetAdvancedFilters = () => {

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, createContext, useContext } from 'react'
 import AppLayout from './components/layout/AppLayout'
 import { SidebarProvider } from './context/SidebarContext'
+import { ThemeProvider } from './context/ThemeContext'
 import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
 import Login from './pages/Login'
@@ -13,6 +14,7 @@ import SavingsPage from './pages/Savings'
 import AdvisorPage from './pages/AdvisorPage'
 import FailoverReportPage from './pages/FailoverReportPage'
 import FineTuning from './pages/FineTuning'
+import Documentation from './pages/Documentation'
 import { ToastProvider } from './components/Toast'
 import './styles/landing.css'
 
@@ -189,9 +191,10 @@ export default function App() {
   }
 
   return (
-    <SidebarProvider>
-    <ToastProvider>
-      <Routes>
+    <ThemeProvider>
+      <SidebarProvider>
+      <ToastProvider>
+        <Routes>
         {/* Rotas Públicas */}
         <Route path="/" element={
           user ? <Navigate to="/app" replace /> : <LandingPage onLogin={handleLogin} />
@@ -261,6 +264,18 @@ export default function App() {
           </ProtectedRoute>
         } />
 
+        {/* Documentation Routes */}
+        <Route path="/docs" element={
+          <ProtectedRoute user={user}>
+            <Documentation />
+          </ProtectedRoute>
+        } />
+        <Route path="/docs/:docId" element={
+          <ProtectedRoute user={user}>
+            <Documentation />
+          </ProtectedRoute>
+        } />
+
         {/* Rotas Demo - não requer login, dados fictícios */}
         <Route path="/demo-app" element={
           <DemoRoute>
@@ -322,10 +337,23 @@ export default function App() {
           </DemoRoute>
         } />
 
+        {/* Demo Documentation Routes */}
+        <Route path="/demo-docs" element={
+          <DemoRoute>
+            <Documentation />
+          </DemoRoute>
+        } />
+        <Route path="/demo-docs/:docId" element={
+          <DemoRoute>
+            <Documentation />
+          </DemoRoute>
+        } />
+
         {/* Fallback - redireciona para landing page */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </ToastProvider>
-    </SidebarProvider>
+      </ToastProvider>
+      </SidebarProvider>
+    </ThemeProvider>
   )
 }

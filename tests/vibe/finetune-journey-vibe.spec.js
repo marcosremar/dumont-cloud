@@ -257,10 +257,18 @@ test.describe('Fine-Tuning Feature - Vibe Test Journey', () => {
     console.log('✅ GPU selected: A100 40GB (~$1.50/hr)');
 
     // Test Advanced Settings toggle
-    const advancedToggle = page.locator('text=/Show.*Advanced Settings/');
-    await expect(advancedToggle).toBeVisible();
-    await advancedToggle.click();
-    await page.waitForTimeout(500);
+    // The button text changes based on state: "Show Advanced Settings" or "Hide Advanced Settings"
+    const showAdvancedBtn = page.locator('button:has-text("Show Advanced Settings")');
+    const hideAdvancedBtn = page.locator('button:has-text("Hide Advanced Settings")');
+
+    // Check if Advanced Settings is already expanded
+    const isExpanded = await hideAdvancedBtn.isVisible().catch(() => false);
+
+    if (!isExpanded) {
+      await expect(showAdvancedBtn).toBeVisible();
+      await showAdvancedBtn.click();
+      await page.waitForTimeout(500);
+    }
     console.log('✅ Advanced Settings expanded');
 
     // Verify advanced options are visible
@@ -277,8 +285,8 @@ test.describe('Fine-Tuning Feature - Vibe Test Journey', () => {
       console.log('✅ Validated: Sliders are interactive');
     }
 
-    // Collapse Advanced Settings (cleaner UI)
-    await advancedToggle.click();
+    // Collapse Advanced Settings (cleaner UI) - now look for "Hide" button
+    await hideAdvancedBtn.click();
     await page.waitForTimeout(300);
 
     // Click Next to go to Review
@@ -317,8 +325,8 @@ test.describe('Fine-Tuning Feature - Vibe Test Journey', () => {
     await expect(page.locator('text=/Epochs/i')).toBeVisible();
     console.log('✅ Config parameters verified: Epochs shown');
 
-    // Verify estimated cost is shown
-    const costInfo = page.locator('text=~/.*\\$.*hr.*/i');
+    // Verify estimated cost is shown (format: "Estimated cost: ~$X.XX/hr for GPU usage")
+    const costInfo = page.locator('text=/Estimated cost.*\\$/');
     await expect(costInfo).toBeVisible();
     console.log('✅ Validated: Estimated cost information displayed');
 
