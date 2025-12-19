@@ -233,7 +233,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
               <select
                 value={gpuName}
                 onChange={(e) => setGpuName(e.target.value)}
-                className="w-full px-3 py-2 bg-white dark:bg-dark-surface-secondary border border-gray-200 dark:border-dark-surface-border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2 bg-white dark:bg-dark-surface-secondary border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500"
               >
                 {GPU_OPTIONS.map((gpu) => (
                   <option key={gpu.value} value={gpu.value}>

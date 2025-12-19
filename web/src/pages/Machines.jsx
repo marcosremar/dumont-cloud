@@ -185,12 +185,12 @@ function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onS
 
   return (
     <div
-      className={`flex flex-col p-4 md:p-5 rounded-xl border transition-all bg-white dark:bg-dark-surface-card shadow-theme-sm ${
+      className={`flex flex-col p-4 md:p-5 rounded-xl border transition-all bg-white dark:bg-[#131713] shadow-theme-sm ${
         isInFailover
           ? getFailoverBorderColor()
           : isRunning
             ? 'border-success-200 dark:border-success-500/30'
-            : 'border-gray-200 dark:border-dark-surface-border hover:border-gray-300 dark:hover:border-dark-surface-hover'
+            : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-dark-surface-hover'
       }`}
     >
       {/* Failover Progress Panel - Shows during failover */}
@@ -358,7 +358,7 @@ function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onS
 
             {/* Backup Info Popover */}
             {showBackupInfo && (
-              <div className="absolute top-full left-0 mt-2 z-50 w-72 p-4 bg-white dark:bg-dark-surface-card border border-gray-200 dark:border-dark-surface-border rounded-xl shadow-xl">
+              <div className="absolute top-full left-0 mt-2 z-50 w-72 p-4 bg-white dark:bg-[#131713] border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     <Layers className="w-4 h-4 text-brand-500" />

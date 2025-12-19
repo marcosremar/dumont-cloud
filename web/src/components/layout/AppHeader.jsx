@@ -55,7 +55,7 @@ const AppHeader = ({ user, onLogout, isDemo = false }) => {
   }, []);
 
   return (
-    <header className="sticky top-0 flex w-full bg-white border-b border-gray-200 z-[99999] dark:border-dark-surface-border dark:bg-dark-surface-card">
+    <header className="sticky top-0 flex w-full bg-white border-b border-gray-200 z-[99999] dark:border-gray-800 dark:bg-[#131713]">
       <div className="flex items-center justify-between w-full px-4 py-3 lg:px-6">
         {/* Left side */}
         <div className="flex items-center gap-4">
@@ -84,7 +84,7 @@ const AppHeader = ({ user, onLogout, isDemo = false }) => {
               <input
                 type="text"
                 placeholder="Buscar..."
-                className="w-[300px] h-10 pl-10 pr-4 text-sm text-gray-800 bg-gray-50 border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-2 focus:ring-brand-500/10 focus:outline-none dark:bg-dark-surface-secondary dark:border-dark-surface-border dark:text-gray-200 dark:placeholder:text-gray-500"
+                className="w-[300px] h-10 pl-10 pr-4 text-sm text-gray-800 bg-gray-50 border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-2 focus:ring-brand-500/10 focus:outline-none dark:bg-dark-surface-secondary dark:border-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500"
               />
             </div>
           </div>
@@ -114,12 +114,12 @@ const AppHeader = ({ user, onLogout, isDemo = false }) => {
 
             {/* Notification Dropdown */}
             {isNotificationOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-theme-lg border border-gray-200 dark:bg-dark-surface-card dark:border-dark-surface-border">
-                <div className="p-4 border-b border-gray-200 dark:border-dark-surface-border">
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-theme-lg border border-gray-200 dark:bg-[#131713] dark:border-gray-800">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-800">
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notificações</h3>
                 </div>
                 <div className="max-h-80 overflow-y-auto">
-                  <div className="p-4 hover:bg-gray-50 dark:hover:bg-dark-surface-hover border-b border-gray-100 dark:border-dark-surface-border">
+                  <div className="p-4 hover:bg-gray-50 dark:hover:bg-dark-surface-hover border-b border-gray-100 dark:border-gray-800">
                     <p className="text-sm text-gray-800 dark:text-gray-200">Sua máquina GPU entrou em standby</p>
                     <p className="text-xs text-gray-500 mt-1">Há 2 minutos</p>
                   </div>
@@ -128,7 +128,7 @@ const AppHeader = ({ user, onLogout, isDemo = false }) => {
                     <p className="text-xs text-gray-500 mt-1">Há 1 hora</p>
                   </div>
                 </div>
-                <div className="p-3 border-t border-gray-200 dark:border-dark-surface-border">
+                <div className="p-3 border-t border-gray-200 dark:border-gray-800">
                   <Link
                     to={`${basePath}/settings`}
                     className="text-sm text-brand-500 hover:text-brand-600 font-medium"
@@ -163,8 +163,8 @@ const AppHeader = ({ user, onLogout, isDemo = false }) => {
 
             {/* User Dropdown */}
             {isUserMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-theme-lg border border-gray-200 dark:bg-dark-surface-card dark:border-dark-surface-border">
-                <div className="p-4 border-b border-gray-200 dark:border-dark-surface-border">
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-theme-lg border border-gray-200 dark:bg-[#131713] dark:border-gray-800">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-800">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {user?.username || 'Usuário'}
                   </p>

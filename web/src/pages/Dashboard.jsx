@@ -223,7 +223,7 @@ const TierCard = ({ tier, isSelected, onClick }) => (
   <Popover>
     <PopoverTrigger asChild>
       <button onClick={onClick}
-        className={`flex flex-col p-3 md:p-4 rounded-lg border text-left transition-all shadow-theme-sm ${isSelected ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' : 'border-gray-200 dark:border-dark-surface-border bg-white dark:bg-dark-surface-card hover:border-brand-300 dark:hover:border-brand-500/50'}`}
+        className={`flex flex-col p-3 md:p-4 rounded-lg border text-left transition-all shadow-theme-sm ${isSelected ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#131713] hover:border-brand-300 dark:hover:border-brand-500/50'}`}
         style={{ minHeight: '160px' }}
       >
         <div className="flex items-center justify-between mb-2">
@@ -364,7 +364,7 @@ const GPUSelector = ({ selectedGPU, onSelectGPU, selectedCategory, onSelectCateg
                 className={`p-3 rounded-lg border transition-all text-left ${
                   isActive
                     ? getCategoryBgColor(cat.color, true)
-                    : 'border-gray-200 hover:border-gray-300 dark:border-dark-surface-border bg-gray-100 dark:bg-dark-surface-secondary'
+                    : 'border-gray-200 hover:border-gray-300 dark:border-gray-800 bg-gray-100 dark:bg-dark-surface-secondary'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
@@ -388,7 +388,7 @@ const GPUSelector = ({ selectedGPU, onSelectGPU, selectedCategory, onSelectCateg
           <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700/50">
             <Label className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 block">Modelo Específico (opcional)</Label>
             <Select value={selectedGPU} onValueChange={onSelectGPU}>
-              <SelectTrigger className="bg-gray-100 dark:bg-dark-surface-secondary border-gray-200 dark:border-dark-surface-border h-9 text-xs">
+              <SelectTrigger className="bg-gray-100 dark:bg-dark-surface-secondary border-gray-200 dark:border-gray-800 h-9 text-xs">
                 <SelectValue placeholder="Qualquer modelo da categoria" />
               </SelectTrigger>
               <SelectContent>
@@ -679,7 +679,7 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
               {msg.recommendation && !msg.showCards && (
                 <button
                   onClick={() => applyRecommendation()}
-                  className="mt-3 w-full py-2 px-3 text-xs font-medium text-white bg-blue-600/50 hover:bg-brand-600/70 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="mt-3 w-full py-2 px-3 text-xs font-medium text-white bg-brand-600/50 hover:bg-brand-600/70 rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   <Search className="w-3 h-3" />
                   Buscar GPUs Recomendadas
@@ -736,7 +736,7 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
     <div className="flex flex-col h-full">
       {/* Chat Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-800/50">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500/20 to-blue-600/20 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/20 flex items-center justify-center">
           <Sparkles className="w-5 h-5 text-brand-400" />
         </div>
         <div>
@@ -903,7 +903,7 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
               {msg.recommendation && !msg.showCards && (
                 <button
                   onClick={() => applyRecommendation()}
-                  className="mt-3 w-full py-2 px-3 text-xs font-medium text-white bg-blue-600/50 hover:bg-brand-600/70 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="mt-3 w-full py-2 px-3 text-xs font-medium text-white bg-brand-600/50 hover:bg-brand-600/70 rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   <Search className="w-3 h-3" />
                   Buscar GPUs Recomendadas
@@ -1673,7 +1673,7 @@ export default function Dashboard() {
           {/* WIZARD MODE */}
           {mode === 'wizard' && !showResults && (
             <>
-              <div className="flex flex-wrap gap-2 px-5 py-3 border-y border-gray-100 dark:border-dark-surface-border bg-gray-50 dark:bg-dark-surface-secondary">
+              <div className="flex flex-wrap gap-2 px-5 py-3 border-y border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-dark-surface-secondary">
                 {tabs.map((tab, i) => (
                   <Button
                     key={tab}
@@ -1712,7 +1712,7 @@ export default function Dashboard() {
                 {/* AI Advisor - 1 col */}
                 <div className="lg:col-span-1">
                   <Card className="border-brand-200 dark:border-brand-600/30 bg-gradient-to-br from-brand-50 dark:from-brand-600/10 to-transparent overflow-hidden h-full flex flex-col min-h-[280px]">
-                    <CardHeader className="py-3 border-b border-brand-100 dark:border-brand-600/20 bg-brand-50/50 dark:bg-blue-600/5">
+                    <CardHeader className="py-3 border-b border-brand-100 dark:border-brand-600/20 bg-brand-50/50 dark:bg-brand-600/5">
                       <div className="flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-brand-500 dark:text-brand-400" />
                         <CardTitle className="text-sm">AI Advisor</CardTitle>

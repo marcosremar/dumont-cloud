@@ -55,7 +55,7 @@ function JobCard({ job, onRefresh, onViewLogs, onCancel, onDeploy, onDownload })
   const isCompleted = job.status === 'completed';
 
   return (
-    <div className="bg-white dark:bg-dark-surface-card rounded-xl border border-gray-200 dark:border-dark-surface-border p-5 hover:border-gray-300 dark:hover:border-dark-surface-hover transition-all">
+    <div className="bg-white dark:bg-[#131713] rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:border-gray-300 dark:hover:border-dark-surface-hover transition-all">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
