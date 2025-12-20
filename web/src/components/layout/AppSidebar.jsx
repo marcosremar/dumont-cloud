@@ -11,9 +11,11 @@ import {
   MoreHorizontal,
   Cloud,
   Brain,
-  BookOpen
+  BookOpen,
+  Sparkles
 } from "lucide-react";
 import { useSidebar } from "../../context/SidebarContext";
+import DumontLogo from "../DumontLogo";
 
 // Helper to get base path based on demo mode
 function useBasePath() {
@@ -60,11 +62,12 @@ const AppSidebar = ({ isDemo = false }) => {
       name: "Settings",
       path: `${basePath}/settings`,
     },
-    {
+    // Documentação temporariamente desabilitada no demo
+    ...(!isDemo ? [{
       icon: BookOpen,
       name: "Documentação",
-      path: isDemo ? "/demo-docs" : "/docs",
-    },
+      path: "/docs",
+    }] : []),
   ];
 
   const isActive = useCallback(
@@ -127,19 +130,17 @@ const AppSidebar = ({ isDemo = false }) => {
             {nav.subItems ? (
               <button
                 onClick={() => handleSubmenuToggle(index)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-                  isItemActive
-                    ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10 dark:text-brand-400"
-                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-surface-hover"
-                } ${
-                  !isExpanded && !isHovered
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors cursor-pointer ${isItemActive
+                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-100"
+                  } ${!isExpanded && !isHovered
                     ? "lg:justify-center"
                     : "lg:justify-start"
-                }`}
+                  }`}
               >
                 <Icon
                   size={20}
-                  className={isItemActive ? "text-brand-500 dark:text-brand-400" : "text-gray-500 dark:text-gray-400"}
+                  className={isItemActive ? "text-emerald-600 dark:text-emerald-400" : "text-gray-600 dark:text-gray-300"}
                 />
                 {(isExpanded || isHovered || isMobileOpen) && (
                   <span>{nav.name}</span>
@@ -147,30 +148,27 @@ const AppSidebar = ({ isDemo = false }) => {
                 {(isExpanded || isHovered || isMobileOpen) && (
                   <ChevronDown
                     size={16}
-                    className={`ml-auto transition-transform duration-200 ${
-                      openSubmenu === index
-                        ? "rotate-180 text-brand-500"
-                        : "text-gray-400"
-                    }`}
+                    className={`ml-auto transition-transform duration-200 ${openSubmenu === index
+                      ? "rotate-180 text-brand-500"
+                      : "text-gray-400"
+                      }`}
                   />
                 )}
               </button>
             ) : (
               <Link
                 to={nav.path}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive(nav.path)
-                    ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10 dark:text-brand-400"
-                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-surface-hover"
-                } ${
-                  !isExpanded && !isHovered
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${isActive(nav.path)
+                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-100"
+                  } ${!isExpanded && !isHovered
                     ? "lg:justify-center"
                     : "lg:justify-start"
-                }`}
+                  }`}
               >
                 <Icon
                   size={20}
-                  className={isActive(nav.path) ? "text-brand-500 dark:text-brand-400" : "text-gray-500 dark:text-gray-400"}
+                  className={isActive(nav.path) ? "text-emerald-600 dark:text-emerald-400" : "text-gray-600 dark:text-gray-300"}
                 />
                 {(isExpanded || isHovered || isMobileOpen) && (
                   <span>{nav.name}</span>
@@ -197,11 +195,10 @@ const AppSidebar = ({ isDemo = false }) => {
                       <li key={subItem.name}>
                         <Link
                           to={subItem.path}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
-                            isActive(subItem.path)
-                              ? "bg-brand-50 text-brand-500 dark:bg-brand-500/10 dark:text-brand-400"
-                              : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-dark-surface-hover"
-                          }`}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${isActive(subItem.path)
+                            ? "bg-brand-400/10 text-brand-400"
+                            : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+                            }`}
                         >
                           {SubIcon && <SubIcon size={16} />}
                           {subItem.name}
@@ -220,11 +217,10 @@ const AppSidebar = ({ isDemo = false }) => {
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-4 left-0 bg-white dark:bg-[#0f1210] dark:border-[#1a1f1a] text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200
-        ${
-          isExpanded || isMobileOpen
-            ? "w-[260px]"
-            : isHovered
+      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-4 left-0 bg-white dark:bg-[#0a0d0a] dark:border-white/5 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200
+        ${isExpanded || isMobileOpen
+          ? "w-[260px]"
+          : isHovered
             ? "w-[260px]"
             : "w-[80px]"
         }
@@ -235,18 +231,14 @@ const AppSidebar = ({ isDemo = false }) => {
     >
       {/* Logo */}
       <div
-        className={`py-6 flex ${
-          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-        }`}
+        className={`py-6 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+          }`}
       >
         <Link to={basePath} className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-brand-500 to-brand-600 rounded-lg flex items-center justify-center">
-            <Cloud size={20} className="text-white" />
-          </div>
+          <DumontLogo size={32} />
           {(isExpanded || isHovered || isMobileOpen) && (
             <div className="flex items-center gap-1">
-              <span className="text-lg font-semibold text-gray-900 dark:text-white">Dumont</span>
-              <span className="text-lg font-semibold text-brand-500">Cloud</span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white">Dumont Cloud</span>
               {isDemo && (
                 <span className="ml-2 px-1.5 py-0.5 text-xs font-medium bg-warning-100 text-warning-700 rounded">
                   DEMO
@@ -263,11 +255,10 @@ const AppSidebar = ({ isDemo = false }) => {
           <div className="flex flex-col gap-4">
             <div>
               <h2
-                className={`mb-3 text-xs uppercase tracking-wider flex text-gray-400 font-medium ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start px-3"
-                }`}
+                className={`mb-3 text-xs uppercase tracking-wider flex text-gray-400 font-medium ${!isExpanded && !isHovered
+                  ? "lg:justify-center"
+                  : "justify-start px-3"
+                  }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
                   "Menu"
@@ -279,23 +270,38 @@ const AppSidebar = ({ isDemo = false }) => {
             </div>
           </div>
         </nav>
+
+        {/* Promo Widget */}
+        {(isExpanded || isHovered || isMobileOpen) && (
+          <div className="mt-auto mb-6 px-2">
+            <div className="relative p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-500/10 dark:to-emerald-600/5 border-2 border-emerald-200 dark:border-emerald-500/30 overflow-hidden group shadow-md">
+              {/* Glow Effect */}
+              <div className="absolute -top-10 -right-10 w-24 h-24 bg-emerald-200/50 dark:bg-emerald-500/20 rounded-full blur-3xl transition-all group-hover:bg-emerald-300/60 dark:group-hover:bg-emerald-500/30" />
+
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-600 dark:bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/40">
+                    <Cloud className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-gray-900 dark:text-white font-bold text-sm tracking-tight">GPU Cloud</span>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 text-[11px] leading-relaxed mb-3 font-medium">
+                  GPUs de alto desempenho com até 80% de economia.
+                </p>
+                <Link
+                  to={isDemo ? "/demo-app" : "/app"}
+                  className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700/50 dark:hover:bg-emerald-600/60 border border-emerald-700 dark:border-emerald-500/40 text-white text-xs font-bold transition-all hover:scale-[1.02] shadow-sm"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Explorar Ofertas
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Sidebar Widget */}
-      {(isExpanded || isHovered || isMobileOpen) && (
-        <div className="p-4 mb-4 mx-1 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl">
-          <h3 className="text-sm font-semibold text-white mb-1">GPU Cloud</h3>
-          <p className="text-xs text-brand-100 mb-3">
-            Economize até 80% com spot instances
-          </p>
-          <a
-            href={`${basePath}/machines`}
-            className="block w-full py-2 px-3 text-xs font-medium text-center text-brand-600 bg-white rounded-lg hover:bg-brand-50 transition-colors"
-          >
-            Ver Máquinas
-          </a>
-        </div>
-      )}
+
     </aside>
   );
 };

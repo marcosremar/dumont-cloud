@@ -9,19 +9,39 @@ import {
   Cpu, Server, Wifi, DollarSign, Shield, HardDrive,
   Activity, Search, RotateCcw, Sliders, Wand2,
   Gauge, Globe, Zap, Monitor, ChevronDown, ChevronLeft, ChevronRight, Sparkles,
-  Send, Bot, User, Loader2
+  Send, Bot, User, Loader2, Plus, Minus, X, Check, MapPin
 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Input } from '../components/ui/input';
-import { Checkbox } from '../components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Tabs as TabsUI, TabsList as TabsListUI, TabsTrigger as TabsTriggerUI } from '../components/ui/tabs';
-import { Label } from '../components/ui/label';
-import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Slider } from '../components/ui/slider';
-import { Switch } from '../components/ui/switch';
-import { MetricCard, MetricsGrid, Avatar, AvatarImage, AvatarFallback, Popover, PopoverTrigger, PopoverContent } from '../components/ui/dumont-ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Input,
+  Checkbox,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+  Button,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  Label,
+  Slider,
+  Switch,
+  StatCard as MetricCard,
+  StatsGrid as MetricsGrid,
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '../components/tailadmin-ui';
 import { ErrorState } from '../components/ErrorState';
 import { EmptyState } from '../components/EmptyState';
 import { SkeletonList } from '../components/Skeleton';
@@ -94,7 +114,7 @@ const GPU_CATEGORIES = [
     name: 'Treinamento',
     icon: 'training',
     description: 'Fine-tuning / ML Training',
-    color: 'blue',
+    color: 'green',
     gpus: ['RTX_4080', 'RTX_4080_Super', 'RTX_4090', 'RTX_3080', 'RTX_3080_Ti', 'RTX_3090', 'RTX_3090_Ti', 'RTX_5090', 'A5000', 'A6000', 'L40S']
   },
   {
@@ -102,7 +122,7 @@ const GPU_CATEGORIES = [
     name: 'HPC / LLMs',
     icon: 'hpc',
     description: 'Modelos grandes / Multi-GPU',
-    color: 'blue',
+    color: 'green',
     gpus: ['A100', 'A100_PCIE', 'A100_SXM4', 'A100_80GB', 'H100', 'H100_PCIe', 'H100_SXM5', 'V100', 'V100_SXM2']
   },
 ];
@@ -142,66 +162,92 @@ const RENTAL_TYPE_OPTIONS = [
   { value: 'bid', label: 'Bid/Interruptible' },
 ];
 
-const WorldMap = ({ activeRegion }) => {
+const WorldMap = ({ selectedCodes = [], onCountryClick }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  // Datacenter markers for each region
+  // Datacenter markers
   const datacenterMarkers = [
-    { latLng: [37.77, -122.42], name: 'San Francisco, EUA', region: 'EUA' },
-    { latLng: [40.71, -74.01], name: 'New York, EUA', region: 'EUA' },
-    { latLng: [51.51, -0.13], name: 'London, UK', region: 'Europa' },
-    { latLng: [48.86, 2.35], name: 'Paris, França', region: 'Europa' },
-    { latLng: [52.52, 13.40], name: 'Berlin, Alemanha', region: 'Europa' },
-    { latLng: [35.68, 139.69], name: 'Tokyo, Japão', region: 'Asia' },
-    { latLng: [1.35, 103.82], name: 'Singapore', region: 'Asia' },
-    { latLng: [-23.55, -46.63], name: 'São Paulo, Brasil', region: 'AmericaDoSul' },
+    { latLng: [37.77, -122.42], name: 'San Francisco', code: 'US' },
+    { latLng: [40.71, -74.01], name: 'New York', code: 'US' },
+    { latLng: [51.51, -0.13], name: 'London', code: 'GB' },
+    { latLng: [48.86, 2.35], name: 'Paris', code: 'FR' },
+    { latLng: [52.52, 13.40], name: 'Berlin', code: 'DE' },
+    { latLng: [35.68, 139.69], name: 'Tokyo', code: 'JP' },
+    { latLng: [1.35, 103.82], name: 'Singapore', code: 'SG' },
+    { latLng: [-23.55, -46.63], name: 'São Paulo', code: 'BR' },
   ];
 
-  // Filter markers based on active region
-  const visibleMarkers = activeRegion === 'Global'
+  // Filter markers based on selected codes
+  const visibleMarkers = selectedCodes.length === 0
     ? datacenterMarkers
-    : datacenterMarkers.filter(m => m.region === activeRegion);
+    : datacenterMarkers.filter(m => selectedCodes.includes(m.code));
 
   return (
     <div className="relative w-full h-full">
       <VectorMap
         map={worldMill}
-        backgroundColor="transparent"
+        backgroundColor={isDark ? '#0a0d0a' : '#f8fafc'}
+        containerStyle={{
+          width: '100%',
+          height: '100%',
+        }}
         markerStyle={{
           initial: {
-            fill: '#3b82f6',
-            r: 5,
+            fill: '#10b981',
+            r: 6,
+            stroke: isDark ? '#34d399' : '#059669',
+            strokeWidth: 2,
+            fillOpacity: 0.9,
           },
           hover: {
-            fill: '#60a5fa',
-            r: 7,
+            fill: '#34d399',
+            r: 8,
+            stroke: '#10b981',
+            strokeWidth: 2,
+            fillOpacity: 1,
           },
         }}
         markers={visibleMarkers.map(m => ({
           latLng: m.latLng,
           name: m.name,
-          style: { fill: '#3b82f6', borderWidth: 1, borderColor: 'white' },
+          style: { fill: '#10b981', stroke: '#34d399', strokeWidth: 2, fillOpacity: 0.9 },
         }))}
         zoomOnScroll={false}
         zoomMax={12}
         zoomMin={1}
+        onRegionClick={(e, code) => {
+          if (onCountryClick) {
+            onCountryClick(code);
+          }
+        }}
         regionStyle={{
           initial: {
-            fill: isDark ? '#374151' : '#e2e8f0',
+            fill: isDark ? '#1e293b' : '#cbd5e1',
             fillOpacity: 1,
-            stroke: isDark ? '#4b5563' : '#cbd5e1',
+            stroke: isDark ? '#334155' : '#94a3b8',
             strokeWidth: 0.5,
             strokeOpacity: 1,
           },
           hover: {
-            fillOpacity: 0.8,
+            fillOpacity: 0.9,
             cursor: 'pointer',
-            fill: '#3b82f6',
+            fill: isDark ? '#10b981' : '#34d399',
+            stroke: isDark ? '#34d399' : '#10b981',
+            strokeWidth: 1,
           },
-          selected: {
-            fill: '#3b82f6',
-          },
+        }}
+        series={{
+          regions: [{
+            values: selectedCodes.reduce((acc, code) => {
+              acc[code] = 1;
+              return acc;
+            }, {}),
+            scale: {
+              '1': isDark ? '#10b981' : '#059669'
+            },
+            attribute: 'fill'
+          }]
         }}
       />
     </div>
@@ -287,7 +333,7 @@ const GPUSelector = ({ selectedGPU, onSelectGPU, selectedCategory, onSelectCateg
   const [isExpanded, setIsExpanded] = useState(false);
 
   const getCategoryIcon = (iconType, isActive) => {
-    const colorClass = isActive ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400';
+    const colorClass = isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300';
     switch (iconType) {
       case 'auto':
         return <Zap className={`w-4 h-4 ${colorClass}`} />;
@@ -305,16 +351,14 @@ const GPUSelector = ({ selectedGPU, onSelectGPU, selectedCategory, onSelectCateg
   const getCategoryBgColor = (color, isActive) => {
     if (!isActive) return 'bg-gray-100 dark:bg-dark-surface-secondary';
     switch (color) {
-      case 'green': return 'bg-success-50 dark:bg-success-600/30 border-success-500';
-      case 'blue': return 'bg-brand-50 dark:bg-brand-600/30 border-brand-500';
+      case 'green': return 'bg-emerald-50 dark:bg-emerald-600/30 border-emerald-500';
       default: return 'bg-gray-100 dark:bg-gray-600/30 border-gray-400';
     }
   };
 
   const getIconBgColor = (color) => {
     switch (color) {
-      case 'green': return 'bg-green-500/20';
-      case 'blue': return 'bg-brand-500/20';
+      case 'green': return 'bg-emerald-500/20';
       default: return 'bg-gray-500/20';
     }
   };
@@ -361,21 +405,20 @@ const GPUSelector = ({ selectedGPU, onSelectGPU, selectedCategory, onSelectCateg
                     setIsExpanded(true);
                   }
                 }}
-                className={`p-3 rounded-lg border transition-all text-left ${
-                  isActive
-                    ? getCategoryBgColor(cat.color, true)
-                    : 'border-gray-200 hover:border-gray-300 dark:border-gray-800 bg-gray-100 dark:bg-dark-surface-secondary'
-                }`}
+                className={`p-3 rounded-lg border transition-all text-left ${isActive
+                  ? 'bg-emerald-600 dark:bg-emerald-500 border-emerald-700 dark:border-emerald-600'
+                  : 'border-gray-300 hover:border-gray-400 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <div className={`w-6 h-6 rounded-md ${getIconBgColor(cat.color)} flex items-center justify-center`}>
+                  <div className={`w-6 h-6 rounded-md ${isActive ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'} flex items-center justify-center`}>
                     {getCategoryIcon(cat.icon, isActive)}
                   </div>
-                  <span className={`text-xs font-semibold ${isActive ? 'text-white' : 'text-gray-300'}`}>
+                  <span className={`text-xs font-bold ${isActive ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
                     {cat.name}
                   </span>
                 </div>
-                <p className={`text-[9px] ${isActive ? 'text-gray-300' : 'text-gray-500'}`}>
+                <p className={`text-[9px] ${isActive ? 'text-white/90' : 'text-gray-600 dark:text-gray-400'}`}>
                   {cat.description}
                 </p>
               </button>
@@ -448,7 +491,7 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
         // Handle all stages (research, options, selection, reservation, or legacy recommendation)
         const stage = data.stage || (data.recommendation ? 'recommendation' : 'unknown');
         let messageContent = data.explanation || (data.recommendation?.explanation) || 'Processamento concluído.';
-        
+
         // Prepare payload based on stage
         const msgPayload = {
           role: 'assistant',
@@ -460,7 +503,7 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
         };
 
         setMessages(prev => [...prev, msgPayload]);
-        
+
         if (data.recommendation && onRecommendation) {
           onRecommendation(data.recommendation);
         }
@@ -524,187 +567,186 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
 
         {/* Chat Messages - Compact */}
         <div className="flex-1 overflow-y-auto space-y-2 min-h-[200px]" style={{ paddingLeft: '0.5rem', paddingRight: '0.5rem', paddingTop: '0.5rem', paddingBottom: '0.5rem' }}>
-        {messages.length === 0 && (
-          <div className="text-center py-4">
-            <Bot className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-            <p className="text-gray-400 text-[10px] mb-2">Olá! Sou seu assistente.</p>
-            <div className="space-y-1">
-              <p className="text-gray-600 text-[9px] font-medium">Exemplos rápidos:</p>
-              <div className="flex flex-col gap-1">
-                {['Fine-tuning LLaMA', 'Stable Diffusion', 'Treinar YOLO'].map((ex) => (
-                  <button
-                    key={ex}
-                    onClick={() => setInputValue(ex)}
-                    className="px-1.5 py-0.5 text-[9px] text-gray-400 bg-gray-100 dark:bg-gray-800/40 rounded hover:bg-gray-200 dark:bg-gray-700/50 transition-colors text-left"
-                  >
-                    {ex}
-                  </button>
-                ))}
+          {messages.length === 0 && (
+            <div className="text-center py-4">
+              <Bot className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+              <p className="text-gray-400 text-[10px] mb-2">Olá! Sou seu assistente.</p>
+              <div className="space-y-1">
+                <p className="text-gray-600 text-[9px] font-medium">Exemplos rápidos:</p>
+                <div className="flex flex-col gap-1">
+                  {['Fine-tuning LLaMA', 'Stable Diffusion', 'Treinar YOLO'].map((ex) => (
+                    <button
+                      key={ex}
+                      onClick={() => setInputValue(ex)}
+                      className="px-1.5 py-0.5 text-[9px] text-gray-400 bg-gray-100 dark:bg-gray-800/40 rounded hover:bg-gray-200 dark:bg-gray-700/50 transition-colors text-left"
+                    >
+                      {ex}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex gap-1.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            {msg.role === 'assistant' && (
-              <div className="w-5 h-5 rounded-lg bg-brand-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Bot className="w-3 h-3 text-brand-400" />
-              </div>
-            )}
-            <div className={`max-w-[85%] p-1.5 rounded text-[9px] ${
-              msg.role === 'user'
-                ? 'ai-wizard-message-user'
-                : 'ai-wizard-message-assistant'
-            }`}>
-              {/* Text content - Compact */}
-              <div className="prose prose-invert prose-sm max-w-none prose-p:my-0.5 prose-headings:my-1 prose-strong:text-green-400 prose-ul:my-0.5 prose-li:my-0 prose-hr:border-gray-200 dark:border-gray-700 prose-h2:text-xs prose-h3:text-[9px] prose-h4:text-[8px]">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-              </div>
-
-              {/* Interactive Stage Displays - Minimal in compact mode */}
-              {msg.showCards && (
-                <div className="mt-1 pt-1 border-t border-gray-200 dark:border-gray-700/30">
-                  {/* Legacy Recommendation */}
-                  {(msg.stage === 'recommendation' || (!msg.stage && msg.recommendation?.gpu_options)) && (
-                    <GPUWizardDisplay
-                      recommendation={msg.recommendation}
-                      onSearch={(opt) => applyRecommendation(opt)}
-                    />
-                  )}
-
-                  {/* Research Stage */}
-                  {msg.stage === 'research' && msg.data?.research_results && (
-                    <div className="bg-gray-100 dark:bg-gray-800/50 rounded-lg p-3 text-xs space-y-2">
-                      <div className="font-semibold text-brand-400">Resultados da Pesquisa:</div>
-                      {msg.data.research_results.findings && (
-                        <div><span className="text-gray-400">Descobertas:</span> {msg.data.research_results.findings}</div>
-                      )}
-                      {msg.data.research_results.benchmarks && (
-                        <div><span className="text-gray-400">Benchmarks:</span> {msg.data.research_results.benchmarks}</div>
-                      )}
-                      {msg.data.research_results.prices && (
-                        <div><span className="text-gray-400">Preços:</span> {msg.data.research_results.prices}</div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Options Stage */}
-                  {msg.stage === 'options' && msg.data?.price_options && (
-                    <div className="space-y-2">
-                      <div className="font-semibold text-brand-400 text-xs mb-2">Opções de Preço Encontradas:</div>
-                      <div className="grid grid-cols-1 gap-2">
-                        {msg.data.price_options.map((opt, idx) => (
-                          <div key={idx} className="bg-gray-100 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-brand-500/50 transition-colors">
-                            <div className="flex justify-between items-start mb-1">
-                              <span className="font-bold text-gray-900 dark:text-white text-sm">{opt.tier}</span>
-                              <span className="text-green-400 font-mono text-xs">{opt.price_per_hour}</span>
-                            </div>
-                            <div className="text-gray-400 text-xs mb-1">{opt.gpus.join(', ')}</div>
-                            <div className="text-gray-500 text-[10px]">{opt.performance}</div>
-                            <button 
-                              onClick={() => {
-                                setInputValue(`Escolher opção ${opt.tier}`);
-                                sendMessage();
-                              }}
-                              className="mt-2 w-full py-1 text-[10px] bg-brand-600/20 text-brand-400 rounded hover:bg-brand-600/30 transition-colors"
-                            >
-                              Selecionar {opt.tier}
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Selection Stage */}
-                  {msg.stage === 'selection' && msg.data?.machines && (
-                    <div className="space-y-2">
-                      <div className="font-semibold text-green-400 text-xs mb-2">Máquinas Disponíveis:</div>
-                      <div className="grid grid-cols-1 gap-2">
-                        {msg.data.machines.map((machine, idx) => (
-                          <div key={idx} className="bg-gray-100 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-green-500/50 transition-colors">
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="font-bold text-gray-900 dark:text-white text-xs">{machine.gpu}</span>
-                              <span className="text-green-400 font-mono text-xs">{machine.price_per_hour}</span>
-                            </div>
-                            <div className="flex justify-between text-[10px] text-gray-500 mb-2">
-                              <span>{machine.vram}</span>
-                              <span>{machine.location}</span>
-                            </div>
-                            <button 
-                              onClick={() => {
-                                setInputValue(`Reservar máquina ${machine.id}`);
-                                sendMessage();
-                              }}
-                              className="w-full py-1.5 text-[10px] font-medium bg-green-600/20 text-green-400 rounded hover:bg-green-600/30 transition-colors"
-                            >
-                              Reservar Agora
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Reservation Stage */}
-                  {msg.stage === 'reservation' && msg.data?.reservation && (
-                    <div className="bg-green-900/20 border border-green-500/30 p-4 rounded-lg text-center">
-                      <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <Zap className="w-5 h-5 text-green-400" />
-                      </div>
-                      <h4 className="text-green-400 font-bold text-sm mb-1">Pronto para Reservar!</h4>
-                      <p className="text-gray-300 text-xs mb-3">{msg.data.reservation.details}</p>
-                      <button className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-xs font-bold rounded-lg transition-colors shadow-lg shadow-green-900/20">
-                        Confirmar e Pagar
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Optimization Tips (keep existing) */}
-                  {msg.recommendation?.optimization_tips && msg.recommendation.optimization_tips.length > 0 && (
-                    <div className="mt-3 p-2 rounded bg-sky-900/15 border border-sky-700/20">
-                      <div className="text-[10px] text-sky-400/80 font-semibold mb-1">Dicas de Otimização:</div>
-                      <ul className="text-[10px] text-gray-400 space-y-0.5">
-                        {msg.recommendation.optimization_tips.map((tip, idx) => (
-                          <li key={idx}>• {tip}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex gap-1.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              {msg.role === 'assistant' && (
+                <div className="w-5 h-5 rounded-lg bg-brand-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Bot className="w-3 h-3 text-brand-400" />
                 </div>
               )}
+              <div className={`max-w-[85%] p-1.5 rounded text-[9px] ${msg.role === 'user'
+                ? 'ai-wizard-message-user'
+                : 'ai-wizard-message-assistant'
+                }`}>
+                {/* Text content - Compact */}
+                <div className="prose prose-invert prose-sm max-w-none prose-p:my-0.5 prose-headings:my-1 prose-strong:text-green-400 prose-ul:my-0.5 prose-li:my-0 prose-hr:border-gray-200 dark:border-gray-700 prose-h2:text-xs prose-h3:text-[9px] prose-h4:text-[8px]">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                </div>
 
-              {/* Fallback: Simple search button if no visual cards */}
-              {msg.recommendation && !msg.showCards && (
-                <button
-                  onClick={() => applyRecommendation()}
-                  className="mt-3 w-full py-2 px-3 text-xs font-medium text-white bg-brand-600/50 hover:bg-brand-600/70 rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <Search className="w-3 h-3" />
-                  Buscar GPUs Recomendadas
-                </button>
+                {/* Interactive Stage Displays - Minimal in compact mode */}
+                {msg.showCards && (
+                  <div className="mt-1 pt-1 border-t border-gray-200 dark:border-gray-700/30">
+                    {/* Legacy Recommendation */}
+                    {(msg.stage === 'recommendation' || (!msg.stage && msg.recommendation?.gpu_options)) && (
+                      <GPUWizardDisplay
+                        recommendation={msg.recommendation}
+                        onSearch={(opt) => applyRecommendation(opt)}
+                      />
+                    )}
+
+                    {/* Research Stage */}
+                    {msg.stage === 'research' && msg.data?.research_results && (
+                      <div className="bg-gray-100 dark:bg-gray-800/50 rounded-lg p-3 text-xs space-y-2">
+                        <div className="font-semibold text-brand-400">Resultados da Pesquisa:</div>
+                        {msg.data.research_results.findings && (
+                          <div><span className="text-gray-400">Descobertas:</span> {msg.data.research_results.findings}</div>
+                        )}
+                        {msg.data.research_results.benchmarks && (
+                          <div><span className="text-gray-400">Benchmarks:</span> {msg.data.research_results.benchmarks}</div>
+                        )}
+                        {msg.data.research_results.prices && (
+                          <div><span className="text-gray-400">Preços:</span> {msg.data.research_results.prices}</div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Options Stage */}
+                    {msg.stage === 'options' && msg.data?.price_options && (
+                      <div className="space-y-2">
+                        <div className="font-semibold text-brand-400 text-xs mb-2">Opções de Preço Encontradas:</div>
+                        <div className="grid grid-cols-1 gap-2">
+                          {msg.data.price_options.map((opt, idx) => (
+                            <div key={idx} className="bg-gray-100 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-brand-500/50 transition-colors">
+                              <div className="flex justify-between items-start mb-1">
+                                <span className="font-bold text-gray-900 dark:text-white text-sm">{opt.tier}</span>
+                                <span className="text-green-400 font-mono text-xs">{opt.price_per_hour}</span>
+                              </div>
+                              <div className="text-gray-400 text-xs mb-1">{opt.gpus.join(', ')}</div>
+                              <div className="text-gray-500 text-[10px]">{opt.performance}</div>
+                              <button
+                                onClick={() => {
+                                  setInputValue(`Escolher opção ${opt.tier}`);
+                                  sendMessage();
+                                }}
+                                className="mt-2 w-full py-1 text-[10px] bg-brand-600/20 text-brand-400 rounded hover:bg-brand-600/30 transition-colors"
+                              >
+                                Selecionar {opt.tier}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Selection Stage */}
+                    {msg.stage === 'selection' && msg.data?.machines && (
+                      <div className="space-y-2">
+                        <div className="font-semibold text-green-400 text-xs mb-2">Máquinas Disponíveis:</div>
+                        <div className="grid grid-cols-1 gap-2">
+                          {msg.data.machines.map((machine, idx) => (
+                            <div key={idx} className="bg-gray-100 dark:bg-gray-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-green-500/50 transition-colors">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="font-bold text-gray-900 dark:text-white text-xs">{machine.gpu}</span>
+                                <span className="text-green-400 font-mono text-xs">{machine.price_per_hour}</span>
+                              </div>
+                              <div className="flex justify-between text-[10px] text-gray-500 mb-2">
+                                <span>{machine.vram}</span>
+                                <span>{machine.location}</span>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setInputValue(`Reservar máquina ${machine.id}`);
+                                  sendMessage();
+                                }}
+                                className="w-full py-1.5 text-[10px] font-medium bg-green-600/20 text-green-400 rounded hover:bg-green-600/30 transition-colors"
+                              >
+                                Reservar Agora
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Reservation Stage */}
+                    {msg.stage === 'reservation' && msg.data?.reservation && (
+                      <div className="bg-green-900/20 border border-green-500/30 p-4 rounded-lg text-center">
+                        <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                          <Zap className="w-5 h-5 text-green-400" />
+                        </div>
+                        <h4 className="text-green-400 font-bold text-sm mb-1">Pronto para Reservar!</h4>
+                        <p className="text-gray-300 text-xs mb-3">{msg.data.reservation.details}</p>
+                        <button className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-xs font-bold rounded-lg transition-colors shadow-lg shadow-green-900/20">
+                          Confirmar e Pagar
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Optimization Tips (keep existing) */}
+                    {msg.recommendation?.optimization_tips && msg.recommendation.optimization_tips.length > 0 && (
+                      <div className="mt-3 p-2 rounded bg-sky-900/15 border border-sky-700/20">
+                        <div className="text-[10px] text-sky-400/80 font-semibold mb-1">Dicas de Otimização:</div>
+                        <ul className="text-[10px] text-gray-400 space-y-0.5">
+                          {msg.recommendation.optimization_tips.map((tip, idx) => (
+                            <li key={idx}>• {tip}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Fallback: Simple search button if no visual cards */}
+                {msg.recommendation && !msg.showCards && (
+                  <button
+                    onClick={() => applyRecommendation()}
+                    className="mt-3 w-full py-2 px-3 text-xs font-medium text-white bg-brand-600/50 hover:bg-brand-600/70 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Search className="w-3 h-3" />
+                    Buscar GPUs Recomendadas
+                  </button>
+                )}
+              </div>
+              {msg.role === 'user' && (
+                <div className="w-7 h-7 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                  <User className="w-4 h-4 text-green-400" />
+                </div>
               )}
             </div>
-            {msg.role === 'user' && (
-              <div className="w-7 h-7 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                <User className="w-4 h-4 text-green-400" />
-              </div>
-            )}
-          </div>
-        ))}
+          ))}
 
-        {isLoading && (
-          <div className="flex gap-2 justify-start">
-            <div className="w-5 h-5 rounded-lg bg-brand-500/20 flex items-center justify-center">
-              <Bot className="w-3 h-3 text-brand-400" />
+          {isLoading && (
+            <div className="flex gap-2 justify-start">
+              <div className="w-5 h-5 rounded-lg bg-brand-500/20 flex items-center justify-center">
+                <Bot className="w-3 h-3 text-brand-400" />
+              </div>
+              <div className="ai-wizard-loading">
+                <Loader2 className="w-3 h-3 text-brand-400 ai-wizard-loading-spinner" />
+                <span className="text-[9px]">Processando...</span>
+              </div>
             </div>
-            <div className="ai-wizard-loading">
-              <Loader2 className="w-3 h-3 text-brand-400 ai-wizard-loading-spinner" />
-              <span className="text-[9px]">Processando...</span>
-            </div>
-          </div>
-        )}
+          )}
         </div>
 
         {/* Compact Input */}
@@ -740,31 +782,26 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
           <Sparkles className="w-5 h-5 text-brand-400" />
         </div>
         <div>
-          <h3 className="text-gray-900 dark:text-white font-semibold text-sm">AI GPU Advisor</h3>
-          <p className="text-gray-500 text-[10px]">Descreva seu projeto e receba recomendações</p>
+          <h3 className="text-gray-900 dark:text-white font-semibold text-base">AI GPU Advisor</h3>
         </div>
       </div>
 
       {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[300px] max-h-[500px]">
         {messages.length === 0 && (
-          <div className="text-center py-8">
-            <Bot className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400 text-sm mb-2">Olá! Sou seu assistente de GPU.</p>
-            <p className="text-gray-500 text-xs">Descreva seu projeto e eu vou recomendar a GPU ideal.</p>
-            <div className="mt-4 space-y-2">
-              <p className="text-gray-600 text-[10px]">Exemplos:</p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {['Fine-tuning LLaMA 7B', 'API de Stable Diffusion', 'Treinar modelo de visão'].map((ex) => (
-                  <button
-                    key={ex}
-                    onClick={() => setInputValue(ex)}
-                    className="px-2 py-1 text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-800/50 rounded hover:bg-gray-200 dark:bg-gray-700/50 transition-colors"
-                  >
-                    {ex}
-                  </button>
-                ))}
-              </div>
+          <div className="text-center py-12">
+            <Bot className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400 text-base mb-6">Descreva seu projeto e receba a GPU ideal</p>
+            <div className="flex flex-wrap gap-2 justify-center max-w-md mx-auto">
+              {['Fine-tuning LLaMA 7B', 'Stable Diffusion API', 'Treinar YOLO'].map((ex) => (
+                <button
+                  key={ex}
+                  onClick={() => setInputValue(ex)}
+                  className="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700/70 hover:border-gray-300 dark:hover:border-gray-600 transition-all"
+                >
+                  {ex}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -776,11 +813,10 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
                 <Bot className="w-4 h-4 text-brand-400" />
               </div>
             )}
-            <div className={`max-w-[90%] p-3 rounded-lg ${
-              msg.role === 'user'
-                ? 'ai-wizard-message-user'
-                : 'ai-wizard-message-assistant'
-            }`}>
+            <div className={`max-w-[90%] p-3 rounded-lg ${msg.role === 'user'
+              ? 'ai-wizard-message-user'
+              : 'ai-wizard-message-assistant'
+              }`}>
               {/* Text content */}
               <div className="text-xs prose prose-invert prose-sm max-w-none prose-p:my-1 prose-headings:my-2 prose-strong:text-green-400 prose-ul:my-1 prose-li:my-0 prose-hr:border-gray-200 dark:border-gray-700 prose-h2:text-base prose-h3:text-sm prose-h4:text-xs mb-3">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
@@ -951,8 +987,8 @@ const AIWizardChat = ({ onRecommendation, onSearchWithFilters, compact = false }
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Descreva seu projeto... (ex: Quero rodar LLaMA 13B para fine-tuning)"
-            className="flex-1 ai-wizard-improved-input"
+            placeholder="Descreva seu projeto aqui..."
+            className="flex-1 ai-wizard-improved-input text-sm"
             rows={2}
           />
           <button
@@ -985,10 +1021,10 @@ const GPURecommendationCard = ({ option, onSearch }) => {
       button: 'bg-emerald-700/40 hover:bg-emerald-700/60'
     },
     'máxima': {
-      bg: 'bg-violet-900/20',
-      border: 'border-violet-700/25',
-      badge: 'bg-violet-800/40 text-violet-400',
-      button: 'bg-violet-700/40 hover:bg-violet-700/60'
+      bg: 'bg-emerald-900/20',
+      border: 'border-emerald-700/25',
+      badge: 'bg-emerald-800/40 text-emerald-400',
+      button: 'bg-emerald-700/40 hover:bg-emerald-700/60'
     }
   };
   const colors = tierColors[option.tier] || tierColors['recomendada'];
@@ -1079,7 +1115,7 @@ const GPUWizardDisplay = ({ recommendation, onSearch }) => {
   const tierStyles = {
     'mínima': { accent: 'text-gray-400', bg: 'bg-gray-700/30', border: 'border-gray-600/30' },
     'recomendada': { accent: 'text-emerald-400', bg: 'bg-emerald-900/20', border: 'border-emerald-600/30' },
-    'máxima': { accent: 'text-violet-400', bg: 'bg-violet-900/20', border: 'border-violet-600/30' }
+    'máxima': { accent: 'text-emerald-400', bg: 'bg-emerald-900/20', border: 'border-emerald-600/30' }
   };
   const style = tierStyles[currentOption.tier] || tierStyles['recomendada'];
 
@@ -1106,11 +1142,10 @@ const GPUWizardDisplay = ({ recommendation, onSearch }) => {
         <button
           onClick={goLeft}
           disabled={currentIndex === 0}
-          className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-            currentIndex === 0
-              ? 'bg-gray-800/30 text-gray-600 cursor-not-allowed'
-              : 'bg-gray-200 dark:bg-gray-700/50 text-gray-300 hover:bg-gray-600/50 hover:text-white'
-          }`}
+          className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all ${currentIndex === 0
+            ? 'bg-gray-800/30 text-gray-600 cursor-not-allowed'
+            : 'bg-gray-200 dark:bg-gray-700/50 text-gray-300 hover:bg-gray-600/50 hover:text-white'
+            }`}
           title="Mais barato"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -1184,11 +1219,10 @@ const GPUWizardDisplay = ({ recommendation, onSearch }) => {
         <button
           onClick={goRight}
           disabled={currentIndex === options.length - 1}
-          className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-            currentIndex === options.length - 1
-              ? 'bg-gray-800/30 text-gray-600 cursor-not-allowed'
-              : 'bg-gray-200 dark:bg-gray-700/50 text-gray-300 hover:bg-gray-600/50 hover:text-white'
-          }`}
+          className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all ${currentIndex === options.length - 1
+            ? 'bg-gray-800/30 text-gray-600 cursor-not-allowed'
+            : 'bg-gray-200 dark:bg-gray-700/50 text-gray-300 hover:bg-gray-600/50 hover:text-white'
+            }`}
           title="Mais rápido"
         >
           <ChevronRight className="w-5 h-5" />
@@ -1203,18 +1237,17 @@ const GPUWizardDisplay = ({ recommendation, onSearch }) => {
         </div>
         <div className="relative h-2 bg-gray-200 dark:bg-gray-700/50 rounded-full">
           {/* Track gradient */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-gray-600 via-emerald-600 to-violet-600 opacity-30" />
+          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-gray-600 via-emerald-600 to-emerald-400 opacity-30" />
           {/* Dots */}
           <div className="absolute inset-0 flex items-center justify-between px-1">
             {options.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentIndex(idx)}
-                className={`w-3 h-3 rounded-full transition-all ${
-                  idx === currentIndex
-                    ? `${style.accent.replace('text-', 'bg-')} scale-125 ring-2 ring-white/20`
-                    : 'bg-gray-600 hover:bg-gray-500'
-                }`}
+                className={`w-3 h-3 rounded-full transition-all ${idx === currentIndex
+                  ? `${style.accent.replace('text-', 'bg-')} scale-125 ring-2 ring-white/20`
+                  : 'bg-gray-600 hover:bg-gray-500'
+                  }`}
               />
             ))}
           </div>
@@ -1224,13 +1257,12 @@ const GPUWizardDisplay = ({ recommendation, onSearch }) => {
       {/* Search Button */}
       <button
         onClick={() => onSearch(currentOption)}
-        className={`mt-4 w-full py-3 px-4 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 ${
-          currentOption.tier === 'recomendada'
+        className={`mt-4 w-full py-3 px-4 rounded-lg font-medium text-white transition-all flex items-center justify-center gap-2 ${currentOption.tier === 'recomendada'
+          ? 'bg-emerald-600/50 hover:bg-emerald-600/70'
+          : currentOption.tier === 'máxima'
             ? 'bg-emerald-600/50 hover:bg-emerald-600/70'
-            : currentOption.tier === 'máxima'
-            ? 'bg-violet-600/50 hover:bg-violet-600/70'
             : 'bg-gray-600/50 hover:bg-gray-600/70'
-        }`}
+          }`}
       >
         <Search className="w-4 h-4" />
         Buscar {currentOption.gpu}
@@ -1252,9 +1284,8 @@ const GPUCarousel = ({ options, onSearch }) => {
         <button
           onClick={goLeft}
           disabled={currentIndex === 0}
-          className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-all ${
-            currentIndex === 0 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white hover:bg-gray-700/30'
-          }`}
+          className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-all ${currentIndex === 0 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white hover:bg-gray-700/30'
+            }`}
         >
           <ChevronLeft className="w-4 h-4" />
           <span>Economia</span>
@@ -1265,9 +1296,8 @@ const GPUCarousel = ({ options, onSearch }) => {
             <button
               key={idx}
               onClick={() => setCurrentIndex(idx)}
-              className={`w-2 h-2 rounded-full transition-all ${
-                idx === currentIndex ? 'bg-emerald-500 w-4' : 'bg-gray-600 hover:bg-gray-500'
-              }`}
+              className={`w-2 h-2 rounded-full transition-all ${idx === currentIndex ? 'bg-emerald-500 w-4' : 'bg-gray-600 hover:bg-gray-500'
+                }`}
             />
           ))}
         </div>
@@ -1275,9 +1305,8 @@ const GPUCarousel = ({ options, onSearch }) => {
         <button
           onClick={goRight}
           disabled={currentIndex === options.length - 1}
-          className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-all ${
-            currentIndex === options.length - 1 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white hover:bg-gray-700/30'
-          }`}
+          className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-all ${currentIndex === options.length - 1 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white hover:bg-gray-700/30'
+            }`}
         >
           <span>Performance</span>
           <ChevronRight className="w-4 h-4" />
@@ -1450,14 +1479,16 @@ export default function Dashboard() {
       setShowOnboarding(false);
     }
   };
-  const [activeTab, setActiveTab] = useState('EUA');
+  const [activeTab, setActiveTab] = useState('Global');
   const [selectedTier, setSelectedTier] = useState('Rapido');
   const [selectedGPU, setSelectedGPU] = useState('any');
   const [selectedGPUCategory, setSelectedGPUCategory] = useState('any');
+  const [searchCountry, setSearchCountry] = useState('');
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showResults, setShowResults] = useState(false);
+  const [deployMethod, setDeployMethod] = useState('manual'); // 'ai' | 'manual'
 
   // Filtros avançados completos do Vast.ai - Organizados por categoria
   const [advancedFilters, setAdvancedFilters] = useState({
@@ -1501,6 +1532,141 @@ export default function Dashboard() {
 
   const tabs = ['EUA', 'Europa', 'Ásia', 'América do Sul', 'Global'];
   const tabIds = ['EUA', 'Europa', 'Asia', 'AmericaDoSul', 'Global'];
+
+  // Country to ISO code and region mapping
+  const countryData = {
+    // Regiões (selecionam múltiplos países)
+    'eua': { codes: ['US', 'CA', 'MX'], name: 'EUA', isRegion: true },
+    'europa': { codes: ['GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'BE', 'CH', 'AT', 'IE', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'GR', 'HU', 'RO'], name: 'Europa', isRegion: true },
+    'asia': { codes: ['JP', 'CN', 'KR', 'SG', 'IN', 'TH', 'VN', 'ID', 'MY', 'PH', 'TW'], name: 'Ásia', isRegion: true },
+    'america do sul': { codes: ['BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'UY', 'PY', 'BO'], name: 'América do Sul', isRegion: true },
+
+    // Países individuais - EUA/América do Norte
+    'estados unidos': { codes: ['US'], name: 'Estados Unidos', isRegion: false },
+    'usa': { codes: ['US'], name: 'Estados Unidos', isRegion: false },
+    'united states': { codes: ['US'], name: 'Estados Unidos', isRegion: false },
+    'canada': { codes: ['CA'], name: 'Canadá', isRegion: false },
+    'canadá': { codes: ['CA'], name: 'Canadá', isRegion: false },
+    'mexico': { codes: ['MX'], name: 'México', isRegion: false },
+    'méxico': { codes: ['MX'], name: 'México', isRegion: false },
+
+    // Países individuais - Europa
+    'reino unido': { codes: ['GB'], name: 'Reino Unido', isRegion: false },
+    'uk': { codes: ['GB'], name: 'Reino Unido', isRegion: false },
+    'inglaterra': { codes: ['GB'], name: 'Reino Unido', isRegion: false },
+    'franca': { codes: ['FR'], name: 'França', isRegion: false },
+    'frança': { codes: ['FR'], name: 'França', isRegion: false },
+    'france': { codes: ['FR'], name: 'França', isRegion: false },
+    'alemanha': { codes: ['DE'], name: 'Alemanha', isRegion: false },
+    'germany': { codes: ['DE'], name: 'Alemanha', isRegion: false },
+    'espanha': { codes: ['ES'], name: 'Espanha', isRegion: false },
+    'spain': { codes: ['ES'], name: 'Espanha', isRegion: false },
+    'italia': { codes: ['IT'], name: 'Itália', isRegion: false },
+    'itália': { codes: ['IT'], name: 'Itália', isRegion: false },
+    'italy': { codes: ['IT'], name: 'Itália', isRegion: false },
+    'portugal': { codes: ['PT'], name: 'Portugal', isRegion: false },
+    'holanda': { codes: ['NL'], name: 'Holanda', isRegion: false },
+    'netherlands': { codes: ['NL'], name: 'Holanda', isRegion: false },
+    'belgica': { codes: ['BE'], name: 'Bélgica', isRegion: false },
+    'bélgica': { codes: ['BE'], name: 'Bélgica', isRegion: false },
+    'suica': { codes: ['CH'], name: 'Suíça', isRegion: false },
+    'suíça': { codes: ['CH'], name: 'Suíça', isRegion: false },
+    'austria': { codes: ['AT'], name: 'Áustria', isRegion: false },
+    'áustria': { codes: ['AT'], name: 'Áustria', isRegion: false },
+    'irlanda': { codes: ['IE'], name: 'Irlanda', isRegion: false },
+    'suecia': { codes: ['SE'], name: 'Suécia', isRegion: false },
+    'suécia': { codes: ['SE'], name: 'Suécia', isRegion: false },
+    'noruega': { codes: ['NO'], name: 'Noruega', isRegion: false },
+    'dinamarca': { codes: ['DK'], name: 'Dinamarca', isRegion: false },
+    'finlandia': { codes: ['FI'], name: 'Finlândia', isRegion: false },
+    'finlândia': { codes: ['FI'], name: 'Finlândia', isRegion: false },
+    'polonia': { codes: ['PL'], name: 'Polônia', isRegion: false },
+    'polônia': { codes: ['PL'], name: 'Polônia', isRegion: false },
+
+    // Países individuais - Ásia
+    'japao': { codes: ['JP'], name: 'Japão', isRegion: false },
+    'japão': { codes: ['JP'], name: 'Japão', isRegion: false },
+    'japan': { codes: ['JP'], name: 'Japão', isRegion: false },
+    'china': { codes: ['CN'], name: 'China', isRegion: false },
+    'coreia': { codes: ['KR'], name: 'Coreia do Sul', isRegion: false },
+    'coréia': { codes: ['KR'], name: 'Coreia do Sul', isRegion: false },
+    'korea': { codes: ['KR'], name: 'Coreia do Sul', isRegion: false },
+    'singapore': { codes: ['SG'], name: 'Singapura', isRegion: false },
+    'singapura': { codes: ['SG'], name: 'Singapura', isRegion: false },
+    'india': { codes: ['IN'], name: 'Índia', isRegion: false },
+    'índia': { codes: ['IN'], name: 'Índia', isRegion: false },
+    'tailandia': { codes: ['TH'], name: 'Tailândia', isRegion: false },
+    'tailândia': { codes: ['TH'], name: 'Tailândia', isRegion: false },
+    'vietnam': { codes: ['VN'], name: 'Vietnã', isRegion: false },
+    'vietnã': { codes: ['VN'], name: 'Vietnã', isRegion: false },
+    'indonesia': { codes: ['ID'], name: 'Indonésia', isRegion: false },
+    'indonésia': { codes: ['ID'], name: 'Indonésia', isRegion: false },
+    'malasia': { codes: ['MY'], name: 'Malásia', isRegion: false },
+    'malásia': { codes: ['MY'], name: 'Malásia', isRegion: false },
+    'filipinas': { codes: ['PH'], name: 'Filipinas', isRegion: false },
+    'taiwan': { codes: ['TW'], name: 'Taiwan', isRegion: false },
+
+    // Países individuais - América do Sul
+    'brasil': { codes: ['BR'], name: 'Brasil', isRegion: false },
+    'brazil': { codes: ['BR'], name: 'Brasil', isRegion: false },
+    'argentina': { codes: ['AR'], name: 'Argentina', isRegion: false },
+    'chile': { codes: ['CL'], name: 'Chile', isRegion: false },
+    'colombia': { codes: ['CO'], name: 'Colômbia', isRegion: false },
+    'colômbia': { codes: ['CO'], name: 'Colômbia', isRegion: false },
+    'peru': { codes: ['PE'], name: 'Peru', isRegion: false },
+    'venezuela': { codes: ['VE'], name: 'Venezuela', isRegion: false },
+    'equador': { codes: ['EC'], name: 'Equador', isRegion: false },
+    'uruguai': { codes: ['UY'], name: 'Uruguai', isRegion: false },
+    'paraguai': { codes: ['PY'], name: 'Paraguai', isRegion: false },
+    'bolivia': { codes: ['BO'], name: 'Bolívia', isRegion: false },
+    'bolívia': { codes: ['BO'], name: 'Bolívia', isRegion: false },
+  };
+
+  // State for selected location (can be country or region)
+  const [selectedLocation, setSelectedLocation] = useState(null); // { codes: [], name: '', isRegion: bool }
+
+  // Function to find location data from search query
+  const findLocationFromSearch = (query) => {
+    if (!query || query.length < 2) return null;
+    const normalizedQuery = query.toLowerCase().trim();
+
+    // Check exact match first
+    if (countryData[normalizedQuery]) {
+      return countryData[normalizedQuery];
+    }
+
+    // Check partial match
+    for (const [key, data] of Object.entries(countryData)) {
+      if (key.includes(normalizedQuery) || normalizedQuery.includes(key)) {
+        return data;
+      }
+    }
+    return null;
+  };
+
+  // Handle search input change with auto-selection
+  const handleSearchChange = (value) => {
+    setSearchCountry(value);
+    const foundLocation = findLocationFromSearch(value);
+    if (foundLocation) {
+      setSelectedLocation(foundLocation);
+    }
+  };
+
+  // Handle region button click
+  const handleRegionSelect = (regionKey) => {
+    const regionData = countryData[regionKey];
+    if (regionData) {
+      setSelectedLocation(regionData);
+      setSearchCountry('');
+    }
+  };
+
+  // Clear selection
+  const clearSelection = () => {
+    setSelectedLocation(null);
+    setSearchCountry('');
+  };
 
   const tiers = [
     { name: 'Lento', level: 1, color: 'slate', speed: '100-250 Mbps', time: '~5 min', gpu: 'RTX 3070/3080', vram: '8-12GB VRAM', priceRange: '$0.05 - $0.25/hr', description: 'Econômico. Ideal para tarefas básicas e testes.', filter: { max_price: 0.25, min_gpu_ram: 8 } },
@@ -1594,7 +1760,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-6 lg:p-8 bg-gray-50 dark:bg-dark-surface-bg" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen p-4 md:p-6 lg:p-8 bg-gray-50 dark:bg-[#0a0d0a]" style={{ fontFamily: "'Inter', sans-serif" }}>
       {showOnboarding && (
         <OnboardingWizard
           user={user}
@@ -1604,40 +1770,36 @@ export default function Dashboard() {
       )}
 
       {/* Page Header */}
-      <div className="max-w-7xl mx-auto mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Visão geral das suas máquinas GPU</p>
+      <div className="max-w-7xl mx-auto mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Dashboard</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Visão geral e gerenciamento das suas máquinas GPU</p>
       </div>
 
       {/* Dashboard Stats Cards */}
-      <div className="max-w-7xl mx-auto mb-6">
+      <div className="max-w-7xl mx-auto mb-8">
         <MetricsGrid columns={3}>
           <MetricCard
             icon={Server}
+            iconColor="primary"
             title="Máquinas Ativas"
             value={`${dashboardStats.activeMachines}/${dashboardStats.totalMachines}`}
-            subtext="Instâncias em execução"
-            color="green"
-            tooltip="Total de GPUs rodando vs contratadas"
+            subtitle="Instâncias em execução"
           />
           <MetricCard
             icon={DollarSign}
+            iconColor="warning"
             title="Custo Diário"
             value={`$${dashboardStats.dailyCost}`}
-            subtext="Estimativa baseada no uso"
-            color="yellow"
-            tooltip="Custo estimado baseado nas horas de uso hoje"
+            subtitle="Estimativa baseada no uso"
           />
           <MetricCard
             icon={Shield}
+            iconColor="success"
             title="Economia Mensal"
             value={`$${dashboardStats.savings}`}
-            subtext="vs. preços on-demand"
-            color="blue"
-            trend={89}
-            animate={true}
-            tooltip="Economia comparada a provedores tradicionais"
-            comparison="vs AWS: $6,547 → você paga $724"
+            subtitle="vs. preços on-demand"
+            change="+89%"
+            changeType="up"
           />
         </MetricsGrid>
       </div>
@@ -1645,739 +1807,881 @@ export default function Dashboard() {
       {/* Deploy Wizard */}
       <div className="max-w-7xl mx-auto">
         <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-brand-100 dark:bg-brand-500/20 flex items-center justify-center">
-                <Cpu className="w-5 h-5 text-brand-600 dark:text-brand-400" />
+          <CardHeader className="flex flex-col space-y-4 pb-6 border-b border-white/5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                  <Cpu className="w-6 h-6 text-emerald-500" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Deploy GPU</CardTitle>
+                  <CardDescription>Crie uma nova instância em segundos</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle>Deploy GPU</CardTitle>
-                <CardDescription>Crie uma nova instância</CardDescription>
+
+              {/* Level 1: Method Selection */}
+              <div className="flex bg-gray-100 dark:bg-gray-900/50 p-1.5 rounded-xl border border-gray-300 dark:border-gray-700">
+                <button
+                  onClick={() => setDeployMethod('manual')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${deployMethod === 'manual'
+                    ? 'bg-emerald-700 dark:bg-emerald-600 text-white shadow-md'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800'
+                    }`}
+                >
+                  <Server className="w-4 h-4" />
+                  Seleção Manual
+                </button>
+                <button
+                  onClick={() => setDeployMethod('ai')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${deployMethod === 'ai'
+                    ? 'bg-emerald-700 dark:bg-emerald-600 text-white shadow-md'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800'
+                    }`}
+                >
+                  <Bot className="w-4 h-4" />
+                  AI Assistant
+                </button>
               </div>
             </div>
 
-            <TabsUI value={mode} onValueChange={(v) => { setMode(v); setShowResults(false); }}>
-              <TabsListUI>
-                <TabsTriggerUI value="wizard" className="gap-1.5">
-                  <Wand2 className="w-3.5 h-3.5" />
-                  Wizard
-                </TabsTriggerUI>
-                <TabsTriggerUI value="advanced" className="gap-1.5">
-                  <Sliders className="w-3.5 h-3.5" />
-                  Avançado
-                </TabsTriggerUI>
-              </TabsListUI>
-            </TabsUI>
+            {/* Level 2: Manual Mode Sub-tabs */}
+            {deployMethod === 'manual' && (
+              <div className="flex w-full pt-3">
+                <Tabs value={mode} onValueChange={(v) => { setMode(v); setShowResults(false); }} className="w-full md:w-auto">
+                  <TabsList className="bg-gray-200 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 h-11 p-1 gap-1 rounded-xl">
+                    <TabsTrigger value="wizard" className="gap-2 rounded-lg data-[state=active]:bg-emerald-700 dark:data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md text-gray-700 dark:text-gray-300 font-semibold">
+                      <Wand2 className="w-4 h-4" />
+                      <span>Wizard</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="advanced" className="gap-2 rounded-lg data-[state=active]:bg-emerald-700 dark:data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md text-gray-700 dark:text-gray-300 font-semibold">
+                      <Sliders className="w-4 h-4" />
+                      <span>Avançado</span>
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+            )}
           </CardHeader>
 
-          {/* WIZARD MODE */}
-          {mode === 'wizard' && !showResults && (
-            <>
-              <div className="flex flex-wrap gap-2 px-5 py-3 border-y border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-dark-surface-secondary">
-                {tabs.map((tab, i) => (
-                  <Button
-                    key={tab}
-                    variant={activeTab === tabIds[i] ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setActiveTab(tabIds[i])}
-                  >
-                    {tab}
-                  </Button>
-                ))}
-              </div>
-
-              <CardContent className="pt-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                {/* Main Wizard - 2 cols */}
-                <div className="lg:col-span-2">
-                  <div className="flex flex-col gap-4">
-                    <div>
-                      <Label className="text-gray-600 dark:text-gray-400 text-xs mb-2 block">Região</Label>
-                      <div className="h-44 md:h-52 rounded-xl overflow-hidden shadow-sm">
-                        <WorldMap activeRegion={activeTab} onRegionClick={setActiveTab} />
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-gray-600 dark:text-gray-400 text-xs mb-2 block">GPU (opcional)</Label>
-                      <GPUSelector
-                        selectedGPU={selectedGPU}
-                        onSelectGPU={setSelectedGPU}
-                        selectedCategory={selectedGPUCategory}
-                        onSelectCategory={setSelectedGPUCategory}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Advisor - 1 col */}
-                <div className="lg:col-span-1">
-                  <Card className="border-brand-200 dark:border-brand-600/30 bg-gradient-to-br from-brand-50 dark:from-brand-600/10 to-transparent overflow-hidden h-full flex flex-col min-h-[280px]">
-                    <CardHeader className="py-3 border-b border-brand-100 dark:border-brand-600/20 bg-brand-50/50 dark:bg-brand-600/5">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-brand-500 dark:text-brand-400" />
-                        <CardTitle className="text-sm">AI Advisor</CardTitle>
-                      </div>
-                      <CardDescription>Pergunte sobre GPUs para seu projeto</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-1 overflow-hidden p-0">
-                      <AIWizardChat
-                        compact={false}
-                        onRecommendation={(rec) => {
-                          console.log('AI Recommendation:', rec);
-                        }}
-                        onSearchWithFilters={(filters) => {
-                          const tierMap = {
-                            'Lento': tiers[0],
-                            'Medio': tiers[1],
-                            'Rapido': tiers[2],
-                            'Ultra': tiers[3]
-                          };
-                          const tier = tierMap[filters.tier] || tiers[2];
-                          searchOffers({
-                            ...tier.filter,
-                            gpu_name: filters.gpu_name !== 'any' ? filters.gpu_name : '',
-                            min_gpu_ram: filters.min_gpu_ram || tier.filter.min_gpu_ram,
-                            region: regionToApiRegion[activeTab] || ''
-                          });
-                        }}
-                      />
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <Label className="text-gray-600 dark:text-gray-500 text-xs mb-3 block">Velocidade & Custo</Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-6">
-                  {tiers.map((tier) => (
-                    <TierCard key={tier.name} tier={tier} isSelected={selectedTier === tier.name} onClick={() => setSelectedTier(tier.name)} />
-                  ))}
-                </div>
-
-                <div className="relative h-2.5 rounded-full mb-6 mx-1 bg-gray-200 dark:bg-dark-surface-secondary">
-                  <div className="absolute inset-y-0 left-0 rounded-full"
-                    style={{ width: `${tiers.findIndex(t => t.name === selectedTier) * 25 + 25}%`, background: 'linear-gradient(to right, #4b5563, #ca8a04, #ea580c, #22c55e)' }} />
-                  <div className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-white rounded-full border-2 border-green-500 shadow-lg"
-                    style={{ left: `calc(${tiers.findIndex(t => t.name === selectedTier) * 25 + 25}% - 10px)` }} />
-                </div>
-              </div>
-
-              <Button
-                onClick={handleWizardSearch}
-                className="w-full"
-                size="lg"
-              >
-                <Search className="w-4 h-4" />
-                Buscar Máquinas Disponíveis
-              </Button>
-              </CardContent>
-            </>
+          {/* AI MODE */}
+          {deployMethod === 'ai' && (
+            <CardContent className="h-[600px] p-0 relative">
+              <AIWizardChat
+                compact={false}
+                onRecommendation={(rec) => console.log('AI Rec:', rec)}
+                onSearchWithFilters={(filters) => {
+                  // Logic to jump to search results
+                  setDeployMethod('manual');
+                  setMode('advanced');
+                  // Apply filters...
+                }}
+              />
+            </CardContent>
           )}
 
-        {/* ADVANCED MODE */}
-        {mode === 'advanced' && !showResults && (
-          <CardContent className="pt-6">
-            {/* Header */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-green-100 dark:bg-gradient-to-br dark:from-emerald-500/20 dark:to-emerald-600/20">
-                    <Sliders className="w-6 h-6 text-green-600 dark:text-emerald-400" />
+          {/* WIZARD MODE (MANUAL) */}
+          {deployMethod === 'manual' && mode === 'wizard' && !showResults && (
+            <CardContent className="p-6 space-y-8">
+
+              {/* Step 1: Localização */}
+              <div className="relative p-6 rounded-2xl border-2 border-gray-300 dark:border-white/10 bg-gradient-to-br from-gray-100 dark:from-white/[0.03] to-white dark:to-transparent backdrop-blur-sm shadow-sm">
+                {/* Connector Line */}
+                <div className="absolute left-10 top-[72px] bottom-6 w-0.5 bg-gradient-to-b from-emerald-600/40 via-emerald-500/20 dark:from-emerald-500/30 dark:via-emerald-500/10 to-transparent z-0" />
+
+                <div className="space-y-6 relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-500/20 dark:to-emerald-500/10 border-2 border-emerald-600 dark:border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-bold text-base shadow-lg shadow-emerald-500/20">1</div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Escolha a Região</h3>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-400">Onde você quer que sua máquina esteja localizada?</p>
+                        <span className="text-[10px] bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2.5 py-1 rounded-full border-2 border-emerald-600 dark:border-emerald-500/20 font-bold whitespace-nowrap">Closer = Faster</span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Busca Avançada</h2>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">Ajuste os filtros para encontrar as melhores máquinas disponíveis</p>
+
+                  <div className="grid grid-cols-1 gap-6 pl-0 md:pl-14">
+                    {/* Map & Tabs */}
+                    <div className="space-y-4">
+                      <div className="flex flex-col gap-4">
+                        {/* Search Input + Selected Location Chip */}
+                        <div className="flex flex-col gap-3">
+                          {/* Search Input - TailAdmin Style */}
+                          <div className="relative">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10">
+                              <Search className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Buscar país ou região (ex: Brasil, Europa, Japão...)"
+                              className="w-full pl-12 pr-4 py-3 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 dark:focus:border-emerald-400 hover:border-gray-400 dark:hover:border-gray-600 transition-all"
+                              value={searchCountry}
+                              onChange={(e) => handleSearchChange(e.target.value)}
+                            />
+                          </div>
+
+                          {/* Selected Location Chip (deletable) */}
+                          {selectedLocation && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                {selectedLocation.isRegion ? 'Região:' : 'País:'}
+                              </span>
+                              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-600 dark:bg-emerald-500 text-white rounded-full text-sm font-bold shadow-md">
+                                {selectedLocation.isRegion ? <Globe className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
+                                <span>{selectedLocation.name}</span>
+                                <button
+                                  onClick={clearSelection}
+                                  className="ml-1 p-0.5 rounded-full hover:bg-white/20 transition-colors"
+                                  title="Remover seleção"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Quick Select Buttons (only show when no location is selected) */}
+                          {!selectedLocation && (
+                            <div className="flex flex-wrap gap-2">
+                              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium mr-1 self-center">Regiões:</span>
+                              {['eua', 'europa', 'asia', 'america do sul'].map((regionKey) => (
+                                <button
+                                  key={regionKey}
+                                  onClick={() => handleRegionSelect(regionKey)}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:border-emerald-500 dark:hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all"
+                                >
+                                  <Globe className="w-3 h-3" />
+                                  {countryData[regionKey].name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="h-64 rounded-xl overflow-hidden border-2 border-gray-300 dark:border-white/10 bg-gray-50 dark:bg-[#0a0d0a] relative group shadow-lg">
+                        <WorldMap
+                          selectedCodes={selectedLocation?.codes || []}
+                          onCountryClick={(code) => {
+                            // Find country name from code
+                            const countryNames = {
+                              'US': 'Estados Unidos', 'CA': 'Canadá', 'MX': 'México',
+                              'GB': 'Reino Unido', 'FR': 'França', 'DE': 'Alemanha', 'ES': 'Espanha', 'IT': 'Itália', 'PT': 'Portugal',
+                              'JP': 'Japão', 'CN': 'China', 'KR': 'Coreia do Sul', 'SG': 'Singapura', 'IN': 'Índia',
+                              'BR': 'Brasil', 'AR': 'Argentina', 'CL': 'Chile', 'CO': 'Colômbia',
+                            };
+                            if (countryNames[code]) {
+                              setSelectedLocation({ codes: [code], name: countryNames[code], isRegion: false });
+                              setSearchCountry('');
+                            }
+                          }}
+                        />
+                        <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-gray-50 dark:from-[#0a0d0a] via-transparent to-transparent opacity-50" />
+                      </div>
+                    </div>
+
+
                   </div>
+                </div>
+              </div>
+
+              {/* Step 2: Hardware & Performance */}
+              <div className="relative p-6 rounded-2xl border-2 border-gray-300 dark:border-white/10 bg-gradient-to-br from-gray-100 dark:from-white/[0.03] to-white dark:to-transparent backdrop-blur-sm shadow-sm">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-500/20 dark:to-emerald-500/10 border-2 border-emerald-600 dark:border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-bold text-base shadow-lg shadow-emerald-500/20">2</div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Defina o Hardware</h3>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-400">Qual potência de GPU e velocidade você precisa?</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-0 md:pl-14">
+                  {/* GPU Selector */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 pb-1">
+                      <Cpu className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                      <Label className="text-gray-800 dark:text-gray-200 text-sm font-bold tracking-wide">Modelo da GPU</Label>
+                    </div>
+                    <GPUSelector
+                      selectedGPU={selectedGPU}
+                      onSelectGPU={setSelectedGPU}
+                      selectedCategory={selectedGPUCategory}
+                      onSelectCategory={setSelectedGPUCategory}
+                    />
+                  </div>
+
+                  {/* Tiers - Redesigned as List */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 pb-1">
+                      <Zap className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                      <Label className="text-gray-800 dark:text-gray-200 text-sm font-bold tracking-wide">Nível de Performance</Label>
+                    </div>
+                    <div className="p-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-[280px] overflow-y-auto custom-scrollbar">
+                      <div className="flex flex-col gap-2">
+                        {tiers.map((tier) => (
+                          <div
+                            key={tier.name}
+                            onClick={() => setSelectedTier(tier.name)}
+                            className={`
+                            relative flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all group
+                            ${selectedTier === tier.name
+                                ? "bg-emerald-600 dark:bg-emerald-500 border-emerald-700 dark:border-emerald-600"
+                                : "bg-gray-100 dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-800"
+                              }
+                          `}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`
+                                w-8 h-8 rounded-lg flex items-center justify-center
+                                ${selectedTier === tier.name ? "bg-white/20 text-white" : "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300"}
+                             `}>
+                                {tier.name === 'Lento' && <Gauge className="w-4 h-4" />}
+                                {tier.name === 'Medio' && <Activity className="w-4 h-4" />}
+                                {tier.name === 'Rapido' && <Zap className="w-4 h-4" />}
+                                {tier.name === 'Ultra' && <Sparkles className="w-4 h-4" />}
+                              </div>
+                              <div>
+                                <h4 className={`text-sm font-bold ${selectedTier === tier.name ? "text-white" : "text-gray-900 dark:text-gray-100"}`}>{tier.name}</h4>
+                                <p className={`text-[10px] ${selectedTier === tier.name ? "text-white/80" : "text-gray-600 dark:text-gray-400"}`}>{tier.speed}</p>
+                              </div>
+                            </div>
+
+                            <div className="text-right">
+                              <div className={`text-xs font-mono mb-0.5 font-semibold ${selectedTier === tier.name ? "text-white" : "text-gray-700 dark:text-gray-300"}`}>{tier.priceRange}</div>
+                              <SpeedBars level={tier.level} color={tier.color} />
+                            </div>
+
+                            {/* Glow effect for selected */}
+                            {selectedTier === tier.name && (
+                              <div className="absolute inset-0 rounded-xl bg-white/10 pointer-events-none" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                </div>
+              </div>
+
+              {/* Action */}
+              <div className="pt-2">
+                <Button
+                  onClick={handleWizardSearch}
+                  className="w-full h-12 text-base font-bold bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white shadow-md hover:shadow-lg rounded-xl transition-all"
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  Buscar Máquinas Disponíveis
+                </Button>
+              </div>
+
+            </CardContent>
+          )}
+
+          {/* ADVANCED MODE (MANUAL) */}
+          {deployMethod === 'manual' && mode === 'advanced' && !showResults && (
+            <CardContent className="pt-6">
+              {/* Header */}
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-emerald-100 border-2 border-emerald-600 dark:bg-gradient-to-br dark:from-emerald-500/20 dark:to-emerald-600/20 dark:border-emerald-500/30">
+                      <Sliders className="w-6 h-6 text-emerald-700 dark:text-emerald-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Busca Avançada</h2>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm mt-0.5 font-medium">Ajuste os filtros para encontrar as melhores máquinas disponíveis</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={resetAdvancedFilters}
+                    className="gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Resetar Filtros
+                  </Button>
+                </div>
+                <div className="h-1 bg-gradient-to-r from-emerald-600/40 via-emerald-500/20 dark:from-emerald-500/30 dark:via-emerald-500/10 to-transparent rounded-full"></div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {/* GPU */}
+                <FilterSection title="GPU" icon={Cpu}>
+                  <div className="space-y-4 mt-3">
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Modelo da GPU</Label>
+                      <Select value={advancedFilters.gpu_name} onValueChange={(v) => handleAdvancedFilterChange('gpu_name', v)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {GPU_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">Quantidade de GPUs</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.num_gpus}</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.num_gpus]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('num_gpus', Math.round(v))}
+                        max={8}
+                        min={1}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>1</span>
+                        <span>4</span>
+                        <span>8</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">VRAM Mínima (GB)</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_gpu_ram.toFixed(0)} GB</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.min_gpu_ram]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('min_gpu_ram', Math.round(v))}
+                        max={80}
+                        min={0}
+                        step={4}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>0 GB</span>
+                        <span>40 GB</span>
+                        <span>80 GB</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">Fração de GPU</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.gpu_frac.toFixed(1)}</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.gpu_frac]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('gpu_frac', v)}
+                        max={1}
+                        min={0.1}
+                        step={0.1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>0.1</span>
+                        <span>0.5</span>
+                        <span>1.0</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">Largura de Banda Memória (GB/s)</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.gpu_mem_bw.toFixed(0)}</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.gpu_mem_bw]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('gpu_mem_bw', v)}
+                        max={1000}
+                        min={0}
+                        step={10}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>0 GB/s</span>
+                        <span>500 GB/s</span>
+                        <span>1000 GB/s</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">Potência Máxima (W)</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.gpu_max_power.toFixed(0)} W</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.gpu_max_power]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('gpu_max_power', v)}
+                        max={500}
+                        min={0}
+                        step={10}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>0 W</span>
+                        <span>250 W</span>
+                        <span>500 W</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">Largura de Banda NVLink (GB/s)</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.bw_nvlink.toFixed(0)}</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.bw_nvlink]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('bw_nvlink', v)}
+                        max={600}
+                        min={0}
+                        step={10}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>0 GB/s</span>
+                        <span>300 GB/s</span>
+                        <span>600 GB/s</span>
+                      </div>
+                    </div>
+                  </div>
+                </FilterSection>
+
+                {/* CPU & Memória */}
+                <FilterSection title="CPU & Memória" icon={Server}>
+                  <div className="space-y-4 mt-3">
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">CPU Cores Mínimos</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_cpu_cores}</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.min_cpu_cores]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('min_cpu_cores', Math.round(v))}
+                        max={64}
+                        min={1}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>1</span>
+                        <span>32</span>
+                        <span>64</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">RAM CPU Mínima (GB)</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_cpu_ram.toFixed(0)} GB</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.min_cpu_ram]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('min_cpu_ram', Math.round(v))}
+                        max={256}
+                        min={1}
+                        step={2}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>1 GB</span>
+                        <span>128 GB</span>
+                        <span>256 GB</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">Disco Mínimo (GB)</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_disk.toFixed(0)} GB</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.min_disk]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('min_disk', Math.round(v))}
+                        max={2000}
+                        min={10}
+                        step={10}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>10 GB</span>
+                        <span>1000 GB</span>
+                        <span>2000 GB</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">Velocidade CPU Mínima (GHz)</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.cpu_ghz.toFixed(1)} GHz</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.cpu_ghz]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('cpu_ghz', v)}
+                        max={5}
+                        min={0}
+                        step={0.1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>0 GHz</span>
+                        <span>2.5 GHz</span>
+                        <span>5.0 GHz</span>
+                      </div>
+                    </div>
+                  </div>
+                </FilterSection>
+
+                {/* Performance */}
+                <FilterSection title="Performance" icon={Gauge}>
+                  <div className="space-y-4 mt-3">
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">DLPerf Mínimo</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_dlperf.toFixed(1)}</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.min_dlperf]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('min_dlperf', v)}
+                        max={100}
+                        min={0}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>0</span>
+                        <span>50</span>
+                        <span>100</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">PCIe BW Mínima (GB/s)</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_pcie_bw.toFixed(1)} GB/s</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.min_pcie_bw]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('min_pcie_bw', v)}
+                        max={100}
+                        min={0}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>0 GB/s</span>
+                        <span>50 GB/s</span>
+                        <span>100 GB/s</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">TFLOPs Totais Mínimos</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.total_flops.toFixed(0)} TFLOP</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.total_flops]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('total_flops', v)}
+                        max={10000}
+                        min={0}
+                        step={100}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>0 TFLOP</span>
+                        <span>5000 TFLOP</span>
+                        <span>10000 TFLOP</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">Compute Capability Mínimo</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{(advancedFilters.compute_cap / 10).toFixed(1)}</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.compute_cap]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('compute_cap', v)}
+                        max={900}
+                        min={300}
+                        step={10}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>3.0</span>
+                        <span>6.0</span>
+                        <span>9.0</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Versão CUDA Mínima</Label>
+                      <Select value={advancedFilters.cuda_vers} onValueChange={(v) => handleAdvancedFilterChange('cuda_vers', v)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {CUDA_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </FilterSection>
+
+                {/* Rede */}
+                <FilterSection title="Rede" icon={Wifi}>
+                  <div className="space-y-4 mt-3">
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">Download Mínimo (Mbps)</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_inet_down.toFixed(0)} Mbps</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.min_inet_down]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('min_inet_down', Math.round(v))}
+                        max={1000}
+                        min={10}
+                        step={10}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>10 Mbps</span>
+                        <span>500 Mbps</span>
+                        <span>1000 Mbps</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">Upload Mínimo (Mbps)</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_inet_up.toFixed(0)} Mbps</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.min_inet_up]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('min_inet_up', Math.round(v))}
+                        max={1000}
+                        min={10}
+                        step={10}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>10 Mbps</span>
+                        <span>500 Mbps</span>
+                        <span>1000 Mbps</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">Portas Diretas Mínimas</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.direct_port_count}</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.direct_port_count]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('direct_port_count', Math.round(v))}
+                        max={32}
+                        min={0}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>0</span>
+                        <span>16</span>
+                        <span>32</span>
+                      </div>
+                    </div>
+                  </div>
+                </FilterSection>
+
+                {/* Preço */}
+                <FilterSection title="Preço" icon={DollarSign}>
+                  <div className="space-y-4 mt-3">
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">Preço Máximo</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">${advancedFilters.max_price.toFixed(2)}/hr</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.max_price]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('max_price', v)}
+                        max={15}
+                        min={0.05}
+                        step={0.05}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>$0.05</span>
+                        <span>$7.50</span>
+                        <span>$15.00</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Tipo de Aluguel</Label>
+                      <Select value={advancedFilters.rental_type} onValueChange={(v) => handleAdvancedFilterChange('rental_type', v)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {RENTAL_TYPE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </FilterSection>
+
+                {/* Localização & Qualidade */}
+                <FilterSection title="Localização & Qualidade" icon={Globe}>
+                  <div className="space-y-4 mt-3">
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Região Preferida</Label>
+                      <Select value={advancedFilters.region} onValueChange={(v) => handleAdvancedFilterChange('region', v)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {REGION_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <Label className="text-xs text-gray-500 dark:text-gray-400">Confiabilidade Mínima</Label>
+                        <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{(advancedFilters.min_reliability * 100).toFixed(0)}%</span>
+                      </div>
+                      <Slider
+                        value={[advancedFilters.min_reliability]}
+                        onValueChange={([v]) => handleAdvancedFilterChange('min_reliability', v)}
+                        max={1}
+                        min={0}
+                        step={0.05}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
+                        <span>0%</span>
+                        <span>50%</span>
+                        <span>100%</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border border-gray-200 dark:border-gray-700/30 rounded-lg p-3 bg-gray-900/20">
+                      <Label className="text-sm text-gray-300">Apenas Datacenters Certificados</Label>
+                      <Switch
+                        checked={advancedFilters.datacenter}
+                        onCheckedChange={(checked) => handleAdvancedFilterChange('datacenter', checked)}
+                      />
+                    </div>
+                  </div>
+                </FilterSection>
+              </div>
+
+              {/* Opções & Ordenação */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                <FilterSection title="Opções Adicionais" icon={Shield} defaultOpen={false}>
+                  <div className="space-y-3 mt-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm text-gray-300">Apenas Hosts Verificados</Label>
+                      <Switch
+                        checked={advancedFilters.verified_only}
+                        onCheckedChange={(checked) => handleAdvancedFilterChange('verified_only', checked)}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm text-gray-300">IP Estático</Label>
+                      <Switch
+                        checked={advancedFilters.static_ip}
+                        onCheckedChange={(checked) => handleAdvancedFilterChange('static_ip', checked)}
+                      />
+                    </div>
+                  </div>
+                </FilterSection>
+
+                <FilterSection title="Ordenação" icon={Activity} defaultOpen={false}>
+                  <div className="space-y-3 mt-3">
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Ordenar Por</Label>
+                      <Select value={advancedFilters.order_by} onValueChange={(v) => handleAdvancedFilterChange('order_by', v)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {ORDER_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Limite de Resultados</Label>
+                      <Input type="number" min="10" max="500" value={advancedFilters.limit}
+                        onChange={(e) => handleAdvancedFilterChange('limit', parseInt(e.target.value) || 100)} />
+                    </div>
+                  </div>
+                </FilterSection>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  onClick={handleAdvancedSearch}
+                  className="flex-1"
+                  size="lg"
+                >
+                  <Search className="w-4 h-4" />
+                  Buscar Máquinas
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setMode('wizard')}
+                  size="lg"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Voltar ao Wizard
+                </Button>
+              </div>
+            </CardContent>
+          )}
+
+          {/* RESULTS VIEW */}
+          {showResults && (
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-gray-900 dark:text-white text-lg font-semibold">Máquinas Disponíveis</h2>
+                  <p className="text-gray-500 text-xs">{offers.length} resultados encontrados</p>
                 </div>
                 <Button
                   variant="outline"
-                  onClick={resetAdvancedFilters}
-                  className="gap-2"
+                  size="sm"
+                  onClick={() => setShowResults(false)}
                 >
-                  <RotateCcw className="w-4 h-4" />
-                  Resetar Filtros
+                  <ChevronLeft className="w-4 h-4" />
+                  Voltar
                 </Button>
               </div>
-              <div className="h-0.5 bg-gradient-to-r from-green-500/30 dark:from-emerald-500/30 to-transparent rounded-full"></div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              {/* GPU */}
-              <FilterSection title="GPU" icon={Cpu}>
-                <div className="space-y-4 mt-3">
-                  <div>
-                    <Label className="text-xs text-gray-400 mb-2 block">Modelo da GPU</Label>
-                    <Select value={advancedFilters.gpu_name} onValueChange={(v) => handleAdvancedFilterChange('gpu_name', v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {GPU_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              {loading && (
+                <SkeletonList count={6} type="offer" />
+              )}
 
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">Quantidade de GPUs</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.num_gpus}</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.num_gpus]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('num_gpus', Math.round(v))}
-                      max={8}
-                      min={1}
-                      step={1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>1</span>
-                      <span>4</span>
-                      <span>8</span>
-                    </div>
-                  </div>
+              {error && !loading && (
+                <ErrorState
+                  message={error}
+                  onRetry={() => {
+                    setError(null);
+                    setShowResults(false);
+                  }}
+                  retryText="Tentar novamente"
+                />
+              )}
 
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">VRAM Mínima (GB)</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_gpu_ram.toFixed(0)} GB</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.min_gpu_ram]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('min_gpu_ram', Math.round(v))}
-                      max={80}
-                      min={0}
-                      step={4}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>0 GB</span>
-                      <span>40 GB</span>
-                      <span>80 GB</span>
-                    </div>
-                  </div>
+              {!loading && !error && offers.length === 0 && (
+                <EmptyState
+                  icon="search"
+                  title="Nenhuma máquina encontrada"
+                  description="Não encontramos ofertas com os filtros selecionados. Tente ajustar os critérios de busca."
+                  action={() => setShowResults(false)}
+                  actionText="Ajustar filtros"
+                />
+              )}
 
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">Fração de GPU</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.gpu_frac.toFixed(1)}</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.gpu_frac]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('gpu_frac', v)}
-                      max={1}
-                      min={0.1}
-                      step={0.1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>0.1</span>
-                      <span>0.5</span>
-                      <span>1.0</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">Largura de Banda Memória (GB/s)</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.gpu_mem_bw.toFixed(0)}</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.gpu_mem_bw]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('gpu_mem_bw', v)}
-                      max={1000}
-                      min={0}
-                      step={10}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>0 GB/s</span>
-                      <span>500 GB/s</span>
-                      <span>1000 GB/s</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">Potência Máxima (W)</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.gpu_max_power.toFixed(0)} W</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.gpu_max_power]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('gpu_max_power', v)}
-                      max={500}
-                      min={0}
-                      step={10}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>0 W</span>
-                      <span>250 W</span>
-                      <span>500 W</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">Largura de Banda NVLink (GB/s)</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.bw_nvlink.toFixed(0)}</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.bw_nvlink]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('bw_nvlink', v)}
-                      max={600}
-                      min={0}
-                      step={10}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>0 GB/s</span>
-                      <span>300 GB/s</span>
-                      <span>600 GB/s</span>
-                    </div>
-                  </div>
+              {!loading && offers.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {offers.map((offer, index) => (
+                    <OfferCard key={offer.id || index} offer={offer} onSelect={handleSelectOffer} />
+                  ))}
                 </div>
-              </FilterSection>
-
-              {/* CPU & Memória */}
-              <FilterSection title="CPU & Memória" icon={Server}>
-                <div className="space-y-4 mt-3">
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">CPU Cores Mínimos</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_cpu_cores}</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.min_cpu_cores]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('min_cpu_cores', Math.round(v))}
-                      max={64}
-                      min={1}
-                      step={1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>1</span>
-                      <span>32</span>
-                      <span>64</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">RAM CPU Mínima (GB)</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_cpu_ram.toFixed(0)} GB</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.min_cpu_ram]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('min_cpu_ram', Math.round(v))}
-                      max={256}
-                      min={1}
-                      step={2}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>1 GB</span>
-                      <span>128 GB</span>
-                      <span>256 GB</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">Disco Mínimo (GB)</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_disk.toFixed(0)} GB</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.min_disk]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('min_disk', Math.round(v))}
-                      max={2000}
-                      min={10}
-                      step={10}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>10 GB</span>
-                      <span>1000 GB</span>
-                      <span>2000 GB</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">Velocidade CPU Mínima (GHz)</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.cpu_ghz.toFixed(1)} GHz</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.cpu_ghz]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('cpu_ghz', v)}
-                      max={5}
-                      min={0}
-                      step={0.1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>0 GHz</span>
-                      <span>2.5 GHz</span>
-                      <span>5.0 GHz</span>
-                    </div>
-                  </div>
-                </div>
-              </FilterSection>
-
-              {/* Performance */}
-              <FilterSection title="Performance" icon={Gauge}>
-                <div className="space-y-4 mt-3">
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">DLPerf Mínimo</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_dlperf.toFixed(1)}</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.min_dlperf]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('min_dlperf', v)}
-                      max={100}
-                      min={0}
-                      step={1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>0</span>
-                      <span>50</span>
-                      <span>100</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">PCIe BW Mínima (GB/s)</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_pcie_bw.toFixed(1)} GB/s</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.min_pcie_bw]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('min_pcie_bw', v)}
-                      max={100}
-                      min={0}
-                      step={1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>0 GB/s</span>
-                      <span>50 GB/s</span>
-                      <span>100 GB/s</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">TFLOPs Totais Mínimos</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.total_flops.toFixed(0)} TFLOP</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.total_flops]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('total_flops', v)}
-                      max={10000}
-                      min={0}
-                      step={100}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>0 TFLOP</span>
-                      <span>5000 TFLOP</span>
-                      <span>10000 TFLOP</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">Compute Capability Mínimo</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{(advancedFilters.compute_cap / 10).toFixed(1)}</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.compute_cap]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('compute_cap', v)}
-                      max={900}
-                      min={300}
-                      step={10}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>3.0</span>
-                      <span>6.0</span>
-                      <span>9.0</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-xs text-gray-400 mb-2 block">Versão CUDA Mínima</Label>
-                    <Select value={advancedFilters.cuda_vers} onValueChange={(v) => handleAdvancedFilterChange('cuda_vers', v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {CUDA_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </FilterSection>
-
-              {/* Rede */}
-              <FilterSection title="Rede" icon={Wifi}>
-                <div className="space-y-4 mt-3">
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">Download Mínimo (Mbps)</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_inet_down.toFixed(0)} Mbps</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.min_inet_down]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('min_inet_down', Math.round(v))}
-                      max={1000}
-                      min={10}
-                      step={10}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>10 Mbps</span>
-                      <span>500 Mbps</span>
-                      <span>1000 Mbps</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">Upload Mínimo (Mbps)</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.min_inet_up.toFixed(0)} Mbps</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.min_inet_up]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('min_inet_up', Math.round(v))}
-                      max={1000}
-                      min={10}
-                      step={10}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>10 Mbps</span>
-                      <span>500 Mbps</span>
-                      <span>1000 Mbps</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">Portas Diretas Mínimas</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{advancedFilters.direct_port_count}</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.direct_port_count]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('direct_port_count', Math.round(v))}
-                      max={32}
-                      min={0}
-                      step={1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>0</span>
-                      <span>16</span>
-                      <span>32</span>
-                    </div>
-                  </div>
-                </div>
-              </FilterSection>
-
-              {/* Preço */}
-              <FilterSection title="Preço" icon={DollarSign}>
-                <div className="space-y-4 mt-3">
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">Preço Máximo</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">${advancedFilters.max_price.toFixed(2)}/hr</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.max_price]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('max_price', v)}
-                      max={15}
-                      min={0.05}
-                      step={0.05}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>$0.05</span>
-                      <span>$7.50</span>
-                      <span>$15.00</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-xs text-gray-400 mb-2 block">Tipo de Aluguel</Label>
-                    <Select value={advancedFilters.rental_type} onValueChange={(v) => handleAdvancedFilterChange('rental_type', v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {RENTAL_TYPE_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </FilterSection>
-
-              {/* Localização & Qualidade */}
-              <FilterSection title="Localização & Qualidade" icon={Globe}>
-                <div className="space-y-4 mt-3">
-                  <div>
-                    <Label className="text-xs text-gray-400 mb-2 block">Região Preferida</Label>
-                    <Select value={advancedFilters.region} onValueChange={(v) => handleAdvancedFilterChange('region', v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {REGION_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <Label className="text-xs text-gray-500 dark:text-gray-400">Confiabilidade Mínima</Label>
-                      <span className="text-sm text-gray-700 dark:text-gray-200 font-mono font-medium">{(advancedFilters.min_reliability * 100).toFixed(0)}%</span>
-                    </div>
-                    <Slider
-                      value={[advancedFilters.min_reliability]}
-                      onValueChange={([v]) => handleAdvancedFilterChange('min_reliability', v)}
-                      max={1}
-                      min={0}
-                      step={0.05}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-600 mt-1.5">
-                      <span>0%</span>
-                      <span>50%</span>
-                      <span>100%</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between border border-gray-200 dark:border-gray-700/30 rounded-lg p-3 bg-gray-900/20">
-                    <Label className="text-sm text-gray-300">Apenas Datacenters Certificados</Label>
-                    <Switch
-                      checked={advancedFilters.datacenter}
-                      onCheckedChange={(checked) => handleAdvancedFilterChange('datacenter', checked)}
-                    />
-                  </div>
-                </div>
-              </FilterSection>
-            </div>
-
-            {/* Opções & Ordenação */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-              <FilterSection title="Opções Adicionais" icon={Shield} defaultOpen={false}>
-                <div className="space-y-3 mt-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm text-gray-300">Apenas Hosts Verificados</Label>
-                    <Switch
-                      checked={advancedFilters.verified_only}
-                      onCheckedChange={(checked) => handleAdvancedFilterChange('verified_only', checked)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm text-gray-300">IP Estático</Label>
-                    <Switch
-                      checked={advancedFilters.static_ip}
-                      onCheckedChange={(checked) => handleAdvancedFilterChange('static_ip', checked)}
-                    />
-                  </div>
-                </div>
-              </FilterSection>
-
-              <FilterSection title="Ordenação" icon={Activity} defaultOpen={false}>
-                <div className="space-y-3 mt-3">
-                  <div>
-                    <Label className="text-xs text-gray-400 mb-2 block">Ordenar Por</Label>
-                    <Select value={advancedFilters.order_by} onValueChange={(v) => handleAdvancedFilterChange('order_by', v)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {ORDER_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-400 mb-2 block">Limite de Resultados</Label>
-                    <Input type="number" min="10" max="500" value={advancedFilters.limit}
-                      onChange={(e) => handleAdvancedFilterChange('limit', parseInt(e.target.value) || 100)} />
-                  </div>
-                </div>
-              </FilterSection>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={handleAdvancedSearch}
-                className="flex-1"
-                size="lg"
-              >
-                <Search className="w-4 h-4" />
-                Buscar Máquinas
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setMode('wizard')}
-                size="lg"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Voltar ao Wizard
-              </Button>
-            </div>
-          </CardContent>
-        )}
-
-        {/* RESULTS VIEW */}
-        {showResults && (
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-gray-900 dark:text-white text-lg font-semibold">Máquinas Disponíveis</h2>
-                <p className="text-gray-500 text-xs">{offers.length} resultados encontrados</p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowResults(false)}
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Voltar
-              </Button>
-            </div>
-
-            {loading && (
-              <SkeletonList count={6} type="offer" />
-            )}
-
-            {error && !loading && (
-              <ErrorState
-                message={error}
-                onRetry={() => {
-                  setError(null);
-                  setShowResults(false);
-                }}
-                retryText="Tentar novamente"
-              />
-            )}
-
-            {!loading && !error && offers.length === 0 && (
-              <EmptyState
-                icon="search"
-                title="Nenhuma máquina encontrada"
-                description="Não encontramos ofertas com os filtros selecionados. Tente ajustar os critérios de busca."
-                action={() => setShowResults(false)}
-                actionText="Ajustar filtros"
-              />
-            )}
-
-            {!loading && offers.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {offers.map((offer, index) => (
-                  <OfferCard key={offer.id || index} offer={offer} onSelect={handleSelectOffer} />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        )}
+              )}
+            </CardContent>
+          )}
         </Card>
       </div>
-    </div>
+    </div >
   );
 }

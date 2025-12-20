@@ -1,3 +1,4 @@
+import React from 'react';
 import { ChevronRight, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -41,36 +42,50 @@ export function StatCard({
   icon: Icon,
   iconColor = 'primary',
   subtitle,
-  onClick
+  onClick,
+  loading = false,
+  emptyText = '---'
 }) {
   const iconColorClasses = {
-    primary: 'bg-brand-50 text-brand-500 dark:bg-brand-500/10 dark:text-brand-400',
-    success: 'bg-success-50 text-success-500 dark:bg-success-500/10 dark:text-success-400',
-    warning: 'bg-warning-50 text-warning-500 dark:bg-warning-500/10 dark:text-warning-400',
-    error: 'bg-error-50 text-error-500 dark:bg-error-500/10 dark:text-error-400',
-    gray: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+    primary: 'bg-gradient-to-br from-brand-50 to-brand-100 text-brand-500 dark:from-brand-500/10 dark:to-brand-500/20 dark:text-brand-400',
+    success: 'bg-gradient-to-br from-success-50 to-success-100 text-success-500 dark:from-success-500/10 dark:to-success-500/20 dark:text-success-400',
+    warning: 'bg-gradient-to-br from-warning-50 to-warning-100 text-warning-500 dark:from-warning-500/10 dark:to-warning-500/20 dark:text-warning-400',
+    error: 'bg-gradient-to-br from-error-50 to-error-100 text-error-500 dark:from-error-500/10 dark:to-error-500/20 dark:text-error-400',
+    gray: 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-500 dark:from-gray-800 dark:to-gray-700 dark:text-gray-400',
   };
+
+  // Detect empty state
+  const isEmpty = !loading && (value === null || value === undefined || value === '' || value === '0' || value === '$0' || value === '0/0');
+  const displayValue = isEmpty ? emptyText : value;
 
   return (
     <div
-      className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-theme-sm ${onClick ? 'cursor-pointer hover:border-brand-300 dark:hover:border-brand-700 transition-colors' : ''}`}
+      className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm hover:shadow-md transition-all duration-200 ${onClick ? 'cursor-pointer hover:border-brand-300 dark:hover:border-brand-700 hover:-translate-y-0.5' : ''} ${loading ? 'animate-pulse' : ''}`}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-          {subtitle && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{subtitle}</p>}
-          {change && (
-            <div className={`flex items-center gap-1 mt-2 text-xs font-medium ${changeType === 'up' ? 'text-success-500' : 'text-error-500'}`}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{title}</p>
+          {loading ? (
+            <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded animate-pulse w-24" />
+          ) : (
+            <p className={`text-2xl font-bold transition-colors ${isEmpty ? 'text-gray-400 dark:text-gray-600' : 'text-gray-900 dark:text-white'}`}>
+              {displayValue}
+            </p>
+          )}
+          {subtitle && !loading && (
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">{subtitle}</p>
+          )}
+          {change && !loading && !isEmpty && (
+            <div className={`flex items-center gap-1 mt-2.5 text-xs font-medium ${changeType === 'up' ? 'text-success-500' : 'text-error-500'}`}>
               {changeType === 'up' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
               <span>{change}</span>
             </div>
           )}
         </div>
         {Icon && (
-          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${iconColorClasses[iconColor]}`}>
-            <Icon size={24} />
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${iconColorClasses[iconColor]}`}>
+            <Icon size={24} className={loading ? 'animate-pulse' : ''} />
           </div>
         )}
       </div>
@@ -95,6 +110,43 @@ export function Card({ children, className = '', header, footer, noPadding = fal
           {footer}
         </div>
       )}
+    </div>
+  );
+}
+
+// Card Sub-components (for compatibility with old UI structure)
+export function CardHeader({ children, className = '' }) {
+  return (
+    <div className={`px-6 py-4 border-b border-gray-200 dark:border-gray-800 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+export function CardTitle({ children, className = '' }) {
+  return (
+    <h3 className={`text-lg font-semibold text-gray-900 dark:text-white ${className}`}>
+      {children}
+    </h3>
+  );
+}
+
+export function CardDescription({ children, className = '' }) {
+  return (
+    <p className={`text-sm text-gray-500 dark:text-gray-400 mt-1 ${className}`}>
+      {children}
+    </p>
+  );
+}
+
+export function CardContent({ children, className = '' }) {
+  return <div className={`p-6 ${className}`}>{children}</div>;
+}
+
+export function CardFooter({ children, className = '' }) {
+  return (
+    <div className={`px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 rounded-b-xl ${className}`}>
+      {children}
     </div>
   );
 }
@@ -362,9 +414,15 @@ export function Spinner({ size = 'md', className = '' }) {
 }
 
 // Grid Layouts
-export function StatsGrid({ children }) {
+export function StatsGrid({ children, columns = 4 }) {
+  const colsClass = {
+    2: 'sm:grid-cols-2',
+    3: 'sm:grid-cols-2 lg:grid-cols-3',
+    4: 'sm:grid-cols-2 lg:grid-cols-4',
+  };
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className={`grid grid-cols-1 ${colsClass[columns]} gap-6`}>
       {children}
     </div>
   );
@@ -381,5 +439,309 @@ export function CardsGrid({ children, cols = 3 }) {
     <div className={`grid grid-cols-1 ${colsClass[cols]} gap-6`}>
       {children}
     </div>
+  );
+}
+
+// Checkbox Component
+export function Checkbox({ label, checked, onChange, disabled = false, className = '', ...props }) {
+  return (
+    <label className={`flex items-center gap-2 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        disabled={disabled}
+        className="w-4 h-4 text-brand-500 bg-white border-gray-300 rounded focus:ring-brand-500 focus:ring-2 dark:bg-gray-900 dark:border-gray-700 cursor-pointer disabled:cursor-not-allowed"
+        {...props}
+      />
+      {label && <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>}
+    </label>
+  );
+}
+
+// Label Component
+export function Label({ children, htmlFor, required = false, className = '' }) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className={`block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 ${className}`}
+    >
+      {children}
+      {required && <span className="text-error-500 ml-1">*</span>}
+    </label>
+  );
+}
+
+// Switch Component
+export function Switch({ checked, onChange, disabled = false, label, className = '' }) {
+  return (
+    <label className={`flex items-center gap-3 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
+      <div className="relative">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onChange}
+          disabled={disabled}
+          className="sr-only peer"
+        />
+        <div className={`w-11 h-6 rounded-full transition-colors ${checked ? 'bg-brand-500' : 'bg-gray-300 dark:bg-gray-700'} ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}></div>
+        <div className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`}></div>
+      </div>
+      {label && <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>}
+    </label>
+  );
+}
+
+// Tabs Components
+const TabsContext = React.createContext({ value: '', onValueChange: () => {} });
+
+export function Tabs({ children, value, onValueChange, className = '' }) {
+  return (
+    <TabsContext.Provider value={{ value, onValueChange }}>
+      <div className={className}>
+        {children}
+      </div>
+    </TabsContext.Provider>
+  );
+}
+
+export function TabsList({ children, className = '' }) {
+  return (
+    <div className={`inline-flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+export function TabsTrigger({ children, value, className = '' }) {
+  const { value: activeValue, onValueChange } = React.useContext(TabsContext);
+  const isActive = activeValue === value;
+
+  return (
+    <button
+      onClick={() => onValueChange(value)}
+      className={`px-4 py-2 text-sm font-semibold rounded-md transition-all flex items-center ${
+        isActive
+          ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-md'
+          : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/50'
+      } ${className}`}
+      data-state={isActive ? 'active' : 'inactive'}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function TabsContent({ children, value, activeValue, className = '' }) {
+  if (value !== activeValue) return null;
+  return <div className={className}>{children}</div>;
+}
+
+// Slider Component
+export function Slider({ value = [0], onValueChange, min = 0, max = 100, step = 1, className = '' }) {
+  const handleChange = (e) => {
+    const newValue = parseInt(e.target.value);
+    onValueChange?.([newValue]);
+  };
+
+  return (
+    <input
+      type="range"
+      min={min}
+      max={max}
+      step={step}
+      value={value[0] || 0}
+      onChange={handleChange}
+      className={`w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-brand-500 ${className}`}
+    />
+  );
+}
+
+// Dropdown Menu Components
+export function DropdownMenu({ children, open, onOpenChange }) {
+  return (
+    <div className="relative inline-block" data-open={open} data-onOpenChange={onOpenChange}>
+      {children}
+    </div>
+  );
+}
+
+export function DropdownMenuTrigger({ children, asChild, ...props }) {
+  if (asChild) {
+    return <>{children}</>;
+  }
+  return <button {...props}>{children}</button>;
+}
+
+export function DropdownMenuContent({ children, align = 'end', className = '' }) {
+  const alignClass = align === 'end' ? 'right-0' : 'left-0';
+  return (
+    <div className={`absolute ${alignClass} mt-2 w-56 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg z-50 py-1 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+export function DropdownMenuItem({ children, onClick, className = '' }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function DropdownMenuSeparator() {
+  return <div className="my-1 h-px bg-gray-200 dark:bg-gray-800" />;
+}
+
+export function DropdownMenuLabel({ children, className = '' }) {
+  return (
+    <div className={`px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+// Alert Dialog Components
+export function AlertDialog({ children, open, onOpenChange }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => onOpenChange?.(false)} />
+      <div className="relative z-50" data-open={open} data-onOpenChange={onOpenChange}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function AlertDialogTrigger({ children, asChild, ...props }) {
+  if (asChild) {
+    return <>{children}</>;
+  }
+  return <button {...props}>{children}</button>;
+}
+
+export function AlertDialogContent({ children, className = '' }) {
+  return (
+    <div className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xl max-w-md w-full mx-4 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+export function AlertDialogHeader({ children, className = '' }) {
+  return <div className={`p-6 pb-4 ${className}`}>{children}</div>;
+}
+
+export function AlertDialogTitle({ children, className = '' }) {
+  return <h2 className={`text-lg font-semibold text-gray-900 dark:text-white ${className}`}>{children}</h2>;
+}
+
+export function AlertDialogDescription({ children, className = '' }) {
+  return <p className={`text-sm text-gray-500 dark:text-gray-400 mt-2 ${className}`}>{children}</p>;
+}
+
+export function AlertDialogFooter({ children, className = '' }) {
+  return <div className={`p-6 pt-4 flex items-center gap-3 justify-end ${className}`}>{children}</div>;
+}
+
+export function AlertDialogAction({ children, onClick, className = '' }) {
+  return (
+    <Button variant="primary" onClick={onClick} className={className}>
+      {children}
+    </Button>
+  );
+}
+
+export function AlertDialogCancel({ children, onClick, className = '' }) {
+  return (
+    <Button variant="outline" onClick={onClick} className={className}>
+      {children}
+    </Button>
+  );
+}
+
+// Popover Components
+export function Popover({ children, open, onOpenChange }) {
+  return (
+    <div className="relative inline-block" data-open={open} data-onOpenChange={onOpenChange}>
+      {children}
+    </div>
+  );
+}
+
+export function PopoverTrigger({ children, asChild, ...props }) {
+  if (asChild) {
+    return <>{children}</>;
+  }
+  return <button {...props}>{children}</button>;
+}
+
+export function PopoverContent({ children, align = 'center', className = '' }) {
+  const alignClass = align === 'end' ? 'right-0' : align === 'start' ? 'left-0' : 'left-1/2 -translate-x-1/2';
+  return (
+    <div className={`absolute ${alignClass} mt-2 w-80 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg z-50 p-4 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+// Avatar Components
+export function Avatar({ children, className = '' }) {
+  return (
+    <div className={`relative inline-flex items-center justify-center rounded-full overflow-hidden ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+export function AvatarImage({ src, alt, className = '' }) {
+  return <img src={src} alt={alt} className={`w-full h-full object-cover ${className}`} />;
+}
+
+export function AvatarFallback({ children, className = '' }) {
+  return (
+    <div className={`flex items-center justify-center w-full h-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm font-medium ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+// Select Components (for compatibility with old UI)
+export function SelectTrigger({ children, className = '', ...props }) {
+  return (
+    <button
+      className={`w-full px-4 py-2.5 text-sm text-left text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 dark:bg-gray-900 dark:border-gray-700 dark:text-white flex items-center justify-between ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function SelectValue({ placeholder, children }) {
+  return <span className="truncate">{children || placeholder}</span>;
+}
+
+export function SelectContent({ children, className = '' }) {
+  return (
+    <div className={`absolute mt-1 w-full rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg z-50 max-h-60 overflow-auto ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+export function SelectItem({ children, value, onSelect, className = '' }) {
+  return (
+    <button
+      onClick={() => onSelect?.(value)}
+      className={`w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${className}`}
+    >
+      {children}
+    </button>
   );
 }
