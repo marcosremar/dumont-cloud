@@ -2,7 +2,7 @@
 API endpoints para gerenciar snapshots de GPU com ANS
 """
 from flask import Blueprint, request, jsonify
-from src.services.gpu_snapshot_service import GPUSnapshotService
+from src.services.gpu.snapshot import GPUSnapshotService
 import os
 import logging
 

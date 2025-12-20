@@ -1,0 +1,57 @@
+{
+  "timestamp": "2025-12-20T09:57:37.618Z",
+  "baseUrl": "http://localhost:5173",
+  "passed": 6,
+  "failed": 1,
+  "tests": [
+    {
+      "menu": "Economia",
+      "expectedPath": "/demo-app/savings",
+      "actualPath": "/demo-app/savings",
+      "success": true,
+      "error": null
+    },
+    {
+      "menu": "Métricas",
+      "expectedPath": "/demo-app/metrics",
+      "actualPath": null,
+      "success": false,
+      "error": "elementHandle.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <ul class=\"flex flex-col gap-2\">…</ul> intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <button class=\"w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer bg-brand-400/10 text-brand-400 lg:justify-start\">…</button> intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <ul class=\"flex flex-col gap-2\">…</ul> intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <a href=\"/demo-app/settings\" class=\"flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-gray-400 hover:bg-white/5 hover:text-gray-200 lg:justify-start\">…</a> from <li>…</li> subtree intercepts pointer events\u001b[22m\n\u001b[2m  14 × retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\u001b[2m       - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <button class=\"w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer bg-brand-400/10 text-brand-400 lg:justify-start\">…</button> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\u001b[2m       - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <ul class=\"flex flex-col gap-2\">…</ul> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\u001b[2m       - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <a href=\"/demo-app/settings\" class=\"flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-gray-400 hover:bg-white/5 hover:text-gray-200 lg:justify-start\">…</a> from <li>…</li> subtree intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\u001b[2m       - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <a href=\"/demo-app/settings\" class=\"flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-gray-400 hover:bg-white/5 hover:text-gray-200 lg:justify-start\">…</a> from <li>…</li> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n"
+    },
+    {
+      "menu": "AI Advisor",
+      "expectedPath": "/demo-app/advisor",
+      "actualPath": "/demo-app/advisor",
+      "success": true,
+      "error": null
+    },
+    {
+      "menu": "Dashboard",
+      "expectedPath": "/demo-app",
+      "actualPath": "/demo-app",
+      "success": true,
+      "error": null
+    },
+    {
+      "menu": "Machines",
+      "expectedPath": "/demo-app/machines",
+      "actualPath": "/demo-app/machines",
+      "success": true,
+      "error": null
+    },
+    {
+      "menu": "Fine-Tuning",
+      "expectedPath": "/demo-app/finetune",
+      "actualPath": "/demo-app/finetune",
+      "success": true,
+      "error": null
+    },
+    {
+      "menu": "Settings",
+      "expectedPath": "/demo-app/settings",
+      "actualPath": "/demo-app/settings",
+      "success": true,
+      "error": null
+    }
+  ]
+}

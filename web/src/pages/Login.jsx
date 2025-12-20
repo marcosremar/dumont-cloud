@@ -1,45 +1,7 @@
 import { useState } from 'react'
-import { Cloud, Moon, Sun } from 'lucide-react'
+import { Moon, Sun, ArrowRight, Shield, Zap, Server } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
-
-// Logo do Dumont Cloud para a página de login
-function DumontLogo() {
-  return (
-    <div className="login-logo">
-      <svg width="64" height="64" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Cloud shape */}
-        <path
-          d="M26 16.5C26 13.46 23.54 11 20.5 11C20.17 11 19.85 11.03 19.54 11.08C18.44 8.17 15.62 6 12.32 6C8.11 6 4.68 9.36 4.53 13.55C2.47 14.17 1 16.06 1 18.32C1 21.16 3.34 23.5 6.18 23.5H25C28.04 23.5 30.5 21.04 30.5 18C30.5 15.35 28.62 13.13 26.12 12.58"
-          fill="url(#cloudGradientLogin)"
-          stroke="url(#cloudStrokeLogin)"
-          strokeWidth="1.5"
-        />
-        {/* D letter stylized */}
-        <path
-          d="M10 11V20H13C15.76 20 18 17.76 18 15C18 12.24 15.76 10 13 10H10V11Z"
-          fill="#0e110e"
-          stroke="#4ade80"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        {/* Accent dots */}
-        <circle cx="22" cy="15" r="1.5" fill="#4ade80"/>
-        <circle cx="24" cy="18" r="1" fill="#22c55e"/>
-        <defs>
-          <linearGradient id="cloudGradientLogin" x1="1" y1="6" x2="30.5" y2="23.5" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#1a1f1a"/>
-            <stop offset="1" stopColor="#131713"/>
-          </linearGradient>
-          <linearGradient id="cloudStrokeLogin" x1="1" y1="6" x2="30.5" y2="23.5" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#22c55e"/>
-            <stop offset="1" stopColor="#4ade80"/>
-          </linearGradient>
-        </defs>
-      </svg>
-    </div>
-  )
-}
+import DumontLogo from '../components/DumontLogo'
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('')
@@ -56,57 +18,198 @@ export default function Login({ onLogin }) {
     const result = await onLogin(username, password)
 
     if (result.error) {
-      setError(result.error)
+      setError(result)
       setLoading(false)
     }
   }
 
+  // Determinar ícone e cor com base no tipo de erro
+  const getErrorIcon = (errorType) => {
+    switch (errorType) {
+      case 'connection':
+      case 'timeout':
+        return '🔌'
+      case 'credentials':
+        return '🔒'
+      case 'validation':
+        return '⚠️'
+      case 'server':
+        return '⚙️'
+      default:
+        return '❌'
+    }
+  }
+
+  const getErrorColor = (errorType) => {
+    switch (errorType) {
+      case 'connection':
+      case 'timeout':
+        return 'text-orange-400 bg-orange-900/10 border-orange-900/20'
+      case 'credentials':
+        return 'text-red-400 bg-red-900/10 border-red-900/20'
+      case 'validation':
+        return 'text-yellow-400 bg-yellow-900/10 border-yellow-900/20'
+      case 'server':
+        return 'text-purple-400 bg-purple-900/10 border-purple-900/20'
+      default:
+        return 'text-red-400 bg-red-900/10 border-red-900/20'
+    }
+  }
+
   return (
-    <div className="login-container">
-      {/* Theme toggle button */}
+    <div className="flex min-h-screen w-full bg-[#0a0d0a] text-white overflow-hidden font-sans">
+      {/* Absolute Theme Toggle */}
       <button
         onClick={toggleTheme}
-        className="fixed top-4 right-4 flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800"
+        className="fixed top-6 right-6 z-50 p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all backdrop-blur-sm border border-white/5"
         aria-label="Toggle Dark Mode"
       >
-        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
       </button>
 
-      <div className="login-card">
-        <DumontLogo />
-        <h1 className="login-title">Dumont Cloud</h1>
-        <p className="login-subtitle">GPU Cloud Manager</p>
+      {/* Left Side - Branding & Visuals (Hidden on mobile) */}
+      <div className="hidden lg:flex relative w-1/2 flex-col justify-between p-12 lg:p-16 border-r border-white/5 bg-[#0f1210]">
+        {/* Background Effects */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-900/10 rounded-full blur-[100px]" />
+        </div>
 
-        <form onSubmit={handleSubmit}>
-          {error && <div className="alert alert-error">{error}</div>}
+        {/* Logo Area */}
+        <div className="relative z-10 flex items-center gap-3">
+          <DumontLogo size={40} />
+          <span className="text-2xl font-bold tracking-tight text-white">Dumont Cloud</span>
+        </div>
 
-          <div className="form-group">
-            <label className="form-label">Username</label>
-            <input
-              type="text"
-              className="form-input"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoFocus
-              required
-            />
+        {/* Hero Content */}
+        <div className="relative z-10 max-w-lg">
+          <h1 className="text-4xl font-bold leading-tight mb-6">
+            Intelligence <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-600">
+              Accelerated
+            </span>
+          </h1>
+          <p className="text-lg text-gray-400 leading-relaxed mb-8">
+            Gerencie clusters de GPU de alta performance com failover automático e provisionamento instantâneo. A infraestrutura para a próxima geração de IA.
+          </p>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 text-gray-300">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <Zap size={16} />
+              </div>
+              <span className="text-sm">Provisionamento em segundos</span>
+            </div>
+            <div className="flex items-center gap-3 text-gray-300">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <Shield size={16} />
+              </div>
+              <span className="text-sm">Failover automático 24/7</span>
+            </div>
+            <div className="flex items-center gap-3 text-gray-300">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <Server size={16} />
+              </div>
+              <span className="text-sm">Acesso direto via SSH & Jupyter</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer/Testimonial */}
+        <div className="relative z-10 pt-8 border-t border-white/5">
+          <p className="text-sm text-gray-500 font-mono">
+            v2.5.0-stable • System Status: <span className="text-emerald-500">Operational</span>
+          </p>
+        </div>
+      </div>
+
+      {/* Right Side - Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative z-10">
+        <div className="w-full max-w-sm space-y-8">
+
+          {/* Mobile Logo (visible only on small screens) */}
+          <div className="lg:hidden flex justify-center mb-8">
+            <DumontLogo size={48} />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+          <div className="text-center lg:text-left">
+            <h2 className="text-2xl font-semibold text-white tracking-tight">Login</h2>
+            <p className="text-sm text-gray-400 mt-2">
+              Entre com suas credenciais para acessar o console.
+            </p>
           </div>
 
-          <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
-            {loading ? <span className="spinner" /> : 'Login'}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && typeof error === 'object' && error.error && (
+              <div className="space-y-2">
+                <div className={`p-3 text-sm rounded-lg flex items-start gap-3 border ${getErrorColor(error.errorType)}`}>
+                  <span className="text-lg flex-shrink-0 mt-0.5">{getErrorIcon(error.errorType)}</span>
+                  <div className="flex-1">
+                    <p className="font-medium">{error.error}</p>
+                    {error.hint && (
+                      <details className="mt-2 text-xs opacity-80">
+                        <summary className="cursor-pointer hover:opacity-100 font-mono">
+                          💡 Dica para desenvolvedores
+                        </summary>
+                        <pre className="mt-2 p-2 bg-black/20 rounded overflow-x-auto whitespace-pre-wrap">
+                          {error.hint}
+                        </pre>
+                      </details>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-gray-400 ml-1">Username</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all text-sm"
+                  placeholder="name@company.com"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between ml-1">
+                  <label className="text-xs font-medium text-gray-400">Password</label>
+                  <a href="#" className="text-xs text-emerald-500 hover:text-emerald-400 transition-colors">Esqueceu a senha?</a>
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-600 focus:outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all text-sm"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-all shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <span>Entrar</span>
+                  <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+                </>
+              )}
+            </button>
+            <div className="text-center">
+              <a href="/demo-app" className="text-xs text-gray-500 hover:text-emerald-400 transition-colors">Acessar Demonstração (Sem Login)</a>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   )

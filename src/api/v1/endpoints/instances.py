@@ -25,7 +25,7 @@ from ....core.exceptions import NotFoundException, VastAPIException, MigrationEx
 from ..dependencies import get_instance_service, get_migration_service, get_sync_service, require_auth, get_current_user_email
 from ..dependencies_usage import get_usage_service
 from ....services.usage_service import UsageService
-from ....services.standby_manager import get_standby_manager
+from ....services.standby.manager import get_standby_manager
 
 router = APIRouter(prefix="/instances", tags=["Instances"], dependencies=[Depends(require_auth)])
 
@@ -244,8 +244,8 @@ async def list_instances(
 
         instance_responses.append(InstanceResponse(
             id=inst.id,
-            status=inst.status,
-            actual_status=inst.actual_status,
+            status=inst.status or "stopped",
+            actual_status=inst.actual_status or inst.status or "stopped",
             gpu_name=inst.gpu_name,
             num_gpus=inst.num_gpus,
             gpu_ram=inst.gpu_ram,
@@ -302,15 +302,19 @@ async def create_instance(
             gpu_type=instance.gpu_name
         )
 
-        # Auto-criar CPU standby em background (não bloqueia resposta)
-        standby_manager = get_standby_manager()
-        if standby_manager.is_auto_standby_enabled():
-            logger.info(f"Scheduling CPU standby creation for GPU {instance.id}")
-            background_tasks.add_task(
-                standby_manager.on_gpu_created,
-                gpu_instance_id=instance.id,
-                label=request.label
-            )
+        # Auto-criar CPU standby em background (comportamento padrão)
+        # CPU Standby é criado junto com GPU por padrão, a menos que skip_standby=True
+        if not request.skip_standby:
+            standby_manager = get_standby_manager()
+            if standby_manager.is_configured():
+                logger.info(f"Scheduling CPU standby creation for GPU {instance.id}")
+                background_tasks.add_task(
+                    standby_manager.on_gpu_created,
+                    gpu_instance_id=instance.id,
+                    label=request.label
+                )
+            else:
+                logger.warning(f"CPU Standby not created for GPU {instance.id} - StandbyManager not configured (missing GCP credentials)")
 
         return InstanceResponse(
             id=instance.id,
@@ -338,6 +342,7 @@ async def create_instance(
 
 @router.get("/{instance_id}", response_model=InstanceResponse)
 async def get_instance(
+    request: Request,
     instance_id: int,
     instance_service: InstanceService = Depends(get_instance_service),
 ):
@@ -346,6 +351,117 @@ async def get_instance(
 
     Returns detailed information about a specific instance.
     """
+    from ..schemas.response import CPUStandbyInfo
+    from datetime import datetime, timedelta
+    from ....core.config import get_settings
+
+    # Check if demo mode
+    settings = get_settings()
+    demo_param = request.query_params.get("demo", "").lower() == "true"
+    is_demo = settings.app.demo_mode or demo_param
+
+    # Demo instances data
+    demo_instances = {
+        12345678: InstanceResponse(
+            id=12345678,
+            status="running",
+            actual_status="running",
+            gpu_name="RTX 4090",
+            num_gpus=1,
+            gpu_ram=24.0,
+            cpu_cores=16,
+            cpu_ram=64.0,
+            disk_space=500.0,
+            dph_total=0.45,
+            public_ipaddr="203.0.113.45",
+            ssh_host="ssh4.vast.ai",
+            ssh_port=22345,
+            start_date=(datetime.now() - timedelta(hours=3)).isoformat(),
+            label="dev-workspace-01",
+            ports={"22": 22345, "8080": 8080, "3000": 3000},
+            gpu_util=45.2,
+            gpu_temp=62.0,
+            cpu_util=28.5,
+            ram_used=24.3,
+            ram_total=64.0,
+            provider="vast.ai",
+            cpu_standby=None,
+            total_dph=0.45,
+        ),
+        87654321: InstanceResponse(
+            id=87654321,
+            status="stopped",
+            actual_status="stopped",
+            gpu_name="A100 80GB",
+            num_gpus=1,
+            gpu_ram=80.0,
+            cpu_cores=32,
+            cpu_ram=128.0,
+            disk_space=1000.0,
+            dph_total=1.25,
+            public_ipaddr=None,
+            ssh_host="ssh7.vast.ai",
+            ssh_port=22789,
+            start_date=(datetime.now() - timedelta(days=2)).isoformat(),
+            label="ml-training-large",
+            ports={"22": 22789},
+            gpu_util=0.0,
+            gpu_temp=0.0,
+            cpu_util=0.0,
+            ram_used=0.0,
+            ram_total=128.0,
+            provider="vast.ai",
+            cpu_standby=None,
+            total_dph=1.25,
+        ),
+        55555555: InstanceResponse(
+            id=55555555,
+            status="running",
+            actual_status="running",
+            gpu_name="RTX 3090",
+            num_gpus=2,
+            gpu_ram=48.0,
+            cpu_cores=24,
+            cpu_ram=96.0,
+            disk_space=250.0,
+            dph_total=0.68,
+            public_ipaddr="198.51.100.78",
+            ssh_host="ssh2.vast.ai",
+            ssh_port=22123,
+            start_date=(datetime.now() - timedelta(hours=12)).isoformat(),
+            label="inference-server",
+            ports={"22": 22123, "8000": 8000, "5000": 5000},
+            gpu_util=78.3,
+            gpu_temp=71.0,
+            cpu_util=42.1,
+            ram_used=58.7,
+            ram_total=96.0,
+            provider="vast.ai",
+            cpu_standby=CPUStandbyInfo(
+                enabled=True,
+                provider="gcp",
+                name="standby-inference-eu",
+                zone="europe-west1-b",
+                ip="35.204.123.45",
+                machine_type="e2-medium",
+                status="running",
+                dph_total=0.01,
+                sync_enabled=True,
+                sync_count=847,
+                state="syncing",
+            ),
+            total_dph=0.69,
+        ),
+    }
+
+    if is_demo:
+        if instance_id in demo_instances:
+            return demo_instances[instance_id]
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Instance {instance_id} not found",
+        )
+
     try:
         instance = instance_service.get_instance(instance_id)
 
@@ -438,6 +554,7 @@ async def destroy_instance(
 
 @router.post("/{instance_id}/pause", response_model=SuccessResponse)
 async def pause_instance(
+    request: Request,
     instance_id: int,
     instance_service: InstanceService = Depends(get_instance_service),
 ):
@@ -446,6 +563,35 @@ async def pause_instance(
 
     Pauses a running instance without destroying it.
     """
+    from ....core.config import get_settings
+
+    # Check if demo mode
+    settings = get_settings()
+    demo_param = request.query_params.get("demo", "").lower() == "true"
+    is_demo = settings.app.demo_mode or demo_param
+
+    # Demo mode: simulate pause
+    demo_instance_ids = [12345678, 87654321, 55555555]
+    if is_demo:
+        if instance_id in demo_instance_ids:
+            return SuccessResponse(
+                success=True,
+                message=f"Instance {instance_id} paused successfully (demo mode)",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Instance {instance_id} not found",
+        )
+
+    # Check if instance exists first
+    try:
+        instance_service.get_instance(instance_id)
+    except NotFoundException:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Instance {instance_id} not found",
+        )
+
     success = instance_service.pause_instance(instance_id)
 
     if not success:
@@ -462,6 +608,7 @@ async def pause_instance(
 
 @router.post("/{instance_id}/resume", response_model=SuccessResponse)
 async def resume_instance(
+    request: Request,
     instance_id: int,
     instance_service: InstanceService = Depends(get_instance_service),
 ):
@@ -470,6 +617,35 @@ async def resume_instance(
 
     Resumes a previously paused instance.
     """
+    from ....core.config import get_settings
+
+    # Check if demo mode
+    settings = get_settings()
+    demo_param = request.query_params.get("demo", "").lower() == "true"
+    is_demo = settings.app.demo_mode or demo_param
+
+    # Demo mode: simulate resume
+    demo_instance_ids = [12345678, 87654321, 55555555]
+    if is_demo:
+        if instance_id in demo_instance_ids:
+            return SuccessResponse(
+                success=True,
+                message=f"Instance {instance_id} resumed successfully (demo mode)",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Instance {instance_id} not found",
+        )
+
+    # Check if instance exists first
+    try:
+        instance_service.get_instance(instance_id)
+    except NotFoundException:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Instance {instance_id} not found",
+        )
+
     success = instance_service.resume_instance(instance_id)
 
     if not success:
@@ -522,7 +698,7 @@ async def wake_instance(
     The old instance_id is used to find the snapshot, but a NEW instance ID
     will be returned since we're provisioning a new machine.
     """
-    from ....services.auto_hibernation_manager import get_auto_hibernation_manager
+    from ....services.standby.hibernation import get_auto_hibernation_manager
     
     if request is None:
         request = WakeInstanceRequest()

@@ -49,9 +49,9 @@ class GpuOfferResponse(BaseModel):
     inet_down: float
     inet_up: float
     dph_total: float
-    geolocation: str
+    geolocation: Optional[str] = None
     reliability: float
-    cuda_version: str
+    cuda_version: Optional[str] = None
     verified: bool
     static_ip: bool
 

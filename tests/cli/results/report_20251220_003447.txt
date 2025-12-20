@@ -1,0 +1,63 @@
+DUMONT CLI - E2E Journey Tests Report
+======================================
+Data: Sat Dec 20 00:34:47 CET 2025
+Host: dumontcloud-local
+
+Test: 01_auth_journey
+Status: FAIL
+Duration: 4s
+Output: /home/marcos/dumontcloud/tests/cli/results/01_auth_journey_output.txt
+---
+Test: 02_instance_lifecycle
+Status: FAIL
+Duration: 2s
+Output: /home/marcos/dumontcloud/tests/cli/results/02_instance_lifecycle_output.txt
+---
+Test: 03_backup_restore
+Status: PASS
+Duration: 2s
+Output: /home/marcos/dumontcloud/tests/cli/results/03_backup_restore_output.txt
+---
+Test: 04_standby_failover
+Status: FAIL
+Duration: 4s
+Output: /home/marcos/dumontcloud/tests/cli/results/04_standby_failover_output.txt
+---
+Test: 05_finetune_workflow
+Status: FAIL
+Duration: 2s
+Output: /home/marcos/dumontcloud/tests/cli/results/05_finetune_workflow_output.txt
+---
+Test: 06_spot_analysis
+Status: PASS
+Duration: 3s
+Output: /home/marcos/dumontcloud/tests/cli/results/06_spot_analysis_output.txt
+---
+Test: 07_savings_tracking
+Status: PASS
+Duration: 3s
+Output: /home/marcos/dumontcloud/tests/cli/results/07_savings_tracking_output.txt
+---
+Test: 08_ai_deploy
+Status: PASS
+Duration: 1s
+Output: /home/marcos/dumontcloud/tests/cli/results/08_ai_deploy_output.txt
+---
+Test: 09_migration
+Status: FAIL
+Duration: 1s
+Output: /home/marcos/dumontcloud/tests/cli/results/09_migration_output.txt
+---
+Test: 10_health_check
+Status: PASS
+Duration: 4s
+Output: /home/marcos/dumontcloud/tests/cli/results/10_health_check_output.txt
+---
+
+======================================
+RESUMO
+======================================
+Total: 10
+Passed: 5
+Failed: 5
+Success Rate: 50%

@@ -344,26 +344,40 @@ class VastProvider(IGpuProvider):
 
     def get_instance(self, instance_id: int) -> Instance:
         """Get instance details by ID"""
+        from ....core.exceptions import NotFoundException
         try:
             resp = requests.get(
                 f"{self.api_url}/instances/{instance_id}/",
                 headers=self.headers,
                 timeout=self.timeout,
             )
+
+            # Handle 404 or empty response
+            if resp.status_code == 404:
+                raise NotFoundException(f"Instance {instance_id} not found")
+
             resp.raise_for_status()
             data = resp.json()
 
             # vast.ai returns 'instances' as object or list
             instances_data = data.get("instances")
             if isinstance(instances_data, list):
-                instance_data = instances_data[0] if instances_data else {}
+                if not instances_data:
+                    raise NotFoundException(f"Instance {instance_id} not found")
+                instance_data = instances_data[0]
             elif isinstance(instances_data, dict):
+                if not instances_data or not instances_data.get("id"):
+                    raise NotFoundException(f"Instance {instance_id} not found")
                 instance_data = instances_data
             else:
                 instance_data = data
+                if not instance_data or not instance_data.get("id"):
+                    raise NotFoundException(f"Instance {instance_id} not found")
 
             return self._parse_instance(instance_data)
 
+        except NotFoundException:
+            raise
         except requests.RequestException as e:
             logger.error(f"Failed to get instance {instance_id}: {e}")
             raise ServiceUnavailableException(f"Vast.ai API unreachable: {e}")

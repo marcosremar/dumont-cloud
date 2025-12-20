@@ -6,11 +6,15 @@
       "localStorage": [
         {
           "name": "auth_token",
-          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0QHRlc3QuY29tIiwiZXhwIjoxNzY4NzMwODM2LCJpYXQiOjE3NjYxMzg4MzZ9.4iFDQXzsWS8vElLTg5Ip-vj6Ixd8Md-kSjbhd6EUe5Q"
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0QHRlc3QuY29tIiwiZXhwIjoxNzY4ODI5NDY5LCJpYXQiOjE3NjYyMzc0Njl9.AXRb6BT8m6rpl-6lH6N2CstfklNGSnfHJLSiPoDHSiA"
         },
         {
           "name": "theme",
           "value": "light"
+        },
+        {
+          "name": "demo_mode",
+          "value": "false"
         }
       ]
     }

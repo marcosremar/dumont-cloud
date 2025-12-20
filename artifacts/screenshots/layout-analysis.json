@@ -1,0 +1,300 @@
+{
+  "timestamp": "2025-12-20T08:07:02.120Z",
+  "designSystem": {
+    "colors": {
+      "background": {
+        "primary": [
+          "#0a0d0a",
+          "#0d120d",
+          "#111511"
+        ],
+        "secondary": [
+          "#151a15",
+          "#1a1f1a"
+        ],
+        "card": [
+          "#1a1f1a",
+          "#1e231e",
+          "rgba(30, 35, 30, 0.8)"
+        ]
+      },
+      "accent": {
+        "primary": [
+          "#4ade80",
+          "#22c55e",
+          "#16a34a"
+        ],
+        "secondary": [
+          "#86efac",
+          "#a7f3d0"
+        ],
+        "gradient": [
+          "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
+        ]
+      },
+      "text": {
+        "primary": [
+          "#f5f5f5",
+          "#e5e5e5",
+          "#ffffff"
+        ],
+        "secondary": [
+          "#a1a1aa",
+          "#9ca3af",
+          "#71717a"
+        ],
+        "muted": [
+          "#6b7280",
+          "#64748b"
+        ]
+      },
+      "borders": [
+        "#2a2f2a",
+        "#333833",
+        "rgba(74, 222, 128, 0.2)"
+      ]
+    },
+    "spacing": {
+      "xs": "4px",
+      "sm": "8px",
+      "md": "16px",
+      "lg": "24px",
+      "xl": "32px",
+      "xxl": "48px"
+    },
+    "borderRadius": {
+      "sm": "4px",
+      "md": "8px",
+      "lg": "12px",
+      "xl": "16px",
+      "full": "9999px"
+    },
+    "fonts": {
+      "primary": [
+        "Inter",
+        "SF Pro Display",
+        "system-ui"
+      ],
+      "sizes": {
+        "xs": "12px",
+        "sm": "14px",
+        "base": "16px",
+        "lg": "18px",
+        "xl": "20px",
+        "2xl": "24px",
+        "3xl": "30px"
+      }
+    }
+  },
+  "results": [
+    {
+      "file": "AdvisorPage.jsx",
+      "path": "/home/marcos/dumontcloud/web/src/pages/AdvisorPage.jsx",
+      "issues": [
+        {
+          "rule": "Design Responsivo",
+          "id": "responsive-design",
+          "problems": [
+            "Considere adicionar breakpoints responsivos"
+          ]
+        }
+      ],
+      "suggestions": []
+    },
+    {
+      "file": "Dashboard.jsx",
+      "path": "/home/marcos/dumontcloud/web/src/pages/Dashboard.jsx",
+      "issues": [
+        {
+          "rule": "Consistência de Cores",
+          "id": "color-consistency",
+          "problems": [
+            "Cor não padronizada: #10b981",
+            "Cor não padronizada: #34d399",
+            "Cor não padronizada: #374151",
+            "Cor não padronizada: #e2e8f0",
+            "Cor não padronizada: #4b5563"
+          ]
+        }
+      ],
+      "suggestions": []
+    },
+    {
+      "file": "Documentation.jsx",
+      "path": "/home/marcos/dumontcloud/web/src/pages/Documentation.jsx",
+      "issues": [
+        {
+          "rule": "Consistência de Cores",
+          "id": "color-consistency",
+          "problems": [
+            "Cor não padronizada: #0f1210",
+            "Cor não padronizada: #050605"
+          ]
+        }
+      ],
+      "suggestions": []
+    },
+    {
+      "file": "FailoverReportPage.jsx",
+      "path": "/home/marcos/dumontcloud/web/src/pages/FailoverReportPage.jsx",
+      "issues": [],
+      "suggestions": []
+    },
+    {
+      "file": "FineTuning.jsx",
+      "path": "/home/marcos/dumontcloud/web/src/pages/FineTuning.jsx",
+      "issues": [
+        {
+          "rule": "Consistência de Cores",
+          "id": "color-consistency",
+          "problems": [
+            "Cor não padronizada: #131713",
+            "Cor não padronizada: #1a1f2e",
+            "Cor não padronizada: #0f1219",
+            "Cor não padronizada: #1e2536"
+          ]
+        }
+      ],
+      "suggestions": []
+    },
+    {
+      "file": "GPUMetrics.jsx",
+      "path": "/home/marcos/dumontcloud/web/src/pages/GPUMetrics.jsx",
+      "issues": [
+        {
+          "rule": "Consistência de Cores",
+          "id": "color-consistency",
+          "problems": [
+            "Cor não padronizada: #3b82f6",
+            "Cor não padronizada: #f59e0b",
+            "Cor não padronizada: #ef4444",
+            "Cor não padronizada: #8b5cf6",
+            "Cor não padronizada: #ec4899"
+          ]
+        }
+      ],
+      "suggestions": []
+    },
+    {
+      "file": "LandingPage.jsx",
+      "path": "/home/marcos/dumontcloud/web/src/pages/LandingPage.jsx",
+      "issues": [
+        {
+          "rule": "Consistência de Cores",
+          "id": "color-consistency",
+          "problems": [
+            "Cor não padronizada: #fbbf24"
+          ]
+        },
+        {
+          "rule": "Design Responsivo",
+          "id": "responsive-design",
+          "problems": [
+            "Considere adicionar breakpoints responsivos"
+          ]
+        }
+      ],
+      "suggestions": []
+    },
+    {
+      "file": "Login.jsx",
+      "path": "/home/marcos/dumontcloud/web/src/pages/Login.jsx",
+      "issues": [
+        {
+          "rule": "Consistência de Cores",
+          "id": "color-consistency",
+          "problems": [
+            "Cor não padronizada: #0f1210"
+          ]
+        }
+      ],
+      "suggestions": []
+    },
+    {
+      "file": "Machines.jsx",
+      "path": "/home/marcos/dumontcloud/web/src/pages/Machines.jsx",
+      "issues": [
+        {
+          "rule": "Consistência de Cores",
+          "id": "color-consistency",
+          "problems": [
+            "Cor não padronizada: #1f1414",
+            "Cor não padronizada: #1f1a14",
+            "Cor não padronizada: #14171f",
+            "Cor não padronizada: #1a141f",
+            "Cor não padronizada: #141f1f"
+          ]
+        }
+      ],
+      "suggestions": []
+    },
+    {
+      "file": "MetricsHub.jsx",
+      "path": "/home/marcos/dumontcloud/web/src/pages/MetricsHub.jsx",
+      "issues": [
+        {
+          "rule": "Acessibilidade",
+          "id": "accessibility",
+          "problems": [
+            "Elementos clicáveis podem precisar de role=\"button\" para acessibilidade"
+          ]
+        }
+      ],
+      "suggestions": []
+    },
+    {
+      "file": "Savings.jsx",
+      "path": "/home/marcos/dumontcloud/web/src/pages/Savings.jsx",
+      "issues": [
+        {
+          "rule": "Design Responsivo",
+          "id": "responsive-design",
+          "problems": [
+            "Considere adicionar breakpoints responsivos"
+          ]
+        }
+      ],
+      "suggestions": []
+    },
+    {
+      "file": "Settings.jsx",
+      "path": "/home/marcos/dumontcloud/web/src/pages/Settings.jsx",
+      "issues": [
+        {
+          "rule": "Consistência de Cores",
+          "id": "color-consistency",
+          "problems": [
+            "Cor não padronizada: #f59e0b",
+            "Cor não padronizada: #ef4444",
+            "Cor não padronizada: #10b981",
+            "Cor não padronizada: #1c2128",
+            "Cor não padronizada: #c9d1d9"
+          ]
+        }
+      ],
+      "suggestions": []
+    }
+  ],
+  "suggestions": [
+    {
+      "title": "🎨 Padronizar Paleta de Cores",
+      "description": "Múltiplas páginas usam cores fora do design system. Crie variáveis CSS centralizadas.",
+      "example": "--color-accent: #4ade80; --color-bg-card: #1a1f1a;"
+    },
+    {
+      "title": "📱 Melhorar Responsividade",
+      "description": "Algumas páginas precisam de breakpoints para mobile/tablet.",
+      "example": "@media (max-width: 768px) { ... }"
+    },
+    {
+      "title": "🌙 Dark Mode Consistente",
+      "description": "Garantir que todas as telas usem o tema escuro uniformemente com contraste adequado.",
+      "example": "Texto principal: #f5f5f5, Secundário: #a1a1aa"
+    },
+    {
+      "title": "🔤 Tipografia Hierárquica",
+      "description": "Usar tamanhos de fonte consistentes para criar hierarquia visual clara.",
+      "example": "H1: 30px, H2: 24px, H3: 20px, Body: 16px, Small: 14px"
+    }
+  ]
+}

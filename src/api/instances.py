@@ -4,7 +4,8 @@ API Routes para gerenciamento de instancias GPU
 import subprocess
 import time
 from flask import Blueprint, jsonify, request, g
-from src.services import VastService, ResticService
+from src.services.gpu.vast import VastService
+from src.services.storage.restic import ResticService
 from src.services.codeserver_service import CodeServerService, CodeServerConfig
 
 instances_bp = Blueprint('instances', __name__, url_prefix='/api')

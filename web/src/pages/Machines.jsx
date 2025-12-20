@@ -16,8 +16,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu'
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -27,9 +25,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '../components/ui/alert-dialog'
-import { StatusBadge, ConfirmModal, Popover, PopoverTrigger, PopoverContent } from '../components/ui/dumont-ui'
-import { ChevronDown, MoreVertical, Play, Plus, Server, Cpu, Clock, Activity, Code, Settings, Trash2, Copy, Key, Terminal, Pause, Save, RefreshCw, Upload, Database, ArrowLeftRight, Check, Cloud, Shield, Layers, X, MapPin, Globe, DollarSign } from 'lucide-react'
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '../components/tailadmin-ui'
+import { StatusBadge, ConfirmModal } from '../components/ui/dumont-ui'
+import { ChevronDown, MoreVertical, Play, Plus, Server, Cpu, Clock, Activity, Code, Settings, Trash2, Copy, Key, Terminal, Pause, Save, RefreshCw, Upload, Database, ArrowLeftRight, Check, Cloud, Shield, Layers, X, MapPin, Globe, DollarSign, Zap } from 'lucide-react'
 import HibernationConfigModal from '../components/HibernationConfigModal'
 import MigrationModal from '../components/MigrationModal'
 import { ErrorState } from '../components/ErrorState'
@@ -185,38 +186,41 @@ function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onS
 
   return (
     <div
-      className={`flex flex-col p-4 md:p-5 rounded-xl border transition-all bg-white dark:bg-[#131713] shadow-theme-sm ${
-        isInFailover
+      className={`group relative flex flex-col p-5 rounded-2xl border transition-all duration-300 bg-white dark:bg-[#131713] 
+        shadow-lg hover:shadow-[0_0_25px_rgba(16,185,129,0.15)] hover:-translate-y-1
+        ${isInFailover
           ? getFailoverBorderColor()
           : isRunning
-            ? 'border-success-200 dark:border-success-500/30'
-            : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-dark-surface-hover'
-      }`}
+            ? 'border-emerald-500/20 shadow-emerald-900/5'
+            : 'border-white/5 hover:border-emerald-500/20'
+        }
+      `}
     >
+      {/* Decorative gradient blur */}
+      {isRunning && (
+        <div className="absolute -inset-[1px] bg-gradient-to-b from-emerald-500/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+      )}
       {/* Failover Progress Panel - Shows during failover */}
       {isInFailover && (
         <div className="mb-3 p-3 rounded-lg bg-dark-surface-secondary border border-dark-surface-border" data-testid="failover-progress-panel">
           <div className="flex items-center gap-2 mb-3">
-            <Zap className={`w-4 h-4 ${
-              failoverProgress.phase === 'gpu_lost' ? 'text-red-400 animate-pulse' :
+            <Zap className={`w-4 h-4 ${failoverProgress.phase === 'gpu_lost' ? 'text-red-400 animate-pulse' :
               failoverProgress.phase === 'complete' ? 'text-green-400' :
-              'text-yellow-400 animate-pulse'
-            }`} />
+                'text-yellow-400 animate-pulse'
+              }`} />
             <span className="text-sm font-semibold text-white">Failover em Progresso</span>
           </div>
 
           {/* Progress Steps */}
           <div className="space-y-1.5 text-xs">
-            <div className={`flex items-center gap-2 ${
-              failoverProgress.phase === 'gpu_lost' ? 'text-red-400' :
+            <div className={`flex items-center gap-2 ${failoverProgress.phase === 'gpu_lost' ? 'text-red-400' :
               ['failover_active', 'searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? 'text-green-400' :
-              'text-gray-500'
-            }`} data-testid="failover-step-gpu-lost">
-              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
-                failoverProgress.phase === 'gpu_lost' ? 'border-red-400 bg-red-500/20' :
+                'text-gray-500'
+              }`} data-testid="failover-step-gpu-lost">
+              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${failoverProgress.phase === 'gpu_lost' ? 'border-red-400 bg-red-500/20' :
                 ['failover_active', 'searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? 'border-green-400 bg-green-500/20' :
-                'border-gray-600'
-              }`}>
+                  'border-gray-600'
+                }`}>
                 {['failover_active', 'searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? '✓' : '1'}
               </div>
               <span>GPU Interrompida</span>
@@ -224,16 +228,14 @@ function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onS
               {failoverProgress.metrics?.detection_time_ms && <span className="ml-auto text-gray-500">{failoverProgress.metrics.detection_time_ms}ms</span>}
             </div>
 
-            <div className={`flex items-center gap-2 ${
-              failoverProgress.phase === 'failover_active' ? 'text-yellow-400' :
+            <div className={`flex items-center gap-2 ${failoverProgress.phase === 'failover_active' ? 'text-yellow-400' :
               ['searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? 'text-green-400' :
-              'text-gray-500'
-            }`} data-testid="failover-step-active">
-              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
-                failoverProgress.phase === 'failover_active' ? 'border-yellow-400 bg-yellow-500/20' :
+                'text-gray-500'
+              }`} data-testid="failover-step-active">
+              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${failoverProgress.phase === 'failover_active' ? 'border-yellow-400 bg-yellow-500/20' :
                 ['searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? 'border-green-400 bg-green-500/20' :
-                'border-gray-600'
-              }`}>
+                  'border-gray-600'
+                }`}>
                 {['searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? '✓' : '2'}
               </div>
               <span>Failover para CPU Standby</span>
@@ -241,16 +243,14 @@ function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onS
               {failoverProgress.metrics?.failover_time_ms && <span className="ml-auto text-gray-500">{failoverProgress.metrics.failover_time_ms}ms</span>}
             </div>
 
-            <div className={`flex items-center gap-2 ${
-              failoverProgress.phase === 'searching' ? 'text-cyan-400' :
+            <div className={`flex items-center gap-2 ${failoverProgress.phase === 'searching' ? 'text-cyan-400' :
               ['provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? 'text-green-400' :
-              'text-gray-500'
-            }`} data-testid="failover-step-searching">
-              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
-                failoverProgress.phase === 'searching' ? 'border-blue-400 bg-cyan-500/20' :
+                'text-gray-500'
+              }`} data-testid="failover-step-searching">
+              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${failoverProgress.phase === 'searching' ? 'border-blue-400 bg-cyan-500/20' :
                 ['provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? 'border-green-400 bg-green-500/20' :
-                'border-gray-600'
-              }`}>
+                  'border-gray-600'
+                }`}>
                 {['provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? '✓' : '3'}
               </div>
               <span>Buscando Nova GPU</span>
@@ -258,16 +258,14 @@ function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onS
               {failoverProgress.metrics?.search_time_ms && <span className="ml-auto text-gray-500">{(failoverProgress.metrics.search_time_ms / 1000).toFixed(1)}s</span>}
             </div>
 
-            <div className={`flex items-center gap-2 ${
-              failoverProgress.phase === 'provisioning' ? 'text-purple-400' :
+            <div className={`flex items-center gap-2 ${failoverProgress.phase === 'provisioning' ? 'text-purple-400' :
               ['restoring', 'complete'].includes(failoverProgress.phase) ? 'text-green-400' :
-              'text-gray-500'
-            }`} data-testid="failover-step-provisioning">
-              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
-                failoverProgress.phase === 'provisioning' ? 'border-purple-400 bg-purple-500/20' :
+                'text-gray-500'
+              }`} data-testid="failover-step-provisioning">
+              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${failoverProgress.phase === 'provisioning' ? 'border-purple-400 bg-purple-500/20' :
                 ['restoring', 'complete'].includes(failoverProgress.phase) ? 'border-green-400 bg-green-500/20' :
-                'border-gray-600'
-              }`}>
+                  'border-gray-600'
+                }`}>
                 {['restoring', 'complete'].includes(failoverProgress.phase) ? '✓' : '4'}
               </div>
               <span>Provisionando {failoverProgress.newGpu || 'Nova GPU'}</span>
@@ -275,16 +273,14 @@ function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onS
               {failoverProgress.metrics?.provisioning_time_ms && <span className="ml-auto text-gray-500">{(failoverProgress.metrics.provisioning_time_ms / 1000).toFixed(1)}s</span>}
             </div>
 
-            <div className={`flex items-center gap-2 ${
-              failoverProgress.phase === 'restoring' ? 'text-cyan-400' :
+            <div className={`flex items-center gap-2 ${failoverProgress.phase === 'restoring' ? 'text-cyan-400' :
               failoverProgress.phase === 'complete' ? 'text-green-400' :
-              'text-gray-500'
-            }`} data-testid="failover-step-restoring">
-              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
-                failoverProgress.phase === 'restoring' ? 'border-cyan-400 bg-cyan-500/20' :
+                'text-gray-500'
+              }`} data-testid="failover-step-restoring">
+              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${failoverProgress.phase === 'restoring' ? 'border-cyan-400 bg-cyan-500/20' :
                 failoverProgress.phase === 'complete' ? 'border-green-400 bg-green-500/20' :
-                'border-gray-600'
-              }`}>
+                  'border-gray-600'
+                }`}>
                 {failoverProgress.phase === 'complete' ? '✓' : '5'}
               </div>
               <span>Restaurando Dados</span>
@@ -292,12 +288,10 @@ function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onS
               {failoverProgress.metrics?.restore_time_ms && <span className="ml-auto text-gray-500">{(failoverProgress.metrics.restore_time_ms / 1000).toFixed(1)}s</span>}
             </div>
 
-            <div className={`flex items-center gap-2 ${
-              failoverProgress.phase === 'complete' ? 'text-green-400' : 'text-gray-500'
-            }`} data-testid="failover-step-complete">
-              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${
-                failoverProgress.phase === 'complete' ? 'border-green-400 bg-green-500/20' : 'border-gray-600'
-              }`}>
+            <div className={`flex items-center gap-2 ${failoverProgress.phase === 'complete' ? 'text-green-400' : 'text-gray-500'
+              }`} data-testid="failover-step-complete">
+              <div className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${failoverProgress.phase === 'complete' ? 'border-green-400 bg-green-500/20' : 'border-gray-600'
+                }`}>
                 {failoverProgress.phase === 'complete' ? '✓' : '6'}
               </div>
               <span>Recuperação Completa</span>
@@ -410,16 +404,15 @@ function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onS
                       <span className="text-white font-medium">{cpuStandby.sync_count || 0}</span>
                     </div>
                     <div className="mt-2 pt-2 border-t border-gray-700/50">
-                      <div className={`text-xs px-2 py-1 rounded text-center ${
-                        cpuStandby.state === 'ready' ? 'bg-green-500/20 text-green-400' :
+                      <div className={`text-xs px-2 py-1 rounded text-center ${cpuStandby.state === 'ready' ? 'bg-green-500/20 text-green-400' :
                         cpuStandby.state === 'syncing' ? 'bg-cyan-500/20 text-cyan-400' :
-                        cpuStandby.state === 'failover_active' ? 'bg-yellow-500/20 text-yellow-400' :
-                        'bg-gray-700/30 text-gray-400'
-                      }`}>
+                          cpuStandby.state === 'failover_active' ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-gray-700/30 text-gray-400'
+                        }`}>
                         {cpuStandby.state === 'ready' ? '✓ Pronto para failover' :
-                         cpuStandby.state === 'syncing' ? '↻ Sincronizando...' :
-                         cpuStandby.state === 'failover_active' ? '⚡ Failover ativo' :
-                         '○ Provisionando...'}
+                          cpuStandby.state === 'syncing' ? '↻ Sincronizando...' :
+                            cpuStandby.state === 'failover_active' ? '⚡ Failover ativo' :
+                              '○ Provisionando...'}
                       </div>
                     </div>
                   </div>
@@ -485,11 +478,10 @@ function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onS
         {machine.public_ipaddr && (
           <button
             onClick={() => copyToClipboard(machine.public_ipaddr, 'ip')}
-            className={`px-1.5 py-0.5 rounded border transition-all ${
-              copiedField === 'ip'
-                ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 hover:bg-cyan-500/20'
-            }`}
+            className={`px-1.5 py-0.5 rounded border transition-all ${copiedField === 'ip'
+              ? 'bg-green-500/20 text-green-400 border-green-500/30'
+              : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 hover:bg-cyan-500/20'
+              }`}
             title="Clique para copiar IP"
           >
             {copiedField === 'ip' ? 'Copiado!' : machine.public_ipaddr}
@@ -568,13 +560,12 @@ function MachineCard({ machine, onDestroy, onStart, onPause, onRestoreToNew, onS
         </Popover>
         {isRunning && syncStatus && (
           <span
-            className={`flex items-center gap-1 px-1.5 py-0.5 rounded border cursor-help ${
-              syncStatus === 'syncing'
-                ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
-                : syncStatus === 'synced'
+            className={`flex items-center gap-1 px-1.5 py-0.5 rounded border cursor-help ${syncStatus === 'syncing'
+              ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+              : syncStatus === 'synced'
                 ? 'bg-green-500/10 text-green-400 border-green-500/20'
                 : 'bg-gray-700/30 text-gray-400 border-gray-700/30'
-            }`}
+              }`}
             title={syncStats ? `Último sync: ${syncStats.files_changed || 0} modificados, ${syncStats.data_added || '0 B'} enviados` : 'Clique em "Criar Snapshot" para sincronizar'}
           >
             <RefreshCw className={`w-2.5 h-2.5 ${syncStatus === 'syncing' ? 'animate-spin' : ''}`} />
@@ -1090,14 +1081,14 @@ export default function Machines() {
       setMachines(prev => prev.map(m =>
         m.id === machineId
           ? {
-              ...m,
-              actual_status: 'running',
-              status: 'running',
-              start_date: new Date().toISOString(),
-              public_ipaddr: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-              gpu_util: Math.floor(Math.random() * 30) + 10,
-              gpu_temp: Math.floor(Math.random() * 15) + 55
-            }
+            ...m,
+            actual_status: 'running',
+            status: 'running',
+            start_date: new Date().toISOString(),
+            public_ipaddr: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+            gpu_util: Math.floor(Math.random() * 30) + 10,
+            gpu_temp: Math.floor(Math.random() * 15) + 55
+          }
           : m
       ))
       showDemoToast(`${machine?.gpu_name || 'Máquina'} iniciada!`, 'success')
@@ -1122,13 +1113,13 @@ export default function Machines() {
       setMachines(prev => prev.map(m =>
         m.id === machineId
           ? {
-              ...m,
-              actual_status: 'stopped',
-              status: 'stopped',
-              public_ipaddr: null,
-              gpu_util: 0,
-              gpu_temp: 0
-            }
+            ...m,
+            actual_status: 'stopped',
+            status: 'stopped',
+            public_ipaddr: null,
+            gpu_util: 0,
+            gpu_temp: 0
+          }
           : m
       ))
       showDemoToast(`${machine?.gpu_name || 'Máquina'} pausada!`, 'success')
@@ -1645,12 +1636,11 @@ export default function Machines() {
 
       {/* Demo Toast Notification */}
       {demoToast && (
-        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg shadow-xl border flex items-center gap-3 animate-slide-up ${
-          demoToast.type === 'success' ? 'bg-green-900/90 border-green-500/50 text-green-100' :
+        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg shadow-xl border flex items-center gap-3 animate-slide-up ${demoToast.type === 'success' ? 'bg-green-900/90 border-green-500/50 text-green-100' :
           demoToast.type === 'warning' ? 'bg-yellow-900/90 border-yellow-500/50 text-yellow-100' :
-          demoToast.type === 'error' ? 'bg-red-900/90 border-red-500/50 text-red-100' :
-          'bg-cyan-900/90 border-cyan-500/50 text-cyan-100'
-        }`}>
+            demoToast.type === 'error' ? 'bg-red-900/90 border-red-500/50 text-red-100' :
+              'bg-cyan-900/90 border-cyan-500/50 text-cyan-100'
+          }`}>
           {demoToast.type === 'success' && <Check className="w-5 h-5" />}
           {demoToast.type === 'warning' && <RefreshCw className="w-5 h-5 animate-spin" />}
           {demoToast.type === 'info' && <RefreshCw className="w-5 h-5 animate-spin" />}

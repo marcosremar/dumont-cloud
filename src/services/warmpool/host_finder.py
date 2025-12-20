@@ -93,22 +93,13 @@ class HostFinder:
             Lista de ofertas de GPU
         """
         try:
-            # Construir query
-            query = {
-                "verified": {"eq": verified},
-                "rentable": {"eq": True},
-                "num_gpus": {"gte": min_gpus},
-                "reliability2": {"gte": min_reliability},
+            # Construir params simples (VAST.ai usa params, não query JSON)
+            params = {
+                "order": "dph_total",
+                "type": "on-demand",
+                "verified": str(verified).lower(),
+                "rentable": "true",
             }
-
-            if gpu_name:
-                query["gpu_name"] = {"eq": gpu_name}
-
-            if max_price:
-                query["dph_total"] = {"lte": max_price}
-
-            if geolocation:
-                query["geolocation"] = {"eq": geolocation}
 
             async with aiohttp.ClientSession() as session:
                 headers = {
@@ -119,7 +110,7 @@ class HostFinder:
                 async with session.get(
                     f"{self.api_url}/bundles/",
                     headers=headers,
-                    params={"q": str(query)}
+                    params=params
                 ) as response:
                     if response.status != 200:
                         text = await response.text()
@@ -132,6 +123,18 @@ class HostFinder:
                     offers = []
                     for offer_data in offers_data:
                         try:
+                            # Aplicar filtros locais
+                            if gpu_name and offer_data.get("gpu_name", "") != gpu_name:
+                                continue
+                            if offer_data.get("num_gpus", 0) < min_gpus:
+                                continue
+                            if max_price and offer_data.get("dph_total", 999) > max_price:
+                                continue
+                            if offer_data.get("reliability2", 0) < min_reliability:
+                                continue
+                            if geolocation and offer_data.get("geolocation", "") != geolocation:
+                                continue
+
                             offer = GPUOffer(
                                 offer_id=offer_data.get("id"),
                                 machine_id=offer_data.get("machine_id"),
@@ -156,7 +159,7 @@ class HostFinder:
                             logger.warning(f"Failed to parse offer: {e}")
                             continue
 
-                    logger.info(f"Found {len(offers)} GPU offers")
+                    logger.info(f"Found {len(offers)} GPU offers (filtered from {len(offers_data)})")
                     return offers
 
         except Exception as e:

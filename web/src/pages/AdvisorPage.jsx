@@ -1,4 +1,3 @@
-import Layout from '../components/Layout'
 import GPUAdvisor from '../components/gpu-advisor/GPUAdvisor'
 
 export default function AdvisorPage({ user, onLogout }) {
@@ -7,10 +6,6 @@ export default function AdvisorPage({ user, onLogout }) {
         return token ? { 'Authorization': `Bearer ${token}` } : {}
     }
 
-    return (
-        <Layout user={user} onLogout={onLogout}>
-            <GPUAdvisor getAuthHeaders={getAuthHeaders} />
-        </Layout>
-    )
+    return <GPUAdvisor getAuthHeaders={getAuthHeaders} />
 }
 

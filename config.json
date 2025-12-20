@@ -1,7 +1,7 @@
 {
   "users": {
     "marcosremar@gmail.com": {
-      "password": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+      "password": "852241cdf2434a7a8bbb572676488d8cda831b463cd2a1526995481714892180",
       "vast_api_key": "a9df8f732d9b1b8a6bb54fd43c477824254552b0d964c58bd92b16c6f25ca3dd",
       "settings": {
         "stage_timeout": 30,
@@ -217,6 +217,46 @@
       "settings": {}
     },
     "e2e_test_1766111624@example.com": {
+      "password": "ea358ca5c6aabae0359507e983633541074089fdee99b4e49227fb8d1476515c",
+      "vast_api_key": null,
+      "settings": {}
+    },
+    "test_1766194211@example.com": {
+      "password": "85777f270ad7cf2a790981bbae3c4e484a1dc55e24a77390d692fbf1cffa12fa",
+      "vast_api_key": null,
+      "settings": {}
+    },
+    "e2e_test_1766194214@example.com": {
+      "password": "ea358ca5c6aabae0359507e983633541074089fdee99b4e49227fb8d1476515c",
+      "vast_api_key": null,
+      "settings": {}
+    },
+    "test_1766194588@example.com": {
+      "password": "85777f270ad7cf2a790981bbae3c4e484a1dc55e24a77390d692fbf1cffa12fa",
+      "vast_api_key": null,
+      "settings": {}
+    },
+    "e2e_test_1766194588@example.com": {
+      "password": "ea358ca5c6aabae0359507e983633541074089fdee99b4e49227fb8d1476515c",
+      "vast_api_key": null,
+      "settings": {}
+    },
+    "test_1766194647@example.com": {
+      "password": "85777f270ad7cf2a790981bbae3c4e484a1dc55e24a77390d692fbf1cffa12fa",
+      "vast_api_key": null,
+      "settings": {}
+    },
+    "e2e_test_1766194647@example.com": {
+      "password": "ea358ca5c6aabae0359507e983633541074089fdee99b4e49227fb8d1476515c",
+      "vast_api_key": null,
+      "settings": {}
+    },
+    "test_1766194885@example.com": {
+      "password": "85777f270ad7cf2a790981bbae3c4e484a1dc55e24a77390d692fbf1cffa12fa",
+      "vast_api_key": null,
+      "settings": {}
+    },
+    "e2e_test_1766194885@example.com": {
       "password": "ea358ca5c6aabae0359507e983633541074089fdee99b4e49227fb8d1476515c",
       "vast_api_key": null,
       "settings": {}

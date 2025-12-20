@@ -188,7 +188,7 @@ def get_migration_service(
     user_email: str = Depends(get_current_user_email),
 ) -> MigrationService:
     """Get migration service"""
-    from ...services.vast_service import VastService
+    from ...services.gpu.vast import VastService
 
     # Get user's settings
     user_repo = next(get_user_repository())

@@ -1,0 +1,76 @@
+
+==============================================
+[0;34mTeste: Savings Tracking[0m
+==============================================
+Inicio: Sat Dec 20 00:39:11 CET 2025
+
+[0;32m[PASS][0m CLI encontrado: /home/marcos/.local/bin/dumont
+[0;32m[PASS][0m Backend acessivel em http://localhost:8767
+[1;33m[STEP][0m Fazendo login com marcosremar@gmail.com...
+[0;32m[PASS][0m Login realizado
+[1;33m[STEP][0m 1. Verificando resumo de economia...
+[0;34m[INFO][0m Summary: ❌ Unknown resource: savings
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+[0;32m[PASS][0m Savings deve estar autenticado
+[1;33m[STEP][0m 2. Verificando economia mensal...
+[0;34m[INFO][0m Monthly: ❌ Unknown resource: savings
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+❌ Unknown resource: savings
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+[1;33m[STEP][0m 3. Verificando breakdown de economia...
+[0;34m[INFO][0m Breakdown: ❌ Unknown resource: savings
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+Breakdown nao disponivel
+[1;33m[STEP][0m 4. Verificando economia por hibernacao...
+[0;34m[INFO][0m Hibernation savings: ❌ Unknown resource: savings
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+Hibernation savings nao disponivel
+[1;33m[STEP][0m 5. Verificando economia por spot...
+[0;34m[INFO][0m Spot savings: ❌ Unknown resource: savings
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+🔄 GET /api/v1/metrics/spot/savings
+✅ Success (200)
+{
+  "items": [],
+  "total_potential_savings_month": 0.0,
+  "avg_savings_percent": 0.0,
+  "generated_at": "2025-12-19T23:39:12.738762"
+}
+[1;33m[STEP][0m 6. Verificando comparacao com on-demand...
+[0;34m[INFO][0m Compare: ❌ Unknown resource: savings
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+Comparacao nao disponivel
+[1;33m[STEP][0m 7. Verificando projecao de economia...
+[0;34m[INFO][0m Projection: ❌ Unknown resource: savings
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+Projecao nao disponivel
+[1;33m[STEP][0m 8. Verificando historico de economia...
+[0;34m[INFO][0m History: ❌ Unknown resource: savings
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+❌ Unknown resource: savings
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+[0;32m[PASS][0m Endpoints de savings verificados
+[1;33m[STEP][0m Fazendo logout...
+🔄 POST /api/auth/logout
+✅ Logged out successfully.
+[0;32m[PASS][0m Logout realizado
+
+----------------------------------------------
+Resumo dos Asserts:
+  [0;32mPassed: 2[0m
+  [0;31mFailed: 0[0m
+----------------------------------------------
+
+[0;32m[PASS][0m Teste 'Savings Tracking' completado com sucesso!
+Fim: Sat Dec 20 00:39:13 CET 2025
+==============================================

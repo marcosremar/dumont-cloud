@@ -25,9 +25,8 @@
   },
   "homepage": "https://github.com/marcosremar/snapbpu#readme",
   "devDependencies": {
-    "@playwright/test": "^1.49.0"
-  },
-  "dependencies": {
-    "playwright": "^1.49.0"
+    "@playwright/test": "^1.57.0",
+    "playwright": "^1.57.0",
+    "ws": "^8.18.3"
   }
 }

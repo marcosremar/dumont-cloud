@@ -1,24 +1,40 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
+import { defineConfig } from "vite"
+import react from "@vitejs/plugin-react"
+import path from "path"
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
   server: {
+    host: "0.0.0.0",
     port: 5173,
+    strictPort: true,
+    allowedHosts: ["dumontcloud-local.orb.local", ".orb.local"],
     proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
+      "/admin/doc/live": {
+        target: "http://localhost:8081",
+        changeOrigin: true,
+      },
+      "/api/docs": {
+        target: "http://localhost:8081",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/docs/, "/api"),
+      },
+      "/api": {
+        target: "http://localhost:8766",
+        changeOrigin: true,
+      },
+      "/admin": {
+        target: "http://localhost:8766",
         changeOrigin: true,
       },
     },
   },
   build: {
-    outDir: 'build',
+    outDir: "build",
   },
 })

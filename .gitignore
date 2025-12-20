@@ -42,3 +42,6 @@ test-results/
 
 # Build artifacts
 web/build/
+
+# macOS metadata files
+._*

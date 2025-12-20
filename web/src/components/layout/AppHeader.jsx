@@ -14,6 +14,7 @@ import {
   LogOut,
   Cloud
 } from "lucide-react";
+import DumontLogo from "../DumontLogo";
 
 // Helper to get base path based on demo mode
 function useBasePath() {
@@ -55,7 +56,7 @@ const AppHeader = ({ user, onLogout, isDemo = false }) => {
   }, []);
 
   return (
-    <header className="sticky top-0 flex w-full bg-white border-b border-gray-200 z-[99999] dark:border-[#1a1f1a] dark:bg-[#0f1210]">
+    <header className="sticky top-0 flex w-full bg-white border-b border-gray-200 z-[99999] dark:border-white/5 dark:bg-[#0a0d0a]">
       <div className="flex items-center justify-between w-full px-4 py-3 lg:px-6">
         {/* Left side */}
         <div className="flex items-center gap-4">
@@ -70,11 +71,8 @@ const AppHeader = ({ user, onLogout, isDemo = false }) => {
 
           {/* Mobile Logo */}
           <Link to={basePath} className="flex items-center gap-2 lg:hidden">
-            <div className="w-8 h-8 bg-gradient-to-br from-brand-500 to-brand-600 rounded-lg flex items-center justify-center">
-              <Cloud size={20} className="text-white" />
-            </div>
-            <span className="text-lg font-semibold text-gray-900 dark:text-white">Dumont</span>
-            <span className="text-lg font-semibold text-brand-500">Cloud</span>
+            <DumontLogo size={32} />
+            <span className="text-lg font-bold text-gray-900 dark:text-white">Dumont Cloud</span>
           </Link>
 
           {/* Search Bar - Desktop */}
@@ -83,8 +81,8 @@ const AppHeader = ({ user, onLogout, isDemo = false }) => {
               <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Buscar..."
-                className="w-[300px] h-10 pl-10 pr-4 text-sm text-gray-800 bg-gray-50 border border-gray-200 rounded-lg focus:border-brand-300 focus:ring-2 focus:ring-brand-500/10 focus:outline-none dark:bg-dark-surface-secondary dark:border-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500"
+                placeholder="Buscar máquinas, modelos..."
+                className="w-[300px] h-10 pl-10 pr-4 text-sm text-gray-800 bg-gray-50 border border-gray-200 rounded-xl focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 focus:outline-none dark:bg-white/5 dark:border-white/10 dark:text-gray-200 dark:placeholder:text-gray-500 transition-all focus:bg-white dark:focus:bg-[#050505]"
               />
             </div>
           </div>
@@ -147,8 +145,8 @@ const AppHeader = ({ user, onLogout, isDemo = false }) => {
               onClick={() => setUserMenuOpen(!isUserMenuOpen)}
               className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1f1a]"
             >
-              <div className="w-8 h-8 bg-brand-100 rounded-full flex items-center justify-center">
-                <User size={18} className="text-brand-600" />
+              <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center shadow-lg shadow-brand-500/20">
+                <User size={18} className="text-white" />
               </div>
               <div className="hidden md:block text-left">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import {
   Zap, Clock, CheckCircle, XCircle, TrendingUp, TrendingDown,
   Activity, Server, Cpu, RefreshCw, Calendar, BarChart3,
-  AlertTriangle, Shield, ArrowRight, Timer
+  AlertTriangle, Shield, ArrowRight, Timer, HardDrive, Database,
+  Download, Upload, Bot, Play
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 
@@ -163,21 +164,21 @@ const getReasonLabel = (reason) => {
 
 // Componente de métrica individual
 const MetricCard = ({ icon: Icon, label, value, subValue, color = 'green', trend = null }) => (
-  <div className="p-4 rounded-lg bg-gray-800/50 border border-gray-700/50">
+  <div className="p-4 rounded-xl bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 shadow-sm">
     <div className="flex items-center gap-2 mb-2">
-      <Icon className={`w-4 h-4 text-${color}-400`} />
-      <span className="text-xs text-gray-400 uppercase">{label}</span>
+      <Icon className={`w-4 h-4 text-${color}-500 dark:text-${color}-400`} />
+      <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">{label}</span>
     </div>
     <div className="flex items-end gap-2">
-      <span className={`text-2xl font-bold text-${color}-400`}>{value}</span>
+      <span className={`text-2xl font-bold text-${color}-600 dark:text-${color}-400`}>{value}</span>
       {trend !== null && (
-        <span className={`text-xs flex items-center gap-0.5 ${trend >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+        <span className={`text-xs flex items-center gap-0.5 ${trend >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
           {trend >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
           {Math.abs(trend)}%
         </span>
       )}
     </div>
-    {subValue && <p className="text-xs text-gray-500 mt-1">{subValue}</p>}
+    {subValue && <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{subValue}</p>}
   </div>
 )
 
@@ -211,15 +212,206 @@ const FailoverTimeline = ({ failover }) => {
   )
 }
 
+// Visual Timeline Breakdown Component
+const VisualTimelineBreakdown = ({ phases, totalTime }) => {
+  const phaseList = [
+    { key: 'snapshot_creation', label: 'Snapshot', color: 'bg-blue-500', time: phases?.snapshot_creation_ms || 0 },
+    { key: 'gpu_search', label: 'Busca GPU', color: 'bg-purple-500', time: phases?.gpu_search_ms || 0 },
+    { key: 'gpu_provision', label: 'Provisioning', color: 'bg-yellow-500', time: phases?.gpu_provision_ms || 0 },
+    { key: 'gpu_ready_wait', label: 'Aguardando', color: 'bg-orange-500', time: phases?.gpu_ready_wait_ms || 0 },
+    { key: 'restore', label: 'Restore', color: 'bg-cyan-500', time: phases?.restore_ms || 0 },
+    { key: 'inference', label: 'Inference', color: 'bg-green-500', time: phases?.inference_after_ms || 0 },
+  ]
+
+  const validPhases = phaseList.filter(p => p.time > 0)
+  const total = totalTime || validPhases.reduce((s, p) => s + p.time, 0)
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-1 text-xs text-gray-400">
+        <Clock className="w-3 h-3" />
+        <span>Tempo Total: {formatDuration(total)}</span>
+      </div>
+      <div className="flex h-6 rounded-lg overflow-hidden bg-gray-700/30">
+        {validPhases.map((phase, idx) => {
+          const pct = (phase.time / total) * 100
+          return (
+            <div
+              key={phase.key}
+              className={`${phase.color} flex items-center justify-center text-[10px] text-white font-medium transition-all hover:brightness-125`}
+              style={{ width: `${Math.max(pct, 5)}%` }}
+              title={`${phase.label}: ${formatDuration(phase.time)} (${pct.toFixed(1)}%)`}
+            >
+              {pct > 10 ? phase.label : ''}
+            </div>
+          )
+        })}
+      </div>
+      <div className="flex flex-wrap gap-2 text-[10px]">
+        {validPhases.map(phase => (
+          <div key={phase.key} className="flex items-center gap-1">
+            <div className={`w-2 h-2 rounded-sm ${phase.color}`} />
+            <span className="text-gray-400">{phase.label}: {formatDuration(phase.time)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Real Failover Test Card Component
+const RealFailoverCard = ({ test }) => {
+  const phases = test.phase_timings || {}
+
+  return (
+    <div
+      className={`p-4 rounded-lg border ${
+        test.totals?.success
+          ? 'border-green-500/30 bg-green-500/5'
+          : 'border-red-500/30 bg-red-500/5'
+      }`}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          {test.totals?.success ? (
+            <CheckCircle className="w-5 h-5 text-green-400" />
+          ) : (
+            <XCircle className="w-5 h-5 text-red-400" />
+          )}
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-white font-medium">{test.gpu?.original_type || 'GPU'}</span>
+              {test.gpu?.new_type && (
+                <>
+                  <ArrowRight className="w-3 h-3 text-gray-500" />
+                  <span className="text-green-400 font-medium">{test.gpu.new_type}</span>
+                </>
+              )}
+            </div>
+            <div className="text-xs text-gray-500">
+              {test.started_at ? formatDate(test.started_at) : 'N/A'} • ID: {test.failover_id}
+            </div>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className={`text-lg font-bold ${test.totals?.success ? 'text-green-400' : 'text-red-400'}`}>
+            {formatDuration(test.totals?.total_time_ms || 0)}
+          </div>
+          <div className="text-xs text-gray-500">tempo total</div>
+        </div>
+      </div>
+
+      {/* Visual Timeline */}
+      <VisualTimelineBreakdown phases={phases} totalTime={test.totals?.total_time_ms} />
+
+      {/* Snapshot Info */}
+      {test.snapshot && (
+        <div className="mt-4 pt-4 border-t border-gray-700/50">
+          <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
+            <HardDrive className="w-3 h-3 text-blue-400" />
+            <span className="text-blue-400 font-medium">Snapshot Details</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div className="p-2 bg-gray-800/50 rounded">
+              <div className="text-gray-500">Tamanho</div>
+              <div className="text-white font-medium">{test.snapshot.size_mb || 0} MB</div>
+            </div>
+            <div className="p-2 bg-gray-800/50 rounded">
+              <div className="text-gray-500">Criacao</div>
+              <div className="text-white font-medium">{formatDuration(test.snapshot.creation_time_ms || 0)}</div>
+            </div>
+            <div className="p-2 bg-gray-800/50 rounded">
+              <div className="text-gray-500">Storage</div>
+              <div className="text-white font-medium">{test.snapshot.storage || 'B2'}</div>
+            </div>
+            <div className="p-2 bg-gray-800/50 rounded">
+              <div className="text-gray-500">Compressao</div>
+              <div className="text-white font-medium">{test.snapshot.compression || 'LZ4'}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restore Info */}
+      {test.restore && test.restore.time_ms > 0 && (
+        <div className="mt-3">
+          <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
+            <Download className="w-3 h-3 text-cyan-400" />
+            <span className="text-cyan-400 font-medium">Restore Details</span>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-xs">
+            <div className="p-2 bg-gray-800/50 rounded">
+              <div className="text-gray-500">Download</div>
+              <div className="text-white font-medium">{formatDuration(test.restore.download_time_ms || 0)}</div>
+            </div>
+            <div className="p-2 bg-gray-800/50 rounded">
+              <div className="text-gray-500">Decompress</div>
+              <div className="text-white font-medium">{formatDuration(test.restore.decompress_time_ms || 0)}</div>
+            </div>
+            <div className="p-2 bg-gray-800/50 rounded">
+              <div className="text-gray-500">Total</div>
+              <div className="text-white font-medium">{formatDuration(test.restore.time_ms || 0)}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inference Test */}
+      {test.inference && (
+        <div className="mt-3">
+          <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
+            <Bot className="w-3 h-3 text-green-400" />
+            <span className="text-green-400 font-medium">Inference Test</span>
+            {test.inference.success ? (
+              <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded text-[10px]">PASSED</span>
+            ) : (
+              <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded text-[10px]">FAILED</span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="p-2 bg-gray-800/50 rounded">
+              <div className="text-gray-500">Modelo</div>
+              <div className="text-white font-medium">{test.inference.model || 'N/A'}</div>
+            </div>
+            <div className="p-2 bg-gray-800/50 rounded">
+              <div className="text-gray-500">Time to Inference</div>
+              <div className="text-white font-medium">{formatDuration(test.inference.ready_time_ms || 0)}</div>
+            </div>
+          </div>
+          {test.inference.response && (
+            <div className="mt-2 p-2 bg-gray-800/50 rounded text-xs">
+              <div className="text-gray-500 mb-1">Response Preview:</div>
+              <div className="text-gray-300 truncate">{test.inference.response.substring(0, 100)}...</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Error */}
+      {!test.totals?.success && test.totals?.failure_reason && (
+        <div className="mt-3 pt-3 border-t border-red-500/30">
+          <span className="text-xs text-red-400">
+            <AlertTriangle className="w-3 h-3 inline mr-1" />
+            Falha: {test.totals.failure_reason}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Componente principal
 export default function FailoverReport({ isDemo = true }) {
   const [history, setHistory] = useState([])
+  const [realTests, setRealTests] = useState([])
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState('30d') // 7d, 30d, 90d
+  const [activeTab, setActiveTab] = useState('all') // 'all', 'real', 'simulated'
 
   useEffect(() => {
     // Load data based on mode
-    const loadHistory = () => {
+    const loadHistory = async () => {
       // Try to get real data from localStorage first (from simulations)
       let localHistory = []
       try {
@@ -253,6 +445,20 @@ export default function FailoverReport({ isDemo = true }) {
         console.error('Error loading local failover history:', e)
       }
 
+      // Fetch real failover test history from API
+      try {
+        const token = localStorage.getItem('auth_token')
+        const res = await fetch('/api/standby/failover/test-real/history', {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setRealTests(data.tests || [])
+        }
+      } catch (err) {
+        console.error('Error fetching real failover tests:', err)
+      }
+
       // If we have local data, combine with demo data
       if (localHistory.length > 0) {
         // Sort by timestamp, newest first
@@ -272,20 +478,17 @@ export default function FailoverReport({ isDemo = true }) {
       }
 
       // In production, fetch from API
-      const fetchHistory = async () => {
-        try {
-          const res = await fetch('/api/v1/standby/failover-history')
-          if (res.ok) {
-            const data = await res.json()
-            setHistory(data.history || [])
-          }
-        } catch (err) {
-          console.error('Error fetching failover history:', err)
-        } finally {
-          setLoading(false)
+      try {
+        const res = await fetch('/api/v1/standby/failover-history')
+        if (res.ok) {
+          const data = await res.json()
+          setHistory(data.history || [])
         }
+      } catch (err) {
+        console.error('Error fetching failover history:', err)
+      } finally {
+        setLoading(false)
       }
-      fetchHistory()
     }
 
     loadHistory()
@@ -349,25 +552,25 @@ export default function FailoverReport({ isDemo = true }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-red-500/20">
-            <Zap className="w-5 h-5 text-red-400" />
+          <div className="p-2 rounded-lg bg-red-100 dark:bg-red-500/20">
+            <Zap className="w-5 h-5 text-red-500 dark:text-red-400" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-white">Relatório de Failover</h2>
-            <p className="text-sm text-gray-400">Histórico e métricas de recuperação automática</p>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Relatório de Failover</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Histórico e métricas de recuperação automática</p>
           </div>
         </div>
 
         {/* Time Range Selector */}
-        <div className="flex gap-1 bg-gray-800/50 rounded-lg p-1">
+        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg p-1">
           {['7d', '30d', '90d'].map(range => (
             <button
               key={range}
               onClick={() => setTimeRange(range)}
               className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
                 timeRange === range
-                  ? 'bg-green-500/20 text-green-400'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-green-500 text-white dark:bg-green-500/20 dark:text-green-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               {range === '7d' ? '7 dias' : range === '30d' ? '30 dias' : '90 dias'}
@@ -442,10 +645,10 @@ export default function FailoverReport({ isDemo = true }) {
       </div>
 
       {/* Gráfico de Latências por Fase */}
-      <Card className="border-gray-700/50 bg-gray-800/30">
+      <Card className="border-gray-200 dark:border-gray-700/50 bg-white dark:bg-gray-800/30 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-white text-sm flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-cyan-400" />
+          <CardTitle className="text-gray-900 dark:text-white text-sm flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
             Latência por Fase (Média)
           </CardTitle>
         </CardHeader>
@@ -467,12 +670,12 @@ export default function FailoverReport({ isDemo = true }) {
               return (
                 <div key={phase.key} className="space-y-1">
                   <div className="flex justify-between text-xs">
-                    <span className="text-gray-400">{phase.label}</span>
-                    <span className={`text-${phase.color}-400 font-medium`}>{formatDuration(avgTime)}</span>
+                    <span className="text-gray-500 dark:text-gray-400">{phase.label}</span>
+                    <span className={`text-${phase.color}-600 dark:text-${phase.color}-400 font-medium`}>{formatDuration(avgTime)}</span>
                   </div>
-                  <div className="h-2 bg-gray-700/50 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gray-200 dark:bg-gray-700/50 rounded-full overflow-hidden">
                     <div
-                      className={`h-full bg-${phase.color}-500/50 rounded-full transition-all`}
+                      className={`h-full bg-${phase.color}-500 dark:bg-${phase.color}-500/50 rounded-full transition-all`}
                       style={{ width: `${Math.min(percentage, 100)}%` }}
                     />
                   </div>
@@ -483,12 +686,34 @@ export default function FailoverReport({ isDemo = true }) {
         </CardContent>
       </Card>
 
-      {/* Histórico Detalhado */}
-      <Card className="border-gray-700/50 bg-gray-800/30">
+      {/* Real Failover Tests (with B2 Snapshots) */}
+      {realTests.length > 0 && (
+        <Card className="border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/5 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-gray-900 dark:text-white text-sm flex items-center gap-2">
+              <Database className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+              Testes Reais de Failover (com Snapshots B2)
+              <span className="ml-2 px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded text-[10px]">
+                {realTests.length} teste{realTests.length !== 1 ? 's' : ''}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4" data-testid="real-failover-tests">
+              {realTests.map(test => (
+                <RealFailoverCard key={test.failover_id} test={test} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Histórico Detalhado (Simulated) */}
+      <Card className="border-gray-200 dark:border-gray-700/50 bg-white dark:bg-gray-800/30 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-white text-sm flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-green-400" />
-            Histórico de Failovers
+          <CardTitle className="text-gray-900 dark:text-white text-sm flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-green-500 dark:text-green-400" />
+            Histórico de Failovers (Simulados)
           </CardTitle>
         </CardHeader>
         <CardContent>

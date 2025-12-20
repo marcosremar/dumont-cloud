@@ -6,6 +6,7 @@ import {
   Server, Smartphone, Code, TrendingUp, PiggyBank,
   Lock, Rocket, BarChart3, Users, Star, Calculator
 } from 'lucide-react'
+import DumontLogo from '../components/DumontLogo'
 
 // Componente de comparação de preços em tempo real
 const PriceComparison = () => {
@@ -14,25 +15,25 @@ const PriceComparison = () => {
 
   const gpuData = {
     'RTX 4090': {
-      dumont: 0.44,
-      aws: 4.10,      // p4d.24xlarge equivalent hourly
-      gcp: 3.67,      // a2-highgpu-1g equivalent
-      azure: 3.95     // NC24ads A100 v4 equivalent
+      dumont: 0.40,
+      aws: 3.80,
+      gcp: 3.40,
+      azure: 3.90
     },
     'A100 80GB': {
-      dumont: 1.89,
-      aws: 32.77,     // p4d.24xlarge
-      gcp: 29.13,     // a2-ultragpu-1g
-      azure: 27.20    // ND96asr A100 v4
+      dumont: 1.20,
+      aws: 5.10,
+      gcp: 4.80,
+      azure: 5.40
     },
     'H100': {
       dumont: 2.49,
-      aws: 65.00,     // p5.48xlarge estimate
-      gcp: 52.00,     // a3-highgpu-8g
-      azure: 48.00    // ND H100 v5
+      aws: 7.00,
+      gcp: 6.20,
+      azure: 8.50
     },
     'RTX 3090': {
-      dumont: 0.25,
+      dumont: 0.30,
       aws: 2.10,
       gcp: 1.89,
       azure: 2.05
@@ -88,7 +89,7 @@ const PriceComparison = () => {
 
         <div className="comparison-row dumont highlight">
           <div className="provider">
-            <Cloud size={18} />
+            <DumontLogo size={18} />
             <span>Dumont Cloud</span>
             <span className="badge">VOCÊ</span>
           </div>
@@ -243,7 +244,7 @@ export default function LandingPage({ onLogin }) {
       <nav className={`landing-nav ${isScrolled ? 'scrolled' : ''}`}>
         <div className="nav-container">
           <div className="nav-brand">
-            <Cloud size={32} className="brand-icon" />
+            <DumontLogo size={32} className="brand-icon" />
             <span>Dumont Cloud</span>
           </div>
           <div className="nav-links">
@@ -255,7 +256,7 @@ export default function LandingPage({ onLogin }) {
             <button className="nav-login" onClick={() => setShowLogin(true)}>
               Login
             </button>
-            <button className="nav-cta" onClick={() => setShowLogin(true)}>
+            <button className="nav-cta" onClick={() => document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' })}>
               Começar Grátis
               <ArrowRight size={16} />
             </button>
@@ -271,21 +272,17 @@ export default function LandingPage({ onLogin }) {
         </div>
 
         <div className="hero-content">
-          <div className="hero-badge">
-            <DollarSign size={14} />
-            <span>Você pode economizar R$ 8.500/mês em GPU Cloud</span>
-          </div>
+
 
           <h1>
-            Pare de pagar caro por GPU.
-            <span className="gradient-text">Economize até R$ 102.000/ano</span>
+            Pare de pagar caro por GPU.{' '}
+            <span className="gradient-text">Economize até R$ 102.000/ano</span>{' '}
             com a mesma performance.
           </h1>
 
           <p className="hero-description">
-            Mesmas GPUs que você usa na AWS. Até 89% mais barato.
-            Deploy em 2 minutos. Sem dor de cabeça.
-            Nossa IA escolhe a GPU certa e você vê a economia em reais, não em planilhas.
+            Mesmas GPUs que você usa na AWS. <span className="highlight-text">Até 89% mais barato.</span>{' '}
+            Deploy em 2 minutos. Sem dor de cabeça. Nossa IA escolhe a GPU certa e você vê a economia em reais, não em planilhas.
           </p>
 
           <div className="hero-stats">
@@ -403,14 +400,14 @@ export default function LandingPage({ onLogin }) {
         <div className="features-grid">
           <FeatureCard
             icon={DollarSign}
-            title="Você economiza R$ 8.500/mês"
-            description="Com 10 GPUs rodando 160h/mês, você paga R$ 1.500 em vez de R$ 10.000 na AWS. A diferença vai pro seu bolso."
+            title="Economize com GPU Cloud"
+            description="Pague menos por GPU de alta performance. Mesma qualidade da AWS, preço muito menor. A diferença fica com você."
             highlight
           />
           <FeatureCard
             icon={Zap}
-            title="Auto-economia: +R$ 2.400/mês grátis"
-            description="Máquinas hibernam quando ociosas. Você esquece, o sistema economiza automático. Sem precisar lembrar de desligar nada."
+            title="Economia automática inteligente"
+            description="Máquinas hibernam quando ociosas. Você esquece, o sistema economiza por você. Sem precisar lembrar de desligar nada."
           />
           <FeatureCard
             icon={Sparkles}
@@ -508,104 +505,68 @@ export default function LandingPage({ onLogin }) {
         <div className="section-header">
           <span className="section-badge">Preços</span>
           <h2>Escolha seu plano</h2>
-          <p>Quanto maior o plano, mais horas de GPU você tem. Use qualquer GPU disponível.</p>
+          <p>Todos os planos incluem 7 dias de teste grátis. Cancele quando quiser.</p>
         </div>
 
         <div className="pricing-plans-grid">
-          {/* Plano Starter */}
+          {/* Standard Membership */}
           <div className="plan-card">
             <div className="plan-header">
-              <h3>Starter</h3>
+              <h3>Standard</h3>
               <div className="plan-price">
                 <span className="currency">$</span>
-                <span className="amount">20</span>
+                <span className="amount">19</span>
                 <span className="period">/mês</span>
               </div>
-              <p className="plan-subtitle">Ideal para começar</p>
+              <p className="plan-subtitle">Acesso essencial à plataforma</p>
             </div>
 
-            <div className="plan-hours">
-              <h4><Clock size={16} /> Horas incluídas:</h4>
-              <div className="hours-list">
-                <div className="hours-item">
-                  <span className="gpu">RTX 3060</span>
-                  <span className="hours">100h</span>
-                </div>
-                <div className="hours-item">
-                  <span className="gpu">RTX 4070</span>
-                  <span className="hours">50h</span>
-                </div>
-                <div className="hours-item">
-                  <span className="gpu">RTX 4090</span>
-                  <span className="hours">25h</span>
-                </div>
-                <div className="hours-item">
-                  <span className="gpu">A100 80GB</span>
-                  <span className="hours">8h</span>
-                </div>
-              </div>
-              <p className="hours-note">ou combinação equivalente</p>
+            <div className="plan-usage-highlight">
+              <span className="highlight-tag">Créditos Totais</span>
+              <p>Sua assinatura <strong>inclui $19 em créditos</strong></p>
+              <p className="usage-example">~47h de RTX 4090 ou ~63h de RTX 3090</p>
             </div>
 
             <div className="plan-features">
               <ul>
-                <li><Check size={14} /> Todas as facilidades incluídas</li>
-                <li><Check size={14} /> Auto-hibernação</li>
-                <li><Check size={14} /> VS Code no browser</li>
+                <li><Check size={14} /> 2 máquinas simultâneas</li>
+                <li><Check size={14} /> IA GPU Advisor Básico</li>
+                <li><Check size={14} /> Auto-hibernação inteligente</li>
+                <li><Check size={14} /> Suporte via Discord</li>
               </ul>
             </div>
 
             <button className="plan-cta" onClick={() => setShowLogin(true)}>
-              Começar Agora
+              Começar 7 Dias Grátis
             </button>
           </div>
 
-          {/* Plano Pro - Popular */}
+          {/* Professional Membership */}
           <div className="plan-card popular">
-            <div className="popular-tag">Mais Popular</div>
+            <div className="popular-tag">Melhor para Times</div>
             <div className="plan-header">
-              <h3>Pro</h3>
+              <h3>Professional</h3>
               <div className="plan-price">
                 <span className="currency">$</span>
-                <span className="amount">50</span>
+                <span className="amount">49</span>
                 <span className="period">/mês</span>
               </div>
-              <p className="plan-subtitle">Para projetos sérios</p>
+              <p className="plan-subtitle">Performance e Escala</p>
             </div>
 
-            <div className="plan-hours">
-              <h4><Clock size={16} /> Horas incluídas:</h4>
-              <div className="hours-list">
-                <div className="hours-item">
-                  <span className="gpu">RTX 3060</span>
-                  <span className="hours">250h</span>
-                </div>
-                <div className="hours-item">
-                  <span className="gpu">RTX 4070</span>
-                  <span className="hours">125h</span>
-                </div>
-                <div className="hours-item highlight">
-                  <span className="gpu">RTX 4090</span>
-                  <span className="hours">62h</span>
-                </div>
-                <div className="hours-item">
-                  <span className="gpu">A100 80GB</span>
-                  <span className="hours">20h</span>
-                </div>
-                <div className="hours-item">
-                  <span className="gpu">H100</span>
-                  <span className="hours">12h</span>
-                </div>
-              </div>
-              <p className="hours-note">ou combinação equivalente</p>
+            <div className="plan-usage-highlight">
+              <span className="highlight-tag green">Alta Performance</span>
+              <p>Sua assinatura <strong>inclui $49 em créditos</strong></p>
+              <p className="usage-example">~122h de RTX 4090 ou ~40h de A100</p>
             </div>
 
             <div className="plan-features">
               <ul>
-                <li><Check size={14} /> Tudo do Starter</li>
-                <li><Check size={14} /> AI GPU Advisor</li>
-                <li><Check size={14} /> Snapshots ilimitados</li>
-                <li><Check size={14} /> Suporte prioritário</li>
+                <li><Check size={14} /> 10 máquinas simultâneas</li>
+                <li><Check size={14} /> IA GPU Advisor Avançado</li>
+                <li><Check size={14} /> API Access & Webhooks</li>
+                <li><Check size={14} /> Snapshots estendidos (30 dias)</li>
+                <li><Check size={14} /> Suporte Prioritário</li>
               </ul>
             </div>
 
@@ -615,52 +576,34 @@ export default function LandingPage({ onLogin }) {
             </button>
           </div>
 
-          {/* Plano Business */}
+          {/* Enterprise Membership */}
           <div className="plan-card">
             <div className="plan-header">
-              <h3>Business</h3>
+              <h3>Enterprise</h3>
               <div className="plan-price">
-                <span className="currency">$</span>
-                <span className="amount">150</span>
-                <span className="period">/mês</span>
+                <span className="amount custom">Sob Consulta</span>
               </div>
-              <p className="plan-subtitle">Para equipes e produção</p>
+              <p className="plan-subtitle">Para escala e corporativo</p>
             </div>
 
-            <div className="plan-hours">
-              <h4><Clock size={16} /> Horas incluídas:</h4>
-              <div className="hours-list">
-                <div className="hours-item">
-                  <span className="gpu">RTX 4070</span>
-                  <span className="hours">375h</span>
-                </div>
-                <div className="hours-item highlight">
-                  <span className="gpu">RTX 4090</span>
-                  <span className="hours">187h</span>
-                </div>
-                <div className="hours-item highlight">
-                  <span className="gpu">A100 80GB</span>
-                  <span className="hours">60h</span>
-                </div>
-                <div className="hours-item">
-                  <span className="gpu">H100</span>
-                  <span className="hours">37h</span>
-                </div>
-              </div>
-              <p className="hours-note">ou combinação equivalente</p>
+            <div className="plan-usage-highlight">
+              <span className="highlight-tag purple">Totalmente Gerenciado</span>
+              <p>Infraestrutura dedicada</p>
+              <p className="usage-example">SLA Garantido e Contrato</p>
             </div>
 
             <div className="plan-features">
               <ul>
-                <li><Check size={14} /> Tudo do Pro</li>
-                <li><Check size={14} /> Multi-GPU clusters</li>
-                <li><Check size={14} /> API dedicada</li>
-                <li><Check size={14} /> SLA 99.9%</li>
+                <li><Check size={14} /> Máquinas e créditos ilimitados</li>
+                <li><Check size={14} /> SLA 99.9% garantido</li>
+                <li><Check size={14} /> Gerente de conta dedicado</li>
+                <li><Check size={14} /> Faturamento via Invoice</li>
+                <li><Check size={14} /> VPC e VPN dedicadas</li>
               </ul>
             </div>
 
-            <button className="plan-cta" onClick={() => setShowLogin(true)}>
-              Começar Agora
+            <button className="plan-cta" onClick={() => window.location.href = 'mailto:enterprise@dumont.cloud'}>
+              Falar com Vendas
             </button>
           </div>
         </div>
@@ -673,32 +616,24 @@ export default function LandingPage({ onLogin }) {
           </div>
           <div className="reference-grid">
             <div className="ref-item">
-              <span className="ref-gpu">RTX 3060</span>
-              <span className="ref-price">$0.20/h</span>
-            </div>
-            <div className="ref-item">
-              <span className="ref-gpu">RTX 4070</span>
-              <span className="ref-price">$0.40/h</span>
-            </div>
-            <div className="ref-item">
-              <span className="ref-gpu">RTX 4080</span>
-              <span className="ref-price">$0.60/h</span>
+              <span className="ref-gpu">RTX 3090</span>
+              <span className="ref-price">$0.30/h</span>
             </div>
             <div className="ref-item">
               <span className="ref-gpu">RTX 4090</span>
-              <span className="ref-price">$0.80/h</span>
+              <span className="ref-price">$0.40/h</span>
             </div>
             <div className="ref-item">
-              <span className="ref-gpu">RTX 5090</span>
+              <span className="ref-gpu">A100 40GB</span>
               <span className="ref-price">$1.20/h</span>
             </div>
             <div className="ref-item">
               <span className="ref-gpu">A100 80GB</span>
-              <span className="ref-price">$2.50/h</span>
+              <span className="ref-price">$1.89/h</span>
             </div>
             <div className="ref-item">
-              <span className="ref-gpu">H100</span>
-              <span className="ref-price">$4.00/h</span>
+              <span className="ref-gpu">H100 SXM</span>
+              <span className="ref-price">$2.49/h</span>
             </div>
           </div>
           <p className="reference-note">
@@ -849,8 +784,8 @@ export default function LandingPage({ onLogin }) {
       {/* CTA Section */}
       <section className="final-cta-section">
         <div className="cta-container">
-          <h2>Quer economizar R$ 8.500/mês em GPU Cloud?</h2>
-          <p>Faça o cálculo agora e veja quanto você vai economizar. Deploy em 2 minutos. Sem complicação.</p>
+          <h2>Pronto para economizar em GPU Cloud?</h2>
+          <p>Veja quanto você pode economizar com nossa calculadora. Deploy em 2 minutos. Sem complicação.</p>
           <div className="cta-buttons">
             <button className="cta-primary large" onClick={() => document.getElementById('calculator').scrollIntoView({ behavior: 'smooth' })}>
               <Calculator size={20} />
@@ -872,7 +807,7 @@ export default function LandingPage({ onLogin }) {
       <footer className="landing-footer">
         <div className="footer-container">
           <div className="footer-brand">
-            <Cloud size={24} />
+            <DumontLogo size={24} />
             <span>Dumont Cloud</span>
             <p>GPU Cloud para desenvolvedores que valorizam seu tempo e dinheiro.</p>
           </div>
@@ -910,7 +845,7 @@ export default function LandingPage({ onLogin }) {
             <div className="login-modal-branding">
               <div className="branding-content">
                 <div className="branding-logo">
-                  <Cloud size={32} />
+                  <DumontLogo size={32} />
                   <span>Dumont Cloud</span>
                 </div>
                 <h2>Desenvolvimento com GPU na nuvem</h2>
@@ -978,7 +913,7 @@ function LoginForm({ onLogin, onClose }) {
     console.log('[LoginForm] onLogin result:', result)
 
     if (result.error) {
-      setError(result.error)
+      setError(result)
       setLoading(false)
     } else {
       console.log('[LoginForm] Login successful, closing modal and redirecting')
@@ -997,12 +932,37 @@ function LoginForm({ onLogin, onClose }) {
     }
   }
 
+  // Determinar ícone e cor com base no tipo de erro
+  const getErrorIcon = (errorType) => {
+    switch (errorType) {
+      case 'connection':
+      case 'timeout':
+        return '🔌'
+      case 'credentials':
+        return '🔒'
+      case 'validation':
+        return '⚠️'
+      case 'server':
+        return '⚙️'
+      default:
+        return '❌'
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} className="login-form-v2">
-      {error && (
+      {error && typeof error === 'object' && error.error && (
         <div className="login-error">
-          <Shield size={16} />
-          <span>{error}</span>
+          <span className="error-icon">{getErrorIcon(error.errorType)}</span>
+          <div className="error-content">
+            <span className="error-message">{error.error}</span>
+            {error.hint && (
+              <details className="error-hint">
+                <summary>💡 Dica para desenvolvedores</summary>
+                <pre>{error.hint}</pre>
+              </details>
+            )}
+          </div>
         </div>
       )}
 
@@ -1067,13 +1027,6 @@ function LoginForm({ onLogin, onClose }) {
         <p>Não tem conta? <a href="#">Criar conta grátis</a></p>
       </div>
 
-      <div className="demo-credentials">
-        <div className="demo-label">
-          <Sparkles size={12} />
-          <span>Credenciais de demo</span>
-        </div>
-        <code>marcosremar@gmail.com / 123456</code>
-      </div>
     </form>
   )
 }

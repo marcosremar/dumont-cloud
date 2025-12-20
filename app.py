@@ -55,7 +55,7 @@ def create_app():
         import os
         from src.services.agent_manager import agent_manager
         from src.services.price_monitor_agent import PriceMonitorAgent
-        from src.services.auto_hibernation_manager import AutoHibernationManager
+        from src.services.standby import AutoHibernationManager
 
         logger = logging.getLogger(__name__)
         logger.info("Inicializando agentes automaticos...")

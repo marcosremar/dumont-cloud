@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import List, Dict, Optional
 
 from src.services.agent_manager import Agent
-from src.services.vast_service import VastService
+from src.services.gpu.vast import VastService
 from src.config.database import SessionLocal
 from src.models.price_history import PriceHistory, PriceAlert
 

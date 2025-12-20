@@ -12,33 +12,38 @@
 
 ---
 
-## Planos
+## Planos de Acesso (Paywall)
 
-### Free
-**$0/mes**
-- Ate $10 em creditos
-- 1 maquina simultanea
-- Suporte por email (24h)
-- Backup basico (7 dias)
+Dumont Cloud é uma plataforma premium para quem busca performance sem desperdício. Não oferecemos plano gratuito para garantir a melhor performance para membros pagantes.
 
-### Pro
-**$29/mes**
-- $79 em creditos inclusos
-- 5 maquinas simultaneas
-- Suporte prioritario (4h)
+### Standard Membership
+**$19/mês**
+- Acesso à plataforma e IA Advisor
+- **$19 em créditos de GPU incluídos**
+- 2 máquinas simultâneas
+- Suporte via Discord
+- Backup básico (7 dias)
+
+### Pro Membership
+**$49/mês**
+- Acesso à plataforma e IA Advisor Avançado
+- **$49 em créditos de GPU incluídos**
+- 10 máquinas simultâneas
+- Suporte prioritário (4h)
 - Backup estendido (30 dias)
-- CPU Standby incluido
 - API access
+- Prioridade em novas GPUs (H100/B200)
 
 ### Enterprise
 **Customizado**
-- Creditos ilimitados
-- Maquinas ilimitadas
+- Taxa de plataforma sob consulta
+- Créditos sob demanda
+- Máquinas ilimitadas
 - Suporte 24/7 (1h SLA)
 - Backup ilimitado (90 dias)
 - Account Manager dedicado
 - SLA garantido (99.9%)
-- Faturamento mensal
+- Faturamento mensal (Invoice)
 
 ---
 

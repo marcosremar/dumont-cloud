@@ -6,7 +6,7 @@ test.describe('Debug Props Flow', () => {
     console.log('\n=== DEBUGGING PROPS FLOW ===\n');
 
     // Navigate to machines page
-    await page.goto('http://localhost:5173/demo-app/machines', { waitUntil: 'domcontentloaded' });
+    await page.goto('http://localhost:5173/app/machines', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2000);
 
     // Inject debugging code into the page

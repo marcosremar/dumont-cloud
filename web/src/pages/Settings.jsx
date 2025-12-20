@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield } from 'lucide-react'
+import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import StandbyConfig from '../components/StandbyConfig'
 import FailoverReport from '../components/FailoverReport'
-import { AlertInline, Card, CardHeader, CardTitle, CardContent, Button } from '../components/ui/dumont-ui'
+import { Alert, Card, Button } from '../components/tailadmin-ui'
 
 const API_BASE = ''
 
@@ -72,9 +72,11 @@ function SecretInput({ name, value, onChange, placeholder, validation }) {
         </button>
       </div>
       {validation && (
-        <AlertInline variant={validation.valid ? 'success' : 'error'}>
-          {validation.message}
-        </AlertInline>
+        <div className="mt-2">
+          <Alert variant={validation.valid ? 'success' : 'error'}>
+            <span className="text-xs">{validation.message}</span>
+          </Alert>
+        </div>
       )}
     </div>
   )
@@ -94,9 +96,11 @@ function ValidatedInput({ name, value, onChange, placeholder, type = 'text', val
         style={validation ? { borderColor: validation.valid ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)' } : {}}
       />
       {validation && (
-        <AlertInline variant={validation.valid ? 'success' : 'error'}>
-          {validation.message}
-        </AlertInline>
+        <div className="mt-2">
+          <Alert variant={validation.valid ? 'success' : 'error'}>
+            <span className="text-xs">{validation.message}</span>
+          </Alert>
+        </div>
       )}
     </div>
   )
@@ -466,55 +470,57 @@ export default function Settings() {
         <div className="lg:col-span-3">
           <form onSubmit={handleSubmit} className="space-y-6">
           {message && (
-            <AlertInline variant={message.type === 'success' ? 'success' : 'error'}>
+            <Alert variant={message.type === 'success' ? 'success' : 'error'}>
               {message.text}
-            </AlertInline>
+            </Alert>
           )}
 
           {/* APIs & Credenciais Tab */}
           {activeTab === 'apis' && (
             <div className="space-y-6">
           {/* Vast.ai Configuration */}
-          <Card className="border-green-500/20 bg-gradient-to-br from-[#1a2418] to-[#161a16]">
-            <CardHeader>
+          <Card
+            className="border-green-500/20 bg-gradient-to-br from-[#1a2418] to-[#161a16]"
+            header={
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-green-500/20">
                   <Key className="w-5 h-5 text-green-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-white">Vast.ai</CardTitle>
+                  <h3 className="text-lg font-semibold text-white">Vast.ai</h3>
                   <p className="text-gray-400 text-sm mt-1">Configuração para acesso à plataforma Vast.ai</p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="form-group">
-                <label className="form-label text-gray-300 block mb-2">API Key</label>
-                <SecretInput
-                  name="vast_api_key"
-                  value={settings.vast_api_key}
-                  onChange={handleChange}
-                  placeholder="Enter your vast.ai API key"
-                  validation={validations.vast_api_key}
-                />
-              </div>
-            </CardContent>
+            }
+          >
+            <div className="form-group">
+              <label className="form-label text-gray-300 block mb-2">API Key</label>
+              <SecretInput
+                name="vast_api_key"
+                value={settings.vast_api_key}
+                onChange={handleChange}
+                placeholder="Enter your vast.ai API key"
+                validation={validations.vast_api_key}
+              />
+            </div>
           </Card>
 
           {/* Cloudflare R2 Configuration */}
-          <Card className="border-cyan-500/20 bg-gradient-to-br from-cyan-900/10 to-dark-surface-card">
-            <CardHeader>
+          <Card
+            className="border-cyan-500/20 bg-gradient-to-br from-cyan-900/10 to-dark-surface-card"
+            header={
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-cyan-500/20">
                   <Database className="w-5 h-5 text-cyan-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-white">Cloudflare R2</CardTitle>
+                  <h3 className="text-lg font-semibold text-white">Cloudflare R2</h3>
                   <p className="text-gray-400 text-sm mt-1">Armazenamento em nuvem para snapshots e backups</p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            }
+          >
+            <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="form-group">
                   <label className="form-label text-gray-300 block mb-2">Access Key</label>
@@ -554,7 +560,7 @@ export default function Settings() {
                   validation={validations.r2_bucket}
                 />
               </div>
-            </CardContent>
+            </div>
           </Card>
             </div>
           )}
@@ -563,29 +569,29 @@ export default function Settings() {
           {activeTab === 'storage' && (
             <div className="space-y-6">
           {/* Restic Configuration */}
-          <Card className="border-purple-500/20 bg-gradient-to-br from-[#1f1a26] to-[#161617]">
-            <CardHeader>
+          <Card
+            className="border-purple-500/20 bg-gradient-to-br from-[#1f1a26] to-[#161617]"
+            header={
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-purple-500/20">
                   <Lock className="w-5 h-5 text-purple-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-white">Restic</CardTitle>
+                  <h3 className="text-lg font-semibold text-white">Restic</h3>
                   <p className="text-gray-400 text-sm mt-1">Proteção e criptografia de repositórios</p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="form-group">
-                <label className="form-label text-gray-300 block mb-2">Repository Password</label>
-                <SecretInput
-                  name="restic_password"
-                  value={settings.restic_password}
-                  onChange={handleChange}
-                  validation={validations.restic_password}
-                />
-              </div>
-            </CardContent>
+            }
+          >
+            <div className="form-group">
+              <label className="form-label text-gray-300 block mb-2">Repository Password</label>
+              <SecretInput
+                name="restic_password"
+                value={settings.restic_password}
+                onChange={handleChange}
+                validation={validations.restic_password}
+              />
+            </div>
           </Card>
             </div>
           )}
@@ -594,33 +600,33 @@ export default function Settings() {
           {activeTab === 'notifications' && (
             <div className="space-y-6">
           {/* Notificações */}
-          <Card className="border-yellow-500/20 bg-gradient-to-br from-[#1f1a0f] to-[#161510]">
-            <CardHeader>
+          <Card
+            className="border-yellow-500/20 bg-gradient-to-br from-[#1f1a0f] to-[#161510]"
+            header={
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-yellow-500/20">
                   <AlertCircle className="w-5 h-5 text-yellow-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-white">Notificações</CardTitle>
+                  <h3 className="text-lg font-semibold text-white">Notificações</h3>
                   <p className="text-gray-400 text-sm mt-1">Alertas visuais e sonoros do sistema</p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="form-group">
-                <label className="form-label text-gray-300 block mb-2">Alertas de Saldo Baixo</label>
-                <p className="text-gray-400 text-sm mb-4">
-                  Receba alertas visuais e sonoros quando seu saldo estiver abaixo de $1.00.
-                </p>
-                <Button
-                  type="button"
-                  onClick={testNotification}
-                  className="bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 border border-yellow-500/30"
-                >
-                  Testar Notificação
-                </Button>
-              </div>
-            </CardContent>
+            }
+          >
+            <div className="form-group">
+              <label className="form-label text-gray-300 block mb-2">Alertas de Saldo Baixo</label>
+              <p className="text-gray-400 text-sm mb-4">
+                Receba alertas visuais e sonoros quando seu saldo estiver abaixo de $1.00.
+              </p>
+              <Button
+                type="button"
+                onClick={testNotification}
+                className="bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 border border-yellow-500/30"
+              >
+                Testar Notificação
+              </Button>
+            </div>
           </Card>
 
               {/* Save Button */}
@@ -656,81 +662,81 @@ export default function Settings() {
           {activeTab === 'agent' && (
             <div className="space-y-6">
         {/* DumontAgent Configuration */}
-        <Card className="border-cyan-500/20 bg-gradient-to-br from-[#1a262f] to-[#161a1f]">
-          <CardHeader>
+        <Card
+          className="border-cyan-500/20 bg-gradient-to-br from-[#1a262f] to-[#161a1f]"
+          header={
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-cyan-500/20">
                 <Server className="w-5 h-5 text-cyan-400" />
               </div>
               <div>
-                <CardTitle className="text-white">DumontAgent</CardTitle>
+                <h3 className="text-lg font-semibold text-white">DumontAgent</h3>
                 <p className="text-gray-400 text-sm mt-1">Sincronização automática em máquinas GPU</p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-400 text-sm mb-6">
-              Configure como o agente de sincronização funciona nas máquinas GPU.
-              Estas configurações serão aplicadas em novas máquinas.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="form-group">
-                <label className="form-label text-gray-300 block mb-2">Intervalo de Sincronização</label>
-                <select
-                  name="sync_interval"
-                  className="form-input w-full"
-                  value={agentSettings.sync_interval}
-                  onChange={handleAgentChange}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <option value="30">30 segundos</option>
-                  <option value="60">1 minuto</option>
-                  <option value="120">2 minutos</option>
-                  <option value="300">5 minutos</option>
-                  <option value="600">10 minutos</option>
-                </select>
-                <small className="text-gray-500 text-xs mt-1 block">
-                  Tempo entre cada backup automático
-                </small>
-              </div>
-              <div className="form-group">
-                <label className="form-label text-gray-300 block mb-2">Retenção de Snapshots</label>
-                <select
-                  name="keep_last"
-                  className="form-input w-full"
-                  value={agentSettings.keep_last}
-                  onChange={handleAgentChange}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <option value="5">Últimos 5</option>
-                  <option value="10">Últimos 10</option>
-                  <option value="20">Últimos 20</option>
-                  <option value="50">Últimos 50</option>
-                </select>
-                <small className="text-gray-500 text-xs mt-1 block">
-                  Quantidade de snapshots a manter
-                </small>
-              </div>
+          }
+        >
+          <p className="text-gray-400 text-sm mb-6">
+            Configure como o agente de sincronização funciona nas máquinas GPU.
+            Estas configurações serão aplicadas em novas máquinas.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="form-group">
+              <label className="form-label text-gray-300 block mb-2">Intervalo de Sincronização</label>
+              <select
+                name="sync_interval"
+                className="form-input w-full"
+                value={agentSettings.sync_interval}
+                onChange={handleAgentChange}
+                style={{ cursor: 'pointer' }}
+              >
+                <option value="30">30 segundos</option>
+                <option value="60">1 minuto</option>
+                <option value="120">2 minutos</option>
+                <option value="300">5 minutos</option>
+                <option value="600">10 minutos</option>
+              </select>
+              <small className="text-gray-500 text-xs mt-1 block">
+                Tempo entre cada backup automático
+              </small>
             </div>
-            <button
-              type="button"
-              onClick={saveAgentSettings}
-              disabled={savingAgent}
-              className="py-2 px-4 rounded-lg font-semibold transition-all flex items-center gap-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {savingAgent ? (
-                <>
-                  <span className="spinner" />
-                  Salvando...
-                </>
-              ) : (
-                <>
-                  <Check className="w-4 h-4" />
-                  Salvar Configurações
-                </>
-              )}
-            </button>
-          </CardContent>
+            <div className="form-group">
+              <label className="form-label text-gray-300 block mb-2">Retenção de Snapshots</label>
+              <select
+                name="keep_last"
+                className="form-input w-full"
+                value={agentSettings.keep_last}
+                onChange={handleAgentChange}
+                style={{ cursor: 'pointer' }}
+              >
+                <option value="5">Últimos 5</option>
+                <option value="10">Últimos 10</option>
+                <option value="20">Últimos 20</option>
+                <option value="50">Últimos 50</option>
+              </select>
+              <small className="text-gray-500 text-xs mt-1 block">
+                Quantidade de snapshots a manter
+              </small>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={saveAgentSettings}
+            disabled={savingAgent}
+            className="py-2 px-4 rounded-lg font-semibold transition-all flex items-center gap-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {savingAgent ? (
+              <>
+                <span className="spinner" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4" />
+                Salvar Configurações
+              </>
+            )}
+          </button>
         </Card>
             </div>
           )}
@@ -739,19 +745,21 @@ export default function Settings() {
           {activeTab === 'failover' && (
             <div className="space-y-6">
         {/* R2 Cost Estimator */}
-        <Card className="border-orange-500/20 bg-gradient-to-br from-[#1f1510] to-[#161410]">
-          <CardHeader>
+        <Card
+          className="border-orange-500/20 bg-gradient-to-br from-[#1f1510] to-[#161410]"
+          header={
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-orange-500/20">
                 <DollarSign className="w-5 h-5 text-orange-400" />
               </div>
               <div>
-                <CardTitle className="text-white">Estimativa de Custo</CardTitle>
+                <h3 className="text-lg font-semibold text-white">Estimativa de Custo</h3>
                 <p className="text-gray-400 text-sm mt-1">Cloudflare R2 - Armazenamento em nuvem</p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
+          }
+        >
+          <div>
           <p style={{ color: '#9ca3af', fontSize: '14px', marginBottom: '16px' }}>
             Calcule o custo mensal estimado do armazenamento no Cloudflare R2.
           </p>
@@ -827,7 +835,7 @@ export default function Settings() {
               * Valores para 10GB de dados
             </div>
           </div>
-          </CardContent>
+          </div>
         </Card>
 
         {/* CPU Standby / Failover Configuration */}

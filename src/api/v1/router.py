@@ -4,6 +4,7 @@ Main API v1 router
 from fastapi import APIRouter
 
 from .endpoints import auth, instances, snapshots, settings, metrics, ai_wizard, standby, agent, savings, advisor, hibernation, finetune
+from .endpoints import warmpool, failover_settings, failover
 from .endpoints.settings import balance_router
 from .endpoints.spot import router as spot_router
 
@@ -27,4 +28,13 @@ api_router.include_router(finetune.router)
 
 # Spot Reports - Relatórios de instâncias spot
 api_router.include_router(spot_router, prefix="/metrics", tags=["Spot Reports"])
+
+# GPU Warm Pool - Estratégia principal de failover
+api_router.include_router(warmpool.router, tags=["GPU Warm Pool"])
+
+# Failover Settings - Configurações de failover
+api_router.include_router(failover_settings.router, tags=["Failover Settings"])
+
+# Failover Orchestrator - Execução de failover
+api_router.include_router(failover.router, tags=["Failover Orchestrator"])
 

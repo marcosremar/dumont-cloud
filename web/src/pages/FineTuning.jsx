@@ -19,8 +19,7 @@ import {
   Download,
   Server,
 } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Progress } from '../components/ui/progress';
+import { Button, Progress } from '../components/tailadmin-ui';
 import FineTuningModal from '../components/FineTuningModal';
 
 // Status configurations
@@ -55,7 +54,7 @@ function JobCard({ job, onRefresh, onViewLogs, onCancel, onDeploy, onDownload })
   const isCompleted = job.status === 'completed';
 
   return (
-    <div className="bg-white dark:bg-[#131713] rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:border-gray-300 dark:hover:border-dark-surface-hover transition-all">
+    <div className="bg-white dark:bg-[#131713] rounded-xl border border-gray-200 dark:border-gray-800 p-5 hover:border-gray-300 dark:hover:border-dark-surface-hover transition-all shadow-sm">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -63,8 +62,8 @@ function JobCard({ job, onRefresh, onViewLogs, onCancel, onDeploy, onDownload })
             <StatusIcon className={`w-5 h-5 ${status.color} ${status.spin ? 'animate-spin' : ''}`} />
           </div>
           <div>
-            <h3 className="font-semibold text-white">{job.name}</h3>
-            <p className="text-sm text-gray-400">{job.id}</p>
+            <h3 className="font-semibold text-gray-900 dark:text-white">{job.name}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{job.id}</p>
           </div>
         </div>
         <span className={`text-xs px-2 py-1 rounded ${status.bg} ${status.color}`}>
@@ -76,13 +75,13 @@ function JobCard({ job, onRefresh, onViewLogs, onCancel, onDeploy, onDownload })
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="flex items-center gap-2 text-sm">
           <Cpu className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-400">Model:</span>
-          <span className="text-white truncate">{job.base_model.split('/').pop()}</span>
+          <span className="text-gray-500 dark:text-gray-400">Model:</span>
+          <span className="text-gray-900 dark:text-white truncate">{job.base_model.split('/').pop()}</span>
         </div>
         <div className="flex items-center gap-2 text-sm">
           <Database className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-400">GPU:</span>
-          <span className="text-white">{job.gpu_type}</span>
+          <span className="text-gray-500 dark:text-gray-400">GPU:</span>
+          <span className="text-gray-900 dark:text-white">{job.gpu_type}</span>
         </div>
       </div>
 
@@ -115,18 +114,18 @@ function JobCard({ job, onRefresh, onViewLogs, onCancel, onDeploy, onDownload })
       )}
 
       {/* Timestamps */}
-      <div className="flex items-center justify-between text-xs text-gray-400 mb-4">
+      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
         <span>Created {formatTimeAgo(job.created_at)}</span>
         {job.completed_at && <span>Completed {formatTimeAgo(job.completed_at)}</span>}
       </div>
 
       {/* Actions */}
-      <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-700/50">
+      <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200 dark:border-gray-700/50">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => onViewLogs(job)}
-          className="text-gray-400 hover:text-white"
+          className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
         >
           <FileText className="w-4 h-4 mr-1" />
           Logs
@@ -135,7 +134,7 @@ function JobCard({ job, onRefresh, onViewLogs, onCancel, onDeploy, onDownload })
           variant="ghost"
           size="sm"
           onClick={() => onRefresh(job.id)}
-          className="text-gray-400 hover:text-white"
+          className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
         >
           <RefreshCw className="w-4 h-4 mr-1" />
           Refresh
@@ -490,15 +489,15 @@ export default function FineTuning() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f1219] p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0f1219] p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Brain className="w-7 h-7 text-purple-400" />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <Brain className="w-7 h-7 text-purple-500 dark:text-purple-400" />
             Fine-Tuning
           </h1>
-          <p className="text-gray-400 mt-1">Train custom models with Unsloth</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Train custom models with Unsloth</p>
         </div>
         <Button
           onClick={() => setShowModal(true)}
@@ -511,21 +510,21 @@ export default function FineTuning() {
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-[#1e2536] rounded-xl p-4 border border-gray-700/50">
-          <div className="text-3xl font-bold text-white">{stats.total}</div>
-          <div className="text-sm text-gray-400">Total Jobs</div>
+        <div className="bg-white dark:bg-[#1e2536] rounded-xl p-4 border border-gray-200 dark:border-gray-700/50 shadow-sm">
+          <div className="text-3xl font-bold text-gray-900 dark:text-white">{stats.total}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Total Jobs</div>
         </div>
-        <div className="bg-[#1e2536] rounded-xl p-4 border border-gray-700/50">
-          <div className="text-3xl font-bold text-purple-400">{stats.running}</div>
-          <div className="text-sm text-gray-400">Running</div>
+        <div className="bg-white dark:bg-[#1e2536] rounded-xl p-4 border border-gray-200 dark:border-gray-700/50 shadow-sm">
+          <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.running}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Running</div>
         </div>
-        <div className="bg-[#1e2536] rounded-xl p-4 border border-gray-700/50">
-          <div className="text-3xl font-bold text-green-400">{stats.completed}</div>
-          <div className="text-sm text-gray-400">Completed</div>
+        <div className="bg-white dark:bg-[#1e2536] rounded-xl p-4 border border-gray-200 dark:border-gray-700/50 shadow-sm">
+          <div className="text-3xl font-bold text-green-600 dark:text-green-400">{stats.completed}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Completed</div>
         </div>
-        <div className="bg-[#1e2536] rounded-xl p-4 border border-gray-700/50">
-          <div className="text-3xl font-bold text-red-400">{stats.failed}</div>
-          <div className="text-sm text-gray-400">Failed</div>
+        <div className="bg-white dark:bg-[#1e2536] rounded-xl p-4 border border-gray-200 dark:border-gray-700/50 shadow-sm">
+          <div className="text-3xl font-bold text-red-600 dark:text-red-400">{stats.failed}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Failed</div>
         </div>
       </div>
 
@@ -538,7 +537,7 @@ export default function FineTuning() {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               filter === f
                 ? 'bg-purple-500 text-white'
-                : 'bg-gray-800 text-gray-400 hover:text-white'
+                : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -548,7 +547,7 @@ export default function FineTuning() {
           variant="ghost"
           size="sm"
           onClick={fetchJobs}
-          className="ml-auto text-gray-400 hover:text-white"
+          className="ml-auto text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
         >
           <RefreshCw className="w-4 h-4 mr-1" />
           Refresh
@@ -561,10 +560,10 @@ export default function FineTuning() {
           <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
         </div>
       ) : filteredJobs.length === 0 ? (
-        <div className="text-center py-16 bg-[#1e2536] rounded-xl border border-gray-700/50">
-          <Brain className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No Fine-Tuning Jobs</h3>
-          <p className="text-gray-400 mb-4">
+        <div className="text-center py-16 bg-white dark:bg-[#1e2536] rounded-xl border border-gray-200 dark:border-gray-700/50 shadow-sm">
+          <Brain className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Fine-Tuning Jobs</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">
             {filter === 'all'
               ? "You haven't created any fine-tuning jobs yet."
               : `No ${filter} jobs found.`}

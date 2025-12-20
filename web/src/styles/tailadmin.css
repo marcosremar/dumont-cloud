@@ -43,11 +43,11 @@
 
 /* Cards - TailAdmin Style */
 .ta-card {
-  @apply bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-theme-sm;
+  @apply bg-white dark:bg-[#121512] rounded-2xl border border-gray-200 dark:border-white/5 shadow-theme-sm;
 }
 
 .ta-card-header {
-  @apply px-6 py-4 border-b border-gray-200 dark:border-gray-800;
+  @apply px-6 py-4 border-b border-gray-200 dark:border-white/5;
 }
 
 .ta-card-title {
@@ -63,12 +63,12 @@
 }
 
 .ta-card-footer {
-  @apply px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50;
+  @apply px-6 py-4 border-t border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#0e110e];
 }
 
 /* Stat Cards */
 .stat-card {
-  @apply bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-theme-sm;
+  @apply bg-white dark:bg-[#121512] rounded-2xl border border-gray-200 dark:border-white/5 p-5 shadow-theme-sm hover:translate-y-[-2px] transition-all;
 }
 
 .stat-card-icon {
@@ -392,7 +392,7 @@
 
 /* Dark Mode Body */
 .dark body {
-  @apply bg-gray-950;
+  @apply bg-[#0a0d0a];
 }
 
 /* Custom Utilities */

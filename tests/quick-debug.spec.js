@@ -18,8 +18,8 @@ test('Quick debug - Click Iniciar and check console', async ({ page }) => {
   console.log('\n=== Quick Debug Test ===\n');
 
   // Navigate to demo machines page
-  console.log('1. Navigating to /demo-app/machines...');
-  await page.goto('http://localhost:5173/demo-app/machines');
+  console.log('1. Navigating to /app/machines...');
+  await page.goto('http://localhost:5173/app/machines');
   await page.waitForTimeout(2000);
 
   console.log('2. Taking initial screenshot...');

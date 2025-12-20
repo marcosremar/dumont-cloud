@@ -63,12 +63,12 @@ function NavDropdown({ label, icon: Icon, children, basePath }) {
 
 function DumontLogo() {
   return (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="64" height="64" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* Cloud shape */}
       <path
         d="M26 16.5C26 13.46 23.54 11 20.5 11C20.17 11 19.85 11.03 19.54 11.08C18.44 8.17 15.62 6 12.32 6C8.11 6 4.68 9.36 4.53 13.55C2.47 14.17 1 16.06 1 18.32C1 21.16 3.34 23.5 6.18 23.5H25C28.04 23.5 30.5 21.04 30.5 18C30.5 15.35 28.62 13.13 26.12 12.58"
-        fill="url(#cloudGradient)"
-        stroke="url(#cloudStroke)"
+        fill="url(#cloudGradientLogin)"
+        stroke="url(#cloudStrokeLogin)"
         strokeWidth="1.5"
       />
       {/* D letter stylized */}
@@ -84,11 +84,11 @@ function DumontLogo() {
       <circle cx="22" cy="15" r="1.5" fill="#4ade80"/>
       <circle cx="24" cy="18" r="1" fill="#22c55e"/>
       <defs>
-        <linearGradient id="cloudGradient" x1="1" y1="6" x2="30.5" y2="23.5" gradientUnits="userSpaceOnUse">
+        <linearGradient id="cloudGradientLogin" x1="1" y1="6" x2="30.5" y2="23.5" gradientUnits="userSpaceOnUse">
           <stop stopColor="#1a1f1a"/>
           <stop offset="1" stopColor="#131713"/>
         </linearGradient>
-        <linearGradient id="cloudStroke" x1="1" y1="6" x2="30.5" y2="23.5" gradientUnits="userSpaceOnUse">
+        <linearGradient id="cloudStrokeLogin" x1="1" y1="6" x2="30.5" y2="23.5" gradientUnits="userSpaceOnUse">
           <stop stopColor="#22c55e"/>
           <stop offset="1" stopColor="#4ade80"/>
         </linearGradient>

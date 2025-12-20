@@ -1,0 +1,16 @@
+#!/bin/bash
+# SkyPilot wrapper - runs sky CLI from vendor/skypilot fork
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKYPILOT_DIR="$(dirname "$SCRIPT_DIR")/vendor/skypilot"
+
+# Activate venv if exists
+if [ -f ~/.dumontcloud-venv/bin/activate ]; then
+    source ~/.dumontcloud-venv/bin/activate
+fi
+
+# Add vendor/skypilot to PYTHONPATH
+export PYTHONPATH="${SKYPILOT_DIR}:${PYTHONPATH}"
+
+# Run sky CLI
+exec python3 -m sky.cli "$@"

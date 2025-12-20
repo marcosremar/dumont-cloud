@@ -16,6 +16,7 @@ httpx>=0.26.0
 
 # Environment
 python-dotenv>=1.0.0
+python-jose[cryptography]>=3.3.0
 
 # Previous dependencies (from Flask)
 flask>=2.0.0

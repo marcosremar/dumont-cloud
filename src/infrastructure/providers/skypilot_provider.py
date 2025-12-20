@@ -1,6 +1,8 @@
 """
 SkyPilot Provider for job orchestration
 Handles launching and monitoring fine-tuning jobs via SkyPilot CLI
+
+Uses vendor/skypilot fork via PYTHONPATH instead of system-installed SkyPilot.
 """
 import subprocess
 import json
@@ -13,16 +15,55 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-# Find sky binary - try multiple locations
-import shutil
-SKYPILOT_CLI = shutil.which("sky") or "/home/ubuntu/.pyenv/shims/sky"
+# Vendor SkyPilot directory
+VENDOR_DIR = Path(__file__).parent.parent.parent.parent / "vendor" / "skypilot"
 TEMPLATE_PATH = Path(__file__).parent.parent.parent / "templates"
+
+
+def get_skypilot_env() -> Dict[str, str]:
+    """
+    Get environment variables for running SkyPilot from vendor directory.
+    Adds vendor/skypilot to PYTHONPATH.
+    """
+    env = os.environ.copy()
+    current_pythonpath = env.get("PYTHONPATH", "")
+    vendor_path = str(VENDOR_DIR)
+    
+    if current_pythonpath:
+        env["PYTHONPATH"] = f"{vendor_path}:{current_pythonpath}"
+    else:
+        env["PYTHONPATH"] = vendor_path
+    
+    return env
+
+
+def _run_sky_command(args: List[str], timeout: int = 30) -> subprocess.CompletedProcess:
+    """
+    Run a SkyPilot CLI command using the vendor fork.
+    
+    Args:
+        args: Command arguments (without 'sky' prefix)
+        timeout: Command timeout in seconds
+        
+    Returns:
+        subprocess.CompletedProcess
+    """
+    cmd = ["python3", "-m", "sky.cli"] + args
+    env = get_skypilot_env()
+    
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        env=env
+    )
 
 
 class SkyPilotProvider:
     """
     Provider for SkyPilot job orchestration.
-    Uses SkyPilot CLI to launch and monitor jobs on GCP.
+    Uses SkyPilot CLI from vendor/skypilot fork to launch and monitor jobs.
     """
 
     def __init__(self):
@@ -31,24 +72,34 @@ class SkyPilotProvider:
         self._verify_skypilot()
 
     def _verify_skypilot(self) -> bool:
-        """Verify SkyPilot CLI is available"""
+        """Verify SkyPilot vendor fork is available"""
         try:
-            result = subprocess.run(
-                [SKYPILOT_CLI, "--version"],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
+            # Check if vendor directory exists
+            if not VENDOR_DIR.exists():
+                logger.error(f"SkyPilot vendor directory not found: {VENDOR_DIR}")
+                return False
+            
+            # Try to import sky to verify it works
+            result = _run_sky_command(["--version"], timeout=10)
+            
             if result.returncode == 0:
-                logger.info(f"SkyPilot CLI available: {result.stdout.strip()}")
+                logger.info(f"SkyPilot vendor fork available: {result.stdout.strip()}")
                 return True
-            logger.warning("SkyPilot CLI returned non-zero exit code")
+            
+            # Some versions may not have --version, try --help
+            result = _run_sky_command(["--help"], timeout=10)
+            if result.returncode == 0:
+                logger.info("SkyPilot vendor fork available (verified via --help)")
+                return True
+                
+            logger.warning(f"SkyPilot CLI returned non-zero exit code: {result.stderr}")
             return False
-        except FileNotFoundError:
-            logger.error(f"SkyPilot CLI not found at {SKYPILOT_CLI}")
-            return False
+            
         except subprocess.TimeoutExpired:
-            logger.error("SkyPilot CLI timed out")
+            logger.warning("SkyPilot CLI timed out during verification (may still work)")
+            return True  # Assume it works, timeout might be due to API server startup
+        except Exception as e:
+            logger.error(f"Error verifying SkyPilot: {e}")
             return False
 
     def launch_finetune_job(
@@ -73,22 +124,17 @@ class SkyPilotProvider:
             return {"success": False, "error": f"YAML file not found: {yaml_path}"}
 
         try:
-            cmd = [
-                SKYPILOT_CLI, "jobs", "launch",
+            args = [
+                "jobs", "launch",
                 yaml_path,
                 "--name", job_name,
                 "--detach-run",
                 "-y"
             ]
 
-            logger.debug(f"Running command: {' '.join(cmd)}")
+            logger.debug(f"Running SkyPilot command: sky {' '.join(args)}")
 
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=180  # 3 minutes for job launch
-            )
+            result = _run_sky_command(args, timeout=180)
 
             if result.returncode != 0:
                 error_msg = result.stderr or result.stdout or "Unknown error"
@@ -125,8 +171,7 @@ class SkyPilotProvider:
             Dict with job status information
         """
         try:
-            cmd = [SKYPILOT_CLI, "jobs", "queue", "--json"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = _run_sky_command(["jobs", "queue", "--json"], timeout=30)
 
             if result.returncode != 0:
                 return {"error": result.stderr or "Failed to get job queue"}
@@ -163,8 +208,7 @@ class SkyPilotProvider:
             Log output as string
         """
         try:
-            cmd = [SKYPILOT_CLI, "jobs", "logs", job_name, "--no-follow"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            result = _run_sky_command(["jobs", "logs", job_name, "--no-follow"], timeout=60)
 
             if result.returncode != 0:
                 return f"Error getting logs: {result.stderr}"
@@ -189,8 +233,7 @@ class SkyPilotProvider:
             True if successful
         """
         try:
-            cmd = [SKYPILOT_CLI, "jobs", "cancel", str(job_id), "-y"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            result = _run_sky_command(["jobs", "cancel", str(job_id), "-y"], timeout=60)
 
             if result.returncode == 0:
                 logger.info(f"Job {job_id} cancelled successfully")
@@ -211,8 +254,7 @@ class SkyPilotProvider:
             List of job dictionaries
         """
         try:
-            cmd = [SKYPILOT_CLI, "jobs", "queue", "--json"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = _run_sky_command(["jobs", "queue", "--json"], timeout=30)
 
             if result.returncode != 0:
                 logger.error(f"Failed to list jobs: {result.stderr}")
@@ -228,6 +270,31 @@ class SkyPilotProvider:
         except Exception as e:
             logger.error(f"Error listing jobs: {e}")
             return []
+
+    def check_cloud(self, cloud: str = "vast") -> Dict[str, Any]:
+        """
+        Check if a cloud provider is configured and enabled.
+        
+        Args:
+            cloud: Cloud provider name (vast, gcp, aws, etc.)
+            
+        Returns:
+            Dict with check results
+        """
+        try:
+            result = _run_sky_command(["check", cloud], timeout=30)
+            
+            return {
+                "cloud": cloud,
+                "returncode": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "enabled": result.returncode == 0
+            }
+        except subprocess.TimeoutExpired:
+            return {"cloud": cloud, "error": "Timed out", "enabled": False}
+        except Exception as e:
+            return {"cloud": cloud, "error": str(e), "enabled": False}
 
     def _format_job_status(self, job: Dict[str, Any]) -> Dict[str, Any]:
         """Format job status from SkyPilot output"""

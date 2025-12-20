@@ -1,8 +1,21 @@
-# CPU Standby (Failover)
+# CPU Standby (Failover de Fallback)
+
+> **STATUS**: Estrategia de fallback | Usado quando GPU Warm Pool nao disponivel
 
 ## O que e CPU Standby?
 
-CPU Standby e uma maquina de baixo custo que assume quando sua GPU Spot e interrompida, garantindo que voce nunca perca dados ou tenha downtime.
+CPU Standby e a **estrategia de fallback** do Dumont Cloud. E uma maquina de baixo custo (GCP) que assume quando sua GPU Spot e interrompida, garantindo que voce nunca perca dados.
+
+### Quando e Usado?
+
+| Cenario | Estrategia Usada |
+|---------|------------------|
+| Host tem 2+ GPUs | **GPU Warm Pool** (principal) |
+| Host tem 1 GPU | **CPU Standby** (fallback) |
+| Host inteiro falha | **CPU Standby** + Snapshot B2/R2 |
+| Usuario desativou Warm Pool | **CPU Standby** |
+
+> **Nota**: Prefira hosts com 2+ GPUs para usar o [GPU Warm Pool](05_GPU_Warm_Pool.md) - failover em 30-60s vs 10-20min.
 
 ---
 
@@ -199,3 +212,34 @@ def handle_interrupt(signum, frame):
 
 signal.signal(signal.SIGTERM, handle_interrupt)
 ```
+
+---
+
+## Comparacao: CPU Standby vs GPU Warm Pool
+
+| Aspecto | GPU Warm Pool | CPU Standby |
+|---------|---------------|-------------|
+| **Recovery Time** | 30-60 segundos | 10-20 minutos |
+| **Custo Mensal** | ~$5-10 | ~$11-28 |
+| **Performance** | 100% GPU | Limitado (CPU) |
+| **Transferencia** | Zero (mesmo disco) | rsync (lento) |
+| **Disponibilidade** | Host com 2+ GPUs | Sempre |
+| **Recomendacao** | **PRINCIPAL** | Fallback |
+
+### Quando Preferir CPU Standby?
+
+- Host disponivel so tem 1 GPU
+- Precisa de resiliencia multi-datacenter
+- Custo nao e prioridade (CPU on-demand)
+
+### Quando Preferir GPU Warm Pool?
+
+- Recovery time < 1 minuto e critico
+- Quer manter 100% performance GPU
+- Host tem 2+ GPUs disponiveis
+
+---
+
+## Ver Tambem
+
+- [GPU Warm Pool](05_GPU_Warm_Pool.md) - Estrategia principal de failover

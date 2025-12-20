@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 from src.config.database import get_db
-from src.services.gpu_advisor import GPUAdvisor
+from src.services.gpu.advisor import GPUAdvisor
 from src.api.v1.dependencies import get_current_user_email
 
 router = APIRouter()

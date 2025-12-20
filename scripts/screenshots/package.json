@@ -1,0 +1,18 @@
+{
+    "name": "dumont-screenshot-tools",
+    "version": "1.0.0",
+    "description": "Ferramentas para captura e análise de screenshots do DumontCloud",
+    "scripts": {
+        "capture": "node capture-all-screens.js",
+        "capture:resume": "node capture-all-screens.js --resume",
+        "capture:demo": "node capture-all-screens.js --demo",
+        "analyze": "node analyze-layout.js",
+        "start": "./run-in-background.sh",
+        "status": "./run-in-background.sh --status",
+        "stop": "./run-in-background.sh --stop",
+        "logs": "./run-in-background.sh --logs"
+    },
+    "dependencies": {
+        "playwright": "^1.40.0"
+    }
+}

@@ -26,7 +26,8 @@ import {
   FleetStrategy
 } from '../components/spot'
 import RealSavingsDashboard from '../components/RealSavingsDashboard'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, Progress } from '../components/ui/dumont-ui'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/dumont-ui'
+import { Badge, Progress } from '../components/tailadmin-ui'
 
 ChartJS.register(
   CategoryScale,
@@ -503,10 +504,10 @@ export default function GPUMetrics() {
                   {marketData.slice(0, 50).map((record, idx) => (
                     <TableRow key={idx}>
                       <TableCell>
-                        <Badge color="success">{record.gpu_name}</Badge>
+                        <Badge variant="success">{record.gpu_name}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge color="info">{getMachineTypeLabel(record.machine_type)}</Badge>
+                        <Badge variant="primary">{getMachineTypeLabel(record.machine_type)}</Badge>
                       </TableCell>
                       <TableCell>{formatTime(record.timestamp)}</TableCell>
                       <TableCell align="right">{formatPrice(record.avg_price)}</TableCell>
@@ -567,7 +568,7 @@ export default function GPUMetrics() {
                     <TableCell align="right">{provider.total_observations}</TableCell>
                     <TableCell>
                       {provider.verified ? (
-                        <Badge color="success">Verificado</Badge>
+                        <Badge variant="success">Verificado</Badge>
                       ) : (
                         <span className="text-gray-500">-</span>
                       )}

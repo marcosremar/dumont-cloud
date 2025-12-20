@@ -1,0 +1,179 @@
+{
+  "timestamp": "2025-12-20T10:10:56.994Z",
+  "summary": {
+    "total": 21,
+    "working": 21,
+    "broken": 0
+  },
+  "broken": [],
+  "working": [
+    {
+      "page": "Metrics Hub",
+      "linkText": "Dumont CloudDEMO",
+      "href": "/demo-app",
+      "success": true,
+      "finalUrl": "/demo-app",
+      "error": null
+    },
+    {
+      "page": "Metrics Hub",
+      "linkText": "Machines",
+      "href": "/demo-app/machines",
+      "success": true,
+      "finalUrl": "/demo-app/machines",
+      "error": null
+    },
+    {
+      "page": "Metrics Hub",
+      "linkText": "Fine-Tuning",
+      "href": "/demo-app/finetune",
+      "success": true,
+      "finalUrl": "/demo-app/finetune",
+      "error": null
+    },
+    {
+      "page": "Metrics Hub",
+      "linkText": "Métricas",
+      "href": "/demo-app/metrics-hub",
+      "success": true,
+      "finalUrl": "/demo-app/metrics-hub",
+      "error": null
+    },
+    {
+      "page": "Metrics Hub",
+      "linkText": "Economia",
+      "href": "/demo-app/savings",
+      "success": true,
+      "finalUrl": "/demo-app/savings",
+      "error": null
+    },
+    {
+      "page": "Metrics Hub",
+      "linkText": "AI Advisor",
+      "href": "/demo-app/advisor",
+      "success": true,
+      "finalUrl": "/demo-app/advisor",
+      "error": null
+    },
+    {
+      "page": "Metrics Hub",
+      "linkText": "Settings",
+      "href": "/demo-app/settings",
+      "success": true,
+      "finalUrl": "/demo-app/settings",
+      "error": null
+    },
+    {
+      "page": "GPU Metrics",
+      "linkText": "Dumont CloudDEMO",
+      "href": "/demo-app",
+      "success": true,
+      "finalUrl": "/demo-app",
+      "error": null
+    },
+    {
+      "page": "GPU Metrics",
+      "linkText": "Machines",
+      "href": "/demo-app/machines",
+      "success": true,
+      "finalUrl": "/demo-app/machines",
+      "error": null
+    },
+    {
+      "page": "GPU Metrics",
+      "linkText": "Fine-Tuning",
+      "href": "/demo-app/finetune",
+      "success": true,
+      "finalUrl": "/demo-app/finetune",
+      "error": null
+    },
+    {
+      "page": "GPU Metrics",
+      "linkText": "Métricas",
+      "href": "/demo-app/metrics-hub",
+      "success": true,
+      "finalUrl": "/demo-app/metrics-hub",
+      "error": null
+    },
+    {
+      "page": "GPU Metrics",
+      "linkText": "Economia",
+      "href": "/demo-app/savings",
+      "success": true,
+      "finalUrl": "/demo-app/savings",
+      "error": null
+    },
+    {
+      "page": "GPU Metrics",
+      "linkText": "AI Advisor",
+      "href": "/demo-app/advisor",
+      "success": true,
+      "finalUrl": "/demo-app/advisor",
+      "error": null
+    },
+    {
+      "page": "GPU Metrics",
+      "linkText": "Settings",
+      "href": "/demo-app/settings",
+      "success": true,
+      "finalUrl": "/demo-app/settings",
+      "error": null
+    },
+    {
+      "page": "Dashboard",
+      "linkText": "Dumont CloudDEMO",
+      "href": "/demo-app",
+      "success": true,
+      "finalUrl": "/demo-app",
+      "error": null
+    },
+    {
+      "page": "Dashboard",
+      "linkText": "Machines",
+      "href": "/demo-app/machines",
+      "success": true,
+      "finalUrl": "/demo-app/machines",
+      "error": null
+    },
+    {
+      "page": "Dashboard",
+      "linkText": "Fine-Tuning",
+      "href": "/demo-app/finetune",
+      "success": true,
+      "finalUrl": "/demo-app/finetune",
+      "error": null
+    },
+    {
+      "page": "Dashboard",
+      "linkText": "Métricas",
+      "href": "/demo-app/metrics-hub",
+      "success": true,
+      "finalUrl": "/demo-app/metrics-hub",
+      "error": null
+    },
+    {
+      "page": "Dashboard",
+      "linkText": "Economia",
+      "href": "/demo-app/savings",
+      "success": true,
+      "finalUrl": "/demo-app/savings",
+      "error": null
+    },
+    {
+      "page": "Dashboard",
+      "linkText": "AI Advisor",
+      "href": "/demo-app/advisor",
+      "success": true,
+      "finalUrl": "/demo-app/advisor",
+      "error": null
+    },
+    {
+      "page": "Dashboard",
+      "linkText": "Settings",
+      "href": "/demo-app/settings",
+      "success": true,
+      "finalUrl": "/demo-app/settings",
+      "error": null
+    }
+  ]
+}

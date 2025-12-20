@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
-from ....services.auto_hibernation_manager import get_auto_hibernation_manager
+from ....services.standby.hibernation import get_auto_hibernation_manager
 
 logger = logging.getLogger(__name__)
 

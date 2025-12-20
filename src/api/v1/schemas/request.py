@@ -46,6 +46,10 @@ class CreateInstanceRequest(BaseModel):
     disk_size: float = Field(100, ge=10, description="Disk size (GB)")
     label: Optional[str] = Field(None, description="Instance label")
     ports: Optional[List[int]] = Field(None, description="Ports to expose")
+    skip_standby: bool = Field(False, alias="skip-standby", description="Skip CPU standby creation (default: create standby)")
+
+    class Config:
+        populate_by_name = True  # Accept both skip_standby and skip-standby
 
 
 # Snapshot Requests

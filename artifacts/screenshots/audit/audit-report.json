@@ -1,0 +1,202 @@
+{
+  "timestamp": "2025-12-20T09:53:08.803Z",
+  "baseUrl": "http://localhost:5173",
+  "stats": {
+    "ok": 0,
+    "warning": 0,
+    "broken": 9,
+    "error": 0
+  },
+  "results": [
+    {
+      "name": "Metrics Hub",
+      "path": "/demo-app/metrics-hub",
+      "category": "Analytics",
+      "status": "broken",
+      "issues": [
+        "Conteúdo principal vazio ou muito curto"
+      ],
+      "warnings": [],
+      "screenshot": "/home/marcos/dumontcloud/artifacts/screenshots/audit/metrics-hub.png",
+      "loadTime": 1362,
+      "consoleErrors": [],
+      "hasContent": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5173/demo-app/metrics-hub"
+    },
+    {
+      "name": "GPU Metrics",
+      "path": "/demo-app/metrics",
+      "category": "Analytics",
+      "status": "broken",
+      "issues": [
+        "Conteúdo principal vazio ou muito curto"
+      ],
+      "warnings": [
+        "Nenhum card detectado na página"
+      ],
+      "screenshot": "/home/marcos/dumontcloud/artifacts/screenshots/audit/gpu-metrics.png",
+      "loadTime": 1061,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "hasContent": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5173/demo-app/metrics"
+    },
+    {
+      "name": "Savings Dashboard",
+      "path": "/demo-app/savings",
+      "category": "Analytics",
+      "status": "broken",
+      "issues": [
+        "Conteúdo principal vazio ou muito curto"
+      ],
+      "warnings": [
+        "Nenhum card detectado na página"
+      ],
+      "screenshot": "/home/marcos/dumontcloud/artifacts/screenshots/audit/savings-dashboard.png",
+      "loadTime": 1114,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Error loading savings dashboard: Error: Erro ao carregar dados do dashboard\n    at loadAllData (http://localhost:5173/src/components/savings/SavingsDashboard.jsx?t=1766223685330:75:15)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Error loading savings dashboard: Error: Erro ao carregar dados do dashboard\n    at loadAllData (http://localhost:5173/src/components/savings/SavingsDashboard.jsx?t=1766223685330:75:15)"
+      ],
+      "hasContent": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5173/demo-app/savings"
+    },
+    {
+      "name": "GPU Advisor",
+      "path": "/demo-app/advisor",
+      "category": "Analytics",
+      "status": "broken",
+      "issues": [
+        "Conteúdo principal vazio ou muito curto"
+      ],
+      "warnings": [
+        "Nenhum card detectado na página"
+      ],
+      "screenshot": "/home/marcos/dumontcloud/artifacts/screenshots/audit/gpu-advisor.png",
+      "loadTime": 1111,
+      "consoleErrors": [],
+      "hasContent": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5173/demo-app/advisor"
+    },
+    {
+      "name": "Failover Report",
+      "path": "/demo-app/failover-report",
+      "category": "Reports",
+      "status": "broken",
+      "issues": [
+        "Conteúdo principal vazio ou muito curto"
+      ],
+      "warnings": [
+        "Nenhum card detectado na página"
+      ],
+      "screenshot": "/home/marcos/dumontcloud/artifacts/screenshots/audit/failover-report.png",
+      "loadTime": 1119,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Error fetching failover history: SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON",
+        "Error fetching failover history: SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON"
+      ],
+      "hasContent": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5173/demo-app/failover-report"
+    },
+    {
+      "name": "Fine-Tuning",
+      "path": "/demo-app/finetune",
+      "category": "Reports",
+      "status": "broken",
+      "issues": [
+        "Conteúdo principal vazio ou muito curto"
+      ],
+      "warnings": [
+        "Nenhum card detectado na página"
+      ],
+      "screenshot": "/home/marcos/dumontcloud/artifacts/screenshots/audit/fine-tuning.png",
+      "loadTime": 1091,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "hasContent": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5173/demo-app/finetune"
+    },
+    {
+      "name": "Dashboard",
+      "path": "/demo-app",
+      "category": "Main",
+      "status": "broken",
+      "issues": [
+        "Conteúdo principal vazio ou muito curto"
+      ],
+      "warnings": [],
+      "screenshot": "/home/marcos/dumontcloud/artifacts/screenshots/audit/dashboard.png",
+      "loadTime": 1111,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+      ],
+      "hasContent": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5173/demo-app"
+    },
+    {
+      "name": "Machines",
+      "path": "/demo-app/machines",
+      "category": "Main",
+      "status": "broken",
+      "issues": [
+        "Conteúdo principal vazio ou muito curto"
+      ],
+      "warnings": [],
+      "screenshot": "/home/marcos/dumontcloud/artifacts/screenshots/audit/machines.png",
+      "loadTime": 1101,
+      "consoleErrors": [],
+      "hasContent": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5173/demo-app/machines"
+    },
+    {
+      "name": "Settings",
+      "path": "/demo-app/settings",
+      "category": "Main",
+      "status": "broken",
+      "issues": [
+        "Conteúdo principal vazio ou muito curto"
+      ],
+      "warnings": [],
+      "screenshot": "/home/marcos/dumontcloud/artifacts/screenshots/audit/settings.png",
+      "loadTime": 1100,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "Failed to load agent settings: SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON",
+        "Failed to load agent settings: SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON"
+      ],
+      "hasContent": true,
+      "redirected": false,
+      "finalUrl": "http://localhost:5173/demo-app/settings"
+    }
+  ]
+}

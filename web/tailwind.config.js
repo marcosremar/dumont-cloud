@@ -67,18 +67,18 @@ export default {
         ring: 'hsl(var(--ring))',
         // TailAdmin Brand Colors
         brand: {
-          25: '#f2f7ff',
-          50: '#ecf3ff',
-          100: '#dde9ff',
-          200: '#c2d6ff',
-          300: '#9cb9ff',
-          400: '#7592ff',
-          500: '#465fff',
-          600: '#3641f5',
-          700: '#2a31d8',
-          800: '#252dae',
-          900: '#262e89',
-          950: '#161950',
+          25: '#f0fdf4',
+          50: '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#10b981',
+          600: '#059669',
+          700: '#047857',
+          800: '#065f46',
+          900: '#064e3b',
+          950: '#022c22',
         },
         // TailAdmin Gray Colors
         gray: {
@@ -96,14 +96,14 @@ export default {
           950: '#0c111d',
           dark: '#1a2231',
         },
-        // Landing Page Dark Theme Colors (greenish dark tones)
+        // Landing Page Dark Theme Colors (Abyssal & Neon)
         'dark-surface': {
-          DEFAULT: '#131713',
-          bg: '#0a0d0a',
-          card: '#131713',
-          secondary: '#1a1f1a',
+          DEFAULT: '#0a0d0a', // Page background
+          card: '#121512',    // Card background
+          hover: '#1a1f1a',   // Hover state
+          secondary: '#0e110e',
+          input: '#050505',   // Input background "inset"
           border: '#2a352a',
-          hover: '#232923',
         },
         // TailAdmin Blue Light
         'blue-light': {
