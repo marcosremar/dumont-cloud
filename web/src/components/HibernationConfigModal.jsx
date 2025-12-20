@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Power, Clock, Gauge, Save, Zap, DollarSign, Info } from 'lucide-react';
+import { Power, Clock, Gauge, Save, Zap, DollarSign, Info, Cloud, ChevronDown, ChevronUp, HardDrive } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,15 @@ import { Slider } from './ui/slider';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
 
+// Failover storage providers
+const FAILOVER_PROVIDERS = [
+  { id: 'user_default', name: 'Usar Config. do Usuário', description: 'Usa as configurações de cloud storage do usuário' },
+  { id: 'backblaze_b2', name: 'Backblaze B2', description: '$6/TB - Melhor custo-benefício' },
+  { id: 'cloudflare_r2', name: 'Cloudflare R2', description: 'Sem taxa de egress' },
+  { id: 'aws_s3', name: 'AWS S3', description: 'Maior disponibilidade regional' },
+  { id: 'google_gcs', name: 'Google Cloud Storage', description: 'Integração com GCP' },
+];
+
 /**
  * Modal de Configuração de Auto-Hibernação
  * Layout profissional com shadcn/ui
@@ -23,7 +32,15 @@ export default function HibernationConfigModal({ instance, isOpen, onClose, onSa
     pause_after_minutes: 3,
     delete_after_minutes: 30,
     gpu_usage_threshold: 5.0,
+    // Failover storage config
+    failover_storage: {
+      provider: 'user_default',
+      bucket: '',
+      mount_path: '/data',
+    },
   });
+
+  const [showFailoverConfig, setShowFailoverConfig] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

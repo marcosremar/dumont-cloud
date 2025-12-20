@@ -9,7 +9,8 @@ import {
   Cpu, Server, Wifi, DollarSign, Shield, HardDrive,
   Activity, Search, RotateCcw, Sliders, Wand2,
   Gauge, Globe, Zap, Monitor, ChevronDown, ChevronLeft, ChevronRight, Sparkles,
-  Send, Bot, User, Loader2, Plus, Minus, X, Check, MapPin
+  Send, Bot, User, Loader2, Plus, Minus, X, Check, MapPin,
+  MessageSquare, Lightbulb, Code, Clock
 } from 'lucide-react';
 import {
   Select,
@@ -2013,97 +2014,104 @@ export default function Dashboard() {
                     />
                   </div>
 
-                  {/* Tiers - Redesigned as List */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 pb-3">
-                      <Zap className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
-                      <Label className="text-gray-800 dark:text-gray-200 text-sm font-bold tracking-wide">Nível de Performance</Label>
+                  {/* Use Case & Performance Selection - Redesigned */}
+                  <div className="space-y-4">
+                    {/* Question Header */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                        <Label className="text-gray-800 dark:text-gray-200 text-base font-bold">O que você vai fazer?</Label>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 pl-6">Escolha seu objetivo para ver as melhores recomendações</p>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {tiers.map((tier) => (
-                        <div
-                          key={tier.name}
-                          onClick={() => setSelectedTier(tier.name)}
-                          className={`
-                            relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 group
-                            ${selectedTier === tier.name
-                                ? "bg-gradient-to-br from-emerald-600 to-emerald-700 dark:from-emerald-500 dark:to-emerald-600 border-emerald-500 shadow-lg shadow-emerald-500/30 scale-[1.02]"
-                                : "bg-white dark:bg-gray-800/50 border-gray-300 dark:border-gray-700 hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-md"
-                              }
-                          `}
-                        >
-                          {/* Header with icon and name */}
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-2">
+
+                    {/* Use Case Quick Picks */}
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 'test', label: 'Testar ideias', icon: Lightbulb, tier: 'Lento', desc: 'Protótipos e testes básicos' },
+                        { id: 'develop', label: 'Desenvolver IA', icon: Code, tier: 'Medio', desc: 'Desenvolvimento diário' },
+                        { id: 'train', label: 'Treinar modelos', icon: Zap, tier: 'Rapido', desc: 'Fine-tuning e training' },
+                        { id: 'production', label: 'Projetos grandes', icon: Sparkles, tier: 'Ultra', desc: 'LLMs e workloads pesados' }
+                      ].map((useCase) => {
+                        const isSelected = selectedTier === useCase.tier;
+                        const UseCaseIcon = useCase.icon;
+                        return (
+                          <div
+                            key={useCase.id}
+                            onClick={() => setSelectedTier(useCase.tier)}
+                            className={`
+                              p-3 rounded-lg border-2 cursor-pointer transition-all duration-200
+                              ${isSelected
+                                ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-sm"
+                                : "bg-white dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700"}
+                            `}
+                          >
+                            <div className="flex items-start gap-2">
                               <div className={`
-                                w-10 h-10 rounded-lg flex items-center justify-center transition-all
-                                ${selectedTier === tier.name
-                                  ? "bg-white/20 text-white"
-                                  : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800/40"}
-                             `}>
-                                {tier.name === 'Lento' && <Gauge className="w-5 h-5" />}
-                                {tier.name === 'Medio' && <Activity className="w-5 h-5" />}
-                                {tier.name === 'Rapido' && <Zap className="w-5 h-5" />}
-                                {tier.name === 'Ultra' && <Sparkles className="w-5 h-5" />}
+                                w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0
+                                ${isSelected
+                                  ? "bg-emerald-600 dark:bg-emerald-500 text-white"
+                                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"}
+                              `}>
+                                <UseCaseIcon className="w-4 h-4" />
                               </div>
-                              <div>
-                                <h4 className={`text-base font-bold leading-tight ${selectedTier === tier.name ? "text-white" : "text-gray-900 dark:text-gray-100"}`}>
-                                  {tier.name}
-                                </h4>
-                                <p className={`text-[10px] font-medium ${selectedTier === tier.name ? "text-white/80" : "text-gray-500 dark:text-gray-400"}`}>
-                                  {tier.time}
-                                </p>
+                              <div className="flex-1 min-w-0">
+                                <div className={`text-sm font-semibold ${isSelected ? "text-emerald-700 dark:text-emerald-400" : "text-gray-900 dark:text-gray-100"}`}>
+                                  {useCase.label}
+                                </div>
+                                <div className={`text-[10px] ${isSelected ? "text-emerald-600 dark:text-emerald-500" : "text-gray-500 dark:text-gray-400"}`}>
+                                  {useCase.desc}
+                                </div>
                               </div>
-                            </div>
-
-                            {/* Selected checkmark */}
-                            {selectedTier === tier.name && (
-                              <div className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center">
-                                <div className="w-2 h-2 rounded-full bg-white" />
-                              </div>
-                            )}
-                          </div>
-
-                          {/* GPU specs */}
-                          <div className="space-y-1.5 mb-3">
-                            <div className={`text-xs font-semibold ${selectedTier === tier.name ? "text-white/90" : "text-gray-700 dark:text-gray-300"}`}>
-                              {tier.gpu}
-                            </div>
-                            <div className={`text-[11px] ${selectedTier === tier.name ? "text-white/70" : "text-gray-600 dark:text-gray-400"}`}>
-                              {tier.vram}
+                              {isSelected && (
+                                <div className="w-4 h-4 rounded-full bg-emerald-600 dark:bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                </div>
+                              )}
                             </div>
                           </div>
-
-                          {/* Speed indicator */}
-                          <div className="mb-3">
-                            <SpeedBars level={tier.level} color={selectedTier === tier.name ? 'white' : tier.color} />
-                          </div>
-
-                          {/* Price */}
-                          <div className={`
-                            text-center py-2 px-3 rounded-lg font-mono text-sm font-bold
-                            ${selectedTier === tier.name
-                              ? "bg-white/20 text-white"
-                              : "bg-gray-100 dark:bg-gray-900/50 text-emerald-700 dark:text-emerald-400"}
-                          `}>
-                            {tier.priceRange}
-                          </div>
-
-                          {/* Description */}
-                          <p className={`
-                            text-[10px] mt-2 leading-relaxed
-                            ${selectedTier === tier.name ? "text-white/70" : "text-gray-500 dark:text-gray-400"}
-                          `}>
-                            {tier.description}
-                          </p>
-
-                          {/* Glow effect for selected */}
-                          {selectedTier === tier.name && (
-                            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
+
+                    {/* Recommended Tier Info */}
+                    {selectedTier && (
+                      <div className="mt-4 p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-emerald-600 dark:bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                            {selectedTier === 'Lento' && <Gauge className="w-5 h-5 text-white" />}
+                            {selectedTier === 'Medio' && <Activity className="w-5 h-5 text-white" />}
+                            {selectedTier === 'Rapido' && <Zap className="w-5 h-5 text-white" />}
+                            {selectedTier === 'Ultra' && <Sparkles className="w-5 h-5 text-white" />}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                                Recomendação: {tiers.find(t => t.name === selectedTier)?.name}
+                              </h4>
+                              <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                                {tiers.find(t => t.name === selectedTier)?.priceRange}
+                              </span>
+                            </div>
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
+                                <Cpu className="w-3.5 h-3.5" />
+                                <span className="font-semibold">{tiers.find(t => t.name === selectedTier)?.gpu}</span>
+                                <span className="text-gray-500 dark:text-gray-400">•</span>
+                                <span>{tiers.find(t => t.name === selectedTier)?.vram}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                <Clock className="w-3.5 h-3.5" />
+                                <span>Tempo médio de deploy: {tiers.find(t => t.name === selectedTier)?.time}</span>
+                              </div>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                                {tiers.find(t => t.name === selectedTier)?.description}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 </div>

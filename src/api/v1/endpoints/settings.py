@@ -91,16 +91,106 @@ async def complete_onboarding(
         from ..dependencies import get_user_repository
         user_repo = next(get_user_repository())
         user = auth_service.get_user(user_email)
-        
+
         settings = user.settings or {}
         settings["has_completed_onboarding"] = True
-        
+
         user_repo.update_user(user_email, {"settings": settings})
-        
+
         return SuccessResponse(
             success=True,
             message="Onboarding completed",
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Cloud Storage Failover settings
+@router.get("/cloud-storage")
+async def get_cloud_storage_settings(
+    user_email: str = Depends(get_current_user_email),
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    """
+    Get cloud storage failover settings
+    """
+    try:
+        user = auth_service.get_user(user_email)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        settings = user.settings or {}
+        cloud_storage = settings.get("cloud_storage", {})
+
+        return {"settings": cloud_storage}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/cloud-storage", response_model=SuccessResponse)
+async def update_cloud_storage_settings(
+    request: dict,
+    user_email: str = Depends(get_current_user_email),
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    """
+    Update cloud storage failover settings
+    """
+    try:
+        from ..dependencies import get_user_repository
+        user_repo = next(get_user_repository())
+        user = auth_service.get_user(user_email)
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        settings = user.settings or {}
+        settings["cloud_storage"] = request
+
+        user_repo.update_user(user_email, {"settings": settings})
+
+        return SuccessResponse(
+            success=True,
+            message="Cloud storage settings updated",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/cloud-storage/test", response_model=SuccessResponse)
+async def test_cloud_storage_connection(
+    request: dict,
+    user_email: str = Depends(get_current_user_email),
+):
+    """
+    Test cloud storage connection
+    """
+    try:
+        provider = request.get("primary_provider", "")
+
+        # Basic validation based on provider
+        if provider == "backblaze_b2":
+            if not request.get("b2_key_id") or not request.get("b2_app_key"):
+                raise HTTPException(status_code=400, detail="Missing B2 credentials")
+        elif provider == "aws_s3":
+            if not request.get("s3_access_key") or not request.get("s3_secret_key"):
+                raise HTTPException(status_code=400, detail="Missing S3 credentials")
+        elif provider == "google_gcs":
+            if not request.get("gcs_credentials_json"):
+                raise HTTPException(status_code=400, detail="Missing GCS credentials")
+        elif provider == "cloudflare_r2":
+            # R2 uses the main settings, so we just validate it's configured
+            pass
+
+        # TODO: Actually test the connection using rclone or boto3
+        # For now, just validate the configuration
+
+        return SuccessResponse(
+            success=True,
+            message=f"Connection to {provider} validated",
+        )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

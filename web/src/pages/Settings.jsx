@@ -233,9 +233,46 @@ function Toast({ message, title = 'Saldo Baixo!', type = 'warning', onClose }) {
 const SETTINGS_MENU = [
   { id: 'apis', label: 'APIs & Credenciais', icon: Key, color: 'green' },
   { id: 'storage', label: 'Armazenamento', icon: Database, color: 'blue' },
+  { id: 'cloudstorage', label: 'Cloud Storage Failover', icon: Cloud, color: 'purple' },
   { id: 'agent', label: 'Agent Sync', icon: Server, color: 'cyan' },
   { id: 'notifications', label: 'Notificações', icon: AlertCircle, color: 'yellow' },
   { id: 'failover', label: 'CPU Failover', icon: Shield, color: 'red' },
+]
+
+// Cloud Storage Providers
+const CLOUD_STORAGE_PROVIDERS = [
+  {
+    id: 'backblaze_b2',
+    name: 'Backblaze B2',
+    description: 'Armazenamento de baixo custo, ~$0.005/GB/mês',
+    icon: '🅱️',
+    color: 'red',
+    fields: ['key_id', 'app_key', 'bucket']
+  },
+  {
+    id: 'cloudflare_r2',
+    name: 'Cloudflare R2',
+    description: 'Zero egress fees, ~$0.015/GB/mês',
+    icon: '☁️',
+    color: 'orange',
+    fields: ['access_key', 'secret_key', 'endpoint', 'bucket']
+  },
+  {
+    id: 'aws_s3',
+    name: 'Amazon S3',
+    description: 'Alta disponibilidade, multi-região',
+    icon: '📦',
+    color: 'yellow',
+    fields: ['access_key', 'secret_key', 'region', 'bucket']
+  },
+  {
+    id: 'google_gcs',
+    name: 'Google Cloud Storage',
+    description: 'Integração com GCP, multi-região',
+    icon: '🔷',
+    color: 'blue',
+    fields: ['credentials_json', 'bucket']
+  },
 ]
 
 export default function Settings() {
@@ -262,6 +299,30 @@ export default function Settings() {
   const [message, setMessage] = useState(null)
   const [showToast, setShowToast] = useState(false)
 
+  // Cloud Storage Failover settings
+  const [cloudStorageSettings, setCloudStorageSettings] = useState({
+    enabled: false,
+    primary_provider: 'backblaze_b2',
+    mount_method: 'rclone',
+    mount_path: '/data',
+    cache_size_gb: 10,
+    // Backblaze B2
+    b2_key_id: '',
+    b2_app_key: '',
+    b2_bucket: '',
+    // Cloudflare R2 (já existe no settings principal)
+    // AWS S3
+    s3_access_key: '',
+    s3_secret_key: '',
+    s3_region: 'us-east-1',
+    s3_bucket: '',
+    // Google Cloud Storage
+    gcs_credentials_json: '',
+    gcs_bucket: '',
+  })
+  const [savingCloudStorage, setSavingCloudStorage] = useState(false)
+  const [testingConnection, setTestingConnection] = useState(false)
+
   // Validação real-time
   const validations = useMemo(() => {
     return {
@@ -286,6 +347,7 @@ export default function Settings() {
   useEffect(() => {
     loadSettings()
     loadAgentSettings()
+    loadCloudStorageSettings()
   }, [])
 
   const loadSettings = async () => {
@@ -343,6 +405,69 @@ export default function Settings() {
       setMessage({ type: 'error', text: 'Erro de conexao' })
     }
     setSavingAgent(false)
+  }
+
+  // Cloud Storage handlers
+  const handleCloudStorageChange = (e) => {
+    const { name, value, type, checked } = e.target
+    setCloudStorageSettings(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }))
+  }
+
+  const saveCloudStorageSettings = async () => {
+    setSavingCloudStorage(true)
+    try {
+      const res = await fetch(`${API_BASE}/api/settings/cloud-storage`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cloudStorageSettings),
+        credentials: 'include'
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success('Configurações de Cloud Storage salvas!')
+      } else {
+        toast.error(data.error || 'Falha ao salvar configurações')
+      }
+    } catch (e) {
+      toast.error('Erro de conexão')
+    }
+    setSavingCloudStorage(false)
+  }
+
+  const testCloudStorageConnection = async () => {
+    setTestingConnection(true)
+    try {
+      const res = await fetch(`${API_BASE}/api/settings/cloud-storage/test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cloudStorageSettings),
+        credentials: 'include'
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success(`Conexão com ${cloudStorageSettings.primary_provider} OK!`)
+      } else {
+        toast.error(data.error || 'Falha ao testar conexão')
+      }
+    } catch (e) {
+      toast.error('Erro ao testar conexão')
+    }
+    setTestingConnection(false)
+  }
+
+  const loadCloudStorageSettings = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/settings/cloud-storage`, { credentials: 'include' })
+      const data = await res.json()
+      if (data.settings) {
+        setCloudStorageSettings(prev => ({ ...prev, ...data.settings }))
+      }
+    } catch (e) {
+      console.error('Failed to load cloud storage settings:', e)
+    }
   }
 
   // Calcular custos estimados do R2
@@ -440,6 +565,7 @@ export default function Settings() {
                   green: 'stat-card-icon-success',
                   blue: 'stat-card-icon-primary',
                   cyan: 'stat-card-icon-primary',
+                  purple: 'bg-purple-500/20 text-purple-400',
                   yellow: 'stat-card-icon-warning',
                   red: 'stat-card-icon-error',
                 }
@@ -593,6 +719,387 @@ export default function Settings() {
               />
             </div>
           </Card>
+            </div>
+          )}
+
+          {/* Cloud Storage Failover Tab */}
+          {activeTab === 'cloudstorage' && (
+            <div className="space-y-6">
+              {/* Header Card */}
+              <Card
+                className="border-purple-500/20 bg-gradient-to-br from-[#1f1a26] to-[#161617]"
+                header={
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-purple-500/20">
+                      <Cloud className="w-5 h-5 text-purple-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">Cloud Storage Failover</h3>
+                      <p className="text-gray-400 text-sm mt-1">Configure provedores de storage para failover global</p>
+                    </div>
+                  </div>
+                }
+              >
+                <div className="space-y-4">
+                  {/* Enable/Disable Toggle */}
+                  <div className="flex items-center justify-between p-4 bg-dark-surface rounded-lg">
+                    <div>
+                      <h4 className="text-white font-medium">Habilitar Cloud Storage Failover</h4>
+                      <p className="text-gray-400 text-sm mt-1">
+                        Permite failover para qualquer região global usando cloud storage
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="enabled"
+                        checked={cloudStorageSettings.enabled}
+                        onChange={handleCloudStorageChange}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
+                    </label>
+                  </div>
+
+                  {/* Provedor Principal */}
+                  <div className="form-group">
+                    <label className="form-label text-gray-300 block mb-2">Provedor de Storage</label>
+                    <select
+                      name="primary_provider"
+                      className="form-input w-full"
+                      value={cloudStorageSettings.primary_provider}
+                      onChange={handleCloudStorageChange}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {CLOUD_STORAGE_PROVIDERS.map(provider => (
+                        <option key={provider.id} value={provider.id}>
+                          {provider.icon} {provider.name} - {provider.description}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Método de Montagem */}
+                  <div className="form-group">
+                    <label className="form-label text-gray-300 block mb-2">Método de Montagem</label>
+                    <select
+                      name="mount_method"
+                      className="form-input w-full"
+                      value={cloudStorageSettings.mount_method}
+                      onChange={handleCloudStorageChange}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <option value="rclone">rclone mount (FUSE com VFS cache)</option>
+                      <option value="restic">restic restore (snapshot completo)</option>
+                      <option value="s3fs">s3fs (compatível S3)</option>
+                    </select>
+                    <small className="text-gray-500 text-xs mt-1 block">
+                      rclone é recomendado para melhor performance com cache local
+                    </small>
+                  </div>
+
+                  {/* Configurações de Cache */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="form-group">
+                      <label className="form-label text-gray-300 block mb-2">Caminho de Montagem</label>
+                      <input
+                        type="text"
+                        name="mount_path"
+                        className="form-input w-full"
+                        value={cloudStorageSettings.mount_path}
+                        onChange={handleCloudStorageChange}
+                        placeholder="/data"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label text-gray-300 block mb-2">Tamanho do Cache (GB)</label>
+                      <input
+                        type="number"
+                        name="cache_size_gb"
+                        className="form-input w-full"
+                        value={cloudStorageSettings.cache_size_gb}
+                        onChange={handleCloudStorageChange}
+                        min="1"
+                        max="100"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Backblaze B2 Configuration */}
+              {cloudStorageSettings.primary_provider === 'backblaze_b2' && (
+                <Card
+                  className="border-red-500/20 bg-gradient-to-br from-[#261a1a] to-[#171616]"
+                  header={
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-red-500/20">
+                        <span className="text-xl">🅱️</span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Backblaze B2</h3>
+                        <p className="text-gray-400 text-sm mt-1">Armazenamento de baixo custo (~$0.005/GB/mês)</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="form-group">
+                        <label className="form-label text-gray-300 block mb-2">Key ID</label>
+                        <SecretInput
+                          name="b2_key_id"
+                          value={cloudStorageSettings.b2_key_id}
+                          onChange={handleCloudStorageChange}
+                          placeholder="000xxxxxxxxxxxxx"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label text-gray-300 block mb-2">Application Key</label>
+                        <SecretInput
+                          name="b2_app_key"
+                          value={cloudStorageSettings.b2_app_key}
+                          onChange={handleCloudStorageChange}
+                          placeholder="K000xxxxxxxxxxxxxxxxxxxxxxxxxx"
+                        />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label text-gray-300 block mb-2">Bucket Name</label>
+                      <input
+                        type="text"
+                        name="b2_bucket"
+                        className="form-input w-full"
+                        value={cloudStorageSettings.b2_bucket}
+                        onChange={handleCloudStorageChange}
+                        placeholder="my-bucket-name"
+                      />
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* AWS S3 Configuration */}
+              {cloudStorageSettings.primary_provider === 'aws_s3' && (
+                <Card
+                  className="border-yellow-500/20 bg-gradient-to-br from-[#26251a] to-[#171716]"
+                  header={
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-yellow-500/20">
+                        <span className="text-xl">📦</span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Amazon S3</h3>
+                        <p className="text-gray-400 text-sm mt-1">Alta disponibilidade, multi-região</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="form-group">
+                        <label className="form-label text-gray-300 block mb-2">Access Key ID</label>
+                        <SecretInput
+                          name="s3_access_key"
+                          value={cloudStorageSettings.s3_access_key}
+                          onChange={handleCloudStorageChange}
+                          placeholder="AKIAIOSFODNN7EXAMPLE"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label text-gray-300 block mb-2">Secret Access Key</label>
+                        <SecretInput
+                          name="s3_secret_key"
+                          value={cloudStorageSettings.s3_secret_key}
+                          onChange={handleCloudStorageChange}
+                          placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="form-group">
+                        <label className="form-label text-gray-300 block mb-2">Region</label>
+                        <select
+                          name="s3_region"
+                          className="form-input w-full"
+                          value={cloudStorageSettings.s3_region}
+                          onChange={handleCloudStorageChange}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <option value="us-east-1">US East (N. Virginia)</option>
+                          <option value="us-west-2">US West (Oregon)</option>
+                          <option value="eu-west-1">EU (Ireland)</option>
+                          <option value="eu-central-1">EU (Frankfurt)</option>
+                          <option value="ap-northeast-1">Asia Pacific (Tokyo)</option>
+                          <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+                          <option value="sa-east-1">South America (São Paulo)</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label text-gray-300 block mb-2">Bucket Name</label>
+                        <input
+                          type="text"
+                          name="s3_bucket"
+                          className="form-input w-full"
+                          value={cloudStorageSettings.s3_bucket}
+                          onChange={handleCloudStorageChange}
+                          placeholder="my-bucket-name"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* Google Cloud Storage Configuration */}
+              {cloudStorageSettings.primary_provider === 'google_gcs' && (
+                <Card
+                  className="border-blue-500/20 bg-gradient-to-br from-[#1a1f26] to-[#161617]"
+                  header={
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-blue-500/20">
+                        <span className="text-xl">🔷</span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Google Cloud Storage</h3>
+                        <p className="text-gray-400 text-sm mt-1">Integração com GCP, multi-região</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <div className="space-y-4">
+                    <div className="form-group">
+                      <label className="form-label text-gray-300 block mb-2">Service Account JSON</label>
+                      <textarea
+                        name="gcs_credentials_json"
+                        className="form-input w-full font-mono text-xs"
+                        value={cloudStorageSettings.gcs_credentials_json}
+                        onChange={handleCloudStorageChange}
+                        placeholder='{"type": "service_account", ...}'
+                        rows={4}
+                      />
+                      <small className="text-gray-500 text-xs mt-1 block">
+                        Cole o JSON completo da chave de serviço
+                      </small>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label text-gray-300 block mb-2">Bucket Name</label>
+                      <input
+                        type="text"
+                        name="gcs_bucket"
+                        className="form-input w-full"
+                        value={cloudStorageSettings.gcs_bucket}
+                        onChange={handleCloudStorageChange}
+                        placeholder="my-gcs-bucket"
+                      />
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* Cloudflare R2 - Usa as mesmas settings de R2 */}
+              {cloudStorageSettings.primary_provider === 'cloudflare_r2' && (
+                <Card
+                  className="border-orange-500/20 bg-gradient-to-br from-[#261f1a] to-[#171616]"
+                  header={
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-orange-500/20">
+                        <span className="text-xl">☁️</span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Cloudflare R2</h3>
+                        <p className="text-gray-400 text-sm mt-1">Zero egress fees (~$0.015/GB/mês)</p>
+                      </div>
+                    </div>
+                  }
+                >
+                  <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                    <p className="text-blue-300 text-sm">
+                      <strong>Nota:</strong> As credenciais do Cloudflare R2 são configuradas na aba "APIs & Credenciais".
+                      Se você já configurou o R2 lá, ele estará pronto para uso.
+                    </p>
+                  </div>
+                </Card>
+              )}
+
+              {/* Comparativo de Tempos */}
+              <Card
+                className="border-gray-500/20 bg-gradient-to-br from-[#1a1a1f] to-[#161617]"
+                header={
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-gray-500/20">
+                      <HardDrive className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">Comparativo de Estratégias</h3>
+                      <p className="text-gray-400 text-sm mt-1">Tempo estimado de failover para cada estratégia</p>
+                    </div>
+                  </div>
+                }
+              >
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <div className="text-2xl font-bold text-green-400">~6s</div>
+                    <div className="text-gray-400 text-sm mt-1">GPU Warm Pool</div>
+                    <div className="text-gray-500 text-xs">Mesmo host</div>
+                  </div>
+                  <div className="text-center p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-400">~23s</div>
+                    <div className="text-gray-400 text-sm mt-1">Regional Volume</div>
+                    <div className="text-gray-500 text-xs">Mesma região</div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-400">~47s</div>
+                    <div className="text-gray-400 text-sm mt-1">Cloud Storage</div>
+                    <div className="text-gray-500 text-xs">Qualquer região</div>
+                  </div>
+                  <div className="text-center p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    <div className="text-2xl font-bold text-red-400">~600s</div>
+                    <div className="text-gray-400 text-sm mt-1">CPU Standby</div>
+                    <div className="text-gray-500 text-xs">GCP/AWS</div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Save Button */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={testCloudStorageConnection}
+                  disabled={testingConnection || !cloudStorageSettings.enabled}
+                  className="py-3 px-6 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {testingConnection ? (
+                    <>
+                      <span className="spinner" />
+                      Testando...
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-4 h-4" />
+                      Testar Conexão
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={saveCloudStorageSettings}
+                  disabled={savingCloudStorage}
+                  className="flex-1 py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {savingCloudStorage ? (
+                    <>
+                      <span className="spinner" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Salvar Configurações
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           )}
 
