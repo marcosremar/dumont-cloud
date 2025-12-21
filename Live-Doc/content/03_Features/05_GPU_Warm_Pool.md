@@ -179,14 +179,29 @@ No dashboard, veja:
 
 ```bash
 # Status do warm pool
-curl https://api.dumontcloud.com/api/warmpool/status
+curl https://api.dumontcloud.com/api/v1/warmpool/status/123 \
+  -H "Authorization: Bearer $API_KEY"
 
 # Listar hosts com multiplas GPUs
-curl https://api.dumontcloud.com/api/warmpool/hosts?gpu_name=RTX_4090
+curl "https://api.dumontcloud.com/api/v1/warmpool/hosts?gpu_name=RTX_4090&min_gpus=2" \
+  -H "Authorization: Bearer $API_KEY"
+
+# Provisionar warm pool
+curl -X POST https://api.dumontcloud.com/api/v1/warmpool/provision \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"machine_id": 123, "host_machine_id": 88888}'
+
+# Habilitar warm pool
+curl -X POST https://api.dumontcloud.com/api/v1/warmpool/enable/123 \
+  -H "Authorization: Bearer $API_KEY"
 
 # Testar failover
-curl -X POST https://api.dumontcloud.com/api/warmpool/failover/test
+curl -X POST https://api.dumontcloud.com/api/v1/warmpool/failover/test/123 \
+  -H "Authorization: Bearer $API_KEY"
 ```
+
+> Veja documentacao completa em [GPU Warm Pool API](/admin/doc/live#04_API/05_GPU_Warm_Pool_API.md)
 
 ---
 

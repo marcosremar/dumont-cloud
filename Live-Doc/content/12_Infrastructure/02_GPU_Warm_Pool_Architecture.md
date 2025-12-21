@@ -251,14 +251,37 @@ class WarmPoolSettings(BaseSettings):
 
 ## Endpoints REST
 
+### Warm Pool
+
 | Endpoint | Metodo | Descricao |
 |----------|--------|-----------|
-| `/api/warmpool/status` | GET | Status do warm pool |
-| `/api/warmpool/hosts` | GET | Listar hosts multi-GPU |
-| `/api/warmpool/enable` | POST | Habilitar warm pool |
-| `/api/warmpool/disable` | POST | Desabilitar (usa CPU) |
-| `/api/warmpool/provision` | POST | Provisionar manualmente |
-| `/api/warmpool/failover/test` | POST | Testar failover |
+| `/api/v1/warmpool/status/{machine_id}` | GET | Status do warm pool |
+| `/api/v1/warmpool/hosts` | GET | Listar hosts multi-GPU |
+| `/api/v1/warmpool/provision` | POST | Provisionar warm pool |
+| `/api/v1/warmpool/enable/{machine_id}` | POST | Habilitar warm pool |
+| `/api/v1/warmpool/disable/{machine_id}` | POST | Desabilitar (usa CPU) |
+| `/api/v1/warmpool/failover/test/{machine_id}` | POST | Testar failover |
+| `/api/v1/warmpool/cleanup/{machine_id}` | DELETE | Limpar recursos |
+
+### Failover Orchestrator
+
+| Endpoint | Metodo | Descricao |
+|----------|--------|-----------|
+| `/api/v1/failover/execute` | POST | Executar failover |
+| `/api/v1/failover/readiness/{machine_id}` | GET | Verificar prontidao |
+| `/api/v1/failover/status/{machine_id}` | GET | Status detalhado |
+| `/api/v1/failover/strategies` | GET | Listar estrategias |
+
+### Failover Settings
+
+| Endpoint | Metodo | Descricao |
+|----------|--------|-----------|
+| `/api/v1/failover/settings/global` | GET/PUT | Config global |
+| `/api/v1/failover/settings/machines/{id}` | GET/PUT | Config por maquina |
+| `/api/v1/failover/settings/machines/{id}/enable-warm-pool` | POST | Habilitar warm pool |
+| `/api/v1/failover/settings/machines/{id}/enable-both` | POST | Habilitar ambas estrategias |
+
+> Documentacao completa: [GPU Warm Pool API](/admin/doc/live#04_API/05_GPU_Warm_Pool_API.md)
 
 ---
 

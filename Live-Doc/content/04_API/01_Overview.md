@@ -101,6 +101,59 @@ X-RateLimit-Reset: 1704067200
 | GET | `/offers` | Listar ofertas |
 | GET | `/offers/{gpu}` | Ofertas por GPU |
 
+### Failover Orchestrator
+
+| Metodo | Endpoint | Descricao |
+|--------|----------|-----------|
+| POST | `/failover/execute` | Executar failover |
+| GET | `/failover/readiness/{machine_id}` | Verificar prontidao |
+| GET | `/failover/status/{machine_id}` | Status detalhado |
+| POST | `/failover/test/{machine_id}` | Testar failover (dry-run) |
+| GET | `/failover/strategies` | Listar estrategias |
+
+### Failover Settings
+
+| Metodo | Endpoint | Descricao |
+|--------|----------|-----------|
+| GET | `/failover/settings/global` | Config global |
+| PUT | `/failover/settings/global` | Atualizar config global |
+| GET | `/failover/settings/machines` | Listar configs por maquina |
+| GET | `/failover/settings/machines/{id}` | Config de uma maquina |
+| PUT | `/failover/settings/machines/{id}` | Atualizar config de maquina |
+
+### GPU Warm Pool
+
+| Metodo | Endpoint | Descricao |
+|--------|----------|-----------|
+| GET | `/warmpool/status/{machine_id}` | Status do warm pool |
+| GET | `/warmpool/hosts` | Listar hosts multi-GPU |
+| POST | `/warmpool/provision` | Provisionar warm pool |
+| POST | `/warmpool/enable/{machine_id}` | Habilitar warm pool |
+| POST | `/warmpool/disable/{machine_id}` | Desabilitar warm pool |
+
+### Standby (CPU)
+
+| Metodo | Endpoint | Descricao |
+|--------|----------|-----------|
+| GET | `/standby/status` | Status do CPU standby |
+| POST | `/standby/configure` | Configurar standby |
+| GET | `/standby/associations` | Listar associacoes GPU-CPU |
+| GET | `/standby/pricing` | Estimar custos |
+
+### Agent Status
+
+| Metodo | Endpoint | Descricao |
+|--------|----------|-----------|
+| POST | `/agent/status` | Heartbeat do agente |
+| GET | `/agent/instances` | Listar instancias com agente |
+| POST | `/agent/instances/{id}/keep-alive` | Adiar hibernacao |
+
+### Hibernation
+
+| Metodo | Endpoint | Descricao |
+|--------|----------|-----------|
+| GET | `/hibernation/stats` | Estatisticas de economia |
+
 ---
 
 ## Exemplos
@@ -215,9 +268,18 @@ Receba notificacoes em tempo real sobre eventos:
 - `instance.stopped`
 - `instance.deleted`
 - `instance.interrupted`
+- `instance.hibernated`
 - `failover.started`
+- `failover.warm_pool_success`
+- `failover.cpu_standby_success`
 - `failover.completed`
+- `failover.failed`
+- `warmpool.provisioned`
+- `warmpool.degraded`
+- `standby.sync_started`
+- `standby.sync_completed`
 - `balance.low`
+- `agent.heartbeat_lost`
 
 ### Payload Exemplo
 ```json

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Wrapper script for Dumont CLI
+source /home/marcos/dumontcloud/.venv/bin/activate
+export PYTHONPATH="/home/marcos/dumontcloud:$PYTHONPATH"
+python -m cli "$@"

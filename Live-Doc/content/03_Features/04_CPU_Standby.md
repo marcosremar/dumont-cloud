@@ -240,6 +240,55 @@ signal.signal(signal.SIGTERM, handle_interrupt)
 
 ---
 
+## API Reference
+
+### Endpoints de Standby
+
+```bash
+# Status do standby
+curl https://api.dumontcloud.com/api/v1/standby/status \
+  -H "Authorization: Bearer $API_KEY"
+
+# Configurar standby
+curl -X POST https://api.dumontcloud.com/api/v1/standby/configure \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "enabled": true,
+    "gcp_zone": "europe-west1-b",
+    "gcp_machine_type": "e2-standard-4"
+  }'
+
+# Listar associacoes GPU-CPU
+curl https://api.dumontcloud.com/api/v1/standby/associations \
+  -H "Authorization: Bearer $API_KEY"
+
+# Iniciar sync manualmente
+curl -X POST https://api.dumontcloud.com/api/v1/standby/associations/456789/start-sync \
+  -H "Authorization: Bearer $API_KEY"
+
+# Estimar custos
+curl https://api.dumontcloud.com/api/v1/standby/pricing \
+  -H "Authorization: Bearer $API_KEY"
+```
+
+### Endpoints de Failover Testing
+
+```bash
+# Simular failover
+curl -X POST https://api.dumontcloud.com/api/v1/standby/failover/simulate/456789 \
+  -H "Authorization: Bearer $API_KEY"
+
+# Relatório de failovers
+curl https://api.dumontcloud.com/api/v1/standby/failover/report \
+  -H "Authorization: Bearer $API_KEY"
+```
+
+> Veja documentacao completa em [Failover Orchestrator API](/admin/doc/live#04_API/03_Failover_Orchestrator.md)
+
+---
+
 ## Ver Tambem
 
 - [GPU Warm Pool](05_GPU_Warm_Pool.md) - Estrategia principal de failover
+- [Failover Settings API](/admin/doc/live#04_API/04_Failover_Settings.md) - Configurar estrategias

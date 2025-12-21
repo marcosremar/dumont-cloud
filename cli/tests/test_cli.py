@@ -1,4 +1,4 @@
-"""Tests for Dumont CLI"""
+"""Tests for Dumont CLI - Auto-discovery mode"""
 import pytest
 from unittest.mock import patch, MagicMock, Mock
 import sys
@@ -11,6 +11,81 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.api_client import APIClient
 from commands.base import CommandBuilder
 from utils.token_manager import TokenManager
+
+
+# ============================================================
+# Mock OpenAPI Schema for Testing
+# ============================================================
+
+MOCK_OPENAPI_SCHEMA = {
+    "paths": {
+        "/api/auth/login": {
+            "post": {"summary": "Login", "requestBody": {}}
+        },
+        "/api/auth/logout": {
+            "post": {"summary": "Logout"}
+        },
+        "/api/auth/me": {
+            "get": {"summary": "Get current user"}
+        },
+        "/api/auth/register": {
+            "post": {"summary": "Register new user", "requestBody": {}}
+        },
+        "/api/v1/instances": {
+            "get": {"summary": "List instances", "parameters": []},
+            "post": {"summary": "Create instance", "requestBody": {}}
+        },
+        "/api/v1/instances/{instance_id}": {
+            "get": {"summary": "Get instance", "parameters": []},
+            "delete": {"summary": "Delete instance"}
+        },
+        "/api/v1/instances/{instance_id}/pause": {
+            "post": {"summary": "Pause instance"}
+        },
+        "/api/v1/instances/{instance_id}/resume": {
+            "post": {"summary": "Resume instance"}
+        },
+        "/api/v1/snapshots": {
+            "get": {"summary": "List snapshots"},
+            "post": {"summary": "Create snapshot", "requestBody": {}}
+        },
+        "/api/v1/snapshots/{snapshot_id}": {
+            "delete": {"summary": "Delete snapshot"}
+        },
+        "/api/v1/warmpool/status/{machine_id}": {
+            "get": {"summary": "Get warm pool status"}
+        },
+        "/api/v1/warmpool/hosts": {
+            "get": {"summary": "List multi-GPU hosts"}
+        },
+        "/api/v1/warmpool/provision": {
+            "post": {"summary": "Provision warm pool", "requestBody": {}}
+        },
+        "/api/v1/failover/execute": {
+            "post": {"summary": "Execute failover", "requestBody": {}}
+        },
+        "/api/v1/failover/status/{machine_id}": {
+            "get": {"summary": "Get failover status"}
+        },
+        "/api/v1/failover/settings/global": {
+            "get": {"summary": "Get global failover settings"},
+            "put": {"summary": "Update global failover settings", "requestBody": {}}
+        },
+        "/api/v1/standby/status": {
+            "get": {"summary": "Get standby status"}
+        },
+        "/api/v1/standby/configure": {
+            "post": {"summary": "Configure standby", "requestBody": {}}
+        },
+        "/api/v1/balance": {
+            "get": {"summary": "Get account balance"}
+        },
+        "/api/v1/settings": {
+            "get": {"summary": "Get settings"},
+            "put": {"summary": "Update settings", "requestBody": {}}
+        },
+    }
+}
 
 
 class TestAPIClient:
@@ -134,13 +209,14 @@ class TestAPIClient:
 
 
 class TestCommandBuilder:
-    """Tests for CommandBuilder"""
+    """Tests for CommandBuilder with auto-discovery"""
 
     @pytest.fixture
     def api(self):
         """Create mock API client"""
         api = MagicMock()
         api.call = MagicMock()
+        api.base_url = "http://localhost:8766"
         return api
 
     @pytest.fixture
@@ -155,31 +231,11 @@ class TestCommandBuilder:
 
     def test_build_command_tree_with_schema(self, builder, api):
         """Test building command tree from OpenAPI schema"""
-        mock_schema = {
-            "paths": {
-                "/api/v1/instances": {
-                    "get": {
-                        "summary": "List instances",
-                        "parameters": []
-                    },
-                    "post": {
-                        "summary": "Create instance",
-                        "requestBody": {}
-                    }
-                },
-                "/api/v1/snapshots": {
-                    "get": {
-                        "summary": "List snapshots",
-                        "parameters": []
-                    }
-                }
-            }
-        }
-        api.load_openapi_schema.return_value = mock_schema
+        api.load_openapi_schema.return_value = MOCK_OPENAPI_SCHEMA
 
         commands = builder.build_command_tree()
 
-        # Check auth commands (from overrides)
+        # Check auth commands
         assert "auth" in commands
         assert "login" in commands["auth"]
         assert "logout" in commands["auth"]
@@ -189,60 +245,52 @@ class TestCommandBuilder:
         assert "instance" in commands
         assert "list" in commands["instance"]
         assert "create" in commands["instance"]
+        assert "get" in commands["instance"]
+        assert "delete" in commands["instance"]
         assert "pause" in commands["instance"]
         assert "resume" in commands["instance"]
 
-        # Check snapshot commands
-        assert "snapshot" in commands
-        assert "list" in commands["snapshot"]
+        # Check warmpool commands
+        assert "warmpool" in commands
+        assert "hosts" in commands["warmpool"]
+        assert "provision" in commands["warmpool"]
 
-    def test_build_command_tree_no_schema(self, builder, api):
-        """Test building command tree when schema is None"""
+    def test_build_command_tree_no_schema_exits(self, builder, api):
+        """Test that missing schema causes exit"""
         api.load_openapi_schema.return_value = None
 
-        commands = builder.build_command_tree()
-        assert commands == {}
+        with pytest.raises(SystemExit) as exc_info:
+            builder.build_command_tree()
+
+        assert exc_info.value.code == 1
 
     def test_execute_help_command(self, builder, api, capsys):
         """Test help command"""
-        api.load_openapi_schema.return_value = {"paths": {}}
+        api.load_openapi_schema.return_value = MOCK_OPENAPI_SCHEMA
 
         builder.execute("help", None, [])
 
         captured = capsys.readouterr()
-        assert "Dumont Cloud - Command Reference" in captured.out
+        assert "Dumont Cloud CLI" in captured.out
+        assert "comandos disponíveis" in captured.out
 
     def test_execute_unknown_resource(self, builder, api):
         """Test unknown resource"""
-        api.load_openapi_schema.return_value = {"paths": {}}
+        api.load_openapi_schema.return_value = MOCK_OPENAPI_SCHEMA
 
         with pytest.raises(SystemExit):
             builder.execute("unknown", "action", [])
 
     def test_execute_unknown_action(self, builder, api):
         """Test unknown action"""
-        mock_schema = {
-            "paths": {
-                "/api/v1/instances": {
-                    "get": {"summary": "List", "parameters": []}
-                }
-            }
-        }
-        api.load_openapi_schema.return_value = mock_schema
+        api.load_openapi_schema.return_value = MOCK_OPENAPI_SCHEMA
 
         with pytest.raises(SystemExit):
             builder.execute("instance", "unknown", [])
 
     def test_execute_simple_get(self, builder, api):
         """Test executing simple GET command"""
-        mock_schema = {
-            "paths": {
-                "/api/v1/instances": {
-                    "get": {"summary": "List instances", "parameters": []}
-                }
-            }
-        }
-        api.load_openapi_schema.return_value = mock_schema
+        api.load_openapi_schema.return_value = MOCK_OPENAPI_SCHEMA
 
         builder.execute("instance", "list", [])
 
@@ -250,14 +298,7 @@ class TestCommandBuilder:
 
     def test_execute_with_path_param(self, builder, api):
         """Test executing command with path parameter"""
-        mock_schema = {
-            "paths": {
-                "/api/v1/instances/{instance_id}": {
-                    "get": {"summary": "Get instance", "parameters": []}
-                }
-            }
-        }
-        api.load_openapi_schema.return_value = mock_schema
+        api.load_openapi_schema.return_value = MOCK_OPENAPI_SCHEMA
 
         builder.execute("instance", "get", ["12345"])
 
@@ -265,31 +306,14 @@ class TestCommandBuilder:
 
     def test_execute_with_missing_path_param(self, builder, api):
         """Test executing command with missing path parameter"""
-        mock_schema = {
-            "paths": {
-                "/api/v1/instances/{instance_id}": {
-                    "delete": {"summary": "Delete instance", "parameters": []}
-                }
-            }
-        }
-        api.load_openapi_schema.return_value = mock_schema
+        api.load_openapi_schema.return_value = MOCK_OPENAPI_SCHEMA
 
         with pytest.raises(SystemExit):
             builder.execute("instance", "delete", [])
 
     def test_execute_login_with_credentials(self, builder, api):
         """Test login command with username and password"""
-        mock_schema = {
-            "paths": {
-                "/api/auth/login": {
-                    "post": {
-                        "summary": "Login",
-                        "requestBody": {}
-                    }
-                }
-            }
-        }
-        api.load_openapi_schema.return_value = mock_schema
+        api.load_openapi_schema.return_value = MOCK_OPENAPI_SCHEMA
 
         builder.execute("auth", "login", ["user@test.com", "password123"])
 
@@ -299,27 +323,6 @@ class TestCommandBuilder:
         assert args[0][1] == "/api/auth/login"
         assert args[0][2] == {"username": "user@test.com", "password": "password123"}
 
-    def test_execute_with_key_value_data(self, builder, api):
-        """Test command with key=value data"""
-        mock_schema = {
-            "paths": {
-                "/api/v1/snapshots": {
-                    "post": {
-                        "summary": "Create snapshot",
-                        "requestBody": {}
-                    }
-                }
-            }
-        }
-        api.load_openapi_schema.return_value = mock_schema
-
-        builder.execute("snapshot", "create", ["name=backup1", "instance_id=12345"])
-
-        api.call.assert_called_once()
-        args = api.call.call_args
-        # Note: numeric values are auto-converted to int
-        assert args[0][2] == {"name": "backup1", "instance_id": 12345}
-
 
 class TestTokenManager:
     """Tests for TokenManager"""
@@ -327,7 +330,6 @@ class TestTokenManager:
     @pytest.fixture
     def token_manager(self, tmp_path):
         """Create TokenManager with temp file"""
-        import tempfile
         with patch('pathlib.Path.home') as mock_home:
             mock_home.return_value = tmp_path
             tm = TokenManager()
@@ -355,18 +357,23 @@ class TestTokenManager:
         assert token_manager.get() is None
 
 
-class TestCoverageCommands:
-    """Tests to verify API endpoint coverage"""
+# ============================================================
+# Auto-Discovery Command Tests
+# ============================================================
+
+class TestAutoDiscoveryCommands:
+    """Tests for auto-discovered commands"""
 
     @pytest.fixture
     def builder(self):
         """Create CommandBuilder with mock API"""
         api = MagicMock()
-        api.load_openapi_schema.return_value = {"paths": {}}
+        api.load_openapi_schema.return_value = MOCK_OPENAPI_SCHEMA
+        api.base_url = "http://localhost:8766"
         return CommandBuilder(api)
 
-    def test_auth_commands_available(self, builder):
-        """Test all auth commands are available"""
+    def test_auth_commands_discovered(self, builder):
+        """Test auth commands are auto-discovered"""
         commands = builder.build_command_tree()
         assert "auth" in commands
         assert "login" in commands["auth"]
@@ -374,63 +381,115 @@ class TestCoverageCommands:
         assert "me" in commands["auth"]
         assert "register" in commands["auth"]
 
-    def test_instance_commands_available(self, builder):
-        """Test all instance commands are available"""
+    def test_instance_commands_discovered(self, builder):
+        """Test instance commands are auto-discovered"""
         commands = builder.build_command_tree()
         assert "instance" in commands
-        required_commands = [
-            "list", "create", "get", "delete", "pause", "resume",
-            "wake", "migrate", "migrate-estimate", "sync", "sync-status", "offers"
-        ]
-        for cmd in required_commands:
-            assert cmd in commands["instance"], f"Missing instance command: {cmd}"
+        assert "list" in commands["instance"]
+        assert "create" in commands["instance"]
+        assert "get" in commands["instance"]
+        assert "delete" in commands["instance"]
+        assert "pause" in commands["instance"]
+        assert "resume" in commands["instance"]
 
-    def test_snapshot_commands_available(self, builder):
-        """Test all snapshot commands are available"""
+    def test_snapshot_commands_discovered(self, builder):
+        """Test snapshot commands are auto-discovered"""
         commands = builder.build_command_tree()
         assert "snapshot" in commands
         assert "list" in commands["snapshot"]
         assert "create" in commands["snapshot"]
-        assert "restore" in commands["snapshot"]
         assert "delete" in commands["snapshot"]
 
-    def test_finetune_commands_available(self, builder):
-        """Test all finetune commands are available"""
+    def test_warmpool_commands_discovered(self, builder):
+        """Test warmpool commands are auto-discovered"""
         commands = builder.build_command_tree()
-        assert "finetune" in commands
-        required_commands = [
-            "list", "create", "get", "logs", "cancel", "refresh", "models", "upload-dataset"
-        ]
-        for cmd in required_commands:
-            assert cmd in commands["finetune"], f"Missing finetune command: {cmd}"
+        assert "warmpool" in commands
+        assert "hosts" in commands["warmpool"]
+        assert "provision" in commands["warmpool"]
+        # status has path param so check it exists
+        assert any("status" in cmd for cmd in commands["warmpool"])
 
-    def test_savings_commands_available(self, builder):
-        """Test all savings commands are available"""
+    def test_failover_commands_discovered(self, builder):
+        """Test failover commands are auto-discovered"""
         commands = builder.build_command_tree()
-        assert "savings" in commands
-        assert "summary" in commands["savings"]
-        assert "history" in commands["savings"]
-        assert "breakdown" in commands["savings"]
-        assert "comparison" in commands["savings"]
+        assert "failover" in commands
+        assert "execute" in commands["failover"]
 
-    def test_metrics_commands_available(self, builder):
-        """Test all metrics commands are available"""
+    def test_standby_commands_discovered(self, builder):
+        """Test standby commands are auto-discovered"""
         commands = builder.build_command_tree()
-        assert "metrics" in commands
-        required_commands = [
-            "market", "market-summary", "providers", "efficiency",
-            "predictions", "compare", "gpus", "types",
-            "savings-real", "savings-history", "hibernation-events"
-        ]
-        for cmd in required_commands:
-            assert cmd in commands["metrics"], f"Missing metrics command: {cmd}"
+        assert "standby" in commands
+        assert "status" in commands["standby"]
+        assert "configure" in commands["standby"]
 
-    def test_settings_commands_available(self, builder):
-        """Test all settings commands are available"""
+    def test_balance_commands_discovered(self, builder):
+        """Test balance commands are auto-discovered"""
+        commands = builder.build_command_tree()
+        assert "balance" in commands
+        assert "list" in commands["balance"]
+
+    def test_settings_commands_discovered(self, builder):
+        """Test settings commands are auto-discovered"""
         commands = builder.build_command_tree()
         assert "settings" in commands
-        assert "get" in commands["settings"]
-        assert "update" in commands["settings"]
+
+
+class TestCommandMethodMapping:
+    """Tests for HTTP method mapping"""
+
+    @pytest.fixture
+    def builder(self):
+        """Create CommandBuilder with mock API"""
+        api = MagicMock()
+        api.load_openapi_schema.return_value = MOCK_OPENAPI_SCHEMA
+        api.base_url = "http://localhost:8766"
+        return CommandBuilder(api)
+
+    def test_get_method_mapped(self, builder):
+        """Test GET methods are correctly mapped"""
+        commands = builder.build_command_tree()
+        assert commands["instance"]["list"]["method"] == "GET"
+        assert commands["instance"]["get"]["method"] == "GET"
+
+    def test_post_method_mapped(self, builder):
+        """Test POST methods are correctly mapped"""
+        commands = builder.build_command_tree()
+        assert commands["instance"]["create"]["method"] == "POST"
+        assert commands["auth"]["login"]["method"] == "POST"
+
+    def test_delete_method_mapped(self, builder):
+        """Test DELETE methods are correctly mapped"""
+        commands = builder.build_command_tree()
+        assert commands["instance"]["delete"]["method"] == "DELETE"
+
+    def test_put_method_mapped(self, builder):
+        """Test PUT methods are correctly mapped"""
+        commands = builder.build_command_tree()
+        assert commands["settings"]["update"]["method"] == "PUT"
+
+
+class TestPathParsing:
+    """Tests for path parameter handling"""
+
+    @pytest.fixture
+    def builder(self):
+        """Create CommandBuilder with mock API"""
+        api = MagicMock()
+        api.load_openapi_schema.return_value = MOCK_OPENAPI_SCHEMA
+        api.base_url = "http://localhost:8766"
+        return CommandBuilder(api)
+
+    def test_path_with_single_param(self, builder):
+        """Test paths with single path parameter"""
+        commands = builder.build_command_tree()
+        assert "{instance_id}" in commands["instance"]["get"]["path"]
+
+    def test_action_after_path_param(self, builder):
+        """Test action name extraction after path param"""
+        commands = builder.build_command_tree()
+        # /instances/{id}/pause -> action should be "pause"
+        assert "pause" in commands["instance"]
+        assert "resume" in commands["instance"]
 
 
 class TestIntegrationScenarios:
@@ -519,3 +578,33 @@ class TestIntegrationScenarios:
 
         assert result["snapshot_id"] == "snap_123"
         assert result["name"] == "backup1"
+
+
+class TestBackendOffline:
+    """Tests for backend offline scenarios"""
+
+    def test_no_schema_exits_with_error(self):
+        """Test that missing schema causes exit with code 1"""
+        api = MagicMock()
+        api.load_openapi_schema.return_value = None
+        api.base_url = "http://localhost:8766"
+        builder = CommandBuilder(api)
+
+        with pytest.raises(SystemExit) as exc_info:
+            builder.build_command_tree()
+
+        assert exc_info.value.code == 1
+
+    def test_error_message_shows_url(self, capsys):
+        """Test that error message includes backend URL"""
+        api = MagicMock()
+        api.load_openapi_schema.return_value = None
+        api.base_url = "http://localhost:8766"
+        builder = CommandBuilder(api)
+
+        with pytest.raises(SystemExit):
+            builder.build_command_tree()
+
+        captured = capsys.readouterr()
+        assert "localhost:8766" in captured.out
+        assert "backend" in captured.out.lower()
