@@ -51,13 +51,18 @@ class VastService:
         verified_only: bool = False,
         static_ip: bool = False,
         limit: int = 50,
+        machine_type: str = "on-demand",  # "on-demand" or "interruptible" (spot)
     ) -> List[Dict[str, Any]]:
-        """Busca ofertas de GPU com filtros"""
+        """Busca ofertas de GPU com filtros
+
+        Args:
+            machine_type: "on-demand" for stable instances, "interruptible" for spot/cheaper instances
+        """
         import json
 
         print(f"[DEBUG search_offers] gpu_name={gpu_name}, min_inet_down={min_inet_down}, "
               f"max_price={max_price}, min_disk={min_disk}, region={region}, "
-              f"min_reliability={min_reliability}, verified_only={verified_only}")
+              f"min_reliability={min_reliability}, verified_only={verified_only}, machine_type={machine_type}")
 
         query = {
             "rentable": {"eq": True},
@@ -65,7 +70,13 @@ class VastService:
             "disk_space": {"gte": min_disk},
             "inet_down": {"gte": min_inet_down},
             "dph_total": {"lte": max_price},
+            "direct_port_count": {"gte": 1},  # Ensure host can expose ports
+            "static_ip": {"eq": True},  # Require static IP for reliable port access
         }
+
+        # Add reliability filter if specified
+        if min_reliability > 0:
+            query["reliability2"] = {"gte": min_reliability}
 
         if verified_only:
             query["verified"] = {"eq": True}
@@ -73,13 +84,10 @@ class VastService:
         if gpu_name:
             query["gpu_name"] = {"eq": gpu_name}
 
-        if static_ip:
-            query["static_ip"] = {"eq": True}
-
         params = {
             "q": json.dumps(query),
             "order": "dph_total",
-            "type": "on-demand",
+            "type": machine_type,  # "on-demand" or "interruptible" (spot)
             "limit": limit,
         }
 
@@ -132,6 +140,7 @@ class VastService:
         ports: Optional[List[int]] = None,
         onstart_cmd: Optional[str] = None,
         use_template: bool = True,
+        label: Optional[str] = None,
     ) -> Optional[int]:
         """
         Cria uma nova instancia.
@@ -160,27 +169,36 @@ class VastService:
         
         # Adicionar comando customizado se fornecido
         if onstart_cmd:
-            onstart_script = f"#\!/bin/bash\ntouch ~/.no_auto_tmux\n{onstart_cmd}"
+            onstart_script = f"#!/bin/bash\ntouch ~/.no_auto_tmux\n{onstart_cmd}"
         elif tailscale_authkey:
-            hostname = f"gpu-{instance_id_hint or new}"
-            onstart_script = f"""#\!/bin/bash
+            hostname = f"gpu-{instance_id_hint or 'new'}"
+            onstart_script = f"""#!/bin/bash
 touch ~/.no_auto_tmux
 curl -fsSL https://tailscale.com/install.sh | sh
 tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &
 """
 
         try:
-            # Montar extra_env com portas
-            extra_env = []
+            # Build port mapping dict for docker - each port needs its own key
+            # Format: {"-p 8003:8003": "1", "-p 22:22": "1"}
+            # Based on vast.ai CLI: --env '-p 8000:8000'
+            env_dict = {}
             for port in ports:
-                extra_env.append([f"-p {port}:{port}", "1"])
+                env_dict[f"-p {port}:{port}"] = "1"
 
             payload = {
                 "client_id": "me",
                 "disk": disk,
                 "onstart": onstart_script,
-                "extra_env": extra_env,
             }
+
+            # Add port mappings via env field - Vast.ai interprets this as docker -p flags
+            if env_dict:
+                payload["env"] = env_dict
+            
+            # Adicionar label se especificado (para identificar origem: wizard, job, serverless)
+            if label:
+                payload["label"] = label
 
             # Decidir entre template ou imagem direta
             if use_template:
