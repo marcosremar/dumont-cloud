@@ -139,14 +139,18 @@ API Direta:
     except SystemExit:
         return
 
-    # Get API URL and key
+    # Get API URL
     api_url = args.api_url or config.get_api_url()
-    api_key = args.api_key or config.get_api_key()
 
     # Create API client
     api = APIClient(base_url=api_url)
-    if api_key:
-        api.token_manager.save(api_key)
+
+    # Only use api_key from config if no JWT token is saved
+    # JWT token from login takes priority
+    if not api.token_manager.get():
+        api_key = args.api_key or config.get_api_key()
+        if api_key:
+            api.token_manager.token = api_key  # Set in memory only, don't save to file
 
     # Handle direct API commands
     if args.command == "api":
