@@ -24,7 +24,7 @@ from ..schemas.metrics import (
     ComparisonResponse,
     GpuComparisonItem,
 )
-from ....config.database import SessionLocal
+from ....config.database import get_session_factory
 from ....models.metrics import (
     MarketSnapshot,
     ProviderReliability,
@@ -56,7 +56,7 @@ async def get_market_snapshots(
     Dados agregados por GPU e tipo de máquina.
     Útil para visualizar tendências de preço ao longo do tempo.
     """
-    db = SessionLocal()
+    db = get_session_factory()()
     try:
         start_time = datetime.utcnow() - timedelta(hours=hours)
         query = db.query(MarketSnapshot).filter(
@@ -108,7 +108,7 @@ async def get_market_summary(
     Se gpu_name não for especificado, retorna resumo de TODAS as GPUs.
     Formato: { "data": { "GPU_NAME": { "machine_type": { dados } } } }
     """
-    db = SessionLocal()
+    db = get_session_factory()()
     try:
         # Build query for latest snapshots
         query = db.query(MarketSnapshot)
@@ -169,7 +169,7 @@ async def get_provider_rankings(
 
     Score considera: availability, estabilidade de preço, verificação, histórico.
     """
-    db = SessionLocal()
+    db = get_session_factory()()
     try:
         query = db.query(ProviderReliability).filter(
             ProviderReliability.total_observations >= min_observations
@@ -232,7 +232,7 @@ async def get_efficiency_rankings(
 
     Score combina: $/TFLOPS, $/VRAM, reliability, verificação.
     """
-    db = SessionLocal()
+    db = get_session_factory()()
     try:
         # Buscar rankings mais recentes
         latest_time = db.query(
@@ -303,7 +303,7 @@ async def get_price_prediction(
     - Previsão por dia da semana
     - Melhor horário/dia para alugar
     """
-    db = SessionLocal()
+    db = get_session_factory()()
     try:
         # Buscar previsão existente e válida
         if not force_refresh:
@@ -348,7 +348,7 @@ async def compare_gpus(
     """
     Compara múltiplas GPUs em termos de preço e custo-benefício.
     """
-    db = SessionLocal()
+    db = get_session_factory()()
     try:
         gpu_list = [g.strip() for g in gpus.split(",")]
         comparison = []
@@ -397,7 +397,7 @@ async def list_available_gpus():
     """
     Lista todas as GPUs disponíveis com dados de mercado.
     """
-    db = SessionLocal()
+    db = get_session_factory()()
     try:
         gpus = db.query(MarketSnapshot.gpu_name).distinct().all()
         return sorted([gpu[0] for gpu in gpus if gpu[0]])
@@ -430,7 +430,7 @@ async def get_real_savings(
     from ....models.instance_status import HibernationEvent, InstanceStatus
     from sqlalchemy import func
     
-    db = SessionLocal()
+    db = get_session_factory()()
     try:
         start_date = datetime.utcnow() - timedelta(days=days)
         
@@ -517,7 +517,7 @@ async def get_savings_history(
     from ....models.instance_status import HibernationEvent
     from sqlalchemy import func, cast, Date
     
-    db = SessionLocal()
+    db = get_session_factory()()
     try:
         start_date = datetime.utcnow() - timedelta(days=days)
         
@@ -572,7 +572,7 @@ async def get_hibernation_events(
     """
     from ....models.instance_status import HibernationEvent
     
-    db = SessionLocal()
+    db = get_session_factory()()
     try:
         query = db.query(HibernationEvent)
         
