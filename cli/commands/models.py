@@ -17,7 +17,7 @@ class ModelsCommands:
         print("\n📦 Deployed Models\n")
         print("=" * 70)
 
-        response = self.api.call("GET", "/api/v1/models", silent=True)
+        response = self.api.call("GET", "/api/v1/models/", silent=True)
 
         if not response:
             print("❌ Could not fetch models. Make sure you are logged in.")

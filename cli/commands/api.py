@@ -258,8 +258,8 @@ class SmartRouter:
         ("warmpool", "disable"): ("POST", "/api/v1/warmpool/disable/{machine_id}"),
 
         # Models
-        ("models",): ("GET", "/api/v1/models/deployments"),
-        ("models", "list"): ("GET", "/api/v1/models/deployments"),
+        ("models",): ("GET", "/api/v1/models/"),
+        ("models", "list"): ("GET", "/api/v1/models/"),
         ("models", "templates"): ("GET", "/api/v1/models/templates"),
         ("models", "deploy"): ("POST", "/api/v1/models/deploy"),
 
