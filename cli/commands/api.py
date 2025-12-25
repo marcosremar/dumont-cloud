@@ -246,9 +246,14 @@ class SmartRouter:
         ("snapshot", "delete"): ("DELETE", "/api/v1/snapshots/{snapshot_id}"),
 
         # Serverless
+        ("serverless",): ("GET", "/api/v1/serverless/status"),
         ("serverless", "status"): ("GET", "/api/v1/serverless/status"),
-        ("serverless", "enable"): ("POST", "/api/v1/serverless/enable"),
-        ("serverless", "disable"): ("POST", "/api/v1/serverless/disable"),
+        ("serverless", "list"): ("GET", "/api/v1/serverless/list"),
+        ("serverless", "pricing"): ("GET", "/api/v1/serverless/pricing"),
+        ("serverless", "enable"): ("POST", "/api/v1/serverless/enable/{instance_id}"),
+        ("serverless", "disable"): ("POST", "/api/v1/serverless/disable/{instance_id}"),
+        ("serverless", "wake"): ("POST", "/api/v1/serverless/wake/{instance_id}"),
+        ("serverless", "get"): ("GET", "/api/v1/serverless/status/{instance_id}"),
 
         # Warmpool
         ("warmpool",): ("GET", "/api/v1/warmpool/hosts"),
