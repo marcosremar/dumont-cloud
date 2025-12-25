@@ -159,17 +159,19 @@ class ModelDeployService:
                 deployment.gpu_name = result.gpu_name or gpu_type
                 deployment.dph_total = result.dph_total
 
-                public_ip = result.public_ip or result.ssh_host
+                # SSH uses ssh_host (e.g., ssh8.vast.ai), endpoint uses public_ip
+                ssh_host = result.ssh_host
                 ssh_port = result.ssh_port
+                public_ip = result.public_ip or result.ssh_host
 
-                logger.info(f"Provisioner completed! Instance {deployment.instance_id} at {public_ip}:{ssh_port}")
+                logger.info(f"Provisioner completed! Instance {deployment.instance_id} SSH: {ssh_host}:{ssh_port}, Public IP: {public_ip}")
 
             # Step 2: Install and start the model server via SSH
             deployment.update_status(ModelStatus.DOWNLOADING, "Installing model runtime...", 50)
 
-            # Run the deployment script via SSH
+            # Run the deployment script via SSH (use ssh_host, not public_ip)
             await self._run_model_deploy_script(
-                deployment, public_ip, ssh_port
+                deployment, ssh_host, ssh_port
             )
 
             # Step 3: Wait for port to be exposed and health check
@@ -231,11 +233,12 @@ class ModelDeployService:
                 except Exception as cleanup_err:
                     logger.warning(f"Failed to cleanup instance: {cleanup_err}")
 
-    async def _run_model_deploy_script(self, deployment: ModelDeployment, public_ip: str, ssh_port: int):
+    async def _run_model_deploy_script(self, deployment: ModelDeployment, ssh_host: str, ssh_port: int):
         """
         Run the model deployment script on the remote instance via SSH.
 
         Uses scripts from runtime_templates module (DRY).
+        Note: ssh_host is the SSH proxy host (e.g., ssh8.vast.ai), not the public IP.
         """
         # Get scripts from centralized runtime_templates
         install_script = get_install_script(deployment.model_type.value)
@@ -254,13 +257,13 @@ echo "[$(date)] Starting deployment for {deployment.model_id}" >> /var/log/dumon
 # Start model server
 {start_script}
 """
-        # Execute via SSH
+        # Execute via SSH using ssh_host (the SSH proxy, e.g. ssh8.vast.ai)
         ssh_cmd = [
             "ssh", "-i", "/home/marcos/.ssh/id_rsa",
             "-o", "StrictHostKeyChecking=no",
-            "-o", "ConnectTimeout=10",
+            "-o", "ConnectTimeout=30",
             "-p", str(ssh_port),
-            f"root@{public_ip}",
+            f"root@{ssh_host}",
             deploy_cmd
         ]
 

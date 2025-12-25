@@ -114,7 +114,7 @@ class ModelsCommands:
         if kwargs.get("instance_id"):
             payload["instance_id"] = int(kwargs["instance_id"])
 
-        response = self.api.call("POST", "/api/v1/models/deploy", json=payload, silent=True)
+        response = self.api.call("POST", "/api/v1/models/deploy", data=payload, silent=True)
 
         if not response or not response.get("success"):
             error = response.get("detail", "Unknown error") if response else "Failed to connect"
@@ -192,7 +192,7 @@ class ModelsCommands:
         response = self.api.call(
             "POST",
             f"/api/v1/models/{deployment_id}/stop",
-            json={"force": force},
+            data={"force": force},
             silent=True
         )
 

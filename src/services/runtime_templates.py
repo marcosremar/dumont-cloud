@@ -46,13 +46,15 @@ echo "Model: $MODEL_ID"
 echo "Port: $PORT"
 
 echo "Starting vLLM server on port $PORT..."
-# Run in foreground to keep container alive
-python -m vllm.entrypoints.openai.api_server \
+# Run in background with nohup so it survives SSH disconnect
+nohup python -m vllm.entrypoints.openai.api_server \
     --model "$MODEL_ID" \
     --port "$PORT" \
     --gpu-memory-utilization "$GPU_MEMORY" \
     --trust-remote-code \
-    2>&1 | tee /tmp/vllm.log
+    > /tmp/vllm.log 2>&1 &
+echo "vLLM server started in background (PID: $!)"
+sleep 2  # Give it time to start
 """,
     health_check_script="""#!/bin/bash
 PORT="${PORT:-8000}"
@@ -78,8 +80,8 @@ SPEECH_TEMPLATE = RuntimeTemplate(
     install_script="""#!/bin/bash
 set -e
 echo "Installing Whisper dependencies..."
-pip install transformers accelerate torch --quiet
-pip install fastapi uvicorn python-multipart --quiet
+pip install transformers==4.40.0 accelerate torch --quiet
+pip install fastapi uvicorn python-multipart librosa --quiet
 echo "Whisper dependencies installed"
 """,
     start_script="""#!/bin/bash
@@ -118,10 +120,11 @@ async def transcribe(file: UploadFile = File(...)):
     import librosa
     audio, sr = librosa.load(tmp_path, sr=16000)
     inputs = processor(audio, sampling_rate=16000, return_tensors="pt")
-    inputs = {k: v.to("cuda") for k, v in inputs.items()}
+    # Convert to float16 to match model dtype
+    inputs = {k: v.to("cuda").half() if v.dtype == torch.float32 else v.to("cuda") for k, v in inputs.items()}
 
     with torch.no_grad():
-        generated_ids = model.generate(**inputs)
+        generated_ids = model.generate(**inputs, language="en")
     transcription = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
     os.unlink(tmp_path)
@@ -131,10 +134,11 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8001)))
 PYEOF
 
-pip install librosa --quiet
 echo "Starting Whisper server on port $PORT..."
-# Run in foreground to keep container alive
-MODEL_ID="$MODEL_ID" PORT="$PORT" python /tmp/whisper_server.py 2>&1 | tee /tmp/whisper.log
+# Run in background with nohup so it survives SSH disconnect
+nohup env MODEL_ID="$MODEL_ID" PORT="$PORT" python /tmp/whisper_server.py > /tmp/whisper.log 2>&1 &
+echo "Whisper server started in background (PID: $!)"
+sleep 2  # Give it time to start
 """,
     health_check_script="""#!/bin/bash
 PORT="${PORT:-8001}"
@@ -219,8 +223,10 @@ if __name__ == "__main__":
 PYEOF
 
 echo "Starting Diffusion server on port $PORT..."
-# Run in foreground to keep container alive
-MODEL_ID="$MODEL_ID" PORT="$PORT" python /tmp/diffusion_server.py 2>&1 | tee /tmp/diffusion.log
+# Run in background with nohup so it survives SSH disconnect
+nohup env MODEL_ID="$MODEL_ID" PORT="$PORT" python /tmp/diffusion_server.py > /tmp/diffusion.log 2>&1 &
+echo "Diffusion server started in background (PID: $!)"
+sleep 2  # Give it time to start
 """,
     health_check_script="""#!/bin/bash
 PORT="${PORT:-8002}"
@@ -322,8 +328,10 @@ PYEOF
 
 echo "[$(date)] Starting embeddings server on port $PORT..." >> /var/log/dumont-deploy.log
 echo "Starting embeddings server on port $PORT..."
-# Run in foreground to keep container alive
-MODEL_ID="$MODEL_ID" PORT="$PORT" python /tmp/embeddings_server.py 2>&1 | tee -a /var/log/dumont-deploy.log
+# Run in background with nohup so it survives SSH disconnect
+nohup env MODEL_ID="$MODEL_ID" PORT="$PORT" python /tmp/embeddings_server.py >> /var/log/dumont-deploy.log 2>&1 &
+echo "Embeddings server started in background (PID: $!)"
+sleep 2  # Give it time to start
 """,
     health_check_script="""#!/bin/bash
 PORT="${PORT:-8003}"
@@ -418,8 +426,10 @@ if __name__ == "__main__":
 PYEOF
 
 echo "Starting Vision server on port $PORT..."
-# Run in foreground to keep container alive
-MODEL_ID="$MODEL_ID" PORT="$PORT" python /tmp/vision_server.py 2>&1 | tee /tmp/vision.log
+# Run in background with nohup so it survives SSH disconnect
+nohup env MODEL_ID="$MODEL_ID" PORT="$PORT" python /tmp/vision_server.py > /tmp/vision.log 2>&1 &
+echo "Vision server started in background (PID: $!)"
+sleep 2  # Give it time to start
 """,
     health_check_script="""#!/bin/bash
 PORT="${PORT:-8004}"
@@ -516,8 +526,10 @@ if __name__ == "__main__":
 PYEOF
 
 echo "Starting Video server on port $PORT..."
-# Run in foreground to keep container alive
-MODEL_ID="$MODEL_ID" PORT="$PORT" python /tmp/video_server.py 2>&1 | tee /tmp/video.log
+# Run in background with nohup so it survives SSH disconnect
+nohup env MODEL_ID="$MODEL_ID" PORT="$PORT" python /tmp/video_server.py > /tmp/video.log 2>&1 &
+echo "Video server started in background (PID: $!)"
+sleep 2  # Give it time to start
 """,
     health_check_script="""#!/bin/bash
 PORT="${PORT:-8005}"
