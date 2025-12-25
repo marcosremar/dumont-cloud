@@ -231,12 +231,12 @@ class SmartRouter:
         ("savings", "history"): ("GET", "/api/v1/metrics/savings/history"),
         ("savings", "breakdown"): ("GET", "/api/v1/metrics/savings/real"),
 
-        # Jobs
-        ("jobs",): ("GET", "/api/v1/jobs"),
-        ("jobs", "list"): ("GET", "/api/v1/jobs"),
-        ("job", "get"): ("GET", "/api/v1/jobs/{job_id}"),
-        ("job", "create"): ("POST", "/api/v1/jobs"),
-        ("job", "cancel"): ("POST", "/api/v1/jobs/{job_id}/cancel"),
+        # Jobs (finetune jobs)
+        ("jobs",): ("GET", "/api/v1/finetune/jobs"),
+        ("jobs", "list"): ("GET", "/api/v1/finetune/jobs"),
+        ("job", "get"): ("GET", "/api/v1/finetune/jobs/{job_id}"),
+        ("job", "create"): ("POST", "/api/v1/finetune/jobs"),
+        ("job", "cancel"): ("POST", "/api/v1/finetune/jobs/{job_id}/cancel"),
 
         # Snapshots
         ("snapshots",): ("GET", "/api/v1/snapshots"),
@@ -251,9 +251,11 @@ class SmartRouter:
         ("serverless", "disable"): ("POST", "/api/v1/serverless/disable"),
 
         # Warmpool
+        ("warmpool",): ("GET", "/api/v1/warmpool/hosts"),
+        ("warmpool", "hosts"): ("GET", "/api/v1/warmpool/hosts"),
         ("warmpool", "status"): ("GET", "/api/v1/warmpool/status/{machine_id}"),
-        ("warmpool", "enable"): ("POST", "/api/v1/warmpool/enable"),
-        ("warmpool", "disable"): ("POST", "/api/v1/warmpool/disable"),
+        ("warmpool", "enable"): ("POST", "/api/v1/warmpool/enable/{machine_id}"),
+        ("warmpool", "disable"): ("POST", "/api/v1/warmpool/disable/{machine_id}"),
 
         # Models
         ("models",): ("GET", "/api/v1/models/deployments"),
