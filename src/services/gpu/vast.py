@@ -293,8 +293,10 @@ tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &
                 logger.debug(f"create_instance: offer_id={offer_id}, TEMPLATE={template_id}, disk={disk}")
             else:
                 # Usar imagem diretamente (sem template)
+                # IMPORTANTE: runtype=ssh habilita SSH proxy do Vast.ai
                 payload["image"] = image
-                logger.debug(f"create_instance: offer_id={offer_id}, IMAGE={image}, disk={disk}")
+                payload["runtype"] = "ssh"
+                logger.debug(f"create_instance: offer_id={offer_id}, IMAGE={image}, runtype=ssh, disk={disk}")
 
             # Retry logic for rate limiting
             max_retries = 10

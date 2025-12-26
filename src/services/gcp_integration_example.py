@@ -73,15 +73,11 @@ def create_gcp_machine(
     
     sync_id = f"sync-{gpu_instance_id}-{int(time.time())}"
     
-    # ... resto do código permanece igual ...
-    try:
-        # Construir comando gcloud
-        cmd = [
-            'gcloud', 'compute', 'instances', 'create', sync_id,
-            f'--project={project_id}',
-            f'--zone={zone}',  # ← USA A ZONA DETECTADA
-            f'--machine-type={machine_type}',
-            # ... resto igual
-        ]
-        
-        # ... continua igual ...
+    # Exemplo de uso - código incompleto para referência
+    # Ver sync_machine_service.py para implementação real
+    return {
+        "sync_id": sync_id,
+        "zone": zone,
+        "method": method,
+        "status": "example_only"
+    }

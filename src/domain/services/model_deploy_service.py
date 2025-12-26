@@ -18,6 +18,7 @@ from ..models.model_deploy import ModelDeployment, ModelType, ModelStatus, Acces
 from ...services.runtime_templates import get_template, get_all_templates, get_install_script, get_start_script, get_health_check_script
 from ...services.gpu.vast import VastService
 from ...services.gpu.strategies import MachineProvisionerService, ProvisionConfig, ProvisionResult
+from ...modules.models.images import get_image_for_model, MODEL_IMAGES
 
 logger = logging.getLogger(__name__)
 
@@ -123,14 +124,27 @@ class ModelDeployService:
                 # Use custom label if provided (for testing use dumont:test:*)
                 # Default to dumont:model-deploy for production
                 instance_label = label or "dumont:model-deploy"
+
+                # Get pre-built image from registry (reproducible, no pip install at runtime)
+                try:
+                    image_config = get_image_for_model(deployment.model_type.value)
+                    docker_image = image_config["image"]
+                    model_port = image_config.get("port", deployment.port)
+                    logger.info(f"Using pre-built image: {docker_image}")
+                except KeyError:
+                    # Fallback to generic pytorch image if model type not in registry
+                    docker_image = "pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime"
+                    model_port = deployment.port
+                    logger.warning(f"Model type {deployment.model_type.value} not in registry, using fallback image")
+
                 config = ProvisionConfig(
                     gpu_name=gpu_type,
                     max_price=max_price,
                     disk_space=100,
                     min_inet_down=100,
                     region="global",
-                    image="pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime",
-                    ports=[22, deployment.port],  # SSH + model port
+                    image=docker_image,
+                    ports=[22, model_port],  # SSH + model port
                     label=instance_label,
                 )
 
@@ -237,25 +251,64 @@ class ModelDeployService:
         """
         Run the model deployment script on the remote instance via SSH.
 
-        Uses scripts from runtime_templates module (DRY).
+        For pre-built images with start_cmd: Just start the server (no pip install needed).
+        For images with entrypoint (start_cmd empty): Server auto-starts, nothing to do.
+        For fallback images (use_fallback=True): Full install + start via runtime_templates.
+
         Note: ssh_host is the SSH proxy host (e.g., ssh8.vast.ai), not the public IP.
         """
-        # Get scripts from centralized runtime_templates
-        install_script = get_install_script(deployment.model_type.value)
-        start_script = get_start_script(deployment.model_type.value, deployment.model_id, deployment.port)
+        model_type = deployment.model_type.value
 
-        deploy_cmd = f"""#!/bin/bash
+        # Get image config
+        image_config = MODEL_IMAGES.get(model_type, {})
+        use_fallback = image_config.get("use_fallback", False)
+        start_cmd = image_config.get("start_cmd", "")
+        port = image_config.get("port", deployment.port)
+
+        if use_fallback or model_type not in MODEL_IMAGES:
+            # Fallback: use runtime_templates (full pip install + start)
+            install_script = get_install_script(model_type)
+            start_script = get_start_script(model_type, deployment.model_id, deployment.port)
+
+            deploy_cmd = f"""#!/bin/bash
 set -e
 export MODEL_ID="{deployment.model_id}"
 export PORT={deployment.port}
 
-echo "[$(date)] Starting deployment for {deployment.model_id}" >> /var/log/dumont-deploy.log
+echo "[$(date)] Starting fallback deployment for {deployment.model_id}" >> /var/log/dumont-deploy.log
 
-# Install runtime
+# Install runtime (fallback mode)
 {install_script}
 
 # Start model server
 {start_script}
+"""
+        elif not start_cmd:
+            # Image has entrypoint (e.g., whisper ASR) - server auto-starts
+            # Just log that we're ready
+            deploy_cmd = f"""#!/bin/bash
+echo "[$(date)] Pre-built image with entrypoint for {deployment.model_id}" >> /var/log/dumont-deploy.log
+echo "Server should auto-start via Docker entrypoint"
+"""
+            logger.info(f"Image has entrypoint, server should auto-start for {deployment.model_id}")
+        else:
+            # Pre-built image with start_cmd (e.g., vLLM) - need to start manually
+            # Substitute variables in start_cmd
+            actual_start_cmd = start_cmd.replace("$MODEL_ID", deployment.model_id).replace("$PORT", str(port))
+
+            deploy_cmd = f"""#!/bin/bash
+set -e
+export MODEL_ID="{deployment.model_id}"
+export PORT={port}
+export HF_TOKEN="${{HF_TOKEN:-}}"
+
+echo "[$(date)] Starting pre-built deployment for {deployment.model_id}" >> /var/log/dumont-deploy.log
+
+# Server already installed in image, just start it
+nohup {actual_start_cmd} > /var/log/model-server.log 2>&1 &
+
+echo "[$(date)] Model server started (PID: $!)" >> /var/log/dumont-deploy.log
+sleep 2
 """
         # Execute via SSH using ssh_host (the SSH proxy, e.g. ssh8.vast.ai)
         ssh_cmd = [

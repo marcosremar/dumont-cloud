@@ -86,63 +86,45 @@ class RaceStrategy(ProvisioningStrategy):
 
             winner: Optional[MachineCandidate] = None
 
-            # Process in batches
-            for batch_num in range(config.max_batches):
-                if winner:
-                    break
+            # Create all machines at once (up to batch_size)
+            batch_offers = offers[:config.batch_size]
 
-                batch_start_idx = batch_num * config.batch_size
-                batch_offers = offers[batch_start_idx:batch_start_idx + config.batch_size]
+            report_progress(
+                "creating",
+                f"Creating {len(batch_offers)} machines...",
+                15,
+            )
 
-                if not batch_offers:
-                    break
+            # Create machines in parallel
+            all_candidates = self._create_batch(
+                vast_service, batch_offers, config
+            )
 
-                batch_progress_base = 10 + (batch_num * 25)
-                report_progress(
-                    "creating",
-                    f"Batch {batch_num + 1}/{config.max_batches}: Creating {len(batch_offers)} machines...",
-                    batch_progress_base,
+            total_machines_tried = len(batch_offers)
+            total_machines_created = len(all_candidates)
+
+            if not all_candidates:
+                report_progress("failed", "No machines could be created", 100)
+                return ProvisionResult(
+                    success=False,
+                    error="Failed to create any instances",
+                    machines_tried=total_machines_tried,
+                    total_time_seconds=time.time() - start_time,
                 )
 
-                # Create machines in parallel
-                batch_candidates = self._create_batch(
-                    vast_service, batch_offers, config
-                )
+            # Race for SSH connection - NO TIMEOUT
+            report_progress(
+                "waiting",
+                f"Waiting for first machine to be ready ({len(all_candidates)} racing)...",
+                25,
+            )
 
-                total_machines_tried += len(batch_offers)
-                total_machines_created += len(batch_candidates)
-                all_candidates.extend(batch_candidates)
-
-                if not batch_candidates:
-                    report_progress(
-                        "waiting",
-                        f"Batch {batch_num + 1}: No machines created, trying next batch",
-                        batch_progress_base + 5,
-                    )
-                    continue
-
-                # Race for SSH connection
-                report_progress(
-                    "waiting",
-                    f"Waiting for first machine to be ready ({len(batch_candidates)} racing)...",
-                    batch_progress_base + 10,
-                )
-
-                winner = self._race_for_ready(
-                    vast_service,
-                    batch_candidates,
-                    config,
-                    progress_callback=lambda s, m, p: report_progress(
-                        s, m, batch_progress_base + 10 + int(p * 0.15)
-                    ),
-                )
-
-                if not winner:
-                    report_progress(
-                        "waiting",
-                        f"Batch {batch_num + 1}: No machine ready in {config.batch_timeout}s",
-                        batch_progress_base + 25,
-                    )
+            winner = self._race_for_ready(
+                vast_service,
+                all_candidates,
+                config,
+                progress_callback=lambda s, m, p: report_progress(s, m, 25 + int(p * 0.5)),
+            )
 
             # Cleanup - destroy all non-winners
             destroyed = self._cleanup(vast_service, all_candidates, winner)
@@ -161,7 +143,7 @@ class RaceStrategy(ProvisioningStrategy):
                     gpu_name=winner.gpu_name,
                     dph_total=winner.dph_total,
                     port_mappings=winner.port_mappings,
-                    rounds_attempted=batch_num + 1,
+                    rounds_attempted=1,
                     machines_tried=total_machines_tried,
                     machines_created=total_machines_created,
                     total_time_seconds=total_time,
@@ -171,8 +153,8 @@ class RaceStrategy(ProvisioningStrategy):
                 report_progress("failed", "No machine became ready", 100)
                 return ProvisionResult(
                     success=False,
-                    error=f"No machine ready after {config.max_batches} batches ({total_machines_tried} tried)",
-                    rounds_attempted=config.max_batches,
+                    error=f"All {total_machines_created} machines failed or no SSH connectivity",
+                    rounds_attempted=1,
                     machines_tried=total_machines_tried,
                     machines_created=total_machines_created,
                     total_time_seconds=total_time,
@@ -304,54 +286,81 @@ class RaceStrategy(ProvisioningStrategy):
         """
         Race all candidates - first with SSH ready wins.
 
-        Returns the winning candidate or None.
-        """
-        batch_start = time.time()
-        destroyed_ids = set()
+        NO TIMEOUT - waits until at least one machine is ready.
+        Docker image pull can take variable time depending on image size.
 
-        while time.time() - batch_start < config.batch_timeout:
+        Returns the winning candidate or None (only if all machines fail/destroyed).
+        """
+        race_start = time.time()
+        destroyed_ids = set()
+        failed_ids = set()
+        max_consecutive_failures = 10  # Safety: stop if all checks fail repeatedly
+
+        consecutive_failures = 0
+
+        while True:
             # Update SSH info for all candidates
             active_candidates = [
                 (c, t) for c, t in candidates
-                if c.instance_id not in destroyed_ids
+                if c.instance_id not in destroyed_ids and c.instance_id not in failed_ids
             ]
 
             if not active_candidates:
+                logger.warning("[RaceStrategy] No active candidates left")
                 return None
 
             # Check all candidates in parallel
-            winner = self._check_candidates_parallel(
+            winner, newly_failed = self._check_candidates_parallel_v2(
                 vast_service, active_candidates, config
             )
+
+            # Track failed instances
+            for failed_id in newly_failed:
+                failed_ids.add(failed_id)
 
             if winner:
                 return winner
 
-            elapsed = int(time.time() - batch_start)
+            # Check if all remaining machines failed
+            if len(failed_ids) >= len(candidates):
+                logger.warning("[RaceStrategy] All machines failed")
+                return None
+
+            elapsed = int(time.time() - race_start)
+            remaining = len(active_candidates) - len(newly_failed)
+
             if progress_callback:
-                progress = int((elapsed / config.batch_timeout) * 100)
                 progress_callback(
                     "waiting",
-                    f"Waiting... ({elapsed}s/{config.batch_timeout}s, {len(active_candidates)} machines)",
-                    progress,
+                    f"Waiting for SSH... ({elapsed}s, {remaining} machines loading)",
+                    min(50, elapsed),  # Cap at 50% for waiting phase
                 )
 
             time.sleep(config.check_interval)
 
-        return None
-
-    def _check_candidates_parallel(
+    def _check_candidates_parallel_v2(
         self,
         vast_service: Any,
         candidates: List[Tuple[MachineCandidate, float]],
         config: ProvisionConfig,
-    ) -> Optional[MachineCandidate]:
-        """Check SSH connectivity for all candidates in parallel"""
+    ) -> Tuple[Optional[MachineCandidate], List[int]]:
+        """
+        Check SSH connectivity for all candidates in parallel.
 
-        def check_one(candidate: MachineCandidate, start_time: float) -> Optional[MachineCandidate]:
+        Returns:
+            (winner, failed_ids) - winner if found, plus list of failed instance IDs
+        """
+        failed_ids = []
+
+        def check_one(candidate: MachineCandidate, start_time: float) -> Tuple[Optional[MachineCandidate], Optional[int]]:
             try:
                 status = vast_service.get_instance_status(candidate.instance_id)
-                actual_status = status.get("status")
+                actual_status = status.get("actual_status") or status.get("status")
+
+                # Check for terminal failure states
+                if actual_status in ("exited", "error", "destroyed"):
+                    logger.warning(f"[RaceStrategy] Instance {candidate.instance_id} failed: {actual_status}")
+                    return (None, candidate.instance_id)
 
                 if actual_status == "running":
                     ssh_host = status.get("ssh_host")
@@ -378,12 +387,14 @@ class RaceStrategy(ProvisioningStrategy):
                                 f"[RaceStrategy] {candidate.gpu_name} ready in "
                                 f"{candidate.ready_time:.1f}s at {ssh_host}:{ssh_port}"
                             )
-                            return candidate
+                            return (candidate, None)
+
+                # Still loading/waiting
+                return (None, None)
 
             except Exception as e:
                 logger.debug(f"[RaceStrategy] Check failed for {candidate.instance_id}: {e}")
-
-            return None
+                return (None, None)
 
         with ThreadPoolExecutor(max_workers=len(candidates)) as executor:
             futures = {
@@ -391,15 +402,27 @@ class RaceStrategy(ProvisioningStrategy):
                 for c, t in candidates
             }
 
-            for future in as_completed(futures, timeout=10):
+            for future in as_completed(futures, timeout=15):
                 try:
-                    result = future.result()
-                    if result:
-                        return result
+                    winner, failed_id = future.result()
+                    if winner:
+                        return (winner, failed_ids)
+                    if failed_id:
+                        failed_ids.append(failed_id)
                 except Exception:
                     pass
 
-        return None
+        return (None, failed_ids)
+
+    def _check_candidates_parallel(
+        self,
+        vast_service: Any,
+        candidates: List[Tuple[MachineCandidate, float]],
+        config: ProvisionConfig,
+    ) -> Optional[MachineCandidate]:
+        """Legacy method - calls v2 and ignores failed list"""
+        winner, _ = self._check_candidates_parallel_v2(vast_service, candidates, config)
+        return winner
 
     def _cleanup(
         self,
