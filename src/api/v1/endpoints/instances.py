@@ -1054,14 +1054,16 @@ async def enable_serverless_alias(
     user_repo = FileUserRepository(config_file=settings.app.config_file)
     user = user_repo.get_user(user_email)
 
-    if not user or not user.vast_api_key:
+    # Try user's key first, then fall back to system key from .env
+    api_key = (user.vast_api_key if user else None) or settings.vast.api_key
+    if not api_key:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Vast.ai API key not configured"
         )
 
     manager = get_serverless_manager()
-    manager.configure(vast_api_key=user.vast_api_key)
+    manager.configure(vast_api_key=api_key)
 
     # Handle mode aliases
     mode = request.mode
@@ -1098,14 +1100,16 @@ async def disable_serverless_alias(
     user_repo = FileUserRepository(config_file=settings.app.config_file)
     user = user_repo.get_user(user_email)
 
-    if not user or not user.vast_api_key:
+    # Try user's key first, then fall back to system key from .env
+    api_key = (user.vast_api_key if user else None) or settings.vast.api_key
+    if not api_key:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Vast.ai API key not configured"
         )
 
     manager = get_serverless_manager()
-    manager.configure(vast_api_key=user.vast_api_key)
+    manager.configure(vast_api_key=api_key)
 
     result = manager.disable(instance_id)
 
@@ -1232,6 +1236,40 @@ async def get_instance_health(
             "status": instance.status,
             "gpu_name": instance.gpu_name,
             "ssh_available": bool(instance.ssh_host and instance.ssh_port),
+        }
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+
+@router.get("/{instance_id}/savings")
+async def get_instance_savings(
+    instance_id: int,
+    instance_service: InstanceService = Depends(get_instance_service),
+):
+    """
+    Get savings metrics for an instance
+    """
+    try:
+        instance = instance_service.get_instance(instance_id)
+
+        # Calculate estimated savings based on serverless mode
+        dph = instance.dph_total or 0
+        hours_idle = 20  # Estimated 20 hours idle per day
+        days = 30
+
+        # Savings from serverless (assume 80% idle time)
+        potential_savings = dph * hours_idle * days * 0.8
+
+        return {
+            "instance_id": instance_id,
+            "current_dph": dph,
+            "estimated_monthly_cost": dph * 24 * days,
+            "estimated_serverless_cost": dph * 4 * days + 0.01 * 20 * days,  # 4h active + 20h standby
+            "estimated_savings": potential_savings,
+            "savings_percent": 80,  # Estimated
         }
     except NotFoundException as e:
         raise HTTPException(

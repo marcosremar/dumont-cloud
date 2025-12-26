@@ -1,8 +1,8 @@
 {
   "users": {
     "test@test.com": {
-      "password": "ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae",
-      "vast_api_key": "test_api_key_12345",
+      "password": "937e8d5fbb48bd4949536cd65b8d35c426b80d2f830c5c308e2cdec422ae2244",
+      "vast_api_key": null,
       "settings": {
         "test_key": "test_value",
         "cloud_storage": {
@@ -21,6 +21,21 @@
     },
     "qa@test.com": {
       "password": "7e6e0c3079a08c5cc6036789b57e951f65f82383913ba1a49ae992544f1b4b6e",
+      "vast_api_key": null,
+      "settings": {}
+    },
+    "test2@test.com": {
+      "password": "ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae",
+      "vast_api_key": null,
+      "settings": {}
+    },
+    "testXYZ@test.com": {
+      "password": "ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae",
+      "vast_api_key": null,
+      "settings": {}
+    },
+    "serverless_test@test.com": {
+      "password": "ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae",
       "vast_api_key": null,
       "settings": {}
     }

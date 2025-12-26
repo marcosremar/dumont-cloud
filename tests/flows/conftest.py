@@ -14,7 +14,7 @@ from dataclasses import dataclass
 # Configuração
 BASE_URL = os.environ.get("DUMONT_API_URL", "http://localhost:8000")
 TEST_EMAIL = os.environ.get("TEST_EMAIL", "test@test.com")
-TEST_PASSWORD = os.environ.get("TEST_PASSWORD", "test123")
+TEST_PASSWORD = os.environ.get("TEST_PASSWORD", "test1234")
 VAST_API_KEY = os.environ.get("VAST_API_KEY", "")
 
 # Timeouts
@@ -157,8 +157,8 @@ def auth_token() -> str:
     with httpx.Client(base_url=BASE_URL, timeout=TIMEOUT_SHORT) as client:
         # Tentar login
         response = client.post(
-            "/api/auth/login",
-            json={"email": TEST_EMAIL, "password": TEST_PASSWORD}
+            "/api/v1/auth/login",
+            json={"username": TEST_EMAIL, "password": TEST_PASSWORD}
         )
 
         if response.status_code == 200:
@@ -166,8 +166,8 @@ def auth_token() -> str:
 
         # Se login falhar, tentar registrar
         response = client.post(
-            "/api/auth/register",
-            json={"email": TEST_EMAIL, "password": TEST_PASSWORD}
+            "/api/v1/auth/register",
+            json={"username": TEST_EMAIL, "password": TEST_PASSWORD}
         )
 
         if response.status_code in [200, 201]:
