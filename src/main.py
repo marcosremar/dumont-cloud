@@ -51,11 +51,31 @@ async def lifespan(app: FastAPI):
         # Initialize CPU Standby Manager
         try:
             from .services.standby.manager import get_standby_manager
-            gcp_credentials_json = os.environ.get("GCP_CREDENTIALS", "")
+            import json as json_module
 
-            if gcp_credentials_json and vast_api_key:
-                import json
-                gcp_creds = json.loads(gcp_credentials_json)
+            gcp_creds = None
+
+            # Try to load GCP credentials from multiple sources:
+            # 1. GCP_CREDENTIALS environment variable (JSON string)
+            gcp_credentials_json = os.environ.get("GCP_CREDENTIALS", "")
+            if gcp_credentials_json:
+                try:
+                    gcp_creds = json_module.loads(gcp_credentials_json)
+                except json_module.JSONDecodeError:
+                    logger.warning("Invalid JSON in GCP_CREDENTIALS env var")
+
+            # 2. GOOGLE_APPLICATION_CREDENTIALS file path
+            if not gcp_creds:
+                creds_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+                if creds_path and os.path.exists(creds_path):
+                    try:
+                        with open(creds_path, 'r') as f:
+                            gcp_creds = json_module.load(f)
+                        logger.info(f"✓ Loaded GCP credentials from {creds_path}")
+                    except Exception as e:
+                        logger.warning(f"Failed to load GCP credentials from file: {e}")
+
+            if gcp_creds and vast_api_key:
 
                 standby_mgr = get_standby_manager()
                 standby_mgr.configure(
@@ -100,6 +120,28 @@ async def lifespan(app: FastAPI):
                 logger.info("✓ MarketMonitorAgent started")
         except Exception as e:
             logger.warning(f"⚠ MarketMonitorAgent not started: {e}")
+
+        # Initialize AutoHibernationManager (monitors GPU usage and auto-hibernates idle instances)
+        try:
+            from .services.standby.hibernation import init_auto_hibernation_manager
+
+            b2_endpoint = os.environ.get("B2_ENDPOINT", "")
+            b2_bucket = os.environ.get("B2_BUCKET", "")
+
+            if vast_api_key and b2_endpoint and b2_bucket:
+                hibernation_manager = init_auto_hibernation_manager(
+                    vast_api_key=vast_api_key,
+                    r2_endpoint=b2_endpoint,
+                    r2_bucket=b2_bucket,
+                    check_interval=30  # Check every 30 seconds
+                )
+                hibernation_manager.start()  # Start the background monitoring thread
+                agents_started.append("AutoHibernationManager")
+                logger.info("✓ AutoHibernationManager started (monitoring GPU usage)")
+            else:
+                logger.warning("⚠ AutoHibernationManager not started (missing VAST_API_KEY, B2_ENDPOINT or B2_BUCKET)")
+        except Exception as e:
+            logger.warning(f"⚠ AutoHibernationManager not started: {e}")
 
         # Initialize Periodic Snapshot Service
         try:

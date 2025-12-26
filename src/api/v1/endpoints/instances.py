@@ -422,6 +422,7 @@ async def create_instance(
             disk_size=request.disk_size,
             label=request.label,
             ports=request.ports,
+            onstart_cmd=request.onstart_cmd,
         )
         logger.info(f"Instance {instance.id} created successfully")
 

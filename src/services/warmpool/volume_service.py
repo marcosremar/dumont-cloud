@@ -47,7 +47,7 @@ class VolumeService:
 
     def __init__(self, vast_api_key: str):
         self.api_key = vast_api_key
-        self.api_url = "https://console.vast.ai/api/v0"
+        self.api_url = "https://cloud.vast.ai/api/v0"
 
     async def create_volume(
         self,

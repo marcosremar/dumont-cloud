@@ -33,7 +33,7 @@ class ResticConfig:
 @dataclass
 class VastConfig:
     """Configuracoes da API vast.ai"""
-    api_url: str = "https://console.vast.ai/api/v0"
+    api_url: str = "https://cloud.vast.ai/api/v0"
 
     # Timeouts
     stage_timeout: int = 30  # Timeout por etapa de inicializacao

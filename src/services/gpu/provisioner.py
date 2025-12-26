@@ -68,7 +68,7 @@ class GPUProvisioner:
     def __init__(self, vast_api_key: str):
         self.api_key = vast_api_key
         self.headers = {"Authorization": f"Bearer {vast_api_key}"}
-        self.base_url = "https://console.vast.ai/api/v0"
+        self.base_url = "https://cloud.vast.ai/api/v0"
 
     # Default Docker image - Vast.ai's own image (pre-cached, boots in ~20s)
     DEFAULT_IMAGE = "vastai/pytorch"

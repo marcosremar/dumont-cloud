@@ -82,7 +82,7 @@ class WarmPoolManager:
     ):
         self.machine_id = machine_id
         self.api_key = vast_api_key
-        self.api_url = "https://console.vast.ai/api/v0"
+        self.api_url = "https://cloud.vast.ai/api/v0"
 
         # Configuracao
         self.config = config or WarmPoolConfig()

@@ -49,6 +49,7 @@ class CreateInstanceRequest(BaseModel):
     disk_size: float = Field(100, ge=10, description="Disk size (GB)")
     label: Optional[str] = Field(None, description="Instance label")
     ports: Optional[List[int]] = Field(None, description="Ports to expose")
+    onstart_cmd: Optional[str] = Field(None, description="Command to run on instance start (like SSH install)")
     skip_standby: bool = Field(False, alias="skip-standby", description="Skip CPU standby creation (default: create standby)")
     skip_validation: bool = Field(False, description="Skip pre-validation (faster but may fail at creation time)")
 

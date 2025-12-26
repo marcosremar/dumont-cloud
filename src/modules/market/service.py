@@ -98,7 +98,7 @@ class MarketService:
             import aiohttp
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    "https://console.vast.ai/api/v0/bundles",
+                    "https://cloud.vast.ai/api/v0/bundles",
                     headers={"Authorization": f"Bearer {self.vast_api_key}"},
                     timeout=30
                 ) as resp:

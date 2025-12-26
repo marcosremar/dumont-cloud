@@ -126,6 +126,9 @@ def get_instance_service(
     user_email: str = Depends(get_current_user_email),
 ) -> InstanceService:
     """Get instance service"""
+    import logging
+    logger = logging.getLogger(__name__)
+
     settings = get_settings()
 
     # In demo mode, use demo provider that returns mock data
@@ -139,7 +142,11 @@ def get_instance_service(
     user = user_repo.get_user(user_email)
 
     # Try user's key first, then fall back to system key from .env
-    api_key = (user.vast_api_key if user else None) or settings.vast.api_key
+    user_api_key = user.vast_api_key if user else None
+    system_api_key = settings.vast.api_key
+    api_key = user_api_key or system_api_key
+
+    logger.info(f"get_instance_service: user={user_email}, user_key={user_api_key[:10] if user_api_key else 'empty'}..., system_key={system_api_key[:10] if system_api_key else 'empty'}...")
 
     if not api_key:
         raise HTTPException(

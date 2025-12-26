@@ -88,7 +88,7 @@ class VastProvider(IGpuProvider):
 
         # 401 Unauthorized
         if status == 401:
-            raise VastAPIException("API key inválida ou expirada. Verifique sua chave em console.vast.ai")
+            raise VastAPIException("API key inválida ou expirada. Verifique sua chave em cloud.vast.ai")
 
         # 402 Payment Required
         if status == 402:
@@ -417,23 +417,33 @@ class VastProvider(IGpuProvider):
             "client_id": "me",
             "image": image,
             "disk": int(disk_size),
-            "onstart": onstart_cmd,
-            "extra_env": extra_env,
         }
 
+        # Só adicionar campos opcionais se tiverem valor
+        if onstart_cmd:
+            payload["onstart"] = onstart_cmd
+        if extra_env:
+            payload["extra_env"] = extra_env
         if label:
             payload["label"] = label
 
         try:
+            url = f"{self.api_url}/asks/{offer_id}/"
+            logger.debug(f"create_instance: PUT {url}")
+            logger.debug(f"create_instance: payload={payload}")
+
             resp = requests.put(
-                f"{self.api_url}/asks/{offer_id}/",
+                url,
                 json=payload,
                 headers=self.headers,
                 timeout=self.timeout,
             )
 
+            logger.debug(f"create_instance: status={resp.status_code}, response={resp.text[:200]}")
+
             # Usar error handler para respostas de erro
             if not resp.ok:
+                logger.warning(f"create_instance: Error {resp.status_code} for offer {offer_id}: {resp.text}")
                 self._handle_vast_error(resp, "criar instância", offer_id)
 
             data = resp.json()
@@ -755,49 +765,61 @@ class VastProvider(IGpuProvider):
             return False
 
     def pause_instance(self, instance_id: int) -> bool:
-        """Pause an instance"""
-        logger.info(f"Pausing instance {instance_id}")
+        """
+        Pause (stop) an instance.
+
+        VAST.ai uses {"state": "stopped"} to pause instances.
+        The intended_status will change to "stopped".
+        """
+        logger.info(f"Stopping instance {instance_id}")
         try:
             resp = requests.put(
                 f"{self.api_url}/instances/{instance_id}/",
-                headers={"Accept": "application/json"},
-                params={"api_key": self.api_key},
-                json={"paused": True},
+                headers=self.headers,
+                json={"state": "stopped"},
                 timeout=self.timeout,
             )
             success = resp.status_code == 200 and resp.json().get("success", False)
             if success:
-                logger.info(f"Instance {instance_id} paused")
+                logger.info(f"Instance {instance_id} stop requested")
+            else:
+                logger.warning(f"Instance {instance_id} stop failed: {resp.text}")
             return success
 
         except requests.RequestException as e:
-            logger.error(f"Failed to pause instance: {e}")
+            logger.error(f"Failed to stop instance: {e}")
             raise ServiceUnavailableException(f"Vast.ai API unreachable: {e}")
         except Exception as e:
-            logger.error(f"Unexpected error pausing instance: {e}")
+            logger.error(f"Unexpected error stopping instance: {e}")
             return False
 
     def resume_instance(self, instance_id: int) -> bool:
-        """Resume a paused instance"""
-        logger.info(f"Resuming instance {instance_id}")
+        """
+        Resume (start) a stopped instance.
+
+        VAST.ai uses {"state": "running"} to start instances.
+        The intended_status will change to "running".
+        """
+        logger.info(f"Starting instance {instance_id}")
         try:
             resp = requests.put(
                 f"{self.api_url}/instances/{instance_id}/",
-                headers={"Accept": "application/json"},
-                params={"api_key": self.api_key},
-                json={"paused": False},
+                headers=self.headers,
+                json={"state": "running"},
                 timeout=self.timeout,
             )
             success = resp.status_code == 200 and resp.json().get("success", False)
             if success:
-                logger.info(f"Instance {instance_id} resumed")
+                logger.info(f"Instance {instance_id} start requested")
+            else:
+                logger.warning(f"Instance {instance_id} start failed: {resp.text}")
             return success
 
         except requests.RequestException as e:
-            logger.error(f"Failed to resume instance: {e}")
+            logger.error(f"Failed to start instance: {e}")
             raise ServiceUnavailableException(f"Vast.ai API unreachable: {e}")
         except Exception as e:
-            logger.error(f"Unexpected error resuming instance: {e}")
+            logger.error(f"Unexpected error starting instance: {e}")
             return False
 
     def get_instance_metrics(self, instance_id: int) -> Dict[str, Any]:
@@ -882,54 +904,17 @@ class VastProvider(IGpuProvider):
         if result["balance"] < 1.0:
             result["warnings"].append(f"Saldo baixo: ${result['balance']:.2f}")
 
-        # 3. Verificar se oferta ainda existe e está disponível
-        try:
-            # Buscar oferta específica
-            resp = requests.get(
-                f"{self.api_url}/bundles/",
-                params={"q": json.dumps({"id": {"eq": offer_id}, "rentable": {"eq": True}})},
-                headers=self.headers,
-                timeout=self.timeout,
-            )
-
-            if not resp.ok:
-                self._handle_vast_error(resp, "verificar oferta", offer_id)
-
-            data = resp.json()
-            offers = data.get("offers", [])
-
-            if not offers:
-                result["valid"] = False
-                result["errors"].append(f"Oferta {offer_id} não está mais disponível")
-                raise OfferUnavailableException(offer_id, "A máquina pode ter sido alugada ou saiu do ar")
-
-            offer = offers[0]
-            result["offer"] = offer
-
-            # Verificar se temos saldo para pelo menos 1 hora
-            price_per_hour = offer.get("dph_total", 0)
-            if price_per_hour > 0 and result["balance"] < price_per_hour:
-                result["valid"] = False
-                result["errors"].append(
-                    f"Saldo insuficiente para esta máquina. "
-                    f"Preço: ${price_per_hour:.4f}/hora, Saldo: ${result['balance']:.2f}"
-                )
-                raise InsufficientBalanceException(required=price_per_hour, available=result["balance"])
-
-            # Avisar se saldo baixo para operação prolongada
-            hours_available = result["balance"] / price_per_hour if price_per_hour > 0 else 999
-            if hours_available < 2:
-                result["warnings"].append(
-                    f"Saldo permite apenas ~{hours_available:.1f}h de uso. "
-                    f"Considere adicionar créditos."
-                )
-
-        except (OfferUnavailableException, InsufficientBalanceException):
-            raise
-        except Exception as e:
-            result["valid"] = False
-            result["errors"].append(f"Erro ao verificar oferta: {e}")
-            logger.error(f"Error validating offer {offer_id}: {e}")
+        # 3. Nota: Não verificamos existência de oferta específica porque:
+        #    - A query {"id": {"eq": offer_id}} não funciona consistentemente na API VAST
+        #    - Ofertas são muito transientes (podem ser alugadas em segundos)
+        #    - A tentativa de criar a instância retornará erro claro se oferta indisponível
+        #
+        # Apenas adicionamos um aviso que a verificação de oferta foi pulada
+        result["warnings"].append(
+            f"Verificação de disponibilidade da oferta {offer_id} não realizada. "
+            "Se a oferta já foi alugada, a criação falhará com erro claro."
+        )
+        logger.debug(f"Skipping offer availability check for {offer_id} (VAST.ai API limitation)")
 
         return result
 

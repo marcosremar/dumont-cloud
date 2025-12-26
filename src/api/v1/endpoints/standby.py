@@ -181,12 +181,36 @@ async def configure_standby(
             detail="User not found"
         )
 
-    # Check for GCP credentials
+    # Check for GCP credentials (multiple sources)
+    # 1. Direct gcp_credentials in settings
     gcp_creds = user.settings.get("gcp_credentials")
+
+    # 2. From cloud_storage settings (frontend saves here)
+    if not gcp_creds:
+        cloud_storage = user.settings.get("cloud_storage", {})
+        gcs_creds_json = cloud_storage.get("gcs_credentials_json")
+        if gcs_creds_json:
+            try:
+                gcp_creds = json.loads(gcs_creds_json) if isinstance(gcs_creds_json, str) else gcs_creds_json
+            except json.JSONDecodeError:
+                pass
+
+    # 3. From environment file (GOOGLE_APPLICATION_CREDENTIALS)
+    if not gcp_creds:
+        import os
+        creds_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+        if creds_path and os.path.exists(creds_path):
+            try:
+                with open(creds_path, 'r') as f:
+                    gcp_creds = json.load(f)
+                logger.info(f"Loaded GCP credentials from {creds_path}")
+            except Exception as e:
+                logger.warning(f"Failed to load GCP credentials from file: {e}")
+
     if not gcp_creds and request.enabled:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="GCP credentials not configured. Please add gcp_credentials to your settings."
+            detail="GCP credentials not configured. Set GOOGLE_APPLICATION_CREDENTIALS or add gcp_credentials to settings."
         )
 
     if not user.vast_api_key and request.enabled:
@@ -737,7 +761,7 @@ def _get_vast_instance_info(instance_id: int, vast_api_key: str) -> Dict[str, An
     import requests
 
     headers = {"Authorization": f"Bearer {vast_api_key}"}
-    response = requests.get("https://console.vast.ai/api/v0/instances/", headers=headers)
+    response = requests.get("https://cloud.vast.ai/api/v0/instances/", headers=headers)
     response.raise_for_status()
 
     for instance in response.json().get("instances", []):
@@ -958,7 +982,7 @@ async def test_real_failover(
             # Actually destroy the GPU instance
             headers = {"Authorization": f"Bearer {user.vast_api_key}"}
             response = requests.delete(
-                f"https://console.vast.ai/api/v0/instances/{gpu_instance_id}/",
+                f"https://cloud.vast.ai/api/v0/instances/{gpu_instance_id}/",
                 headers=headers
             )
             logger.info(f"[{failover_id}] GPU {gpu_instance_id} destroyed")
@@ -986,7 +1010,7 @@ async def test_real_failover(
         }
 
         response = requests.get(
-            "https://console.vast.ai/api/v0/bundles",
+            "https://cloud.vast.ai/api/v0/bundles",
             headers=headers,
             params=search_params
         )
@@ -1011,7 +1035,7 @@ async def test_real_failover(
             try:
                 logger.info(f"[{failover_id}] Trying offer {offer['id']} ({offer.get('gpu_name', 'unknown')})...")
                 create_response = requests.put(
-                    f"https://console.vast.ai/api/v0/asks/{offer['id']}/",
+                    f"https://cloud.vast.ai/api/v0/asks/{offer['id']}/",
                     headers=headers,
                     json={
                         "client_id": "me",

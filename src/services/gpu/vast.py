@@ -89,7 +89,7 @@ class GpuOffer:
 class VastService:
     """Service para gerenciar instancias vast.ai"""
 
-    API_URL = "https://console.vast.ai/api/v0"
+    API_URL = "https://cloud.vast.ai/api/v0"
 
     def __init__(self, api_key: str):
         self.api_key = api_key

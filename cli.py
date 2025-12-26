@@ -21,7 +21,7 @@ CONFIG_FILE = Path.home() / ".dumont_config"
 
 
 class DumontCLI:
-    def __init__(self, base_url: str = "http://localhost:8766"):
+    def __init__(self, base_url: str = "http://localhost:8000"):
         self.base_url = base_url
         self.token: Optional[str] = None
         self.session = requests.Session()
@@ -783,7 +783,7 @@ Examples:
   dumont wizard deploy                          # Deploy any GPU
   dumont wizard deploy "RTX 4090"               # Deploy specific GPU
   dumont wizard deploy gpu="RTX 4090" speed=fast price=1.5
-  
+
   # Model Installation
   dumont model install <instance_id> <model_id>
   dumont model install 12345 llama3.2
@@ -801,11 +801,14 @@ Examples:
   dumont auth me
         """
     )
-    
+
+    # Get default base URL from environment variable or use localhost:8000
+    default_base_url = os.environ.get('DUMONT_API_URL', 'http://localhost:8000')
+
     parser.add_argument(
         "--base-url",
-        default="http://localhost:8766",
-        help="Base URL of the API"
+        default=default_base_url,
+        help=f"Base URL of the API (default: {default_base_url}, can be set via DUMONT_API_URL env var)"
     )
     
     parser.add_argument("resource", nargs="?", help="Resource (instance, wizard, model, auth, etc)")

@@ -104,6 +104,7 @@ class InstanceService:
         disk_size: float = 100,
         label: Optional[str] = None,
         ports: Optional[List[int]] = None,
+        onstart_cmd: Optional[str] = None,
     ) -> Instance:
         """
         Create a new GPU instance
@@ -114,6 +115,7 @@ class InstanceService:
             disk_size: Disk size in GB
             label: Optional label for the instance
             ports: List of ports to expose
+            onstart_cmd: Command to run on instance start (e.g., SSH install script)
 
         Returns:
             Created instance
@@ -132,6 +134,7 @@ class InstanceService:
             disk_size=disk_size,
             label=label,
             env_vars=env_vars,
+            onstart_cmd=onstart_cmd,
         )
 
         logger.info(f"Instance {instance.id} created successfully")

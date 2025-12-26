@@ -101,7 +101,7 @@ class InstanceResponse(BaseModel):
     """Instance response"""
     id: int
     status: str
-    actual_status: str
+    actual_status: Optional[str] = None  # Can be None when instance is starting
     gpu_name: str
     num_gpus: int
     gpu_ram: float

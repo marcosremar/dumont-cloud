@@ -39,7 +39,7 @@ class VastSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="VAST_", extra="ignore")
 
     api_key: str = Field(default="", validation_alias=AliasChoices("api_key", "VAST_API_KEY"))
-    api_url: str = Field(default="https://console.vast.ai/api/v0", validation_alias=AliasChoices("api_url", "VAST_API_URL"))
+    api_url: str = Field(default="https://cloud.vast.ai/api/v0", validation_alias=AliasChoices("api_url", "VAST_API_URL"))
     stage_timeout: int = Field(default=30, validation_alias=AliasChoices("stage_timeout", "VAST_STAGE_TIMEOUT"))
     ssh_ready_timeout: int = Field(default=60, validation_alias=AliasChoices("ssh_ready_timeout", "VAST_SSH_TIMEOUT"))
     default_region: str = Field(default="EU", validation_alias=AliasChoices("default_region", "VAST_DEFAULT_REGION"))

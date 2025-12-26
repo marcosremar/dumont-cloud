@@ -99,7 +99,7 @@ class CloudStorageFailover:
         storage_config: CloudStorageConfig,
     ):
         self.api_key = vast_api_key
-        self.api_url = "https://console.vast.ai/api/v0"
+        self.api_url = "https://cloud.vast.ai/api/v0"
         self.storage = storage_config
         self.host_finder = HostFinder(vast_api_key)
 

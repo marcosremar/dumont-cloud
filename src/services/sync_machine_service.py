@@ -383,7 +383,7 @@ class SyncMachineService:
             }
 
             resp = requests.get(
-                'https://console.vast.ai/api/v0/bundles/',
+                'https://cloud.vast.ai/api/v0/bundles/',
                 headers=headers,
                 params={'q': json.dumps(query)}
             )
@@ -407,7 +407,7 @@ class SyncMachineService:
 
             # Criar instancia
             create_resp = requests.put(
-                f'https://console.vast.ai/api/v0/asks/{offer["id"]}/',
+                f'https://cloud.vast.ai/api/v0/asks/{offer["id"]}/',
                 headers=headers,
                 json={
                     'client_id': 'me',
