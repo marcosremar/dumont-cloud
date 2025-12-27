@@ -413,11 +413,24 @@ class VastProvider(IGpuProvider):
                 else:
                     extra_env.append([key, value])
 
+        # Check if port 8080 is requested (for VS Code Online/code-server)
+        needs_jupyter_mode = False
+        if env_vars:
+            for key in env_vars.keys():
+                if key == "PORT_8080":
+                    needs_jupyter_mode = True
+                    break
+
         payload = {
             "client_id": "me",
             "image": image,
             "disk": int(disk_size),
         }
+
+        # Use jupyter runtype to expose port 8080 (for VS Code Online)
+        if needs_jupyter_mode:
+            payload["runtype"] = "jupyter"
+            logger.info("Using jupyter runtype to expose port 8080 for VS Code Online")
 
         # Só adicionar campos opcionais se tiverem valor
         if onstart_cmd:

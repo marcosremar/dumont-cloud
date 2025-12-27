@@ -42,14 +42,29 @@ class SearchOffersRequest(BaseModel):
     limit: int = Field(50, ge=1, le=100, description="Maximum number of results")
 
 
+# Default onstart script that installs code-server for VS Code Online
+DEFAULT_ONSTART_CMD = """
+# Install code-server for VS Code Online
+if ! command -v code-server &> /dev/null; then
+    curl -fsSL https://code-server.dev/install.sh | sh -s -- --method=standalone
+fi
+# Start code-server in background on port 8080 (no auth for dev)
+mkdir -p ~/.config/code-server
+echo 'bind-addr: 0.0.0.0:8080
+auth: none
+cert: false' > ~/.config/code-server/config.yaml
+nohup code-server --config ~/.config/code-server/config.yaml > /tmp/code-server.log 2>&1 &
+""".strip()
+
+
 class CreateInstanceRequest(BaseModel):
     """Create instance request"""
     offer_id: int = Field(..., description="GPU offer ID")
     image: str = Field("pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime", description="Docker image")
     disk_size: float = Field(100, ge=10, description="Disk size (GB)")
     label: Optional[str] = Field(None, description="Instance label")
-    ports: Optional[List[int]] = Field(None, description="Ports to expose")
-    onstart_cmd: Optional[str] = Field(None, description="Command to run on instance start (like SSH install)")
+    ports: Optional[List[int]] = Field(default=[8080], description="Ports to expose (8080 for VS Code Online)")
+    onstart_cmd: Optional[str] = Field(default=DEFAULT_ONSTART_CMD, description="Command to run on instance start (installs code-server by default)")
     skip_standby: bool = Field(False, alias="skip-standby", description="Skip CPU standby creation (default: create standby)")
     skip_validation: bool = Field(False, description="Skip pre-validation (faster but may fail at creation time)")
 
