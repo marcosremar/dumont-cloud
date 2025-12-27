@@ -819,7 +819,9 @@ export default function Dashboard({ onStatsUpdate }) {
         });
 
         if (!res.ok) {
-          throw new Error('Failed to create instance');
+          const errorData = await res.json().catch(() => ({}));
+          const apiError = errorData.detail || errorData.message || errorData.error || '';
+          throw new Error(apiError || `Erro HTTP ${res.status}`);
         }
 
         const data = await res.json();
@@ -841,21 +843,42 @@ export default function Dashboard({ onStatsUpdate }) {
         return { index, instanceId, success: true };
       } catch (error) {
         // Mark as failed with descriptive error message
+        const msg = (error.message || '').toLowerCase();
         let errorMessage = 'Erro desconhecido';
-        if (error.message?.includes('balance') || error.message?.includes('insufficient')) {
+
+        // Balance/Credit errors
+        if (msg.includes('balance') || msg.includes('insufficient') || msg.includes('credit') || msg.includes('saldo')) {
           errorMessage = 'Saldo insuficiente';
-        } else if (error.message?.includes('timeout') || error.message?.includes('Timeout')) {
-          errorMessage = 'Timeout de conexão';
-        } else if (error.message?.includes('unavailable') || error.message?.includes('not available')) {
+        // Machine availability errors
+        } else if (msg.includes('unavailable') || msg.includes('not available') || msg.includes('offer not found') || msg.includes('not found')) {
           errorMessage = 'Máquina indisponível';
-        } else if (error.message?.includes('network') || error.message?.includes('Network')) {
+        } else if (msg.includes('already rented') || msg.includes('busy') || msg.includes('in use')) {
+          errorMessage = 'Já está alugada';
+        // Connection/Network errors
+        } else if (msg.includes('timeout') || msg.includes('timed out')) {
+          errorMessage = 'Timeout de conexão';
+        } else if (msg.includes('network') || msg.includes('connection') || msg.includes('connect')) {
           errorMessage = 'Erro de rede';
-        } else if (error.message?.includes('auth') || error.message?.includes('401') || error.message?.includes('403')) {
+        // Authentication errors
+        } else if (msg.includes('auth') || msg.includes('401') || msg.includes('403') || msg.includes('api key') || msg.includes('unauthorized') || msg.includes('forbidden')) {
           errorMessage = 'Erro de autenticação';
-        } else if (error.message?.includes('limit') || error.message?.includes('quota')) {
-          errorMessage = 'Limite de instâncias atingido';
-        } else if (error.message) {
-          errorMessage = error.message.slice(0, 30);
+        // Limit errors
+        } else if (msg.includes('limit') || msg.includes('quota') || msg.includes('exceeded')) {
+          errorMessage = 'Limite de instâncias';
+        // Disk/Storage errors
+        } else if (msg.includes('disk') || msg.includes('storage') || msg.includes('space')) {
+          errorMessage = 'Erro de disco';
+        // SSH/Docker errors
+        } else if (msg.includes('ssh') || msg.includes('docker') || msg.includes('container')) {
+          errorMessage = 'Erro de inicialização';
+        // HTTP status codes
+        } else if (msg.includes('erro http') || msg.includes('500') || msg.includes('502') || msg.includes('503')) {
+          errorMessage = 'Servidor indisponível';
+        } else if (msg.includes('400') || msg.includes('bad request')) {
+          errorMessage = 'Requisição inválida';
+        } else if (error.message && error.message.length > 0) {
+          // Use the actual message if it's short enough, otherwise truncate
+          errorMessage = error.message.length <= 25 ? error.message : error.message.slice(0, 22) + '...';
         }
 
         setRaceCandidates(prev => {
@@ -1206,7 +1229,18 @@ export default function Dashboard({ onStatsUpdate }) {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Opção 1: Configuração Guiada */}
                 <button
-                  onClick={() => { setDeployMethod('manual'); setMode('wizard'); setShowResults(false); }}
+                  onClick={() => {
+                    setDeployMethod('manual');
+                    setMode('wizard');
+                    setShowResults(false);
+                    // Scroll to wizard form
+                    setTimeout(() => {
+                      document.getElementById('wizard-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                    if (deployMethod === 'manual' && mode === 'wizard') {
+                      toast.info('Modo Guiado já selecionado. Comece escolhendo uma região abaixo.');
+                    }
+                  }}
                   data-testid="config-guided"
                   className={`p-6 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:shadow-brand-500/10 active:scale-[0.98] ${
                     deployMethod === 'manual' && mode === 'wizard'
@@ -1233,7 +1267,15 @@ export default function Dashboard({ onStatsUpdate }) {
 
                 {/* Opção 2: Configuração Avançada */}
                 <button
-                  onClick={() => { setDeployMethod('manual'); setMode('advanced'); setShowResults(false); }}
+                  onClick={() => {
+                    setDeployMethod('manual');
+                    setMode('advanced');
+                    setShowResults(false);
+                    setTimeout(() => {
+                      document.getElementById('wizard-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                    toast.info('Modo Avançado selecionado. Configure filtros detalhados.');
+                  }}
                   data-testid="config-advanced"
                   className={`p-6 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:shadow-brand-500/10 active:scale-[0.98] ${
                     deployMethod === 'manual' && mode === 'advanced'
@@ -1260,7 +1302,14 @@ export default function Dashboard({ onStatsUpdate }) {
 
                 {/* Opção 3: Assistente IA */}
                 <button
-                  onClick={() => { setDeployMethod('ai'); setShowResults(false); }}
+                  onClick={() => {
+                    setDeployMethod('ai');
+                    setShowResults(false);
+                    setTimeout(() => {
+                      document.getElementById('wizard-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                    toast.info('Assistente IA ativado. Descreva o que você precisa.');
+                  }}
                   data-testid="config-ai"
                   className={`p-6 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/10 active:scale-[0.98] ${
                     deployMethod === 'ai'
@@ -1290,7 +1339,7 @@ export default function Dashboard({ onStatsUpdate }) {
 
           {/* AI MODE */}
           {deployMethod === 'ai' && (
-            <CardContent className="h-[600px] p-0 relative animate-fadeIn">
+            <CardContent id="wizard-form-section" className="h-[600px] p-0 relative animate-fadeIn">
               <AIWizardChat
                 compact={false}
                 onRecommendation={(rec) => {}}
@@ -1306,7 +1355,7 @@ export default function Dashboard({ onStatsUpdate }) {
 
           {/* WIZARD MODE (MANUAL) */}
           {deployMethod === 'manual' && mode === 'wizard' && !showResults && (
-            <div className="animate-fadeIn">
+            <div id="wizard-form-section" className="animate-fadeIn">
               <WizardForm
                 searchCountry={searchCountry}
                 selectedLocation={selectedLocation}
