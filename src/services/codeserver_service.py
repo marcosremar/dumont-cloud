@@ -1,15 +1,19 @@
 """
 Service para instalacao e configuracao do code-server em instancias GPU.
 
-Responsabilidades (Single Responsibility):
-- Instalar code-server via script oficial
-- Configurar settings (tema, trust, etc)
-- Iniciar/parar code-server
-- Verificar status
+Versao 2.0 - Com resiliencia:
+- Retry com backoff exponencial
+- Liberacao automatica de porta
+- Health check apos iniciar
+- Tratamento robusto de erros
 """
 import subprocess
-from typing import Optional, Dict, Any
+import time
+import logging
+from typing import Optional, Dict, Any, Tuple
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -27,15 +31,25 @@ class CodeServerConfig:
     dumont_api_url: str = ""
     dumont_auth_token: str = ""
     dumont_machine_id: str = ""
+    # Resiliencia
+    max_retries: int = 3
+    retry_delay: float = 2.0
+    health_check_timeout: int = 10
 
 
 class CodeServerService:
-    """Service para gerenciar code-server em instancias remotas"""
+    """
+    Service resiliente para gerenciar code-server em instancias remotas.
 
-    # Script de instalacao do code-server
+    Features:
+    - Retry automatico com backoff exponencial
+    - Liberacao de porta antes de iniciar
+    - Health check HTTP apos iniciar
+    - Fallback para portas alternativas
+    """
+
     INSTALL_SCRIPT = "curl -fsSL https://code-server.dev/install.sh | sh -s -- --method=standalone"
 
-    # Configuracoes padrao do VS Code
     DEFAULT_SETTINGS = {
         "workbench.colorTheme": "Default Dark+",
         "security.workspace.trust.enabled": False,
@@ -53,25 +67,25 @@ class CodeServerService:
     }
 
     def __init__(self, ssh_host: str, ssh_port: int, ssh_user: str = "root"):
-        """
-        Inicializa o service com conexao SSH.
-
-        Args:
-            ssh_host: IP ou hostname do servidor
-            ssh_port: Porta SSH
-            ssh_user: Usuario SSH (padrao: root)
-        """
         self.ssh_host = ssh_host
         self.ssh_port = ssh_port
         self.ssh_user = ssh_user
 
-    def _ssh_cmd(self, command: str, timeout: int = 60) -> tuple[bool, str]:
+    def _ssh_cmd(
+        self,
+        command: str,
+        timeout: int = 60,
+        retries: int = 3,
+        retry_delay: float = 2.0
+    ) -> Tuple[bool, str]:
         """
-        Executa comando via SSH.
+        Executa comando via SSH com retry automatico.
 
         Args:
             command: Comando a executar
             timeout: Timeout em segundos
+            retries: Numero de tentativas
+            retry_delay: Delay entre tentativas (com backoff)
 
         Returns:
             Tupla (sucesso, output)
@@ -79,70 +93,116 @@ class CodeServerService:
         ssh_command = [
             "ssh",
             "-o", "StrictHostKeyChecking=no",
+            "-o", "UserKnownHostsFile=/dev/null",
+            "-o", "LogLevel=ERROR",
             "-o", f"ConnectTimeout={min(timeout, 30)}",
+            "-o", "ServerAliveInterval=10",
+            "-o", "ServerAliveCountMax=3",
             "-p", str(self.ssh_port),
             f"{self.ssh_user}@{self.ssh_host}",
             command
         ]
 
-        try:
-            result = subprocess.run(
-                ssh_command,
-                capture_output=True,
-                text=True,
-                timeout=timeout
-            )
-            output = result.stdout + result.stderr
-            return result.returncode == 0, output
-        except subprocess.TimeoutExpired:
-            return False, "Timeout ao executar comando SSH"
-        except Exception as e:
-            return False, str(e)
+        last_error = ""
+        for attempt in range(retries):
+            try:
+                result = subprocess.run(
+                    ssh_command,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout
+                )
+                output = result.stdout + result.stderr
+
+                # Filtrar mensagens do VAST.ai que nao sao erros
+                if result.returncode == 0:
+                    return True, output
+
+                # Verificar se o comando realmente falhou ou so tem warning
+                if "Welcome to vast.ai" in output and result.returncode != 0:
+                    # Tentar novamente - pode ser problema transiente
+                    last_error = output
+                else:
+                    return False, output
+
+            except subprocess.TimeoutExpired:
+                last_error = f"Timeout ({timeout}s) na tentativa {attempt + 1}"
+            except Exception as e:
+                last_error = str(e)
+
+            if attempt < retries - 1:
+                delay = retry_delay * (2 ** attempt)  # Backoff exponencial
+                time.sleep(delay)
+
+        return False, f"Falha apos {retries} tentativas: {last_error}"
+
+    def _ensure_port_free(self, port: int) -> bool:
+        """Garante que a porta esta livre, matando processo se necessario."""
+        # Primeiro tenta pkill do code-server
+        self._ssh_cmd(f"pkill -f 'code-server.*{port}' 2>/dev/null || true", timeout=10, retries=1)
+
+        # Depois usa fuser para matar qualquer coisa na porta
+        self._ssh_cmd(f"fuser -k {port}/tcp 2>/dev/null || true", timeout=10, retries=1)
+
+        # Aguarda um pouco
+        time.sleep(1)
+
+        # Verifica se a porta esta livre
+        success, output = self._ssh_cmd(
+            f"netstat -tlnp 2>/dev/null | grep ':{port} ' || ss -tlnp | grep ':{port} ' || echo 'PORT_FREE'",
+            timeout=10, retries=1
+        )
+
+        return "PORT_FREE" in output or not output.strip()
+
+    def _health_check(self, port: int, timeout: int = 10) -> bool:
+        """Verifica se code-server esta respondendo via HTTP."""
+        success, output = self._ssh_cmd(
+            f"curl -s -o /dev/null -w '%{{http_code}}' --connect-timeout 5 http://localhost:{port}/ || echo 'FAIL'",
+            timeout=timeout, retries=2
+        )
+        return success and ("200" in output or "302" in output)
 
     def is_installed(self) -> bool:
         """Verifica se code-server esta instalado"""
-        success, output = self._ssh_cmd("which code-server || ls ~/.local/bin/code-server 2>/dev/null")
-        return success and ("code-server" in output)
+        success, output = self._ssh_cmd(
+            "ls ~/.local/bin/code-server 2>/dev/null && echo 'INSTALLED' || echo 'NOT_INSTALLED'",
+            retries=2
+        )
+        return success and "INSTALLED" in output
 
     def install(self, config: Optional[CodeServerConfig] = None) -> Dict[str, Any]:
-        """
-        Instala code-server na instancia.
-
-        Args:
-            config: Configuracao opcional (usa padrao se nao especificado)
-
-        Returns:
-            Dict com status da instalacao
-        """
+        """Instala code-server com retry."""
         config = config or CodeServerConfig()
 
-        # Verificar se ja esta instalado
         if self.is_installed():
             return {"success": True, "message": "code-server ja instalado", "already_installed": True}
 
+        # Garantir dependencias
+        self._ssh_cmd("apt-get update -qq && apt-get install -y -qq curl", timeout=60, retries=2)
+
         # Instalar code-server
-        success, output = self._ssh_cmd(self.INSTALL_SCRIPT, timeout=120)
+        success, output = self._ssh_cmd(
+            self.INSTALL_SCRIPT,
+            timeout=180,
+            retries=config.max_retries
+        )
 
         if not success:
             return {"success": False, "error": f"Falha na instalacao: {output}"}
 
-        return {"success": True, "message": "code-server instalado com sucesso"}
+        # Verificar instalacao
+        if self.is_installed():
+            return {"success": True, "message": "code-server instalado com sucesso"}
+
+        return {"success": False, "error": "Instalacao completou mas binario nao encontrado"}
 
     def configure(self, config: Optional[CodeServerConfig] = None) -> Dict[str, Any]:
-        """
-        Configura code-server com settings personalizados.
-
-        Args:
-            config: Configuracao do code-server
-
-        Returns:
-            Dict com status da configuracao
-        """
+        """Configura code-server com settings personalizados."""
         import json
 
         config = config or CodeServerConfig()
 
-        # Montar settings.json
         settings = self.DEFAULT_SETTINGS.copy()
         settings["workbench.colorTheme"] = config.theme
         settings["security.workspace.trust.enabled"] = config.trust_enabled
@@ -153,197 +213,148 @@ class CodeServerService:
 
         settings_json = json.dumps(settings, indent=4)
 
-        # Determinar diretorio de configuracao baseado no usuario
         if config.user == "root":
             config_dir = "/root/.local/share/code-server/User"
+            home_dir = "/root"
         else:
             config_dir = f"/home/{config.user}/.local/share/code-server/User"
+            home_dir = f"/home/{config.user}"
 
-        # Criar diretorio e settings
         setup_script = f"""
 mkdir -p {config_dir}
+mkdir -p {home_dir}/.config/code-server
+
+# Settings do VS Code
 cat > {config_dir}/settings.json << 'SETTINGS_EOF'
 {settings_json}
 SETTINGS_EOF
-echo "Settings configurados em {config_dir}/settings.json"
+
+# Config do code-server
+cat > {home_dir}/.config/code-server/config.yaml << 'CONFIG_EOF'
+bind-addr: 0.0.0.0:{config.port}
+auth: {config.auth}
+cert: false
+CONFIG_EOF
+
+echo "CONFIGURED"
 """
 
-        success, output = self._ssh_cmd(setup_script)
+        success, output = self._ssh_cmd(setup_script, retries=config.max_retries)
 
-        if not success:
-            return {"success": False, "error": f"Falha na configuracao: {output}"}
+        if success and "CONFIGURED" in output:
+            return {"success": True, "message": "code-server configurado", "config_dir": config_dir}
 
-        return {"success": True, "message": "code-server configurado", "config_dir": config_dir}
+        return {"success": False, "error": f"Falha na configuracao: {output}"}
 
     def start(self, config: Optional[CodeServerConfig] = None) -> Dict[str, Any]:
         """
-        Inicia code-server.
+        Inicia code-server com resiliencia.
 
-        Args:
-            config: Configuracao do code-server
-
-        Returns:
-            Dict com status
+        - Libera porta automaticamente
+        - Cria workspace se nao existir
+        - Faz health check apos iniciar
+        - Tenta portas alternativas se necessario
         """
         config = config or CodeServerConfig()
+        port = config.port
 
-        # Parar instancia existente
-        self._ssh_cmd("pkill -f code-server 2>/dev/null", timeout=10)
+        # 1. Criar workspace
+        self._ssh_cmd(f"mkdir -p {config.workspace}", timeout=10, retries=2)
 
-        # Iniciar code-server
-        start_cmd = f"""
-sleep 2
-nohup ~/.local/bin/code-server --auth {config.auth} --bind-addr 0.0.0.0:{config.port} {config.workspace} > /tmp/code-server.log 2>&1 &
-sleep 3
-pgrep -f code-server > /dev/null && echo "RUNNING" || echo "FAILED"
+        # 2. Tentar na porta configurada e alternativas
+        ports_to_try = [port, port + 1, port + 2, 8888, 9000]
+
+        for try_port in ports_to_try:
+            # Liberar porta
+            if not self._ensure_port_free(try_port):
+                continue
+
+            # Iniciar code-server
+            start_cmd = f"""
+nohup ~/.local/bin/code-server \\
+    --auth {config.auth} \\
+    --bind-addr 0.0.0.0:{try_port} \\
+    --disable-telemetry \\
+    {config.workspace} > /tmp/code-server-{try_port}.log 2>&1 &
+
+# Aguardar inicializacao
+for i in 1 2 3 4 5; do
+    sleep 1
+    if pgrep -f "code-server.*{try_port}" > /dev/null; then
+        echo "STARTED_PORT_{try_port}"
+        exit 0
+    fi
+done
+echo "FAILED"
 """
+            success, output = self._ssh_cmd(start_cmd, timeout=30, retries=1)
 
-        success, output = self._ssh_cmd(start_cmd, timeout=30)
+            if success and f"STARTED_PORT_{try_port}" in output:
+                # Health check
+                time.sleep(2)
+                if self._health_check(try_port, config.health_check_timeout):
+                    return {
+                        "success": True,
+                        "message": f"code-server rodando na porta {try_port}",
+                        "port": try_port,
+                        "workspace": config.workspace,
+                        "url": f"http://{self.ssh_host}:{try_port}/"
+                    }
 
-        if "RUNNING" in output:
-            return {
-                "success": True,
-                "message": f"code-server rodando na porta {config.port}",
-                "port": config.port,
-                "workspace": config.workspace
-            }
-
-        return {"success": False, "error": f"Falha ao iniciar: {output}"}
+        return {"success": False, "error": f"Falha ao iniciar em todas as portas tentadas: {ports_to_try}"}
 
     def stop(self) -> Dict[str, Any]:
-        """Para code-server"""
-        success, output = self._ssh_cmd("pkill -f code-server", timeout=10)
-        return {"success": True, "message": "code-server parado"}
+        """Para code-server."""
+        success, output = self._ssh_cmd("pkill -f code-server || true", timeout=10, retries=2)
+        time.sleep(1)
+
+        # Verificar se parou
+        check_success, check_output = self._ssh_cmd("pgrep -f code-server || echo 'STOPPED'", timeout=10, retries=1)
+
+        if "STOPPED" in check_output:
+            return {"success": True, "message": "code-server parado"}
+        return {"success": False, "message": "code-server pode ainda estar rodando"}
 
     def status(self) -> Dict[str, Any]:
-        """Retorna status do code-server"""
-        success, output = self._ssh_cmd("pgrep -f code-server && echo 'RUNNING' || echo 'STOPPED'")
+        """Retorna status detalhado do code-server."""
+        success, output = self._ssh_cmd("""
+if pgrep -f code-server > /dev/null; then
+    PORT=$(netstat -tlnp 2>/dev/null | grep code-server | awk '{print $4}' | grep -oE '[0-9]+$' | head -1)
+    PORT=${PORT:-$(ss -tlnp | grep code-server | awk '{print $4}' | grep -oE '[0-9]+$' | head -1)}
+    echo "RUNNING:$PORT"
+else
+    echo "STOPPED"
+fi
+""", retries=2)
 
-        if "RUNNING" in output:
-            # Pegar porta em uso
-            port_check = self._ssh_cmd("netstat -tlnp 2>/dev/null | grep code-server | head -1")
-            return {"running": True, "output": output}
+        if "RUNNING:" in output:
+            port = output.split("RUNNING:")[1].strip().split()[0]
+            return {
+                "running": True,
+                "port": int(port) if port.isdigit() else None,
+                "healthy": self._health_check(int(port)) if port.isdigit() else False
+            }
 
-        return {"running": False, "output": output}
+        return {"running": False, "port": None, "healthy": False}
 
-    def install_machine_switcher_extension(self, config: CodeServerConfig) -> Dict[str, Any]:
-        """
-        Instala a extensao Dumont Machine Switcher no code-server.
-
-        A extensao permite trocar entre maquinas GPU diretamente do VS Code.
-
-        Args:
-            config: Configuracao com credenciais do Dumont Cloud
-
-        Returns:
-            Dict com status da instalacao
-        """
-        import json
-
-        # URL do .vsix hospedado (pode ser local ou remoto)
-        # Por enquanto, vamos criar a configuracao para a extensao funcionar
-
-        # Determinar diretorio home baseado no usuario
-        if config.user == "root":
-            home_dir = "/root"
-        else:
-            home_dir = f"/home/{config.user}"
-
-        # Criar arquivo de configuracao do Dumont
-        dumont_config = {
-            "api_url": config.dumont_api_url,
-            "auth_token": config.dumont_auth_token,
-            "machine_id": config.dumont_machine_id
-        }
-        dumont_config_json = json.dumps(dumont_config, indent=2)
-
-        setup_script = f"""
-# Criar diretorio de configuracao do Dumont
-mkdir -p {home_dir}/.dumont
-
-# Salvar configuracao
-cat > {home_dir}/.dumont/config.json << 'DUMONT_CONFIG_EOF'
-{dumont_config_json}
-DUMONT_CONFIG_EOF
-
-# Configurar variaveis de ambiente para code-server
-mkdir -p {home_dir}/.config/code-server
-
-# Adicionar variaveis ao profile para persistencia
-cat >> {home_dir}/.bashrc << 'BASHRC_EOF'
-
-# Dumont Cloud Environment
-export DUMONT_API_URL="{config.dumont_api_url}"
-export DUMONT_AUTH_TOKEN="{config.dumont_auth_token}"
-export DUMONT_MACHINE_ID="{config.dumont_machine_id}"
-BASHRC_EOF
-
-echo "Dumont Machine Switcher configurado"
-"""
-
-        success, output = self._ssh_cmd(setup_script, timeout=30)
-
-        if not success:
-            return {"success": False, "error": f"Falha ao configurar extensao: {output}"}
-
-        return {
-            "success": True,
-            "message": "Dumont Machine Switcher configurado",
-            "config_path": f"{home_dir}/.dumont/config.json"
-        }
-
-    def install_vsix_extension(self, vsix_url: str) -> Dict[str, Any]:
-        """
-        Instala uma extensao .vsix no code-server.
-
-        Args:
-            vsix_url: URL do arquivo .vsix para download
-
-        Returns:
-            Dict com status da instalacao
-        """
-        install_script = f"""
-# Baixar extensao
-cd /tmp
-curl -fsSL -o extension.vsix "{vsix_url}"
-
-# Instalar via code-server
-~/.local/bin/code-server --install-extension /tmp/extension.vsix
-
-# Limpar
-rm -f /tmp/extension.vsix
-
-echo "Extensao instalada"
-"""
-
-        success, output = self._ssh_cmd(install_script, timeout=120)
-
-        if not success:
-            return {"success": False, "error": f"Falha ao instalar extensao: {output}"}
-
-        return {"success": True, "message": "Extensao instalada com sucesso"}
+    def restart(self, config: Optional[CodeServerConfig] = None) -> Dict[str, Any]:
+        """Reinicia code-server."""
+        self.stop()
+        time.sleep(2)
+        return self.start(config)
 
     def setup_full(self, config: Optional[CodeServerConfig] = None, vsix_url: Optional[str] = None) -> Dict[str, Any]:
         """
-        Instalacao e configuracao completa do code-server.
-        Metodo conveniente que executa install + configure + start + extensao.
-
-        Args:
-            config: Configuracao do code-server
-            vsix_url: URL opcional do .vsix da extensao Machine Switcher
-
-        Returns:
-            Dict com status de cada etapa
+        Instalacao e configuracao completa com resiliencia.
         """
         config = config or CodeServerConfig()
-        results = {"steps": []}
+        results = {"steps": [], "success": False}
 
         # 1. Instalar
         install_result = self.install(config)
         results["steps"].append({"step": "install", **install_result})
 
-        if not install_result["success"] and not install_result.get("already_installed"):
-            results["success"] = False
+        if not install_result.get("success") and not install_result.get("already_installed"):
             results["error"] = "Falha na instalacao"
             return results
 
@@ -351,33 +362,29 @@ echo "Extensao instalada"
         config_result = self.configure(config)
         results["steps"].append({"step": "configure", **config_result})
 
-        if not config_result["success"]:
-            results["success"] = False
+        if not config_result.get("success"):
             results["error"] = "Falha na configuracao"
             return results
 
-        # 3. Configurar Machine Switcher (se credenciais fornecidas)
-        if config.dumont_api_url and config.dumont_auth_token:
-            switcher_result = self.install_machine_switcher_extension(config)
-            results["steps"].append({"step": "machine_switcher_config", **switcher_result})
-
-            # Instalar extensao .vsix se URL fornecida
-            if vsix_url:
-                vsix_result = self.install_vsix_extension(vsix_url)
-                results["steps"].append({"step": "machine_switcher_vsix", **vsix_result})
-
-        # 4. Iniciar
+        # 3. Iniciar
         start_result = self.start(config)
         results["steps"].append({"step": "start", **start_result})
 
-        if not start_result["success"]:
-            results["success"] = False
-            results["error"] = "Falha ao iniciar"
-            return results
+        if not start_result.get("success"):
+            # Tentar uma vez mais com restart
+            restart_result = self.restart(config)
+            results["steps"].append({"step": "restart", **restart_result})
+
+            if not restart_result.get("success"):
+                results["error"] = "Falha ao iniciar"
+                return results
+
+            start_result = restart_result
 
         results["success"] = True
-        results["message"] = f"code-server instalado e rodando na porta {config.port}"
-        results["port"] = config.port
+        results["message"] = f"code-server instalado e rodando na porta {start_result.get('port', config.port)}"
+        results["port"] = start_result.get("port", config.port)
+        results["url"] = start_result.get("url", f"http://{self.ssh_host}:{config.port}/")
 
         return results
 
@@ -389,38 +396,18 @@ def setup_codeserver_on_instance(
     code_port: int = 8080,
     workspace: str = "/workspace",
     theme: str = "Default Dark+",
-    dumont_api_url: str = "",
-    dumont_auth_token: str = "",
-    dumont_machine_id: str = "",
-    vsix_url: Optional[str] = None,
+    max_retries: int = 3,
 ) -> Dict[str, Any]:
     """
     Funcao helper para setup rapido do code-server.
-
-    Args:
-        ssh_host: IP do servidor
-        ssh_port: Porta SSH
-        ssh_user: Usuario SSH
-        code_port: Porta do code-server
-        workspace: Diretorio workspace
-        theme: Tema do VS Code
-        dumont_api_url: URL da API do Dumont Cloud (para Machine Switcher)
-        dumont_auth_token: Token JWT do Dumont Cloud
-        dumont_machine_id: ID da maquina atual
-        vsix_url: URL do arquivo .vsix da extensao Machine Switcher
-
-    Returns:
-        Dict com resultado do setup
     """
     config = CodeServerConfig(
         port=code_port,
         workspace=workspace,
         theme=theme,
         user=ssh_user,
-        dumont_api_url=dumont_api_url,
-        dumont_auth_token=dumont_auth_token,
-        dumont_machine_id=dumont_machine_id,
+        max_retries=max_retries,
     )
 
     service = CodeServerService(ssh_host, ssh_port, ssh_user)
-    return service.setup_full(config, vsix_url=vsix_url)
+    return service.setup_full(config)
