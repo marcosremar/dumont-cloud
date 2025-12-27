@@ -37,8 +37,8 @@ test('authenticate', async ({ page }) => {
     console.log('📍 On login page');
 
     // Fill in credentials
-    const username = process.env.TEST_USER_EMAIL || 'test@test.com';
-    const password = process.env.TEST_USER_PASSWORD || 'test123';
+    const username = process.env.TEST_USER_EMAIL || 'marcosremar@gmail.com';
+    const password = process.env.TEST_USER_PASSWORD || 'dumont123';
 
     console.log(`📧 Using username: ${username}`);
 

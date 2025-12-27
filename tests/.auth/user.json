@@ -5,11 +5,19 @@
       "origin": "http://localhost:5173",
       "localStorage": [
         {
+          "name": "auth_token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtYXJjb3NyZW1hckBnbWFpbC5jb20iLCJleHAiOjE3Njk0MDYyMTQsImlhdCI6MTc2NjgxNDIxNH0.mS79Jyjl0Kch-oONl1vBmpxIjmT8UkFmoKygIMog0Yw"
+        },
+        {
           "name": "theme",
           "value": "dark"
         },
         {
           "name": "demo_mode",
+          "value": "true"
+        },
+        {
+          "name": "onboarding_completed",
           "value": "true"
         }
       ]

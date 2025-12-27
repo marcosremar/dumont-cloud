@@ -18,7 +18,10 @@ export const DEMO_MACHINES = [
     label: 'dev-workspace-01',
     gpu_util: 45.2,
     gpu_temp: 62,
-    ports: { '22': 22345, '8080': 8080 },
+    ports: {
+      '22/tcp': [{ HostPort: '22345' }],
+      '8080/tcp': [{ HostPort: '8080' }]
+    },
     provider: 'vast.ai',
     cpu_standby: {
       enabled: true,
@@ -52,7 +55,11 @@ export const DEMO_MACHINES = [
     label: 'ml-training-large',
     gpu_util: 92.5,
     gpu_temp: 71,
-    ports: { '22': 22789, '8080': 8080, '6006': 6006 },
+    ports: {
+      '22/tcp': [{ HostPort: '22789' }],
+      '8080/tcp': [{ HostPort: '8080' }],
+      '6006/tcp': [{ HostPort: '6006' }]
+    },
     provider: 'vast.ai',
     cpu_standby: {
       enabled: true,
@@ -120,7 +127,10 @@ export const DEMO_MACHINES = [
     label: 'llm-finetuning',
     gpu_util: 78.3,
     gpu_temp: 68,
-    ports: { '22': 22999, '8080': 8080 },
+    ports: {
+      '22/tcp': [{ HostPort: '22999' }],
+      '8080/tcp': [{ HostPort: '8080' }]
+    },
     provider: 'vast.ai',
     cpu_standby: {
       enabled: true,
