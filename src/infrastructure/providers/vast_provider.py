@@ -4,9 +4,11 @@ Implements IGpuProvider interface (Dependency Inversion Principle)
 """
 import json
 import logging
+import time
 import requests
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, TypeVar, Callable
 from datetime import datetime
+from functools import wraps
 
 from ...core.exceptions import (
     VastAPIException,
@@ -22,6 +24,66 @@ from ...domain.repositories import IGpuProvider
 from ...domain.models import GpuOffer, Instance
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar('T')
+
+
+def retry_with_backoff(
+    max_retries: int = 3,
+    initial_delay: float = 2.0,
+    max_delay: float = 30.0,
+    backoff_factor: float = 2.0,
+) -> Callable:
+    """
+    Decorator for retrying API calls on rate limit (429) and transient errors.
+    Uses exponential backoff: delay = min(initial_delay * (backoff_factor ** attempt), max_delay)
+    """
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> T:
+            last_exception = None
+            delay = initial_delay
+
+            for attempt in range(max_retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except requests.exceptions.HTTPError as e:
+                    status_code = e.response.status_code if e.response is not None else 0
+                    # Retry on rate limit (429) or server errors (5xx)
+                    if status_code == 429 or (500 <= status_code < 600):
+                        last_exception = e
+                        if attempt < max_retries:
+                            # Check for Retry-After header
+                            retry_after = int(e.response.headers.get("Retry-After", 0)) if e.response else 0
+                            wait_time = max(delay, retry_after)
+                            logger.warning(
+                                f"[VastProvider] {func.__name__} got {status_code}, "
+                                f"retrying in {wait_time:.1f}s (attempt {attempt + 1}/{max_retries})"
+                            )
+                            time.sleep(wait_time)
+                            delay = min(delay * backoff_factor, max_delay)
+                            continue
+                    raise
+                except requests.exceptions.RequestException as e:
+                    # Retry on connection errors
+                    error_str = str(e).lower()
+                    if "429" in str(e) or "too many" in error_str or "connection" in error_str or "timeout" in error_str:
+                        last_exception = e
+                        if attempt < max_retries:
+                            logger.warning(
+                                f"[VastProvider] {func.__name__} failed ({e}), "
+                                f"retrying in {delay:.1f}s (attempt {attempt + 1}/{max_retries})"
+                            )
+                            time.sleep(delay)
+                            delay = min(delay * backoff_factor, max_delay)
+                            continue
+                    raise
+
+            if last_exception:
+                raise last_exception
+            return None  # Should not reach here
+        return wrapper
+    return decorator
 
 
 class VastProvider(IGpuProvider):
@@ -49,6 +111,47 @@ class VastProvider(IGpuProvider):
         self.api_url = api_url
         self.timeout = timeout
         self.headers = {"Authorization": f"Bearer {api_key}"}
+
+    @retry_with_backoff(max_retries=3, initial_delay=2.0, max_delay=30.0)
+    def _make_request(
+        self,
+        method: str,
+        endpoint: str,
+        params: Optional[Dict] = None,
+        json_data: Optional[Dict] = None,
+        timeout: Optional[int] = None,
+        raise_for_status: bool = True
+    ) -> requests.Response:
+        """
+        Make HTTP request to VAST.ai API with automatic retry on rate limit and transient errors.
+
+        Args:
+            method: HTTP method (GET, POST, PUT, DELETE)
+            endpoint: API endpoint (will be appended to api_url)
+            params: Query parameters
+            json_data: JSON body data
+            timeout: Request timeout (uses self.timeout if not specified)
+            raise_for_status: Whether to raise exception on non-2xx responses
+
+        Returns:
+            Response object
+        """
+        url = f"{self.api_url}/{endpoint.lstrip('/')}"
+        response = requests.request(
+            method=method,
+            url=url,
+            headers=self.headers,
+            params=params,
+            json=json_data,
+            timeout=timeout or self.timeout,
+        )
+        # For rate limiting to work with decorator, we need to raise on 429/5xx
+        if response.status_code == 429 or (500 <= response.status_code < 600):
+            response.raise_for_status()
+        # For other errors, only raise if requested
+        if raise_for_status and not response.ok:
+            response.raise_for_status()
+        return response
 
     def _handle_vast_error(self, response: requests.Response, context: str = "", offer_id: int = None) -> None:
         """
@@ -211,13 +314,7 @@ class VastProvider(IGpuProvider):
         }
 
         try:
-            resp = requests.get(
-                f"{self.api_url}/bundles",
-                params=params,
-                headers=self.headers,
-                timeout=self.timeout,
-            )
-            resp.raise_for_status()
+            resp = self._make_request("GET", "bundles", params=params)
             data = resp.json()
             offers_data = data.get("offers", []) if isinstance(data, dict) else data
 
@@ -306,13 +403,7 @@ class VastProvider(IGpuProvider):
             params["type"] = machine_type
 
         try:
-            resp = requests.get(
-                f"{self.api_url}/bundles",
-                params=params,
-                headers=self.headers,
-                timeout=self.timeout,
-            )
-            resp.raise_for_status()
+            resp = self._make_request("GET", "bundles", params=params)
             data = resp.json()
             offers_data = data.get("offers", []) if isinstance(data, dict) else data
 
@@ -441,16 +532,11 @@ class VastProvider(IGpuProvider):
             payload["label"] = label
 
         try:
-            url = f"{self.api_url}/asks/{offer_id}/"
-            logger.debug(f"create_instance: PUT {url}")
+            endpoint = f"asks/{offer_id}/"
+            logger.debug(f"create_instance: PUT {self.api_url}/{endpoint}")
             logger.debug(f"create_instance: payload={payload}")
 
-            resp = requests.put(
-                url,
-                json=payload,
-                headers=self.headers,
-                timeout=self.timeout,
-            )
+            resp = self._make_request("PUT", endpoint, json_data=payload, raise_for_status=False)
 
             logger.debug(f"create_instance: status={resp.status_code}, response={resp.text[:200]}")
 
@@ -551,12 +637,7 @@ class VastProvider(IGpuProvider):
 
         try:
             # Usa endpoint /bids/ ao invés de /asks/
-            resp = requests.put(
-                f"{self.api_url}/bids/{offer_id}/",
-                json=payload,
-                headers=self.headers,
-                timeout=self.timeout,
-            )
+            resp = self._make_request("PUT", f"bids/{offer_id}/", json_data=payload, raise_for_status=False)
 
             if not resp.ok:
                 self._handle_vast_error(resp, "criar instância spot", offer_id)
@@ -630,16 +711,12 @@ class VastProvider(IGpuProvider):
             query["gpu_name"] = {"eq": gpu_name}
 
         try:
-            resp = requests.get(
-                f"{self.api_url}/bundles/",
-                params={
-                    "q": json.dumps(query),
-                    "order": "min_bid",  # Ordenar por preço (mais barato primeiro)
-                    "type": "bid",  # Apenas ofertas que aceitam bid
-                },
-                headers=self.headers,
-                timeout=self.timeout,
-            )
+            params = {
+                "q": json.dumps(query),
+                "order": "min_bid",  # Ordenar por preço (mais barato primeiro)
+                "type": "bid",  # Apenas ofertas que aceitam bid
+            }
+            resp = self._make_request("GET", "bundles/", params=params, raise_for_status=False)
 
             if not resp.ok:
                 logger.warning(f"Failed to fetch interruptible offers: HTTP {resp.status_code}")
@@ -669,17 +746,14 @@ class VastProvider(IGpuProvider):
     def get_instance(self, instance_id: int) -> Instance:
         """Get instance details by ID"""
         try:
-            resp = requests.get(
-                f"{self.api_url}/instances/{instance_id}/",
-                headers=self.headers,
-                timeout=self.timeout,
-            )
+            resp = self._make_request("GET", f"instances/{instance_id}/", raise_for_status=False)
 
             # Handle 404 or empty response
             if resp.status_code == 404:
                 raise NotFoundException(f"Instance {instance_id} not found")
 
-            resp.raise_for_status()
+            if not resp.ok:
+                resp.raise_for_status()
             data = resp.json()
 
             # vast.ai returns 'instances' as object or list
@@ -729,13 +803,7 @@ class VastProvider(IGpuProvider):
     def list_instances(self) -> List[Instance]:
         """List all user instances"""
         try:
-            resp = requests.get(
-                f"{self.api_url}/instances/",
-                params={"owner": "me"},
-                headers=self.headers,
-                timeout=self.timeout,
-            )
-            resp.raise_for_status()
+            resp = self._make_request("GET", "instances/", params={"owner": "me"})
             data = resp.json()
             instances_data = data.get("instances", [])
 
@@ -760,11 +828,7 @@ class VastProvider(IGpuProvider):
         """Destroy an instance"""
         logger.info(f"Destroying instance {instance_id}")
         try:
-            resp = requests.delete(
-                f"{self.api_url}/instances/{instance_id}/",
-                headers=self.headers,
-                timeout=self.timeout,
-            )
+            resp = self._make_request("DELETE", f"instances/{instance_id}/", raise_for_status=False)
             success = resp.status_code in [200, 204]
             if success:
                 logger.info(f"Instance {instance_id} destroyed")
@@ -786,11 +850,10 @@ class VastProvider(IGpuProvider):
         """
         logger.info(f"Stopping instance {instance_id}")
         try:
-            resp = requests.put(
-                f"{self.api_url}/instances/{instance_id}/",
-                headers=self.headers,
-                json={"state": "stopped"},
-                timeout=self.timeout,
+            resp = self._make_request(
+                "PUT", f"instances/{instance_id}/",
+                json_data={"state": "stopped"},
+                raise_for_status=False
             )
             success = resp.status_code == 200 and resp.json().get("success", False)
             if success:
@@ -815,11 +878,10 @@ class VastProvider(IGpuProvider):
         """
         logger.info(f"Starting instance {instance_id}")
         try:
-            resp = requests.put(
-                f"{self.api_url}/instances/{instance_id}/",
-                headers=self.headers,
-                json={"state": "running"},
-                timeout=self.timeout,
+            resp = self._make_request(
+                "PUT", f"instances/{instance_id}/",
+                json_data={"state": "running"},
+                raise_for_status=False
             )
             success = resp.status_code == 200 and resp.json().get("success", False)
             if success:
@@ -845,12 +907,7 @@ class VastProvider(IGpuProvider):
     def get_balance(self) -> Dict[str, Any]:
         """Get account balance (not part of IGpuProvider, but useful)"""
         try:
-            resp = requests.get(
-                f"{self.api_url}/users/current/",
-                headers=self.headers,
-                timeout=self.timeout,
-            )
-            resp.raise_for_status()
+            resp = self._make_request("GET", "users/current/")
             data = resp.json()
             return {
                 "credit": data.get("credit", 0),
