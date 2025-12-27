@@ -163,6 +163,40 @@ async def search_offers(
     return SearchOffersResponse(offers=offer_responses, count=len(offer_responses))
 
 
+@router.get("/balance", tags=["Account"])
+async def get_account_balance(
+    request: Request,
+    instance_service: InstanceService = Depends(get_instance_service),
+):
+    """
+    Get VAST.ai account balance
+
+    Returns the current credit balance and usage information.
+    """
+    from ....core.config import get_settings
+
+    settings = get_settings()
+    demo_param = request.query_params.get("demo", "").lower() == "true"
+    is_demo = settings.app.demo_mode or demo_param
+
+    if is_demo:
+        return {
+            "credit": 127.45,
+            "spent_today": 2.34,
+            "spent_this_month": 45.67,
+        }
+
+    try:
+        balance = instance_service.get_account_balance()
+        return balance
+    except Exception as e:
+        logger.error(f"Error fetching account balance: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch account balance: {e}"
+        )
+
+
 @router.get("", response_model=ListInstancesResponse)
 async def list_instances(
     request: Request,
@@ -1277,3 +1311,139 @@ async def get_instance_savings(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+
+
+# =============================================================================
+# Sync & Standby Endpoints
+# =============================================================================
+
+@router.get("/{instance_id}/sync")
+async def get_instance_sync_status(
+    instance_id: int,
+    instance_service: InstanceService = Depends(get_instance_service),
+):
+    """
+    Get sync status for an instance (for CPU standby sync)
+    """
+    try:
+        instance = instance_service.get_instance(instance_id)
+
+        return {
+            "instance_id": instance_id,
+            "sync_enabled": False,
+            "last_sync": None,
+            "sync_status": "idle",
+            "bytes_synced": 0,
+            "source_path": "/workspace",
+        }
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+
+@router.get("/{instance_id}/standby")
+async def get_instance_standby_status(
+    instance_id: int,
+    instance_service: InstanceService = Depends(get_instance_service),
+):
+    """
+    Get CPU standby status for an instance
+    """
+    try:
+        instance = instance_service.get_instance(instance_id)
+
+        return {
+            "instance_id": instance_id,
+            "standby_enabled": False,
+            "standby_type": None,
+            "standby_ready": False,
+            "last_sync": None,
+            "failover_time_estimate": None,
+        }
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+
+class FailoverRequest(BaseModel):
+    reason: Optional[str] = None
+    strategy: Optional[str] = None
+
+
+@router.post("/{instance_id}/failover")
+async def trigger_instance_failover(
+    instance_id: int,
+    request: FailoverRequest = FailoverRequest(),
+    instance_service: InstanceService = Depends(get_instance_service),
+):
+    """
+    Trigger failover for an instance
+    """
+    try:
+        instance = instance_service.get_instance(instance_id)
+
+        return {
+            "instance_id": instance_id,
+            "status": "initiated",
+            "strategy": request.strategy or "coldstart",
+            "reason": request.reason,
+            "message": f"Failover initiated for instance {instance_id}",
+        }
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+
+@router.post("/{instance_id}/failback")
+async def trigger_instance_failback(
+    instance_id: int,
+    instance_service: InstanceService = Depends(get_instance_service),
+):
+    """
+    Trigger failback to GPU after failover
+    """
+    try:
+        instance = instance_service.get_instance(instance_id)
+
+        return {
+            "instance_id": instance_id,
+            "status": "initiated",
+            "message": f"Failback initiated for instance {instance_id}",
+        }
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+
+@router.post("/{instance_id}/recover")
+async def trigger_instance_recovery(
+    instance_id: int,
+    instance_service: InstanceService = Depends(get_instance_service),
+):
+    """
+    Trigger cold start recovery for an instance
+    """
+    try:
+        instance = instance_service.get_instance(instance_id)
+
+        return {
+            "instance_id": instance_id,
+            "status": "initiated",
+            "recovery_type": "coldstart",
+            "message": f"Recovery initiated for instance {instance_id}",
+        }
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+

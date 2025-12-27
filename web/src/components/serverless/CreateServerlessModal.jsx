@@ -37,8 +37,97 @@ const REGIONS = [
   { id: 'ASIA', name: 'Asia Pacific', latency: '180ms' },
 ]
 
+// Model templates for quick deployment
+const MODEL_TEMPLATES = [
+  // Small models - great for testing (< 2GB VRAM)
+  {
+    id: 'qwen3-0.6b',
+    name: 'Qwen3 0.6B',
+    description: 'Modelo pequeno e rapido, ideal para testes',
+    type: 'llm',
+    docker_image: 'vllm/vllm-openai:latest',
+    model_id: 'Qwen/Qwen3-0.6B',
+    vram_required: 2,
+    recommended_gpu: 'RTX 3080',
+  },
+  {
+    id: 'qwen2.5-0.5b',
+    name: 'Qwen 2.5 0.5B',
+    description: 'Ultra leve, < 1GB VRAM',
+    type: 'llm',
+    docker_image: 'vllm/vllm-openai:latest',
+    model_id: 'Qwen/Qwen2.5-0.5B-Instruct',
+    vram_required: 1,
+    recommended_gpu: 'RTX 3080',
+  },
+  {
+    id: 'phi-3-mini',
+    name: 'Phi-3 Mini',
+    description: 'Modelo Microsoft compacto',
+    type: 'llm',
+    docker_image: 'vllm/vllm-openai:latest',
+    model_id: 'microsoft/Phi-3-mini-4k-instruct',
+    vram_required: 8,
+    recommended_gpu: 'RTX 3080',
+  },
+  // Medium models
+  {
+    id: 'qwen2.5-7b',
+    name: 'Qwen 2.5 7B',
+    description: 'Equilibrio entre performance e custo',
+    type: 'llm',
+    docker_image: 'vllm/vllm-openai:latest',
+    model_id: 'Qwen/Qwen2.5-7B-Instruct',
+    vram_required: 14,
+    recommended_gpu: 'RTX 4090',
+  },
+  {
+    id: 'mistral-7b',
+    name: 'Mistral 7B',
+    description: 'LLM popular e eficiente',
+    type: 'llm',
+    docker_image: 'vllm/vllm-openai:latest',
+    model_id: 'mistralai/Mistral-7B-Instruct-v0.3',
+    vram_required: 14,
+    recommended_gpu: 'RTX 4090',
+  },
+  {
+    id: 'llama-3.1-8b',
+    name: 'Llama 3.1 8B',
+    description: 'Meta LLM de alta qualidade',
+    type: 'llm',
+    docker_image: 'vllm/vllm-openai:latest',
+    model_id: 'meta-llama/Llama-3.1-8B-Instruct',
+    vram_required: 16,
+    recommended_gpu: 'RTX 4090',
+  },
+  // Speech
+  {
+    id: 'whisper-small',
+    name: 'Whisper Small',
+    description: 'Transcricao de audio leve',
+    type: 'speech',
+    docker_image: 'ghcr.io/huggingface/text-generation-inference:latest',
+    model_id: 'openai/whisper-small',
+    vram_required: 2,
+    recommended_gpu: 'RTX 3080',
+  },
+  // Image
+  {
+    id: 'sdxl-turbo',
+    name: 'SDXL Turbo',
+    description: 'Geracao de imagens rapida',
+    type: 'image',
+    docker_image: 'ghcr.io/huggingface/diffusers:latest',
+    model_id: 'stabilityai/sdxl-turbo',
+    vram_required: 12,
+    recommended_gpu: 'RTX 4090',
+  },
+]
+
 export default function CreateServerlessModal({ onClose, onCreate }) {
   const [step, setStep] = useState(1)
+  const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [config, setConfig] = useState({
     name: '',
     machine_type: 'spot', // padrão: spot
@@ -49,8 +138,21 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
     target_latency_ms: 500,
     timeout_seconds: 300,
     docker_image: '',
+    model_id: '',
     env_vars: {},
   })
+
+  // Apply template when selected
+  const applyTemplate = (template) => {
+    setSelectedTemplate(template)
+    setConfig({
+      ...config,
+      name: template.id,
+      docker_image: template.docker_image,
+      model_id: template.model_id,
+      gpu_name: template.recommended_gpu,
+    })
+  }
 
   const selectedGpu = GPU_OPTIONS.find(g => g.name === config.gpu_name)
   const selectedRegion = REGIONS.find(r => r.id === config.region)
@@ -69,7 +171,7 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
 
   return (
     <AlertDialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+      <AlertDialogContent className="!max-w-[90vw] !w-[1200px] max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="sticky top-0 bg-dark-surface-card border-b border-white/10 px-6 py-4 flex items-center justify-between">
           <div>
@@ -91,6 +193,62 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
 
         {/* Content - com scroll */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Templates Section */}
+          <div>
+            <h3 className="text-lg font-medium text-white mb-4">Templates de Modelos</h3>
+            <p className="text-sm text-gray-400 mb-4">
+              Selecione um modelo pre-configurado ou configure manualmente
+            </p>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
+              {MODEL_TEMPLATES.map((template) => (
+                <button
+                  key={template.id}
+                  onClick={() => applyTemplate(template)}
+                  className={`p-3 rounded-lg border text-left transition-all ${
+                    selectedTemplate?.id === template.id
+                      ? 'border-brand-500 bg-brand-500/10'
+                      : 'border-white/10 bg-white/5 hover:border-white/20'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-sm font-medium ${
+                      selectedTemplate?.id === template.id ? 'text-white' : 'text-gray-300'
+                    }`}>
+                      {template.name}
+                    </span>
+                    <Badge className={`text-[10px] ${
+                      template.type === 'llm' ? 'bg-blue-500/20 text-blue-400' :
+                      template.type === 'speech' ? 'bg-purple-500/20 text-purple-400' :
+                      'bg-pink-500/20 text-pink-400'
+                    }`}>
+                      {template.type}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-2">{template.description}</p>
+                  <div className="flex items-center gap-2 text-[10px] text-gray-500">
+                    <span className="px-1.5 py-0.5 rounded bg-white/10">{template.vram_required}GB VRAM</span>
+                    <span>{template.recommended_gpu}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {selectedTemplate && (
+              <div className="p-3 rounded-lg bg-brand-500/10 border border-brand-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="w-4 h-4 text-brand-400" />
+                  <span className="text-sm font-medium text-brand-300">
+                    Template selecionado: {selectedTemplate.name}
+                  </span>
+                </div>
+                <div className="text-xs text-gray-400 font-mono">
+                  Model ID: {selectedTemplate.model_id}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Step 1: Básico */}
           <div>
             <h3 className="text-lg font-medium text-white mb-4">1. Informações Básicas</h3>
@@ -105,12 +263,18 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
                 />
               </div>
 
-              <div>
+              <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Imagem Docker"
                   value={config.docker_image}
                   onChange={(e) => setConfig({ ...config, docker_image: e.target.value })}
-                  placeholder="ollama/ollama, pytorch/pytorch, etc"
+                  placeholder="vllm/vllm-openai:latest"
+                />
+                <Input
+                  label="Model ID (HuggingFace)"
+                  value={config.model_id}
+                  onChange={(e) => setConfig({ ...config, model_id: e.target.value })}
+                  placeholder="Qwen/Qwen3-0.6B"
                 />
               </div>
             </div>

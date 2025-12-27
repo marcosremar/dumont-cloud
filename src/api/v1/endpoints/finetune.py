@@ -25,6 +25,21 @@ def get_service() -> FineTuningService:
     return get_finetune_service()
 
 
+@router.get("/status")
+async def get_finetune_status(
+    service: FineTuningService = Depends(get_service),
+):
+    """
+    Get fine-tuning system status.
+
+    Returns whether SkyPilot is available for launching jobs.
+    """
+    return {
+        "skypilot_available": service.is_skypilot_available,
+        "message": "Fine-tuning ready" if service.is_skypilot_available else "SkyPilot not available - install with: pip install skypilot"
+    }
+
+
 @router.get("/models", response_model=FineTuneModelsResponse)
 async def list_supported_models(
     service: FineTuningService = Depends(get_service),
@@ -220,3 +235,27 @@ async def refresh_job_status(
         )
 
     return FineTuneJobResponse.from_domain(job)
+
+
+@router.delete("/jobs/{job_id}", response_model=SuccessResponse)
+async def delete_job(
+    job_id: str,
+    user_id: str = Depends(get_current_user_email),
+    service: FineTuningService = Depends(get_service),
+):
+    """
+    Delete a fine-tuning job.
+
+    Only jobs that are not running can be deleted.
+    Removes the job from storage.
+    """
+    success = service.delete_job(job_id, user_id)
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to delete job. Job may not exist, is still running, or belongs to another user."
+        )
+
+    logger.info(f"Deleted fine-tuning job {job_id}")
+    return SuccessResponse(success=True, message=f"Job {job_id} deleted")

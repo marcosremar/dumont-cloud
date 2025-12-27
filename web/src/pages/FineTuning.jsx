@@ -47,11 +47,12 @@ function formatTimeAgo(dateStr) {
 }
 
 // Job Card Component
-function JobCard({ job, onRefresh, onViewLogs, onCancel, onDeploy, onDownload }) {
+function JobCard({ job, onRefresh, onViewLogs, onCancel, onDeploy, onDownload, onDelete }) {
   const status = STATUS_CONFIG[job.status] || STATUS_CONFIG.pending;
   const StatusIcon = status.icon;
-  const isRunning = job.status === 'running' || job.status === 'queued';
+  const isRunning = job.status === 'running' || job.status === 'queued' || job.status === 'pending' || job.status === 'uploading';
   const isCompleted = job.status === 'completed';
+  const canDelete = !isRunning; // Can delete failed, completed, or cancelled jobs
 
   return (
     <div className="bg-[#131713] rounded-xl border border-white/10 p-5 hover:border-white/20 transition-all shadow-sm">
@@ -172,6 +173,17 @@ function JobCard({ job, onRefresh, onViewLogs, onCancel, onDeploy, onDownload })
             Cancel
           </Button>
         )}
+        {canDelete && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDelete(job.id)}
+            className="text-red-400 hover:text-red-300 ml-auto"
+          >
+            <Trash2 className="w-4 h-4 mr-1" />
+            Delete
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -192,7 +204,7 @@ function LogsModal({ job, isOpen, onClose }) {
     setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch(`/api/finetune/jobs/${job.id}/logs?tail=200`, {
+      const res = await fetch(`/api/v1/finetune/jobs/${job.id}/logs?tail=200`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       });
       const data = await res.json();
@@ -261,7 +273,7 @@ function DeployModal({ job, isOpen, onClose, onSuccess }) {
     setError(null);
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch(`/api/finetune/jobs/${job.id}/deploy`, {
+      const res = await fetch(`/api/v1/finetune/jobs/${job.id}/deploy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -415,7 +427,7 @@ export default function FineTuning() {
   const handleRefresh = async (jobId) => {
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch(`/api/finetune/jobs/${jobId}/refresh`, {
+      const res = await fetch(`/api/v1/finetune/jobs/${jobId}/refresh`, {
         method: 'POST',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       });
@@ -431,13 +443,34 @@ export default function FineTuning() {
     if (!confirm('Are you sure you want to cancel this job?')) return;
     try {
       const token = localStorage.getItem('auth_token');
-      await fetch(`/api/finetune/jobs/${jobId}/cancel`, {
+      await fetch(`/api/v1/finetune/jobs/${jobId}/cancel`, {
         method: 'POST',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       });
       fetchJobs();
     } catch (err) {
       console.error('Failed to cancel job:', err);
+    }
+  };
+
+  // Delete job
+  const handleDelete = async (jobId) => {
+    if (!confirm('Are you sure you want to delete this job? This action cannot be undone.')) return;
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(`/api/v1/finetune/jobs/${jobId}`, {
+        method: 'DELETE',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        fetchJobs();
+      } else {
+        const data = await res.json();
+        alert(data.detail || 'Failed to delete job');
+      }
+    } catch (err) {
+      console.error('Failed to delete job:', err);
+      alert('Failed to delete job: ' + err.message);
     }
   };
 
@@ -457,7 +490,7 @@ export default function FineTuning() {
   const handleDownload = async (job) => {
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch(`/api/finetune/jobs/${job.id}/download`, {
+      const res = await fetch(`/api/v1/finetune/jobs/${job.id}/download`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       });
       const data = await res.json();
@@ -589,6 +622,7 @@ export default function FineTuning() {
               onCancel={handleCancel}
               onDeploy={handleDeploy}
               onDownload={handleDownload}
+              onDelete={handleDelete}
             />
           ))}
         </div>

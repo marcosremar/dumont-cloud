@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Card,
   Badge,
@@ -43,11 +43,48 @@ import {
   Zap,
   Server,
   Info,
+  Clock,
+  Hash,
 } from 'lucide-react'
 import HibernationConfigModal from '../HibernationConfigModal'
 import FailoverMigrationModal from '../FailoverMigrationModal'
 import SparklineChart from '../ui/SparklineChart'
 import InstanceDetailsModal from './InstanceDetailsModal'
+
+// Failover strategies base info (costs calculated dynamically)
+const FAILOVER_STRATEGIES_BASE = {
+  disabled: { label: 'Desabilitado', color: 'gray', description: 'Sem proteção', recovery: null },
+  cpu_standby: { label: 'CPU Standby', color: 'blue', description: 'GCP e2-medium', recovery: '~10-20min' },
+  warm_pool: { label: 'GPU Warm Pool', color: 'green', description: 'GPU reservada', recovery: '~30-60s' },
+  regional_volume: { label: 'Regional Volume', color: 'purple', description: 'Volume + Spot GPU', recovery: '~2-5min' },
+  snapshot: { label: 'Snapshot', color: 'orange', description: 'Backblaze B2', recovery: '~5-10min' },
+}
+
+// Calculate real costs based on machine data
+const calculateStrategyCosts = (machine) => {
+  const gpuCost = machine.dph_total || 0
+  const cpuStandbyCost = machine.cpu_standby?.dph_total || 0.01 // Real cost from GCP
+
+  // Warm pool: ~50% of GPU cost (keeping a standby GPU ready)
+  const warmPoolCost = gpuCost * 0.5
+
+  // Regional volume: Storage cost (~$0.02/h for 50GB) + average spot GPU (~30% of on-demand)
+  const volumeStorageCost = 0.02
+  const spotGpuEstimate = gpuCost * 0.3
+  const regionalVolumeCost = volumeStorageCost + spotGpuEstimate
+
+  // Snapshot: Only storage cost on B2 (~$0.005/GB/month = ~$0.000007/GB/hour)
+  // For 50GB workspace = ~$0.0003/hour, round to $0.01 minimum
+  const snapshotCost = 0.01
+
+  return {
+    disabled: 0,
+    cpu_standby: cpuStandbyCost,
+    warm_pool: warmPoolCost,
+    regional_volume: regionalVolumeCost,
+    snapshot: snapshotCost,
+  }
+}
 
 export default function MachineCard({
   machine,
@@ -61,7 +98,8 @@ export default function MachineCard({
   onSimulateFailover,
   syncStatus,
   syncStats,
-  failoverProgress
+  failoverProgress,
+  isNew = false, // Highlight animation for newly created machines
 }) {
   const [showConfigModal, setShowConfigModal] = useState(false)
   const [showSSHInstructions, setShowSSHInstructions] = useState(false)
@@ -71,8 +109,43 @@ export default function MachineCard({
   const [showBackupInfo, setShowBackupInfo] = useState(false)
   const [showFailoverMigration, setShowFailoverMigration] = useState(false)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const [elapsedTime, setElapsedTime] = useState(0)
+  const [showStrategyMenu, setShowStrategyMenu] = useState(false)
+
+  // Get current failover strategy and calculate real costs
+  const currentStrategy = machine.failover_strategy || (machine.cpu_standby?.enabled ? 'cpu_standby' : 'disabled')
+  const strategyCosts = calculateStrategyCosts(machine)
+  const strategyInfo = FAILOVER_STRATEGIES_BASE[currentStrategy] || FAILOVER_STRATEGIES_BASE.disabled
+  const currentStrategyCost = strategyCosts[currentStrategy] || 0
 
   const isInFailover = failoverProgress && failoverProgress.phase !== 'idle'
+
+  // Timer for loading elapsed time
+  useEffect(() => {
+    const loadingStates = ['loading', 'creating', 'starting', 'pending', 'provisioning', 'configuring']
+    const status = machine.actual_status || 'stopped'
+    const isLoading = loadingStates.includes(status)
+
+    if (isLoading) {
+      const startTime = machine.created_at ? new Date(machine.created_at).getTime() : Date.now()
+      const updateElapsed = () => {
+        const now = Date.now()
+        setElapsedTime(Math.floor((now - startTime) / 1000))
+      }
+      updateElapsed()
+      const interval = setInterval(updateElapsed, 1000)
+      return () => clearInterval(interval)
+    } else {
+      setElapsedTime(0)
+    }
+  }, [machine.actual_status, machine.created_at])
+
+  const formatElapsedTime = (seconds) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    if (mins > 0) return `${mins}m ${secs}s`
+    return `${secs}s`
+  }
 
   const [gpuHistory] = useState(() => Array.from({ length: 15 }, () => Math.random() * 40 + 30))
   const [memHistory] = useState(() => Array.from({ length: 15 }, () => Math.random() * 30 + 40))
@@ -85,6 +158,38 @@ export default function MachineCard({
   const isRunning = machine.actual_status === 'running'
   const costPerHour = machine.dph_total || 0
   const status = machine.actual_status || 'stopped'
+
+  // States where machine is loading/starting (should not show Start button)
+  const loadingStates = ['loading', 'creating', 'starting', 'pending', 'provisioning', 'configuring']
+  const isLoading = loadingStates.includes(status)
+
+  // States where machine is stopped and can be started
+  const stoppedStates = ['stopped', 'paused', 'exited', 'offline']
+  const isStopped = stoppedStates.includes(status)
+
+  // Map status to display info
+  const getStatusDisplay = (status) => {
+    const statusMap = {
+      'running': { label: 'Online', variant: 'success', animate: false },
+      'loading': { label: 'Inicializando', variant: 'warning', animate: true },
+      'creating': { label: 'Criando', variant: 'warning', animate: true },
+      'starting': { label: 'Iniciando', variant: 'warning', animate: true },
+      'pending': { label: 'Pendente', variant: 'warning', animate: true },
+      'provisioning': { label: 'Provisionando', variant: 'warning', animate: true },
+      'configuring': { label: 'Configurando', variant: 'warning', animate: true },
+      'paused': { label: 'Pausada', variant: 'gray', animate: false },
+      'stopped': { label: 'Parada', variant: 'gray', animate: false },
+      'exited': { label: 'Parada', variant: 'gray', animate: false },
+      'offline': { label: 'Offline', variant: 'gray', animate: false },
+      'error': { label: 'Erro', variant: 'error', animate: false },
+      'failed': { label: 'Falhou', variant: 'error', animate: false },
+      'destroying': { label: 'Destruindo', variant: 'error', animate: true },
+      'failover': { label: 'Failover', variant: 'primary', animate: true },
+    }
+    return statusMap[status] || { label: status || 'Desconhecido', variant: 'gray', animate: false }
+  }
+
+  const statusDisplay = getStatusDisplay(status)
 
   const cpuStandby = machine.cpu_standby
   const hasCpuStandby = cpuStandby?.enabled
@@ -130,8 +235,28 @@ export default function MachineCard({
   }
 
   const openIDE = (ideName, protocol) => {
-    const sshAlias = `dumont-${machine.id}`
-    const url = `${protocol}://vscode-remote/ssh-remote+${sshAlias}/workspace`
+    const sshHost = machine.ssh_host
+    const sshPort = machine.ssh_port || 22
+
+    // Check if SSH host is valid (real VAST.ai hosts are like ssh5.vast.ai)
+    const isValidHost = sshHost && /^ssh\d+\.vast\.ai$/.test(sshHost)
+
+    if (!isValidHost) {
+      setAlertDialog({
+        open: true,
+        title: 'SSH não disponível',
+        description: !sshHost
+          ? 'Host SSH não definido. A máquina pode ainda estar inicializando.'
+          : sshHost === 'ssh.vast.ai'
+            ? 'Esta é uma máquina de demonstração. Use máquinas reais do VAST.ai para conectar via SSH.'
+            : `Host SSH inválido (${sshHost}). A máquina pode ainda estar inicializando.`,
+        action: null
+      })
+      return
+    }
+
+    // Format: vscode://vscode-remote/ssh-remote+root@host:port/root
+    const url = `${protocol}://vscode-remote/ssh-remote+root@${sshHost}:${sshPort}/root`
     window.open(url, '_blank')
   }
 
@@ -173,6 +298,7 @@ export default function MachineCard({
   return (
     <Card
       className={`group relative transition-all
+        ${isNew ? 'animate-highlight-new ring-2 ring-brand-400 ring-opacity-75' : ''}
         ${isInFailover
           ? getFailoverBorderColor()
           : isRunning
@@ -306,25 +432,108 @@ export default function MachineCard({
       )}
 
       {/* Card Header */}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-2">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-gray-900 dark:text-white font-semibold text-base truncate">{gpuName}</span>
-            <Badge variant={isRunning ? 'success' : 'gray'} dot>
-              {isRunning ? 'Online' : 'Offline'}
+          <div className="flex items-center gap-1.5 mb-1">
+            <span className="text-gray-900 dark:text-white font-semibold text-sm truncate">{gpuName}</span>
+            <Badge variant={statusDisplay.variant} dot className={`text-[9px] ${statusDisplay.animate ? 'animate-pulse' : ''}`}>
+              {statusDisplay.label}
             </Badge>
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <Badge variant="primary" className="text-[10px]">
+          <div className="flex items-center gap-1 flex-wrap">
+            <Badge variant="primary" className="text-[9px]">
               Vast.ai
             </Badge>
+
+            {/* Failover Strategy Badge with Dropdown */}
+            <div className="relative" data-testid="failover-strategy-container">
+              <button
+                type="button"
+                data-testid="failover-selector"
+                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 ${
+                  currentStrategy === 'disabled' ? 'bg-gray-500/20 text-gray-400' :
+                  currentStrategy === 'warm_pool' ? 'bg-green-500/20 text-green-400' :
+                  'bg-brand-500/20 text-brand-400'
+                }`}
+                onClick={() => setShowStrategyMenu(!showStrategyMenu)}
+              >
+                <Shield className="w-2.5 h-2.5 mr-0.5" />
+                {strategyInfo.label}
+                {currentStrategyCost > 0 && (
+                  <span className="ml-0.5 text-[8px] opacity-70">+${currentStrategyCost.toFixed(3)}/h</span>
+                )}
+              </button>
+
+              {showStrategyMenu && (
+                <div
+                  className="absolute top-full left-0 mt-1 z-50 w-64 p-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl"
+                  data-testid="failover-dropdown-menu"
+                >
+                  <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-700">
+                    <span className="text-[10px] font-semibold text-gray-300">Estratégia de Failover</span>
+                    <button
+                      onClick={() => setShowStrategyMenu(false)}
+                      className="p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300"
+                      data-testid="failover-dropdown-close"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="space-y-1" data-testid="failover-options-list">
+                    {Object.entries(FAILOVER_STRATEGIES_BASE).map(([key, strategy]) => {
+                      const cost = strategyCosts[key] || 0
+                      return (
+                        <button
+                          key={key}
+                          data-testid={`failover-option-${key}`}
+                          onClick={() => {
+                            // TODO: Call API to change strategy
+                            setShowStrategyMenu(false)
+                          }}
+                          className={`w-full flex items-center justify-between p-1.5 rounded text-left transition-colors ${
+                            currentStrategy === key
+                              ? 'bg-brand-500/20 border border-brand-500/30'
+                              : 'hover:bg-gray-800 border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <Shield className={`w-3 h-3 ${
+                              key === 'disabled' ? 'text-gray-500' :
+                              key === 'warm_pool' ? 'text-green-400' :
+                              key === 'cpu_standby' ? 'text-blue-400' :
+                              key === 'regional_volume' ? 'text-purple-400' :
+                              'text-orange-400'
+                            }`} />
+                            <div>
+                              <div className="text-[10px] text-white font-medium">{strategy.label}</div>
+                              <div className="text-[8px] text-gray-500">
+                                {strategy.description}
+                                {strategy.recovery && <span className="ml-1 text-gray-400">• {strategy.recovery}</span>}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-[9px] text-brand-400 font-mono whitespace-nowrap">
+                            {cost > 0 ? `+$${cost.toFixed(3)}/h` : 'Grátis'}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-gray-700 text-[8px] text-gray-500" data-testid="failover-cost-basis">
+                    Custos baseados em: GPU ${(machine.dph_total || 0).toFixed(2)}/h
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Backup Info Badge */}
             <div className="relative">
               <Badge
                 variant={hasCpuStandby ? 'primary' : 'gray'}
-                className="cursor-pointer hover:opacity-80 text-[10px]"
+                className="cursor-pointer hover:opacity-80 text-[9px]"
                 onClick={() => setShowBackupInfo(!showBackupInfo)}
               >
-                <Layers className="w-3 h-3 mr-1" />
+                <Layers className="w-2.5 h-2.5 mr-0.5" />
                 {hasCpuStandby ? 'Backup' : 'Sem backup'}
               </Badge>
 
@@ -457,7 +666,7 @@ export default function MachineCard({
       </div>
 
       {/* Specs Row */}
-      <div className="flex items-center gap-1.5 mb-4 text-[10px] text-gray-400 flex-wrap">
+      <div className="flex items-center gap-1 mb-2 text-[9px] text-gray-400 flex-wrap">
         {machine.public_ipaddr && (
           <button
             onClick={() => copyToClipboard(machine.public_ipaddr, 'ip')}
@@ -499,6 +708,20 @@ export default function MachineCard({
           {disk}GB Disk
         </span>
 
+        {/* SSH Info - clickable to copy */}
+        {isRunning && machine.ssh_host && (
+          <button
+            onClick={() => copyToClipboard(`ssh root@${machine.ssh_host} -p ${machine.ssh_port || 22}`, 'ssh')}
+            className={`px-1.5 py-0.5 rounded border transition-all ${copiedField === 'ssh'
+              ? 'bg-brand-500/20 text-brand-400 border-brand-500/30'
+              : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
+              }`}
+            title={`SSH: root@${machine.ssh_host}:${machine.ssh_port || 22} (clique para copiar)`}
+          >
+            {copiedField === 'ssh' ? 'Copiado!' : `SSH :${machine.ssh_port || 22}`}
+          </button>
+        )}
+
         {isRunning && syncStatus && (
           <span
             className={`flex items-center gap-1 px-1.5 py-0.5 rounded border ${syncStatus === 'syncing'
@@ -517,48 +740,43 @@ export default function MachineCard({
 
       {isRunning ? (
         <>
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-5 gap-1 mb-4 p-3 rounded-lg bg-white/5 border border-white/10">
+          {/* Metrics Grid - Compact */}
+          <div className="grid grid-cols-5 gap-0.5 mb-2 p-2 rounded-lg bg-white/5 border border-white/10">
             <div className="text-center">
-              <div className="text-brand-400 font-mono text-sm font-bold">{gpuUtil}%</div>
-              <div className="text-[9px] text-gray-500 uppercase tracking-wide">GPU</div>
-              <SparklineChart data={gpuHistory} color="#4caf50" />
+              <div className="text-brand-400 font-mono text-xs font-bold">{gpuUtil}%</div>
+              <div className="text-[8px] text-gray-500 uppercase">GPU</div>
             </div>
             <div className="text-center">
-              <div className="text-white font-mono text-sm font-bold">{memUtil}%</div>
-              <div className="text-[9px] text-gray-500 uppercase tracking-wide">VRAM</div>
-              <SparklineChart data={memHistory} color="#66bb6a" />
+              <div className="text-white font-mono text-xs font-bold">{memUtil}%</div>
+              <div className="text-[8px] text-gray-500 uppercase">VRAM</div>
             </div>
             <div className="text-center">
-              <div className={`font-mono text-sm font-bold ${temp > 75 ? 'text-red-400' : temp > 65 ? 'text-gray-300' : 'text-brand-400'}`}>
+              <div className={`font-mono text-xs font-bold ${temp > 75 ? 'text-red-400' : temp > 65 ? 'text-gray-300' : 'text-brand-400'}`}>
                 {temp}°C
               </div>
-              <div className="text-[9px] text-gray-500 uppercase tracking-wide">TEMP</div>
+              <div className="text-[8px] text-gray-500 uppercase">TEMP</div>
             </div>
             <div className="text-center">
-              <div className="text-brand-400 font-mono text-sm font-bold" title={hasCpuStandby ? `GPU: $${costPerHour.toFixed(2)} + CPU: $${cpuCostPerHour.toFixed(3)}` : ''}>
+              <div className="text-brand-400 font-mono text-xs font-bold" title={hasCpuStandby ? `GPU: $${costPerHour.toFixed(2)} + CPU: $${cpuCostPerHour.toFixed(3)}` : ''}>
                 ${totalCostPerHour.toFixed(2)}
               </div>
-              <div className="text-[9px] text-gray-500 uppercase tracking-wide">/hora</div>
-              {hasCpuStandby && (
-                <div className="text-[8px] text-gray-400 mt-0.5">+backup</div>
-              )}
+              <div className="text-[8px] text-gray-500 uppercase">/hora</div>
             </div>
             {uptime && (
               <div className="text-center">
-                <div className="text-white font-mono text-sm font-bold">{uptime}</div>
-                <div className="text-[9px] text-gray-500 uppercase tracking-wide">UPTIME</div>
+                <div className="text-white font-mono text-xs font-bold">{uptime}</div>
+                <div className="text-[8px] text-gray-500 uppercase">UP</div>
               </div>
             )}
           </div>
 
           {/* IDE Buttons */}
-          <div className="flex gap-1.5 mb-3">
+          <div className="flex gap-1 mb-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="flex-1 text-xs" icon={Code}>
+                <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" icon={Code}>
                   VS Code
-                  <ChevronDown className="w-3 h-3 opacity-50 ml-1" />
+                  <ChevronDown className="w-2.5 h-2.5 opacity-50 ml-0.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -566,57 +784,57 @@ export default function MachineCard({
                 <DropdownMenuItem onClick={() => openIDE('VS Code', 'vscode')}>Desktop (SSH)</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={() => openIDE('Cursor', 'cursor')}>
+            <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" onClick={() => openIDE('Cursor', 'cursor')}>
               Cursor
             </Button>
-            <Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={() => openIDE('Windsurf', 'windsurf')}>
+            <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" onClick={() => openIDE('Windsurf', 'windsurf')}>
               Windsurf
             </Button>
           </div>
 
           {/* Action Buttons - Row 1: Failover actions */}
           {hasCpuStandby && !isInFailover && (
-            <div className="flex gap-2 mb-2">
+            <div className="flex gap-1 mb-1.5">
               <Button
                 variant="outline"
-                size="sm"
+                size="xs"
                 icon={Shield}
-                className="flex-1 text-xs"
+                className="flex-1 text-[10px] h-7"
                 onClick={() => setShowFailoverMigration(true)}
                 title="Migrar para outro tipo de failover"
               >
-                Migrar Failover
+                Failover
               </Button>
               {onSimulateFailover && (
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="xs"
                   icon={Zap}
-                  className="flex-1 text-xs"
+                  className="flex-1 text-[10px] h-7"
                   onClick={() => onSimulateFailover(machine)}
                   title="Simular roubo de GPU e failover automático"
                 >
-                  Testar Failover
+                  Testar
                 </Button>
               )}
             </div>
           )}
 
           {/* Action Buttons - Row 2: Machine actions */}
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             <Button
               variant="secondary"
-              size="sm"
+              size="xs"
               icon={ArrowLeftRight}
-              className="flex-1 text-xs"
+              className="flex-1 text-[10px] h-7"
               onClick={() => onMigrate && onMigrate(machine)}
             >
-              Migrar p/ CPU
+              CPU
             </Button>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" icon={Pause} className="flex-1 text-xs">
+                <Button variant="outline" size="xs" icon={Pause} className="flex-1 text-[10px] h-7">
                   Pausar
                 </Button>
               </AlertDialogTrigger>
@@ -640,54 +858,73 @@ export default function MachineCard({
         </>
       ) : (
         <>
-          {/* Specs Grid - Offline */}
-          <div className="grid grid-cols-4 gap-2 mb-4 p-3 rounded-lg bg-gray-800/20 border border-gray-700/20 text-center">
+          {/* Specs Grid - Offline - Compact */}
+          <div className="grid grid-cols-4 gap-0.5 mb-2 p-2 rounded-lg bg-gray-800/20 border border-gray-700/20 text-center">
             <div>
-              <div className="text-gray-900 dark:text-white font-mono text-sm font-bold">{gpuRam}GB</div>
-              <div className="text-[9px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">VRAM</div>
+              <div className="text-gray-900 dark:text-white font-mono text-xs font-bold">{gpuRam}GB</div>
+              <div className="text-[8px] text-gray-500 dark:text-gray-400 uppercase">VRAM</div>
             </div>
             <div>
-              <div className="text-gray-900 dark:text-white font-mono text-sm font-bold">{cpuCores}</div>
-              <div className="text-[9px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">CPU</div>
+              <div className="text-gray-900 dark:text-white font-mono text-xs font-bold">{cpuCores}</div>
+              <div className="text-[8px] text-gray-500 dark:text-gray-400 uppercase">CPU</div>
             </div>
             <div>
-              <div className="text-gray-900 dark:text-white font-mono text-sm font-bold">{disk}GB</div>
-              <div className="text-[9px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">DISK</div>
+              <div className="text-gray-900 dark:text-white font-mono text-xs font-bold">{disk}GB</div>
+              <div className="text-[8px] text-gray-500 dark:text-gray-400 uppercase">DISK</div>
             </div>
             <div>
-              <div className="text-brand-500 dark:text-brand-400 font-mono text-sm font-bold" title={hasCpuStandby ? `GPU: $${costPerHour.toFixed(2)} + CPU: $${cpuCostPerHour.toFixed(3)}` : ''}>
+              <div className="text-brand-500 dark:text-brand-400 font-mono text-xs font-bold" title={hasCpuStandby ? `GPU: $${costPerHour.toFixed(2)} + CPU: $${cpuCostPerHour.toFixed(3)}` : ''}>
                 ${totalCostPerHour.toFixed(2)}
               </div>
-              <div className="text-[9px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">/hora</div>
-              {hasCpuStandby && (
-                <div className="text-[8px] text-gray-400 mt-0.5">+backup</div>
-              )}
+              <div className="text-[8px] text-gray-500 dark:text-gray-400 uppercase">/hora</div>
             </div>
           </div>
 
-          {/* Action Buttons - Offline */}
-          <div className="flex gap-2">
-            {machine.num_gpus === 0 && (
-              <Button
-                variant="success"
-                size="sm"
-                icon={ArrowLeftRight}
-                className="flex-1 text-xs"
-                onClick={() => onMigrate && onMigrate(machine)}
-              >
-                Migrar p/ GPU
-              </Button>
-            )}
+          {/* Action Buttons - Offline/Loading */}
+          <div className="flex gap-1.5">
+            {isLoading ? (
+              /* Show loading indicator with ID and elapsed time */
+              <div className="w-full p-2 rounded-lg bg-warning-500/10 border border-warning-500/20">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <RefreshCw className="w-3 h-3 text-warning-400 animate-spin" />
+                    <span className="text-xs text-warning-400 font-medium">{statusDisplay.label}...</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-warning-400">
+                    <Clock className="w-3 h-3" />
+                    <span className="text-xs font-mono">{formatElapsedTime(elapsedTime)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                  <Hash className="w-2.5 h-2.5" />
+                  <span className="font-mono">VAST ID: {machine.id}</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                {machine.num_gpus === 0 && (
+                  <Button
+                    variant="success"
+                    size="xs"
+                    icon={ArrowLeftRight}
+                    className="flex-1 text-[10px] h-7"
+                    onClick={() => onMigrate && onMigrate(machine)}
+                  >
+                    GPU
+                  </Button>
+                )}
 
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={Play}
-              className={`text-xs ${machine.num_gpus === 0 ? 'flex-1' : 'w-full'}`}
-              onClick={() => onStart && onStart(machine.id)}
-            >
-              Iniciar
-            </Button>
+                <Button
+                  variant="secondary"
+                  size="xs"
+                  icon={Play}
+                  className={`text-[10px] h-7 ${machine.num_gpus === 0 ? 'flex-1' : 'w-full'}`}
+                  onClick={() => onStart && onStart(machine.id)}
+                >
+                  Iniciar
+                </Button>
+              </>
+            )}
           </div>
         </>
       )}
@@ -728,7 +965,7 @@ export default function MachineCard({
             <AlertDialogDescription>{alertDialog.description}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction>OK</AlertDialogAction>
+            <AlertDialogAction onClick={() => setAlertDialog({ ...alertDialog, open: false })}>OK</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -69,38 +69,49 @@ class SkyPilotProvider:
     def __init__(self):
         """Initialize SkyPilot provider"""
         self.template_path = TEMPLATE_PATH
-        self._verify_skypilot()
+        self._verified = False
+        self._available = None  # None = not checked yet, True/False = checked
+
+    @property
+    def is_available(self) -> bool:
+        """
+        Check if SkyPilot is available (lazy verification).
+        Returns cached result after first check.
+        """
+        if self._available is None:
+            self._available = self._verify_skypilot()
+        return self._available
 
     def _verify_skypilot(self) -> bool:
-        """Verify SkyPilot vendor fork is available"""
+        """Verify SkyPilot is available (either vendor fork or system-installed)"""
+        self._verified = True
+
         try:
-            # Check if vendor directory exists
-            if not VENDOR_DIR.exists():
-                logger.error(f"SkyPilot vendor directory not found: {VENDOR_DIR}")
-                return False
-            
-            # Try to import sky to verify it works
-            result = _run_sky_command(["--version"], timeout=10)
-            
-            if result.returncode == 0:
-                logger.info(f"SkyPilot vendor fork available: {result.stdout.strip()}")
+            # First try system-installed skypilot
+            result = subprocess.run(
+                ["python3", "-c", "import sky; print('ok')"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            if result.returncode == 0 and "ok" in result.stdout:
+                logger.info("SkyPilot available (system-installed)")
                 return True
-            
-            # Some versions may not have --version, try --help
-            result = _run_sky_command(["--help"], timeout=10)
-            if result.returncode == 0:
-                logger.info("SkyPilot vendor fork available (verified via --help)")
-                return True
-                
-            logger.warning(f"SkyPilot CLI returned non-zero exit code: {result.stderr}")
-            return False
-            
-        except subprocess.TimeoutExpired:
-            logger.warning("SkyPilot CLI timed out during verification (may still work)")
-            return True  # Assume it works, timeout might be due to API server startup
         except Exception as e:
-            logger.error(f"Error verifying SkyPilot: {e}")
-            return False
+            logger.debug(f"System skypilot check failed: {e}")
+
+        try:
+            # Then try vendor directory
+            if VENDOR_DIR.exists():
+                result = _run_sky_command(["--help"], timeout=10)
+                if result.returncode == 0:
+                    logger.info("SkyPilot vendor fork available")
+                    return True
+        except Exception as e:
+            logger.debug(f"Vendor skypilot check failed: {e}")
+
+        logger.warning("SkyPilot not available - fine-tuning features will be limited")
+        return False
 
     def launch_finetune_job(
         self,
@@ -118,6 +129,9 @@ class SkyPilotProvider:
             {"success": True, "job_id": int, "job_name": str} or
             {"success": False, "error": str}
         """
+        if not self.is_available:
+            return {"success": False, "error": "SkyPilot not available. Please install skypilot: pip install skypilot"}
+
         logger.info(f"Launching fine-tuning job: {job_name}")
 
         if not os.path.exists(yaml_path):
@@ -170,6 +184,9 @@ class SkyPilotProvider:
         Returns:
             Dict with job status information
         """
+        if not self.is_available:
+            return {"error": "SkyPilot not available"}
+
         try:
             result = _run_sky_command(["jobs", "queue", "--json"], timeout=30)
 
@@ -207,6 +224,9 @@ class SkyPilotProvider:
         Returns:
             Log output as string
         """
+        if not self.is_available:
+            return "SkyPilot not available"
+
         try:
             result = _run_sky_command(["jobs", "logs", job_name, "--no-follow"], timeout=60)
 
@@ -232,6 +252,10 @@ class SkyPilotProvider:
         Returns:
             True if successful
         """
+        if not self.is_available:
+            logger.warning("SkyPilot not available, cannot cancel job")
+            return False
+
         try:
             result = _run_sky_command(["jobs", "cancel", str(job_id), "-y"], timeout=60)
 
@@ -253,6 +277,9 @@ class SkyPilotProvider:
         Returns:
             List of job dictionaries
         """
+        if not self.is_available:
+            return []
+
         try:
             result = _run_sky_command(["jobs", "queue", "--json"], timeout=30)
 

@@ -18,7 +18,10 @@ const OfferCard = ({ offer, onSelect }) => {
   const showWarning = !isBlacklisted && successRate !== null && successRate < 0.7 && successRate >= 0.3;
 
   return (
-    <Card className={`group relative overflow-hidden hover:border-brand-600/50 hover:shadow-lg hover:shadow-brand-600/10 transition-all duration-200 cursor-pointer active:scale-[0.98] ${isBlacklisted ? 'opacity-60 border-red-500/50' : isProblematic ? 'border-orange-500/30' : ''}`}>
+    <Card
+      data-testid="gpu-offer-card"
+      className={`group relative overflow-hidden hover:border-brand-600/50 hover:shadow-lg hover:shadow-brand-600/10 transition-all duration-200 cursor-pointer active:scale-[0.98] ${isBlacklisted ? 'opacity-60 border-red-500/50' : isProblematic ? 'border-orange-500/30' : ''}`}
+    >
       {/* Accent bar - red for blacklisted, orange for problematic */}
       <div className={`absolute top-0 left-0 right-0 h-0.5 ${isBlacklisted ? 'bg-red-500' : isProblematic ? 'bg-orange-500' : 'bg-brand-600'} group-hover:h-1 transition-all`} />
 
@@ -147,6 +150,7 @@ const OfferCard = ({ offer, onSelect }) => {
           <Button
             onClick={() => onSelect(offer)}
             size="sm"
+            data-testid="gpu-offer-select-button"
             className={isBlacklisted ? "bg-gray-500 cursor-not-allowed" : "bg-brand-700 hover:bg-brand-600 text-white"}
             disabled={isBlacklisted}
           >

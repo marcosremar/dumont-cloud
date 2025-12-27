@@ -84,6 +84,11 @@ class FineTuningService:
         self.storage = get_finetune_storage()
         self.template_dir = TEMPLATE_DIR
 
+    @property
+    def is_skypilot_available(self) -> bool:
+        """Check if SkyPilot is available for launching jobs"""
+        return self.skypilot.is_available
+
     def create_job(
         self,
         user_id: str,
@@ -301,6 +306,33 @@ class FineTuningService:
         self.storage.add_job_log(job_id, "Job cancelled by user")
 
         return True
+
+    def delete_job(self, job_id: str, user_id: Optional[str] = None) -> bool:
+        """
+        Delete a job from storage.
+
+        Args:
+            job_id: Job ID
+            user_id: User ID for verification
+
+        Returns:
+            True if deleted
+        """
+        job = self.get_job(job_id, user_id)
+        if not job:
+            logger.warning(f"Job {job_id} not found or doesn't belong to user")
+            return False
+
+        # Don't allow deleting running jobs
+        if job.is_running:
+            logger.warning(f"Job {job_id} is still running, cannot delete")
+            return False
+
+        # Delete from storage
+        success = self.storage.delete_job(job_id)
+        if success:
+            logger.info(f"Deleted job {job_id}")
+        return success
 
     def refresh_job_status(self, job_id: str) -> Optional[FineTuneJob]:
         """

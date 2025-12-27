@@ -235,6 +235,15 @@ class InstanceService:
         """
         return self.gpu_provider.get_balance()
 
+    def get_account_balance(self) -> Dict[str, Any]:
+        """
+        Get account balance (alias for get_balance)
+
+        Returns:
+            Dictionary with credit, balance, etc
+        """
+        return self.get_balance()
+
     def validate_before_create(self, offer_id: int, min_balance: float = 0.10) -> Dict[str, Any]:
         """
         Valida pré-requisitos antes de criar uma instância.

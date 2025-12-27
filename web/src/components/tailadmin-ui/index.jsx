@@ -197,7 +197,7 @@ export function Button({
 }
 
 // Badge Component
-export function Badge({ children, variant = 'gray', size = 'md', dot = false }) {
+export function Badge({ children, variant = 'gray', size = 'md', dot = false, className = '' }) {
   const variants = {
     primary: 'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-400',
     success: 'bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400',
@@ -221,8 +221,8 @@ export function Badge({ children, variant = 'gray', size = 'md', dot = false }) 
   };
 
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full font-medium ${variants[variant]} ${sizes[size]}`}>
-      {dot && <span className={`w-1.5 h-1.5 rounded-full ${dotColors[variant]}`} />}
+    <span className={`inline-flex items-center gap-1.5 rounded-full font-medium ${variants[variant]} ${sizes[size]} ${className}`}>
+      {dot && <span className={`w-1.5 h-1.5 rounded-full ${dotColors[variant]} ${className.includes('animate-pulse') ? 'animate-pulse' : ''}`} />}
       {children}
     </span>
   );

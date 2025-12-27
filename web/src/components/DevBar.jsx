@@ -74,9 +74,9 @@ const DevBar = () => {
           borderRadius: "10px"
         }}>
           <Key size={10} />
-          <code style={{ fontFamily: "monospace", fontSize: "10px" }}>test@test.com</code>
+          <code style={{ fontFamily: "monospace", fontSize: "10px" }}>marcosremar@gmail.com</code>
           <span style={{ opacity: 0.5 }}>|</span>
-          <code style={{ fontFamily: "monospace", fontSize: "10px" }}>test123</code>
+          <code style={{ fontFamily: "monospace", fontSize: "10px" }}>dumont123</code>
         </div>
 
         {/* Links */}

@@ -3,35 +3,31 @@ import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react'
 
 const ToastContext = createContext(null)
 
-// Variants com cores e ícones
+// Variants - dark background with colored accent
 const variants = {
   success: {
     icon: CheckCircle,
-    bg: 'bg-green-500/10',
-    border: 'border-green-500/30',
+    accent: 'bg-green-500',
     iconColor: 'text-green-400',
-    textColor: 'text-green-300'
+    textColor: 'text-white'
   },
   error: {
     icon: AlertCircle,
-    bg: 'bg-red-500/10',
-    border: 'border-red-500/30',
+    accent: 'bg-red-500',
     iconColor: 'text-red-400',
-    textColor: 'text-red-300'
+    textColor: 'text-white'
   },
   warning: {
     icon: AlertTriangle,
-    bg: 'bg-yellow-500/10',
-    border: 'border-yellow-500/30',
+    accent: 'bg-yellow-500',
     iconColor: 'text-yellow-400',
-    textColor: 'text-yellow-300'
+    textColor: 'text-white'
   },
   info: {
     icon: Info,
-    bg: 'bg-cyan-500/10',
-    border: 'border-cyan-500/30',
-    iconColor: 'text-cyan-400',
-    textColor: 'text-cyan-300'
+    accent: 'bg-blue-500',
+    iconColor: 'text-blue-400',
+    textColor: 'text-white'
   }
 }
 
@@ -41,20 +37,26 @@ function ToastItem({ id, message, type = 'info', onClose }) {
 
   return (
     <div
-      className={`toast flex items-start gap-3 p-4 rounded-lg border ${variant.bg} ${variant.border} shadow-lg animate-slide-in`}
-      style={{ minWidth: '300px', maxWidth: '400px' }}
+      className="toast flex items-stretch bg-gray-900 rounded-lg shadow-2xl shadow-black/50 overflow-hidden animate-toast-in border border-gray-700"
+      style={{ minWidth: '320px', maxWidth: '500px' }}
       role="alert"
       aria-live="polite"
     >
-      <Icon className={`w-5 h-5 ${variant.iconColor} flex-shrink-0 mt-0.5`} />
-      <p className={`flex-1 text-sm ${variant.textColor}`}>{message}</p>
-      <button
-        onClick={() => onClose(id)}
-        className="toast-close text-gray-500 hover:text-gray-300 transition-colors p-1"
-        aria-label="Fechar notificação"
-      >
-        <X className="w-4 h-4" />
-      </button>
+      {/* Color accent bar on left */}
+      <div className={`w-1.5 ${variant.accent} flex-shrink-0`} />
+
+      {/* Content */}
+      <div className="flex items-center gap-3 px-4 py-3.5 flex-1">
+        <Icon className={`w-5 h-5 ${variant.iconColor} flex-shrink-0`} />
+        <p className={`flex-1 text-sm font-medium ${variant.textColor}`}>{message}</p>
+        <button
+          onClick={() => onClose(id)}
+          className="text-gray-500 hover:text-white transition-colors p-1 rounded hover:bg-gray-800"
+          aria-label="Fechar notificacao"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   )
 }
@@ -66,7 +68,7 @@ export function ToastProvider({ children }) {
     setToasts(prev => prev.filter(toast => toast.id !== id))
   }, [])
 
-  const addToast = useCallback((message, type = 'info', duration = 3000) => {
+  const addToast = useCallback((message, type = 'info', duration = 4000) => {
     const id = Date.now() + Math.random()
     setToasts(prev => [...prev, { id, message, type }])
 
@@ -79,7 +81,6 @@ export function ToastProvider({ children }) {
     return id
   }, [removeToast])
 
-  // Memoize the toast object to prevent infinite re-renders
   const toast = useMemo(() => ({
     success: (message, duration) => addToast(message, 'success', duration),
     error: (message, duration) => addToast(message, 'error', duration),
@@ -91,31 +92,32 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={toast}>
       {children}
-      {/* Toast Container - responsivo */}
-      <div className="toast-container fixed bottom-4 right-4 z-[9999] flex flex-col gap-2">
+      {/* Toast Container - TOP CENTER */}
+      <div className="toast-container fixed top-4 left-1/2 -translate-x-1/2 z-[99999] flex flex-col items-center gap-3 pointer-events-none">
         {toasts.map(t => (
-          <ToastItem
-            key={t.id}
-            id={t.id}
-            message={t.message}
-            type={t.type}
-            onClose={removeToast}
-          />
+          <div key={t.id} className="pointer-events-auto">
+            <ToastItem
+              id={t.id}
+              message={t.message}
+              type={t.type}
+              onClose={removeToast}
+            />
+          </div>
         ))}
       </div>
       <style>{`
-        @keyframes slide-in {
-          from {
+        @keyframes toast-in {
+          0% {
             opacity: 0;
-            transform: translateX(100%);
+            transform: translateY(-100%) scale(0.95);
           }
-          to {
+          100% {
             opacity: 1;
-            transform: translateX(0);
+            transform: translateY(0) scale(1);
           }
         }
-        .animate-slide-in {
-          animation: slide-in 0.3s ease-out;
+        .animate-toast-in {
+          animation: toast-in 0.3s ease-out;
         }
       `}</style>
     </ToastContext.Provider>

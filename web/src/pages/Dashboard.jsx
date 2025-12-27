@@ -102,19 +102,36 @@ export default function Dashboard({ onStatsUpdate }) {
   // Refs to track intervals and timeouts for cleanup
   const raceIntervalsRef = useRef([]);
   const raceTimeoutsRef = useRef([]);
+  const createdInstanceIdsRef = useRef([]);
 
   useEffect(() => {
     checkOnboarding();
     fetchDashboardStats();
   }, []);
 
-  // Cleanup on unmount
+  // Cleanup on unmount - destroy any created instances
   useEffect(() => {
     return () => {
       raceIntervalsRef.current.forEach(clearInterval);
       raceTimeoutsRef.current.forEach(clearTimeout);
       raceIntervalsRef.current = [];
       raceTimeoutsRef.current = [];
+
+      // Destroy any created instances if user navigates away during race
+      if (createdInstanceIdsRef.current.length > 0) {
+        createdInstanceIdsRef.current.forEach(async (created) => {
+          try {
+            await fetch(`${API_BASE}/api/v1/instances/${created.instanceId}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+            });
+            console.log(`Destroyed instance ${created.instanceId} on unmount`);
+          } catch (e) {
+            console.error(`Failed to destroy instance ${created.instanceId} on unmount:`, e);
+          }
+        });
+        createdInstanceIdsRef.current = [];
+      }
     };
   }, []);
 
@@ -507,96 +524,235 @@ export default function Dashboard({ onStatsUpdate }) {
     const top5 = selectedOffers.slice(0, 5).map((offer, index) => ({
       ...offer,
       status: 'connecting',
-      progress: 0,
-      connectionTime: Math.random() * 5000 + 2000 // Random time between 2-7 seconds
+      progress: 0
     }));
 
     setRaceCandidates(top5);
     setRaceWinner(null);
     setProvisioningMode(true);
 
-    // Simulate the race
-    simulateRace(top5);
+    // Run REAL provisioning race (creates actual instances)
+    runRealProvisioningRace(top5);
   };
 
-  // Simulate connection race
-  const simulateRace = (candidates) => {
+  // REAL provisioning race - creates actual instances and monitors which one starts first
+  const runRealProvisioningRace = async (candidates) => {
     // Clear previous race intervals/timeouts
     raceIntervalsRef.current.forEach(clearInterval);
     raceTimeoutsRef.current.forEach(clearTimeout);
     raceIntervalsRef.current = [];
     raceTimeoutsRef.current = [];
+    createdInstanceIdsRef.current = [];
 
-    // Find which one will "win" (fastest connection time)
-    const sortedBySpeed = [...candidates].sort((a, b) => a.connectionTime - b.connectionTime);
-    const winnerIndex = candidates.findIndex(c => c.id === sortedBySpeed[0].id);
+    let winnerFound = false;
 
-    // Update progress for each candidate
-    const intervals = candidates.map((candidate, index) => {
-      const progressIncrement = 100 / (candidate.connectionTime / 100);
-
-      const intervalId = setInterval(() => {
+    // Create all instances simultaneously
+    const createPromises = candidates.map(async (candidate, index) => {
+      try {
+        // Update status to "creating"
         setRaceCandidates(prev => {
           const updated = [...prev];
-          if (updated[index] && updated[index].status === 'connecting') {
-            updated[index] = {
-              ...updated[index],
-              progress: Math.min((updated[index].progress || 0) + progressIncrement, 100)
-            };
-          }
+          updated[index] = { ...updated[index], status: 'creating', progress: 10 };
           return updated;
         });
-      }, 100);
 
-      raceIntervalsRef.current.push(intervalId);
-      return intervalId;
+        // Create instance via API
+        const res = await fetch(`${API_BASE}/api/v1/instances`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${getToken()}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            offer_id: candidate.id,
+            disk_size: candidate.disk_space || 20,
+            label: `Race-${candidate.gpu_name}-${Date.now()}`
+          })
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to create instance');
+        }
+
+        const data = await res.json();
+        const instanceId = data.id || data.instance_id;
+        createdInstanceIdsRef.current.push({ index, instanceId, offerId: candidate.id });
+
+        // Update with instance ID and status
+        setRaceCandidates(prev => {
+          const updated = [...prev];
+          updated[index] = {
+            ...updated[index],
+            instanceId,
+            status: 'connecting',
+            progress: 30
+          };
+          return updated;
+        });
+
+        return { index, instanceId, success: true };
+      } catch (error) {
+        // Mark as failed
+        setRaceCandidates(prev => {
+          const updated = [...prev];
+          updated[index] = { ...updated[index], status: 'failed', progress: 0 };
+          return updated;
+        });
+        return { index, success: false, error };
+      }
     });
 
-    // Determine winner after their connection time
-    const winnerTimeout = setTimeout(() => {
-      // Clear all intervals
-      intervals.forEach(clearInterval);
-      raceIntervalsRef.current = [];
+    // Wait for all creation attempts
+    await Promise.all(createPromises);
 
-      // Set the winner
-      setRaceCandidates(prev => {
-        return prev.map((c, i) => ({
-          ...c,
-          status: i === winnerIndex ? 'connected' : 'cancelled',
-          progress: i === winnerIndex ? 100 : c.progress
-        }));
-      });
+    // Poll for status updates every 3 seconds
+    const pollInterval = setInterval(async () => {
+      if (winnerFound) {
+        clearInterval(pollInterval);
+        return;
+      }
 
-      setRaceWinner(candidates[winnerIndex]);
-    }, sortedBySpeed[0].connectionTime);
+      try {
+        // Fetch all instances to check status
+        const res = await fetch(`${API_BASE}/api/v1/instances`, {
+          headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        if (!res.ok) return;
 
-    raceTimeoutsRef.current.push(winnerTimeout);
+        const data = await res.json();
+        const instances = data.instances || [];
 
-    // Simulate some failures for realism (optional - 20% chance per non-winner)
-    candidates.forEach((candidate, index) => {
-      if (index !== winnerIndex && Math.random() < 0.2) {
-        const failTime = Math.random() * sortedBySpeed[0].connectionTime;
-        const failTimeout = setTimeout(() => {
+        // Check each created instance
+        for (const created of createdInstanceIdsRef.current) {
+          const instance = instances.find(i => i.id === created.instanceId);
+          if (!instance) continue;
+
+          const status = instance.actual_status;
+          const candidateIndex = created.index;
+
+          // Update progress based on status
           setRaceCandidates(prev => {
             const updated = [...prev];
-            if (updated[index] && updated[index].status === 'connecting') {
-              updated[index] = { ...updated[index], status: 'failed' };
+            if (updated[candidateIndex]) {
+              let progress = updated[candidateIndex].progress || 30;
+              if (status === 'loading') progress = Math.min(progress + 10, 90);
+              if (status === 'running') progress = 100;
+              updated[candidateIndex] = {
+                ...updated[candidateIndex],
+                progress,
+                actualStatus: status,
+                sshHost: instance.ssh_host,
+                sshPort: instance.ssh_port
+              };
             }
             return updated;
           });
-        }, failTime);
 
-        raceTimeoutsRef.current.push(failTimeout);
+          // Check if this one is running (WINNER!)
+          if (status === 'running' && !winnerFound) {
+            winnerFound = true;
+            clearInterval(pollInterval);
+
+            // Mark winner and cancel others
+            setRaceCandidates(prev => {
+              return prev.map((c, i) => ({
+                ...c,
+                status: i === candidateIndex ? 'connected' : 'cancelled',
+                progress: i === candidateIndex ? 100 : c.progress
+              }));
+            });
+
+            // Set winner with full instance data
+            const winnerCandidate = candidates[candidateIndex];
+            setRaceWinner({
+              ...winnerCandidate,
+              instanceId: created.instanceId,
+              ssh_host: instance.ssh_host,
+              ssh_port: instance.ssh_port,
+              actual_status: 'running'
+            });
+
+            // Destroy the losing instances to save money
+            for (const other of createdInstanceIdsRef.current) {
+              if (other.instanceId !== created.instanceId) {
+                try {
+                  await fetch(`${API_BASE}/api/v1/instances/${other.instanceId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                  });
+                  console.log(`Destroyed losing instance ${other.instanceId}`);
+                } catch (e) {
+                  console.error(`Failed to destroy instance ${other.instanceId}:`, e);
+                }
+              }
+            }
+
+            // Clear the ref after cleanup
+            createdInstanceIdsRef.current = [];
+            toast.success(`🏆 ${winnerCandidate.gpu_name} venceu a corrida!`);
+            break;
+          }
+        }
+      } catch (error) {
+        console.error('Error polling instance status:', error);
       }
-    });
+    }, 3000);
+
+    raceIntervalsRef.current.push(pollInterval);
+
+    // Timeout after 5 minutes - if no winner, pick the first one that's furthest along
+    const raceTimeout = setTimeout(async () => {
+      if (!winnerFound) {
+        clearInterval(pollInterval);
+        toast.error('Tempo esgotado. Nenhuma máquina inicializou a tempo.');
+
+        // Clean up all created instances
+        for (const created of createdInstanceIdsRef.current) {
+          try {
+            await fetch(`${API_BASE}/api/v1/instances/${created.instanceId}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
+            console.log(`Cleaned up instance ${created.instanceId} after timeout`);
+          } catch (e) {
+            console.error(`Failed to cleanup instance ${created.instanceId}:`, e);
+          }
+        }
+
+        createdInstanceIdsRef.current = [];
+        setProvisioningMode(false);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    raceTimeoutsRef.current.push(raceTimeout);
   };
 
-  const cancelProvisioningRace = () => {
+  const cancelProvisioningRace = async () => {
     // Clean up all intervals and timeouts
     raceIntervalsRef.current.forEach(clearInterval);
     raceTimeoutsRef.current.forEach(clearTimeout);
     raceIntervalsRef.current = [];
     raceTimeoutsRef.current = [];
+
+    // Destroy all created instances to save money
+    if (createdInstanceIdsRef.current.length > 0) {
+      toast.info('Cancelando e destruindo instâncias criadas...');
+
+      for (const created of createdInstanceIdsRef.current) {
+        try {
+          await fetch(`${API_BASE}/api/v1/instances/${created.instanceId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+          });
+          console.log(`Destroyed instance ${created.instanceId} on cancel`);
+        } catch (e) {
+          console.error(`Failed to destroy instance ${created.instanceId}:`, e);
+        }
+      }
+
+      createdInstanceIdsRef.current = [];
+      toast.success('Corrida cancelada. Instâncias destruídas.');
+    }
 
     setProvisioningMode(false);
     setRaceCandidates([]);
@@ -605,7 +761,7 @@ export default function Dashboard({ onStatsUpdate }) {
 
   const completeProvisioningRace = (winner) => {
     setProvisioningMode(false);
-    toast.success(`Conectado com sucesso à máquina ${winner.gpu_name}!`, 4000);
+    // Toast já foi mostrado quando o vencedor foi encontrado
     navigate(`${basePath}/machines`, { state: { selectedOffer: winner } });
   };
 
@@ -693,14 +849,14 @@ export default function Dashboard({ onStatsUpdate }) {
     const top5 = selectedOffers.slice(0, 5).map((offer, index) => ({
       ...offer,
       status: 'connecting',
-      progress: 0,
-      connectionTime: Math.random() * 5000 + 2000
+      progress: 0
     }));
 
     setRaceCandidates(top5);
     setRaceWinner(null);
     // DON'T set provisioningMode to true - wizard handles step 4 display
-    simulateRace(top5);
+    // Run REAL provisioning race
+    runRealProvisioningRace(top5);
   };
 
   const resetAdvancedFilters = () => {

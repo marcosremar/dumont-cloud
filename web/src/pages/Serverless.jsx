@@ -172,9 +172,25 @@ export default function Serverless() {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       })
       const data = await res.json()
-      setStats(data)
+      // Ensure all required fields have default values
+      setStats({
+        total_requests_24h: data.total_requests_24h || 0,
+        avg_latency_ms: data.avg_latency_ms || 0,
+        total_cost_24h: data.total_cost_24h || 0,
+        active_instances: data.active_instances || 0,
+        cold_starts_24h: data.cold_starts_24h || 0,
+        ...data
+      })
     } catch (e) {
       console.error('Failed to load serverless stats:', e)
+      // Set default stats on error
+      setStats({
+        total_requests_24h: 0,
+        avg_latency_ms: 0,
+        total_cost_24h: 0,
+        active_instances: 0,
+        cold_starts_24h: 0,
+      })
     }
   }
 
@@ -249,7 +265,7 @@ export default function Serverless() {
               <Activity className="w-4 h-4 text-brand-400" />
             </div>
             <div className="text-2xl font-bold text-white">
-              {stats.total_requests_24h.toLocaleString()}
+              {(stats.total_requests_24h || 0).toLocaleString()}
             </div>
             <div className="text-xs text-gray-500 mt-1">
               {endpoints.filter(e => e.status === 'running').length} endpoints ativos
@@ -262,10 +278,10 @@ export default function Serverless() {
               <Clock className="w-4 h-4 text-brand-400" />
             </div>
             <div className="text-2xl font-bold text-white">
-              {stats.avg_latency_ms}ms
+              {stats.avg_latency_ms || 0}ms
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {stats.cold_starts_24h} cold starts
+              {stats.cold_starts_24h || 0} cold starts
             </div>
           </div>
 
@@ -275,10 +291,10 @@ export default function Serverless() {
               <DollarSign className="w-4 h-4 text-brand-400" />
             </div>
             <div className="text-2xl font-bold text-white">
-              ${stats.total_cost_24h.toFixed(2)}
+              ${(stats.total_cost_24h || 0).toFixed(2)}
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              ~${(stats.total_cost_24h * 30).toFixed(2)}/mês
+              ~${((stats.total_cost_24h || 0) * 30).toFixed(2)}/mês
             </div>
           </div>
 
@@ -288,10 +304,10 @@ export default function Serverless() {
               <Server className="w-4 h-4 text-brand-400" />
             </div>
             <div className="text-2xl font-bold text-white">
-              {stats.active_instances}
+              {stats.active_instances || 0}
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {stats.total_endpoints} endpoints configurados
+              {stats.total_endpoints || endpoints.length} endpoints configurados
             </div>
           </div>
         </div>

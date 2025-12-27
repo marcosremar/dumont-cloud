@@ -61,10 +61,14 @@ PORT="${PORT:-8000}"
 curl -s "http://localhost:$PORT/health" > /dev/null 2>&1
 """,
     popular_models=[
-        {"id": "meta-llama/Llama-3.1-8B-Instruct", "name": "Llama 3.1 8B", "size": "16GB"},
-        {"id": "mistralai/Mistral-7B-Instruct-v0.3", "name": "Mistral 7B", "size": "14GB"},
-        {"id": "Qwen/Qwen2.5-7B-Instruct", "name": "Qwen 2.5 7B", "size": "14GB"},
+        # Small models (< 1B params) - great for testing
+        {"id": "Qwen/Qwen3-0.6B", "name": "Qwen3 0.6B", "size": "1.5GB"},
+        {"id": "Qwen/Qwen2.5-0.5B-Instruct", "name": "Qwen 2.5 0.5B", "size": "1GB"},
         {"id": "microsoft/Phi-3-mini-4k-instruct", "name": "Phi-3 Mini", "size": "8GB"},
+        # Medium models
+        {"id": "Qwen/Qwen2.5-7B-Instruct", "name": "Qwen 2.5 7B", "size": "14GB"},
+        {"id": "mistralai/Mistral-7B-Instruct-v0.3", "name": "Mistral 7B", "size": "14GB"},
+        {"id": "meta-llama/Llama-3.1-8B-Instruct", "name": "Llama 3.1 8B", "size": "16GB"},
         {"id": "google/gemma-2-9b-it", "name": "Gemma 2 9B", "size": "18GB"},
     ]
 )

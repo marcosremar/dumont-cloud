@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { apiGet, apiPost, apiDelete, isDemoMode } from '../utils/api'
 import { ConfirmModal } from '../components/ui/dumont-ui'
-import { Plus, Server, Shield, Cpu, Activity, Check, RefreshCw } from 'lucide-react'
+import { Plus, Server, Shield, Cpu, Activity, Check, RefreshCw, DollarSign, TrendingDown, Wallet } from 'lucide-react'
 import MigrationModal from '../components/MigrationModal'
 import { ErrorState } from '../components/ErrorState'
 import { EmptyState } from '../components/EmptyState'
@@ -37,9 +37,23 @@ export default function Machines() {
   const [demoToast, setDemoToast] = useState(null) // Toast message for demo actions
   const [failoverProgress, setFailoverProgress] = useState({}) // machineId -> { phase, message, newGpu, metrics }
   const [failoverHistory, setFailoverHistory] = useState([]) // Array of completed failover events
+  const [newMachineIds, setNewMachineIds] = useState(new Set()) // Track newly created machines for highlight animation
+  const [vastBalance, setVastBalance] = useState(null) // VAST.ai account balance
 
   // Create machine modal state
   const [createModal, setCreateModal] = useState({ open: false, offer: null, creating: false, error: null })
+
+  // Ref to prevent double creation from React Strict Mode
+  const offerProcessedRef = useRef(false)
+
+  // Ref for scrolling to new machines
+  const machinesGridRef = useRef(null)
+
+  // Scroll to top of machines grid
+  const scrollToNewMachine = () => {
+    // Scroll to top of page smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   // Show demo toast
   const showDemoToast = (message, type = 'success') => {
@@ -47,22 +61,50 @@ export default function Machines() {
     setTimeout(() => setDemoToast(null), 3000)
   }
 
+  // Fetch VAST.ai account balance
+  const fetchVastBalance = async () => {
+    if (isDemo) {
+      setVastBalance({ credit: 127.45, spent: 23.55 })
+      return
+    }
+    try {
+      const res = await apiGet('/api/v1/instances/balance')
+      if (res.ok) {
+        const data = await res.json()
+        setVastBalance(data)
+      }
+    } catch (e) {
+      console.error('Error fetching balance:', e)
+    }
+  }
+
   useEffect(() => {
     fetchMachines()
+    fetchVastBalance()
     if (!isDemo) {
       const interval = setInterval(fetchMachines, 5000)
-      return () => clearInterval(interval)
+      const balanceInterval = setInterval(fetchVastBalance, 30000) // Update balance every 30s
+      return () => {
+        clearInterval(interval)
+        clearInterval(balanceInterval)
+      }
     }
   }, [])
 
-  // Handle selectedOffer from Dashboard navigation
+  // Handle selectedOffer from Dashboard navigation - AUTO CREATE without modal
   useEffect(() => {
+    // Prevent double execution from React Strict Mode
+    if (offerProcessedRef.current) return
+
     if (location.state?.selectedOffer) {
-      setCreateModal({ open: true, offer: location.state.selectedOffer, creating: false, error: null })
-      // Clear the state to prevent reopening on refresh
-      window.history.replaceState({}, document.title)
+      offerProcessedRef.current = true // Mark as processed BEFORE doing anything
+      const offer = location.state.selectedOffer
+      // Clear the state IMMEDIATELY to prevent reopening on refresh
+      window.history.replaceState({}, document.title, window.location.pathname)
+      // Directly create instance without showing modal
+      handleCreateInstance(offer)
     }
-  }, [location.state])
+  }, []) // Run only once on mount
 
   // Auto-sync every 30 seconds for running machines
   useEffect(() => {
@@ -135,8 +177,9 @@ export default function Machines() {
     if (isDemo) {
       showDemoToast('Criando máquina demo...', 'info')
       await new Promise(r => setTimeout(r, 2000))
+      const newMachineId = Date.now()
       const newMachine = {
-        id: Date.now(),
+        id: newMachineId,
         gpu_name: offer.gpu_name,
         num_gpus: offer.num_gpus || 1,
         gpu_ram: offer.gpu_ram,
@@ -144,21 +187,43 @@ export default function Machines() {
         cpu_ram: offer.cpu_ram,
         disk_space: offer.disk_space,
         dph_total: offer.dph_total,
-        actual_status: 'running',
-        status: 'running',
+        actual_status: 'loading',
+        status: 'loading',
         start_date: new Date().toISOString(),
-        public_ipaddr: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+        public_ipaddr: null,
         ssh_host: 'ssh.vast.ai',
         ssh_port: 22000 + Math.floor(Math.random() * 1000),
         cpu_standby: { enabled: true, state: 'syncing' }
       }
       setMachines(prev => [newMachine, ...prev])
+      // Add to new machines set for highlight animation
+      setNewMachineIds(prev => new Set([...prev, newMachineId]))
+      // Scroll to top to show new machine
+      setTimeout(() => scrollToNewMachine(), 100)
+      // Simulate boot time - change to running after 3s
+      setTimeout(() => {
+        setMachines(prev => prev.map(m =>
+          m.id === newMachineId
+            ? { ...m, actual_status: 'running', status: 'running', public_ipaddr: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}` }
+            : m
+        ))
+      }, 3000)
+      // Remove highlight after 5 seconds
+      setTimeout(() => {
+        setNewMachineIds(prev => {
+          const next = new Set(prev)
+          next.delete(newMachineId)
+          return next
+        })
+      }, 5000)
       setCreateModal({ open: false, offer: null, creating: false, error: null })
       showDemoToast(`${offer.gpu_name} criada com CPU Standby!`, 'success')
       return
     }
 
-    setCreateModal(prev => ({ ...prev, creating: true, error: null }))
+    // Show toast that we're creating
+    showDemoToast(`Criando ${offer.gpu_name}...`, 'info')
+
     try {
       const res = await apiPost('/api/v1/instances', {
         offer_id: offer.id,
@@ -173,13 +238,33 @@ export default function Machines() {
 
       const data = await res.json()
       setCreateModal({ open: false, offer: null, creating: false, error: null })
+
+      // Track new machine ID for highlight animation
+      const newInstanceId = data.id || data.instance_id
+      if (newInstanceId) {
+        setNewMachineIds(prev => new Set([...prev, newInstanceId]))
+        // Remove highlight after 5 seconds
+        setTimeout(() => {
+          setNewMachineIds(prev => {
+            const next = new Set(prev)
+            next.delete(newInstanceId)
+            return next
+          })
+        }, 5000)
+      }
+
       fetchMachines()
+
+      // Scroll to top to show new machine
+      setTimeout(() => scrollToNewMachine(), 500)
 
       // Show success message
       showDemoToast(`${offer.gpu_name} criada! CPU Standby sendo provisionado...`, 'success')
 
     } catch (err) {
-      setCreateModal(prev => ({ ...prev, creating: false, error: err.message }))
+      // Show error as toast instead of modal
+      showDemoToast(`Erro: ${err.message}`, 'error')
+      setCreateModal({ open: false, offer: null, creating: false, error: null })
     }
   }
 
@@ -494,14 +579,33 @@ export default function Machines() {
     }, 5000)
   }
 
-  const activeMachines = machines.filter(m => m.actual_status === 'running')
-  const inactiveMachines = machines.filter(m => m.actual_status !== 'running')
+  // States where machine is loading/starting
+  const loadingStates = ['loading', 'creating', 'starting', 'pending', 'provisioning', 'configuring']
 
+  // Sort function: most recent first (by start_date or id as fallback)
+  const sortByRecent = (a, b) => {
+    const dateA = a.start_date ? new Date(a.start_date).getTime() : a.id
+    const dateB = b.start_date ? new Date(b.start_date).getTime() : b.id
+    return dateB - dateA // Most recent first
+  }
+
+  // Group machines: Loading → Running → Stopped
+  const loadingMachines = machines.filter(m => loadingStates.includes(m.actual_status)).sort(sortByRecent)
+  const runningMachines = machines.filter(m => m.actual_status === 'running').sort(sortByRecent)
+  const stoppedMachines = machines.filter(m =>
+    !loadingStates.includes(m.actual_status) && m.actual_status !== 'running'
+  ).sort(sortByRecent)
+
+  // For stats, "active" includes loading + running
+  const activeMachines = [...loadingMachines, ...runningMachines]
+  const inactiveMachines = stoppedMachines
+
+  // Build filtered list: Loading always first, then based on filter
   const filteredMachines = filter === 'online'
-    ? activeMachines
+    ? [...loadingMachines, ...runningMachines]
     : filter === 'offline'
-      ? inactiveMachines
-      : [...activeMachines, ...inactiveMachines]
+      ? stoppedMachines
+      : [...loadingMachines, ...runningMachines, ...stoppedMachines]
 
   const totalGpuMem = activeMachines.reduce((acc, m) => acc + (m.gpu_ram || 24000), 0)
   const totalCostPerHour = activeMachines.reduce((acc, m) => acc + (m.total_dph || m.dph_total || 0), 0)
@@ -540,6 +644,21 @@ export default function Machines() {
           </Link>
         </div>
       </div>
+
+      {/* VAST.ai Balance - Compact inline */}
+      {vastBalance && (
+        <div className="mb-4 flex items-center gap-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-900/30 border border-green-500/30">
+            <Wallet className="w-4 h-4 text-green-400" />
+            <span className="text-sm text-green-400/70">Saldo:</span>
+            <span className="text-sm font-bold text-green-400">${vastBalance.credit?.toFixed(2) || '0.00'}</span>
+          </div>
+          <span className="text-xs text-gray-500">
+            <TrendingDown className="w-3 h-3 inline mr-1" />
+            ${totalCostPerHour.toFixed(2)}/hr em uso
+          </span>
+        </div>
+      )}
 
       {/* Stats Summary - TailAdmin Cards */}
       <div className="stats-grid mb-6">
@@ -640,7 +759,7 @@ export default function Machines() {
               actionText="Criar máquina"
             />
           ) : !error && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {filteredMachines.map((machine) => (
                 <MachineCard
                   key={machine.id}
@@ -655,6 +774,7 @@ export default function Machines() {
                   syncStatus={syncStatus[machine.id] || 'idle'}
                   syncStats={syncStats[machine.id]}
                   failoverProgress={failoverProgress[machine.id] || { phase: 'idle' }}
+                  isNew={newMachineIds.has(machine.id)}
                 />
               ))}
             </div>
@@ -766,6 +886,13 @@ export default function Machines() {
         }
         .animate-slide-up {
           animation: slide-up 0.3s ease-out;
+        }
+        @keyframes highlight-new {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+          50% { box-shadow: 0 0 20px 5px rgba(74, 222, 128, 0.4); }
+        }
+        .animate-highlight-new {
+          animation: highlight-new 1s ease-in-out 3;
         }
       `}</style>
     </div>
