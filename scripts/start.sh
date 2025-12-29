@@ -2,8 +2,6 @@
 # Dumont Cloud - Start Script
 # Inicia code-server e backend simultaneamente
 
-set -e
-
 echo "============================================"
 echo "Dumont Cloud - Starting services..."
 echo "============================================"
@@ -11,34 +9,38 @@ echo "============================================"
 # Verificar se code-server está instalado
 if ! command -v code-server &> /dev/null; then
     echo "ERROR: code-server not found!"
-    exit 1
+    # Continue anyway - don't fail the whole container
 fi
 
 # Criar diretório de config se não existir
 mkdir -p /root/.config/code-server
 
-# Criar config do code-server se não existir
-if [ ! -f /root/.config/code-server/config.yaml ]; then
-    echo "Creating code-server config..."
-    cat > /root/.config/code-server/config.yaml << 'EOF'
+# Criar config do code-server
+cat > /root/.config/code-server/config.yaml << 'EOF'
 bind-addr: 0.0.0.0:8080
 auth: password
 password: Marcos+123
 cert: false
 EOF
-fi
 
+echo "Config file created:"
+cat /root/.config/code-server/config.yaml
+
+echo ""
 echo "Starting VS Code Server on port 8080..."
-code-server /app --bind-addr 0.0.0.0:8080 2>&1 | sed 's/^/[code-server] /' &
-CODE_SERVER_PID=$!
+# Run code-server in background, output goes to container logs
+nohup code-server /app --bind-addr 0.0.0.0:8080 > /proc/1/fd/1 2>&1 &
 
-# Aguardar um pouco para code-server inicializar
-sleep 3
+# Give code-server time to start
+sleep 5
 
-# Verificar se code-server está rodando
-if ! kill -0 $CODE_SERVER_PID 2>/dev/null; then
-    echo "WARNING: code-server may have failed to start"
+# Check if it started
+if pgrep -f "code-server" > /dev/null; then
+    echo "code-server started successfully (PID: $(pgrep -f 'code-server' | head -1))"
+else
+    echo "WARNING: code-server may not have started"
 fi
 
+echo ""
 echo "Starting Dumont Cloud API on port 8000..."
 exec python -m uvicorn src.main:app --host 0.0.0.0 --port 8000
