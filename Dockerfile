@@ -74,12 +74,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Script de entrada para rodar ambos serviços
-RUN echo '#!/bin/bash\n\
-# Iniciar code-server em background\n\
-code-server /app --bind-addr 0.0.0.0:8080 &\n\
-# Iniciar backend\n\
-exec python -m uvicorn src.main:app --host 0.0.0.0 --port 8000\n\
-' > /app/start.sh && chmod +x /app/start.sh
+COPY scripts/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 # Comando para iniciar ambos serviços
 CMD ["/bin/bash", "/app/start.sh"]
