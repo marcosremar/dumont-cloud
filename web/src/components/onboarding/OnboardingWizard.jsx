@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { X, ChevronRight, ChevronLeft, Rocket, Cpu, Shield, Zap, Sparkles, CheckCircle2 } from 'lucide-react'
+import { X, ChevronRight, ChevronLeft, Rocket, Cpu, Shield, Zap, Sparkles, CheckCircle2, AlertTriangle, Database, Server, Cloud } from 'lucide-react'
 
 export default function OnboardingWizard({ user, onClose, onComplete }) {
     const [step, setStep] = useState(1)
-    const totalSteps = 4
+    const totalSteps = 5
+    const [failoverStrategy, setFailoverStrategy] = useState('snapshot_only') // Default: Snapshot Only
 
     const nextStep = () => setStep(s => Math.min(s + 1, totalSteps))
     const prevStep = () => setStep(s => Math.max(s - 1, 1))
@@ -106,6 +107,86 @@ export default function OnboardingWizard({ user, onClose, onComplete }) {
 
                     {step === 3 && (
                         <div className="step-content animate-in">
+                            <div className="icon-container icon-orange">
+                                <div className="icon-ring"></div>
+                                <div className="icon-ring delay-1"></div>
+                                <Shield size={56} strokeWidth={1.5} />
+                            </div>
+                            <div className="text-content">
+                                <h2>Proteção <span className="highlight-orange">Failover</span></h2>
+                                <p className="description">
+                                    Escolha como proteger seus dados quando a máquina for interrompida.
+                                </p>
+                            </div>
+                            <div className="failover-options">
+                                <div
+                                    className={`failover-card ${failoverStrategy === 'snapshot_only' ? 'selected' : ''}`}
+                                    onClick={() => setFailoverStrategy('snapshot_only')}
+                                >
+                                    <div className="failover-radio">
+                                        {failoverStrategy === 'snapshot_only' && <CheckCircle2 size={16} />}
+                                    </div>
+                                    <div className="failover-icon"><Database size={20} /></div>
+                                    <div className="failover-info">
+                                        <strong>Snapshot Only</strong>
+                                        <span>Backup a cada 1h • Recovery em ~5min</span>
+                                        <span className="failover-tag recommended">Recomendado</span>
+                                    </div>
+                                </div>
+                                <div
+                                    className={`failover-card ${failoverStrategy === 'cpu_standby' ? 'selected' : ''}`}
+                                    onClick={() => setFailoverStrategy('cpu_standby')}
+                                >
+                                    <div className="failover-radio">
+                                        {failoverStrategy === 'cpu_standby' && <CheckCircle2 size={16} />}
+                                    </div>
+                                    <div className="failover-icon"><Server size={20} /></div>
+                                    <div className="failover-info">
+                                        <strong>CPU Standby</strong>
+                                        <span>CPU sempre ativa • Recovery em ~2min</span>
+                                        <span className="failover-tag">+$0.02/h</span>
+                                    </div>
+                                </div>
+                                <div
+                                    className={`failover-card ${failoverStrategy === 'warm_pool' ? 'selected' : ''}`}
+                                    onClick={() => setFailoverStrategy('warm_pool')}
+                                >
+                                    <div className="failover-radio">
+                                        {failoverStrategy === 'warm_pool' && <CheckCircle2 size={16} />}
+                                    </div>
+                                    <div className="failover-icon"><Cloud size={20} /></div>
+                                    <div className="failover-info">
+                                        <strong>Warm Pool</strong>
+                                        <span>GPU reservada • Recovery em ~30s</span>
+                                        <span className="failover-tag premium">Premium</span>
+                                    </div>
+                                </div>
+                                <div
+                                    className={`failover-card danger ${failoverStrategy === 'none' ? 'selected' : ''}`}
+                                    onClick={() => setFailoverStrategy('none')}
+                                >
+                                    <div className="failover-radio">
+                                        {failoverStrategy === 'none' && <CheckCircle2 size={16} />}
+                                    </div>
+                                    <div className="failover-icon danger"><AlertTriangle size={20} /></div>
+                                    <div className="failover-info">
+                                        <strong>Sem Failover</strong>
+                                        <span>Sem proteção • Dados podem ser perdidos</span>
+                                        <span className="failover-tag danger">Perigoso</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {failoverStrategy === 'none' && (
+                                <div className="danger-warning">
+                                    <AlertTriangle size={18} />
+                                    <span>Atenção: Sem failover, você pode perder todo o trabalho se a máquina for interrompida!</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {step === 4 && (
+                        <div className="step-content animate-in">
                             <div className="icon-container icon-blue">
                                 <div className="icon-ring"></div>
                                 <div className="icon-ring delay-1"></div>
@@ -127,7 +208,7 @@ export default function OnboardingWizard({ user, onClose, onComplete }) {
                         </div>
                     )}
 
-                    {step === 4 && (
+                    {step === 5 && (
                         <div className="step-content animate-in">
                             <div className="icon-container icon-green success">
                                 <div className="icon-ring"></div>
@@ -512,6 +593,163 @@ export default function OnboardingWizard({ user, onClose, onComplete }) {
                 .gpu-chip:hover {
                     background: rgba(59, 130, 246, 0.2);
                     transform: translateY(-2px);
+                }
+
+                /* Failover Options */
+                .icon-orange { color: #f97316; }
+
+                .highlight-orange {
+                    background: linear-gradient(135deg, #f97316, #fb923c);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+
+                .failover-options {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    width: 100%;
+                    margin-top: 8px;
+                }
+
+                .failover-card {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 14px 16px;
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+
+                .failover-card:hover {
+                    background: rgba(249, 115, 22, 0.05);
+                    border-color: rgba(249, 115, 22, 0.2);
+                }
+
+                .failover-card.selected {
+                    background: rgba(249, 115, 22, 0.1);
+                    border-color: #f97316;
+                    box-shadow: 0 0 15px rgba(249, 115, 22, 0.2);
+                }
+
+                .failover-card.danger:hover {
+                    background: rgba(239, 68, 68, 0.05);
+                    border-color: rgba(239, 68, 68, 0.2);
+                }
+
+                .failover-card.danger.selected {
+                    background: rgba(239, 68, 68, 0.1);
+                    border-color: #ef4444;
+                    box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+                }
+
+                .failover-radio {
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    border: 2px solid rgba(255, 255, 255, 0.2);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                    transition: all 0.2s ease;
+                }
+
+                .failover-card.selected .failover-radio {
+                    background: #f97316;
+                    border-color: #f97316;
+                    color: white;
+                }
+
+                .failover-card.danger.selected .failover-radio {
+                    background: #ef4444;
+                    border-color: #ef4444;
+                }
+
+                .failover-icon {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 8px;
+                    background: rgba(249, 115, 22, 0.15);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #f97316;
+                    flex-shrink: 0;
+                }
+
+                .failover-icon.danger {
+                    background: rgba(239, 68, 68, 0.15);
+                    color: #ef4444;
+                }
+
+                .failover-info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                    flex: 1;
+                    text-align: left;
+                }
+
+                .failover-info strong {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #ffffff;
+                }
+
+                .failover-info span {
+                    font-size: 12px;
+                    color: rgba(255, 255, 255, 0.5);
+                }
+
+                .failover-tag {
+                    display: inline-block;
+                    padding: 2px 8px;
+                    border-radius: 4px;
+                    font-size: 10px;
+                    font-weight: 600;
+                    background: rgba(255, 255, 255, 0.1);
+                    color: rgba(255, 255, 255, 0.6);
+                    margin-top: 4px;
+                    width: fit-content;
+                }
+
+                .failover-tag.recommended {
+                    background: rgba(34, 197, 94, 0.2);
+                    color: #22c55e;
+                }
+
+                .failover-tag.premium {
+                    background: rgba(168, 85, 247, 0.2);
+                    color: #a855f7;
+                }
+
+                .failover-tag.danger {
+                    background: rgba(239, 68, 68, 0.2);
+                    color: #ef4444;
+                }
+
+                .danger-warning {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 12px 16px;
+                    background: rgba(239, 68, 68, 0.1);
+                    border: 1px solid rgba(239, 68, 68, 0.3);
+                    border-radius: 10px;
+                    margin-top: 12px;
+                    color: #ef4444;
+                    font-size: 13px;
+                    animation: pulseWarning 2s ease-in-out infinite;
+                }
+
+                @keyframes pulseWarning {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.7; }
                 }
 
                 /* Footer Navigation */
