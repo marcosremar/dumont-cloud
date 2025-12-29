@@ -438,6 +438,27 @@ class DemoProvider(IGpuProvider):
             "email": "demo@example.com",
         }
 
+    def check_api_health(self) -> Dict[str, Any]:
+        """Check API health (demo mode - always healthy)"""
+        return {
+            "healthy": True,
+            "provider": "demo",
+            "message": "Demo mode - always healthy",
+            "latency_ms": 1,
+        }
+
+    def validate_before_create(self, offer_id: int, min_balance: float = 0.10) -> Dict[str, Any]:
+        """Validate before creating instance (demo mode - always valid)"""
+        return {
+            "valid": True,
+            "offer_available": True,
+            "balance_sufficient": True,
+            "balance": 100.00,
+            "required_balance": min_balance,
+            "errors": [],
+            "warnings": [],
+        }
+
     def _parse_offer(self, data: Dict[str, Any]) -> GpuOffer:
         """Parse offer data to domain model"""
         return GpuOffer(
