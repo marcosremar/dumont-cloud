@@ -22,19 +22,38 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Instalar dependências do sistema + code-server
+# Instalar dependências do sistema + code-server + Node.js
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
     procps \
     sudo \
+    ca-certificates \
+    gnupg \
     && curl -fsSL https://code-server.dev/install.sh | sh \
+    && mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update \
+    && apt-get install -y nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Configurar code-server
+# Instalar Claude Code
+RUN curl -fsSL https://claude.ai/install.sh | bash
+
+# Criar usuário ubuntu com privilégios de administrador
+RUN useradd -m -s /bin/bash ubuntu \
+    && echo "ubuntu:ubuntu" | chpasswd \
+    && usermod -aG sudo ubuntu \
+    && echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Configurar code-server para o usuário ubuntu também
 RUN mkdir -p /root/.config/code-server && \
-    printf 'bind-addr: 0.0.0.0:8080\nauth: password\npassword: Marcos+123\ncert: false\n' > /root/.config/code-server/config.yaml
+    printf 'bind-addr: 0.0.0.0:8080\nauth: password\npassword: Marcos+123\ncert: false\n' > /root/.config/code-server/config.yaml && \
+    mkdir -p /home/ubuntu/.config/code-server && \
+    printf 'bind-addr: 0.0.0.0:8080\nauth: password\npassword: Marcos+123\ncert: false\n' > /home/ubuntu/.config/code-server/config.yaml && \
+    chown -R ubuntu:ubuntu /home/ubuntu/.config
 
 # Copiar requirements e instalar dependências Python
 COPY requirements.txt ./
@@ -52,6 +71,9 @@ COPY --from=frontend-builder /app/web/build ./web/build
 
 # Criar diretório para dados persistentes
 RUN mkdir -p /app/data && chmod 777 /app/data
+
+# Dar permissões ao usuário ubuntu no diretório /app
+RUN chown -R ubuntu:ubuntu /app
 
 # Volume para persistência
 VOLUME /app/data
