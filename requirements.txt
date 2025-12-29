@@ -33,3 +33,4 @@ colorama>=0.4.0
 
 # Utilities
 paramiko>=3.0.0
+email-validator>=2.0.0
