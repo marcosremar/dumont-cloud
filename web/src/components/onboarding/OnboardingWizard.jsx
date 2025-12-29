@@ -877,3 +877,4 @@ export default function OnboardingWizard({ user, onClose, onComplete }) {
     )
 }
 
+// Force rebuild Mon Dec 29 12:16:04 CET 2025
