@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  dumont-cloud:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dumont-cloud
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - PYTHONUNBUFFERED=1
+      # Adicione suas variáveis de ambiente aqui
+      # - VAST_API_KEY=${VAST_API_KEY}
+      # - DATABASE_URL=${DATABASE_URL}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "coolify.managed=true"
