@@ -269,7 +269,7 @@ export default function OnboardingWizard({ user, onClose, onComplete }) {
                     border: 1px solid rgba(34, 197, 94, 0.3);
                     border-radius: 24px;
                     width: 100%;
-                    max-width: 520px;
+                    max-width: 640px;
                     padding: 48px;
                     position: relative;
                     display: flex;
@@ -877,4 +877,3 @@ export default function OnboardingWizard({ user, onClose, onComplete }) {
     )
 }
 
-// Force rebuild Mon Dec 29 12:16:04 CET 2025
