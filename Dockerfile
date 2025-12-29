@@ -52,6 +52,15 @@ RUN curl -fsSL https://claude.ai/install.sh | bash \
 # Instalar Claude Code para ubuntu também
 RUN su - ubuntu -c 'curl -fsSL https://claude.ai/install.sh | bash'
 
+# Configurar variáveis de ambiente GLOBAIS para todos os usuários
+RUN echo 'export PATH="/usr/local/bin:/root/.claude/local/bin:$HOME/.claude/local/bin:$PATH"' > /etc/profile.d/claude.sh \
+    && chmod +x /etc/profile.d/claude.sh \
+    && echo 'PATH="/usr/local/bin:/root/.claude/local/bin:/home/ubuntu/.claude/local/bin:$PATH"' >> /etc/environment
+
+# Adicionar ao .bashrc de root e ubuntu
+RUN echo 'export PATH="/root/.claude/local/bin:$PATH"' >> /root/.bashrc \
+    && echo 'export PATH="$HOME/.claude/local/bin:$PATH"' >> /home/ubuntu/.bashrc
+
 # Configurar code-server para ambos usuários
 RUN mkdir -p /root/.config/code-server && \
     printf 'bind-addr: 0.0.0.0:8080\nauth: password\npassword: Marcos+123\ncert: false\n' > /root/.config/code-server/config.yaml && \
