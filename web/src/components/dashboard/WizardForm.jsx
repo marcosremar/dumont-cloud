@@ -8,6 +8,7 @@ import {
 import { Button, Label, CardContent } from '../tailadmin-ui';
 import { WorldMap, GPUSelector } from './';
 import { COUNTRY_DATA, PERFORMANCE_TIERS } from './constants';
+import { apiGet } from '../../utils/api';
 
 // Componente Tooltip simples
 const Tooltip = ({ children, text }) => (
@@ -249,8 +250,8 @@ const WizardForm = ({
         const tier = tiers.find(t => t.name === selectedTier);
         const regionCode = selectedLocation?.codes?.[0] || '';
 
-        // Try to fetch from API
-        const response = await fetch(`/api/v1/instances/offers?limit=3&order_by=dph_total&region=${regionCode}`);
+        // Try to fetch from API (with authentication)
+        const response = await apiGet(`/api/v1/instances/offers?limit=3&order_by=dph_total&region=${regionCode}`);
 
         if (response.ok) {
           const data = await response.json();
