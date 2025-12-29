@@ -1,36 +1,35 @@
-# Dumont Cloud - Dependencias
+# Dumont Cloud - Dependencies (auto-generated from working environment)
 
 # Web Framework
-flask>=2.0.0
-flask-cors>=4.0.0
-fastapi>=0.100.0
-uvicorn>=0.23.0
-pydantic>=2.0.0
-pydantic-settings>=2.0.0
-python-multipart>=0.0.6
+fastapi==0.127.0
+uvicorn==0.35.0
+pydantic==2.12.5
+pydantic-settings==2.12.0
+python-multipart==0.0.21
+flask==3.1.2
+flask-cors==6.0.2
 
-# HTTP Requests
-requests>=2.28.0
-httpx>=0.24.0
-aiohttp>=3.8.0
-aiofiles>=23.0.0
+# HTTP/Async
+requests==2.32.5
+httpx==0.28.1
+aiohttp==3.11.16
+aiofiles==25.1.0
 
 # Database
-sqlalchemy>=2.0.0
-psycopg2-binary>=2.9.0
+sqlalchemy==2.0.40
+psycopg2-binary==2.9.11
 
-# Google Cloud Platform (CPU Standby)
-google-api-python-client>=2.100.0
-google-auth>=2.23.0
+# Google Cloud Platform
+google-api-python-client==2.187.0
+google-auth==2.45.0
+google-cloud-compute==1.40.0
 
-# Machine Learning (para previsao de precos)
-numpy>=1.24.0
-scikit-learn>=1.3.0
-
-# Date/Time (Python 3.13 compatibility)
-python-dateutil>=2.8.2
-colorama>=0.4.0
+# Machine Learning
+numpy==2.4.0
+scikit-learn==1.8.0
 
 # Utilities
-paramiko>=3.0.0
-email-validator>=2.0.0
+python-dateutil==2.9.0.post0
+colorama==0.4.6
+paramiko==4.0.0
+email-validator==2.3.0
