@@ -43,6 +43,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código fonte do backend
 COPY src/ ./src/
 
+# Copiar script de inicialização
+COPY scripts/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 # Copiar frontend buildado
 COPY --from=frontend-builder /app/web/build ./web/build
 
@@ -65,7 +69,5 @@ EXPOSE 8000 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Usar script inline para iniciar ambos serviços
-CMD code-server --bind-addr 0.0.0.0:8080 /app & \
-    sleep 2 && \
-    python -m uvicorn src.main:app --host 0.0.0.0 --port 8000
+# Usar script para iniciar ambos serviços
+CMD ["/app/start.sh"]
