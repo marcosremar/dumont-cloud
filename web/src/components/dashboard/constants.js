@@ -215,9 +215,10 @@ export const COUNTRY_NAMES = {
 
 export const DEMO_OFFERS = [
   { id: 1001, gpu_name: 'RTX 4090', num_gpus: 1, gpu_ram: 24000, cpu_cores: 16, cpu_ram: 64000, disk_space: 200, dph_total: 0.45, inet_down: 2000, verified: true, geolocation: 'US' },
-  { id: 1002, gpu_name: 'RTX 5090', num_gpus: 1, gpu_ram: 32000, cpu_cores: 24, cpu_ram: 128000, disk_space: 500, dph_total: 0.89, inet_down: 5000, verified: true, geolocation: 'EU' },
-  { id: 1003, gpu_name: 'A100 80GB', num_gpus: 1, gpu_ram: 80000, cpu_cores: 32, cpu_ram: 256000, disk_space: 1000, dph_total: 2.10, inet_down: 10000, verified: true, geolocation: 'US' },
-  { id: 1004, gpu_name: 'H100 80GB', num_gpus: 1, gpu_ram: 80000, cpu_cores: 64, cpu_ram: 512000, disk_space: 2000, dph_total: 3.50, inet_down: 25000, verified: true, geolocation: 'EU' },
+  { id: 1002, gpu_name: 'RTX 4080', num_gpus: 1, gpu_ram: 16000, cpu_cores: 12, cpu_ram: 32000, disk_space: 150, dph_total: 0.35, inet_down: 1500, verified: true, geolocation: 'EU' },
+  { id: 1003, gpu_name: 'RTX 5090', num_gpus: 1, gpu_ram: 32000, cpu_cores: 24, cpu_ram: 128000, disk_space: 500, dph_total: 0.89, inet_down: 5000, verified: true, geolocation: 'US' },
+  { id: 1004, gpu_name: 'A100 80GB', num_gpus: 1, gpu_ram: 80000, cpu_cores: 32, cpu_ram: 256000, disk_space: 1000, dph_total: 2.10, inet_down: 10000, verified: true, geolocation: 'EU' },
+  { id: 1005, gpu_name: 'H100 80GB', num_gpus: 1, gpu_ram: 80000, cpu_cores: 64, cpu_ram: 512000, disk_space: 2000, dph_total: 3.50, inet_down: 25000, verified: true, geolocation: 'US' },
 ];
 
 export const DEFAULT_FILTERS = {
