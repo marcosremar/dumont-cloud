@@ -43,10 +43,17 @@ COPY src/ ./src/
 # Copiar frontend buildado
 COPY --from=frontend-builder /app/web/build ./web/build
 
+# Criar diretório para dados persistentes
+RUN mkdir -p /app/data && chmod 777 /app/data
+
+# Volume para persistência
+VOLUME /app/data
+
 # Variáveis de ambiente
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PORT=8000
+ENV CONFIG_FILE=/app/data/config.json
 
 # Expor porta
 EXPOSE 8000
