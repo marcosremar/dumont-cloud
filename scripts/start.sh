@@ -28,8 +28,9 @@ cat /root/.config/code-server/config.yaml
 
 echo ""
 echo "Starting VS Code Server on port 8080..."
-# Run code-server in background, output goes to container logs
-nohup code-server /app --bind-addr 0.0.0.0:8080 > /proc/1/fd/1 2>&1 &
+# IMPORTANT: Unset PORT env var so code-server doesn't use it
+# Also explicitly set bind-addr via command line
+PORT=8080 nohup code-server /app --bind-addr 0.0.0.0:8080 > /proc/1/fd/1 2>&1 &
 
 # Give code-server time to start
 sleep 5
@@ -43,4 +44,6 @@ fi
 
 echo ""
 echo "Starting Dumont Cloud API on port 8000..."
+# Set PORT back to 8000 for uvicorn
+export PORT=8000
 exec python -m uvicorn src.main:app --host 0.0.0.0 --port 8000
