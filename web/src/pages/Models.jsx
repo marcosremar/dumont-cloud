@@ -5,6 +5,7 @@ import {
   Eye, ExternalLink, Copy, Key, Globe, Lock, Mic, Image, MessageSquare, Search,
   ChevronRight, ChevronLeft, Rocket, Zap
 } from 'lucide-react';
+import { DEMO_MODELS, DEMO_TEMPLATES } from '../constants/demoData';
 
 // Model type icons
 const MODEL_TYPE_CONFIG = {
@@ -49,8 +50,21 @@ const Models = () => {
     name: '',
   });
 
+  // Check if demo mode is enabled
+  const isDemoMode = () => {
+    return localStorage.getItem('demo_mode') === 'true';
+  };
+
   // Fetch models and templates
   const fetchModels = useCallback(async () => {
+    // Use demo data in demo mode
+    if (isDemoMode()) {
+      setModels(DEMO_MODELS);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+
     try {
       const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/v1/models', {
@@ -69,6 +83,12 @@ const Models = () => {
   }, []);
 
   const fetchTemplates = useCallback(async () => {
+    // Use demo data in demo mode
+    if (isDemoMode()) {
+      setTemplates(DEMO_TEMPLATES);
+      return;
+    }
+
     try {
       const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/v1/models/templates', {
@@ -120,6 +140,51 @@ const Models = () => {
 
   const handleDeploy = async () => {
     setDeploying(true);
+
+    // In demo mode, simulate deployment
+    if (isDemoMode()) {
+      setTimeout(() => {
+        const newModel = {
+          id: `model-demo-${Date.now()}`,
+          name: formData.name || formData.model_id.split('/').pop(),
+          model_id: formData.model_id,
+          model_type: formData.model_type,
+          status: 'deploying',
+          runtime: DEMO_TEMPLATES.find(t => t.type === formData.model_type)?.runtime || 'vLLM',
+          gpu_name: formData.gpu_type,
+          num_gpus: formData.num_gpus,
+          dph_total: 0.45,
+          progress: 15,
+          status_message: 'Iniciando deploy...',
+          port: formData.port,
+        };
+        setModels(prev => [...prev, newModel]);
+        setShowDeployWizard(false);
+        setDeploying(false);
+
+        // Simulate progress updates
+        let progress = 15;
+        const interval = setInterval(() => {
+          progress += 10;
+          if (progress >= 100) {
+            clearInterval(interval);
+            setModels(prev => prev.map(m =>
+              m.id === newModel.id
+                ? { ...m, status: 'running', progress: 100, status_message: 'Running', endpoint_url: `https://${m.model_type}-demo.dumont.cloud/v1`, access_type: formData.access_type, api_key: formData.access_type === 'private' ? 'dm-sk-demo-key-xxxx' : undefined }
+                : m
+            ));
+          } else {
+            setModels(prev => prev.map(m =>
+              m.id === newModel.id
+                ? { ...m, progress, status_message: progress < 50 ? 'Downloading model...' : 'Loading into GPU...' }
+                : m
+            ));
+          }
+        }, 800);
+      }, 500);
+      return;
+    }
+
     try {
       const token = localStorage.getItem('auth_token');
       const payload = {
@@ -161,6 +226,14 @@ const Models = () => {
   const handleStopModel = async (modelId) => {
     if (!confirm('Tem certeza que deseja parar este modelo?')) return;
 
+    // In demo mode, simulate stop
+    if (isDemoMode()) {
+      setModels(prev => prev.map(m =>
+        m.id === modelId ? { ...m, status: 'stopped' } : m
+      ));
+      return;
+    }
+
     try {
       const token = localStorage.getItem('auth_token');
       const response = await fetch(`/api/v1/models/${modelId}/stop`, {
@@ -179,6 +252,12 @@ const Models = () => {
 
   const handleDeleteModel = async (modelId) => {
     if (!confirm('Tem certeza que deseja deletar este deploy? Esta ação não pode ser desfeita.')) return;
+
+    // In demo mode, simulate delete
+    if (isDemoMode()) {
+      setModels(prev => prev.filter(m => m.id !== modelId));
+      return;
+    }
 
     try {
       const token = localStorage.getItem('auth_token');

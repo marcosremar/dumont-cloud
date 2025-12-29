@@ -11,18 +11,14 @@ export default defineConfig({
   },
   server: {
     host: "0.0.0.0",
-    port: 5173,
-    strictPort: true,
-    allowedHosts: ["dumontcloud-local.orb.local", ".orb.local"],
-    // HMR config - use client's host automatically to prevent infinite polling
+    port: 4890,
+    strictPort: false,
+    allowedHosts: ["dumontcloud-local.orb.local", ".orb.local", "localhost"],
+    // HMR config - automatically use the same port as the server
     hmr: {
-      // Don't force a specific host - let the client use whatever host it connected with
-      // This prevents WebSocket failures when accessing via localhost vs external hostname
-      clientPort: 5173,
       protocol: "ws",
     },
     watch: {
-      // Disable polling - use native file watching for better performance
       usePolling: false,
     },
     proxy: {

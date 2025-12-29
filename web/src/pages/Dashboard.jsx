@@ -74,6 +74,7 @@ import { EmptyState } from '../components/EmptyState';
 import { SkeletonList } from '../components/Skeleton';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../components/Toast';
+import { isDemoMode } from '../utils/api';
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const regionToApiRegion = { 'EUA': 'US', 'Europa': 'EU', 'Asia': 'ASIA', 'AmericaDoSul': 'SA', 'Global': '' };
@@ -463,6 +464,16 @@ export default function Dashboard({ onStatsUpdate }) {
     setLoading(true);
     setError(null);
     setShowResults(true);
+
+    // In demo mode, use demo offers directly
+    if (isDemoMode()) {
+      await new Promise(r => setTimeout(r, 500)); // Simular delay
+      setOffers(DEMO_OFFERS);
+      toast.success(`${DEMO_OFFERS.length} máquinas encontradas!`);
+      setLoading(false);
+      return;
+    }
+
     try {
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
@@ -535,8 +546,49 @@ export default function Dashboard({ onStatsUpdate }) {
     setRaceWinner(null);
     setProvisioningMode(true);
 
-    // Run REAL provisioning race (creates actual instances)
-    runRealProvisioningRace(top5);
+    // In demo mode, simulate the race
+    if (isDemoMode()) {
+      runDemoProvisioningRace(top5);
+    } else {
+      // Run REAL provisioning race (creates actual instances)
+      runRealProvisioningRace(top5);
+    }
+  };
+
+  // Demo provisioning race (simulated)
+  const runDemoProvisioningRace = async (candidates) => {
+    // Simulate progress for each candidate
+    const winnerIndex = Math.floor(Math.random() * candidates.length);
+
+    for (let progress = 0; progress <= 100; progress += 10) {
+      await new Promise(r => setTimeout(r, 300));
+
+      setRaceCandidates(prev => prev.map((c, i) => {
+        if (i === winnerIndex) {
+          return { ...c, status: progress >= 100 ? 'ready' : 'connecting', progress: Math.min(progress + 20, 100) };
+        }
+        // Others progress slower or fail
+        const otherProgress = Math.min(progress - 10 + Math.random() * 20, 90);
+        const willFail = Math.random() > 0.6 && progress > 50;
+        return {
+          ...c,
+          status: willFail ? 'failed' : 'connecting',
+          progress: willFail ? otherProgress : otherProgress,
+          errorMessage: willFail ? 'Máquina indisponível' : undefined
+        };
+      }));
+    }
+
+    // Set winner
+    const winner = { ...candidates[winnerIndex], status: 'ready', progress: 100 };
+    setRaceWinner(winner);
+    toast.success(`🏆 ${winner.gpu_name} provisionada com sucesso! (Demo)`);
+
+    // Navigate after delay
+    setTimeout(() => {
+      setProvisioningMode(false);
+      navigate(`${basePath}/machines`);
+    }, 2000);
   };
 
   // REAL provisioning race with multi-round support
@@ -1071,24 +1123,41 @@ export default function Dashboard({ onStatsUpdate }) {
         }
       });
 
+      // Helper to filter DEMO_OFFERS by tier
+      const filterDemoOffersByTier = (offers, tierFilter) => {
+        return offers.filter(o => {
+          if (tierFilter.max_price && o.dph_total > tierFilter.max_price) return false;
+          if (tierFilter.min_gpu_ram && o.gpu_ram < tierFilter.min_gpu_ram) return false;
+          return true;
+        });
+      };
+
       fetch(`${API_BASE}/api/v1/instances/offers?${params}`, {
         headers: { 'Authorization': `Bearer ${getToken()}` }
       })
         .then(res => res.json())
         .then(data => {
           const realOffers = data.offers || [];
-          const offersToUse = realOffers.length > 0 ? realOffers : DEMO_OFFERS;
+          const filteredDemoOffers = filterDemoOffersByTier(DEMO_OFFERS, tier.filter);
+          const offersToUse = realOffers.length > 0 ? realOffers : filteredDemoOffers;
           setOffers(offersToUse);
           setLoading(false);
           // Start the race with top offers
           if (offersToUse.length > 0) {
             startProvisioningRace(offersToUse);
+          } else {
+            toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
           }
         })
         .catch(() => {
-          setOffers(DEMO_OFFERS);
+          const filteredDemoOffers = filterDemoOffersByTier(DEMO_OFFERS, tier.filter);
+          setOffers(filteredDemoOffers);
           setLoading(false);
-          startProvisioningRace(DEMO_OFFERS);
+          if (filteredDemoOffers.length > 0) {
+            startProvisioningRace(filteredDemoOffers);
+          } else {
+            toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
+          }
         });
     }
   };
@@ -1110,24 +1179,43 @@ export default function Dashboard({ onStatsUpdate }) {
         }
       });
 
+      // Helper to filter DEMO_OFFERS by tier
+      const filterDemoOffersByTier = (offers, tierFilter) => {
+        return offers.filter(o => {
+          if (tierFilter.max_price && o.dph_total > tierFilter.max_price) return false;
+          if (tierFilter.min_gpu_ram && o.gpu_ram < tierFilter.min_gpu_ram) return false;
+          return true;
+        });
+      };
+
       fetch(`${API_BASE}/api/v1/instances/offers?${params}`, {
         headers: { 'Authorization': `Bearer ${getToken()}` }
       })
         .then(res => res.json())
         .then(data => {
           const realOffers = data.offers || [];
-          const offersToUse = realOffers.length > 0 ? realOffers : DEMO_OFFERS;
+          // If no real offers, filter DEMO_OFFERS by the same criteria
+          const filteredDemoOffers = filterDemoOffersByTier(DEMO_OFFERS, tier.filter);
+          const offersToUse = realOffers.length > 0 ? realOffers : filteredDemoOffers;
           setOffers(offersToUse);
           setLoading(false);
           // Start the race WITHOUT showing the overlay - wizard handles step 4
           if (offersToUse.length > 0) {
             startProvisioningRaceIntegrated(offersToUse);
+          } else {
+            toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
           }
         })
         .catch(() => {
-          setOffers(DEMO_OFFERS);
+          // Filter DEMO_OFFERS when API fails
+          const filteredDemoOffers = filterDemoOffersByTier(DEMO_OFFERS, tier.filter);
+          setOffers(filteredDemoOffers);
           setLoading(false);
-          startProvisioningRaceIntegrated(DEMO_OFFERS);
+          if (filteredDemoOffers.length > 0) {
+            startProvisioningRaceIntegrated(filteredDemoOffers);
+          } else {
+            toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
+          }
         });
     }
   };

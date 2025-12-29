@@ -6,14 +6,18 @@ const API_BASE = ''
 
 /**
  * Check if currently in demo mode
- * Demo mode is active ONLY if URL indicates demo:
+ * Demo mode is active if any of these conditions are true:
  * 1. URL starts with /demo-app
  * 2. URL has ?demo=true parameter
+ * 3. localStorage has demo_mode=true (set by tests or login)
  */
 export function isDemoMode() {
-  // Check URL-based demo mode only
+  // Check URL-based demo mode
   if (window.location.pathname.startsWith('/demo-app')) return true
   if (new URLSearchParams(window.location.search).get('demo') === 'true') return true
+
+  // Check localStorage (set by tests and auth setup)
+  if (localStorage.getItem('demo_mode') === 'true') return true
 
   return false
 }

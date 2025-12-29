@@ -147,3 +147,111 @@ export const DEMO_MACHINES = [
     }
   }
 ]
+
+// Demo deployed models for Models page
+export const DEMO_MODELS = [
+  {
+    id: 'model-001',
+    name: 'Llama 3.2 3B Instruct',
+    model_id: 'meta-llama/Llama-3.2-3B-Instruct',
+    model_type: 'llm',
+    status: 'running',
+    runtime: 'vLLM',
+    gpu_name: 'RTX 4090',
+    num_gpus: 1,
+    dph_total: 0.45,
+    endpoint_url: 'https://llm-001.dumont.cloud/v1',
+    access_type: 'private',
+    api_key: 'dm-sk-xxxx-xxxx-xxxx-xxxx-demo001',
+    progress: 100,
+    status_message: 'Running',
+    port: 8000,
+  },
+  {
+    id: 'model-002',
+    name: 'Whisper Large V3',
+    model_id: 'openai/whisper-large-v3',
+    model_type: 'speech',
+    status: 'running',
+    runtime: 'faster-whisper',
+    gpu_name: 'RTX 3090',
+    num_gpus: 1,
+    dph_total: 0.35,
+    endpoint_url: 'https://whisper-001.dumont.cloud/transcribe',
+    access_type: 'public',
+    progress: 100,
+    status_message: 'Running',
+    port: 8001,
+  },
+  {
+    id: 'model-003',
+    name: 'FLUX.1 Schnell',
+    model_id: 'black-forest-labs/FLUX.1-schnell',
+    model_type: 'image',
+    status: 'deploying',
+    runtime: 'diffusers',
+    gpu_name: 'RTX 4090',
+    num_gpus: 1,
+    dph_total: 0.45,
+    progress: 67,
+    status_message: 'Downloading model weights...',
+    port: 8002,
+  },
+]
+
+// Demo templates for model deployment wizard
+export const DEMO_TEMPLATES = [
+  {
+    type: 'llm',
+    name: 'LLM (Chat/Completion)',
+    description: 'Deploy modelos de linguagem para chat e text completion',
+    runtime: 'vLLM',
+    gpu_memory_required: 8,
+    default_port: 8000,
+    popular_models: [
+      { id: 'meta-llama/Llama-3.2-3B-Instruct', name: 'Llama 3.2 3B Instruct', size: '3B' },
+      { id: 'Qwen/Qwen2.5-7B-Instruct', name: 'Qwen 2.5 7B Instruct', size: '7B' },
+      { id: 'mistralai/Mistral-7B-Instruct-v0.3', name: 'Mistral 7B Instruct', size: '7B' },
+      { id: 'google/gemma-2-9b-it', name: 'Gemma 2 9B IT', size: '9B' },
+    ],
+  },
+  {
+    type: 'speech',
+    name: 'Speech (Transcription)',
+    description: 'Transcreva áudio para texto com alta precisão',
+    runtime: 'faster-whisper',
+    gpu_memory_required: 4,
+    default_port: 8001,
+    popular_models: [
+      { id: 'openai/whisper-large-v3', name: 'Whisper Large V3', size: '1.5B' },
+      { id: 'openai/whisper-medium', name: 'Whisper Medium', size: '769M' },
+      { id: 'openai/whisper-small', name: 'Whisper Small', size: '244M' },
+    ],
+  },
+  {
+    type: 'image',
+    name: 'Image (Generation)',
+    description: 'Gere imagens a partir de texto (text-to-image)',
+    runtime: 'diffusers',
+    gpu_memory_required: 12,
+    default_port: 8002,
+    popular_models: [
+      { id: 'black-forest-labs/FLUX.1-schnell', name: 'FLUX.1 Schnell', size: '12B' },
+      { id: 'stabilityai/stable-diffusion-xl-base-1.0', name: 'SDXL Base', size: '3.5B' },
+      { id: 'runwayml/stable-diffusion-v1-5', name: 'SD 1.5', size: '1B' },
+    ],
+  },
+  {
+    type: 'embeddings',
+    name: 'Embeddings (Vectors)',
+    description: 'Gere embeddings para busca semântica e RAG',
+    runtime: 'sentence-transformers',
+    gpu_memory_required: 2,
+    default_port: 8003,
+    popular_models: [
+      { id: 'BAAI/bge-large-en-v1.5', name: 'BGE Large EN', size: '335M' },
+      { id: 'intfloat/e5-large-v2', name: 'E5 Large V2', size: '335M' },
+      { id: 'sentence-transformers/all-MiniLM-L6-v2', name: 'MiniLM L6', size: '22M' },
+    ],
+  },
+]

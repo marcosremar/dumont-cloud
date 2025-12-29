@@ -6,10 +6,11 @@ import DevBar from "./components/DevBar"
 import "./styles/index.css"
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
+  // StrictMode desabilitado temporariamente - causa flickering
+  // <React.StrictMode>
     <BrowserRouter>
       <App />
       <DevBar />
     </BrowserRouter>
-  </React.StrictMode>,
+  // </React.StrictMode>,
 )

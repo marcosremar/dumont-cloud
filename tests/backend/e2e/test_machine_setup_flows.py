@@ -44,8 +44,11 @@ class TestMachine:
 
     def ssh_cmd(self, command: str, timeout: int = 60, retries: int = 3) -> tuple[bool, str]:
         """Executa comando SSH com retry e filtragem de mensagens VAST.ai"""
+        import os
+        ssh_key = os.path.expanduser("~/.ssh/id_rsa")
         ssh_args = [
             "ssh",
+            "-i", ssh_key,
             "-o", "StrictHostKeyChecking=no",
             "-o", "UserKnownHostsFile=/dev/null",
             "-o", "LogLevel=ERROR",

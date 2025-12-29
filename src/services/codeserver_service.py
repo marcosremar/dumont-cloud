@@ -90,8 +90,11 @@ class CodeServerService:
         Returns:
             Tupla (sucesso, output)
         """
+        import os
+        ssh_key = os.path.expanduser("~/.ssh/id_rsa")
         ssh_command = [
             "ssh",
+            "-i", ssh_key,
             "-o", "StrictHostKeyChecking=no",
             "-o", "UserKnownHostsFile=/dev/null",
             "-o", "LogLevel=ERROR",
@@ -166,10 +169,10 @@ class CodeServerService:
     def is_installed(self) -> bool:
         """Verifica se code-server esta instalado"""
         success, output = self._ssh_cmd(
-            "ls ~/.local/bin/code-server 2>/dev/null && echo 'INSTALLED' || echo 'NOT_INSTALLED'",
+            "test -x ~/.local/bin/code-server && ~/.local/bin/code-server --version >/dev/null 2>&1 && echo 'CS_INSTALLED' || echo 'CS_NOT_FOUND'",
             retries=2
         )
-        return success and "INSTALLED" in output
+        return success and "CS_INSTALLED" in output and "CS_NOT_FOUND" not in output
 
     def install(self, config: Optional[CodeServerConfig] = None) -> Dict[str, Any]:
         """Instala code-server com retry."""

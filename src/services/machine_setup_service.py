@@ -103,8 +103,11 @@ class MachineSetupService:
         Returns:
             Tupla (sucesso, output)
         """
+        import os
+        ssh_key = os.path.expanduser("~/.ssh/id_rsa")
         ssh_command = [
             "ssh",
+            "-i", ssh_key,
             "-o", "StrictHostKeyChecking=no",
             "-o", "UserKnownHostsFile=/dev/null",
             "-o", "LogLevel=ERROR",
@@ -162,8 +165,11 @@ class MachineSetupService:
         retries: int = 3
     ) -> Tuple[bool, str]:
         """Copia arquivo local para remoto via SCP com retry."""
+        import os
+        ssh_key = os.path.expanduser("~/.ssh/id_rsa")
         scp_command = [
             "scp",
+            "-i", ssh_key,
             "-o", "StrictHostKeyChecking=no",
             "-o", "UserKnownHostsFile=/dev/null",
             "-o", "LogLevel=ERROR",
