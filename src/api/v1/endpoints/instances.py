@@ -101,8 +101,7 @@ async def search_offers(
             limit=limit,
         )
 
-    # Annotate offers with machine history data
-    history_service = get_machine_history_service()
+    # Build offer dicts
     offer_dicts = [
         {
             "id": offer.id,
@@ -125,12 +124,16 @@ async def search_offers(
         for offer in offers
     ]
 
-    # Annotate with machine history (blacklist, success rate, etc)
-    annotated_offers = history_service.annotate_offers(offer_dicts, provider="vast")
-
-    # Filter out blacklisted if not including them
-    if not include_blacklisted:
-        annotated_offers = [o for o in annotated_offers if not o.get("_is_blacklisted", False)]
+    # Try to annotate with machine history (optional - database may not be available)
+    try:
+        history_service = get_machine_history_service()
+        annotated_offers = history_service.annotate_offers(offer_dicts, provider="vast")
+        # Filter out blacklisted if not including them
+        if not include_blacklisted:
+            annotated_offers = [o for o in annotated_offers if not o.get("_is_blacklisted", False)]
+    except Exception:
+        # Database not available - skip machine history annotation
+        annotated_offers = offer_dicts
 
     offer_responses = [
         GpuOfferResponse(
