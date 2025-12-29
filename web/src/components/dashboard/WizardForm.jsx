@@ -63,7 +63,7 @@ const WizardForm = ({
   const countryData = COUNTRY_DATA;
   const [validationErrors, setValidationErrors] = useState([]);
   const [currentStep, setCurrentStep] = useState(1);
-  const [failoverStrategy, setFailoverStrategy] = useState('vast_warmpool');
+  const [failoverStrategy, setFailoverStrategy] = useState('snapshot_only'); // V5: Default é Snapshot Only
 
   // Machine selection state
   const [selectionMode, setSelectionMode] = useState('recommended'); // 'recommended' or 'manual'
@@ -167,7 +167,19 @@ const WizardForm = ({
   ];
 
   // Estratégias REAIS de failover - custos são ADICIONAIS ao custo da GPU
+  // V5 - Snapshot Only primeiro, removido modal de confirmação
   const failoverOptions = [
+    {
+      id: 'snapshot_only',
+      name: 'Snapshot Only',
+      provider: 'GCP + B2',
+      icon: Database,
+      description: 'Apenas snapshots automáticos. CPU GCP para restore quando necessário.',
+      recoveryTime: '2-5 min',
+      dataLoss: 'Até 60 min',
+      recommended: true,
+      available: true,
+    },
     {
       id: 'vast_warmpool',
       name: 'VAST.ai Warm Pool',
@@ -187,17 +199,16 @@ const WizardForm = ({
         'Snapshots B2 (~$0.50/mês)',
       ],
       requirements: 'Host VAST.ai com 2+ GPUs',
-      recommended: true,
       available: true,
     },
     {
-      id: 'snapshot_only',
-      name: 'Snapshot Only',
+      id: 'cpu_standby_only',
+      name: 'CPU Standby Only',
       provider: 'GCP + B2',
-      icon: Database,
-      description: 'Apenas snapshots automáticos. CPU GCP para restore quando necessário.',
-      recoveryTime: '2-5 min',
-      dataLoss: 'Até 60 min',
+      icon: Server,
+      description: 'CPU GCP mantém dados sincronizados. Sem GPU warm.',
+      recoveryTime: '1-3 min',
+      dataLoss: 'Mínima',
       costHour: '+$0.01/h',
       costMonth: '~$8/mês',
       costDetail: 'CPU GCP $0.01/h + B2 ~$0.50/mês',
@@ -411,14 +422,16 @@ const WizardForm = ({
     }
 
     setValidationErrors([]);
-    // Show payment confirmation before proceeding
-    setShowPaymentConfirm(true);
+    // V5: Ir direto para provisioning sem modal de confirmação
+    setCurrentStep(4);
+    onSubmit(); // Inicia o provisioning
   };
 
   const handleConfirmPayment = () => {
+    // V5: Mantido para compatibilidade mas não usado mais
     setShowPaymentConfirm(false);
     setCurrentStep(4);
-    onSubmit(); // Inicia o provisioning
+    onSubmit();
   };
 
   const handleCancelPayment = () => {
@@ -990,7 +1003,7 @@ const WizardForm = ({
         <div className="space-y-5 animate-fadeIn">
           <div>
             <div className="flex items-center gap-2">
-              <Label className="text-gray-300 text-sm font-medium">Estratégia de Failover</Label>
+              <Label className="text-gray-300 text-sm font-medium">Estratégia de Failover (V5)</Label>
               <Tooltip text="Recuperação automática em caso de falha da GPU">
                 <HelpCircle className="w-3.5 h-3.5 text-gray-500 hover:text-gray-400 cursor-help" />
               </Tooltip>
