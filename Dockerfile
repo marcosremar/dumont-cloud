@@ -39,21 +39,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar Claude Code
-RUN curl -fsSL https://claude.ai/install.sh | bash
-
 # Criar usuário ubuntu com privilégios de administrador
 RUN useradd -m -s /bin/bash ubuntu \
     && echo "ubuntu:ubuntu" | chpasswd \
     && usermod -aG sudo ubuntu \
     && echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Configurar code-server para o usuário ubuntu também
+# Instalar Claude Code para root
+RUN curl -fsSL https://claude.ai/install.sh | bash \
+    && ln -sf /root/.claude/local/bin/claude /usr/local/bin/claude
+
+# Instalar Claude Code para ubuntu também
+RUN su - ubuntu -c 'curl -fsSL https://claude.ai/install.sh | bash'
+
+# Configurar code-server para ambos usuários
 RUN mkdir -p /root/.config/code-server && \
     printf 'bind-addr: 0.0.0.0:8080\nauth: password\npassword: Marcos+123\ncert: false\n' > /root/.config/code-server/config.yaml && \
     mkdir -p /home/ubuntu/.config/code-server && \
     printf 'bind-addr: 0.0.0.0:8080\nauth: password\npassword: Marcos+123\ncert: false\n' > /home/ubuntu/.config/code-server/config.yaml && \
-    chown -R ubuntu:ubuntu /home/ubuntu/.config
+    chown -R ubuntu:ubuntu /home/ubuntu
 
 # Copiar requirements e instalar dependências Python
 COPY requirements.txt ./
@@ -83,6 +87,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PORT=8000
 ENV CONFIG_FILE=/app/data/config.json
+ENV PATH="/root/.claude/local/bin:/home/ubuntu/.claude/local/bin:${PATH}"
 
 # Expor portas
 EXPOSE 8000 8080
