@@ -1,5 +1,5 @@
 # Dumont Cloud - Multi-stage Dockerfile
-# Frontend (React/Vite) + Backend (FastAPI)
+# Frontend (React/Vite) + Backend (FastAPI) + VS Code Server
 
 # ============================================
 # Stage 1: Build Frontend
@@ -8,30 +8,33 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app/web
 
-# Copiar arquivos de dependências
 COPY web/package*.json ./
 COPY web/bun.lock* ./
-
-# Instalar dependências
 RUN npm ci --legacy-peer-deps
 
-# Copiar código fonte
 COPY web/ ./
-
-# Build do frontend
 RUN npm run build
 
 # ============================================
-# Stage 2: Python Backend + Frontend estático
+# Stage 2: Python Backend + Frontend + VS Code Server
 # ============================================
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Instalar dependências do sistema
+# Instalar dependências do sistema + code-server
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    git \
+    procps \
+    sudo \
+    && curl -fsSL https://code-server.dev/install.sh | sh \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Configurar code-server
+RUN mkdir -p /root/.config/code-server && \
+    printf 'bind-addr: 0.0.0.0:8080\nauth: password\npassword: Marcos+123\ncert: false\n' > /root/.config/code-server/config.yaml
 
 # Copiar requirements e instalar dependências Python
 COPY requirements.txt ./
@@ -55,12 +58,14 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PORT=8000
 ENV CONFIG_FILE=/app/data/config.json
 
-# Expor porta
-EXPOSE 8000
+# Expor portas
+EXPOSE 8000 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+# Health check (só verifica o backend principal)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Comando para iniciar
-CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Usar script inline para iniciar ambos serviços
+CMD code-server --bind-addr 0.0.0.0:8080 /app & \
+    sleep 2 && \
+    python -m uvicorn src.main:app --host 0.0.0.0 --port 8000
