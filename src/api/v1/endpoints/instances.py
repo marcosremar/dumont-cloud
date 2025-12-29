@@ -443,7 +443,7 @@ async def create_instance(
             ssh_port=22,
             start_date=datetime.now().isoformat(),
             label=request.label or "Demo Instance",
-            ports=[8080],
+            ports={"8080/tcp": 8080, "22/tcp": 22},
             gpu_util=0.0,
             gpu_temp=35.0,
             cpu_util=5.0,
