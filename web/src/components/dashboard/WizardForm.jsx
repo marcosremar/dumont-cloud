@@ -245,6 +245,29 @@ const WizardForm = ({
       recommended: false,
       available: true,
     },
+    {
+      id: 'no_failover',
+      name: 'Sem Failover',
+      provider: 'Apenas GPU',
+      icon: AlertCircle,
+      description: 'Sem proteção contra falhas. Se a máquina cair, você perde todos os dados.',
+      recoveryTime: 'Manual',
+      dataLoss: 'Total',
+      costHour: '$0',
+      costMonth: '$0',
+      costDetail: 'Sem custo extra, mas sem proteção',
+      howItWorks: 'Apenas a GPU principal. Sem snapshots, sem backup, sem recuperação automática. Se houver falha de hardware ou interrupção, todos os dados serão perdidos.',
+      features: [
+        'Sem custo adicional',
+        'Sem snapshots',
+        'Sem recuperação',
+        'Dados perdidos em falha',
+      ],
+      requirements: 'Nenhum',
+      recommended: false,
+      available: true,
+      danger: true, // Flag para mostrar warning
+    },
   ];
 
   // Fetch recommended machines when tier or location changes
@@ -290,6 +313,11 @@ const WizardForm = ({
   // Mock machines based on tier
   const getMockMachinesForTier = (tierName) => {
     const mockData = {
+      'CPU': [
+        { id: 'cpu1', gpu_name: 'CPU Only', gpu_ram: 0, num_gpus: 0, cpu_cores: 4, cpu_ram: 16, dph_total: 0.02, reliability: 99.9, location: 'GCP', provider: 'GCP', label: 'Mais econômico', isCPU: true },
+        { id: 'cpu2', gpu_name: 'CPU Only', gpu_ram: 0, num_gpus: 0, cpu_cores: 8, cpu_ram: 32, dph_total: 0.04, reliability: 99.9, location: 'GCP', provider: 'GCP', label: 'Melhor custo-benefício', isCPU: true },
+        { id: 'cpu3', gpu_name: 'CPU Only', gpu_ram: 0, num_gpus: 0, cpu_cores: 16, cpu_ram: 64, dph_total: 0.08, reliability: 99.9, location: 'GCP', provider: 'GCP', label: 'Mais rápido', isCPU: true },
+      ],
       'Lento': [
         { id: 'eco1', gpu_name: 'RTX 3060', gpu_ram: 12, num_gpus: 1, dph_total: 0.15, reliability: 98.5, location: 'US-West', provider: 'vast.ai', label: 'Mais econômico' },
         { id: 'eco2', gpu_name: 'RTX 3070', gpu_ram: 8, num_gpus: 1, dph_total: 0.18, reliability: 99.1, location: 'EU-West', provider: 'vast.ai', label: 'Melhor custo-benefício' },
@@ -739,8 +767,9 @@ const WizardForm = ({
               <p className="text-xs text-gray-500 mt-1">Selecione seu objetivo para recomendarmos o hardware ideal</p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               {[
+                { id: 'cpu_only', label: 'Apenas CPU', icon: Server, tier: 'CPU', desc: 'Sem GPU', isCPU: true },
                 { id: 'test', label: 'Experimentar', icon: Lightbulb, tier: 'Lento', desc: 'Testes rápidos' },
                 { id: 'develop', label: 'Desenvolver', icon: Code, tier: 'Medio', desc: 'Dev diário' },
                 { id: 'train', label: 'Treinar modelo', icon: Zap, tier: 'Rapido', desc: 'Fine-tuning' },
@@ -842,13 +871,26 @@ const WizardForm = ({
                                 <span className={`text-sm font-medium ${isSelected ? "text-brand-400" : "text-gray-200"}`}>
                                   {machine.gpu_name}
                                 </span>
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-gray-400">
-                                  {machine.gpu_ram}GB
-                                </span>
-                                {machine.num_gpus > 1 && (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-gray-400">
-                                    x{machine.num_gpus}
-                                  </span>
+                                {machine.isCPU ? (
+                                  <>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400">
+                                      {machine.cpu_cores} vCPU
+                                    </span>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-gray-400">
+                                      {machine.cpu_ram}GB RAM
+                                    </span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-gray-400">
+                                      {machine.gpu_ram}GB
+                                    </span>
+                                    {machine.num_gpus > 1 && (
+                                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-gray-400">
+                                        x{machine.num_gpus}
+                                      </span>
+                                    )}
+                                  </>
                                 )}
                               </div>
                               <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-500">
@@ -1003,7 +1045,7 @@ const WizardForm = ({
         <div className="space-y-5 animate-fadeIn">
           <div>
             <div className="flex items-center gap-2">
-              <Label className="text-gray-300 text-sm font-medium">Estratégia de Failover (V5)</Label>
+              <Label className="text-gray-300 text-sm font-medium">Estratégia de Failover (V6)</Label>
               <Tooltip text="Recuperação automática em caso de falha da GPU">
                 <HelpCircle className="w-3.5 h-3.5 text-gray-500 hover:text-gray-400 cursor-help" />
               </Tooltip>
@@ -1025,8 +1067,12 @@ const WizardForm = ({
                   className={`w-full p-4 rounded-lg border text-left transition-all ${
                     isDisabled
                       ? "bg-white/[0.02] border-white/5 cursor-not-allowed opacity-60"
-                      : isSelected
+                      : isSelected && option.danger
+                        ? "bg-red-500/10 border-red-500"
+                        : isSelected
                         ? "bg-brand-500/10 border-brand-500"
+                        : option.danger
+                        ? "bg-white/5 border-white/10 hover:bg-red-500/5 hover:border-red-500/30"
                         : "bg-white/5 border-white/10 hover:bg-white/[0.07] hover:border-white/20"
                   }`}
                 >
@@ -1047,6 +1093,11 @@ const WizardForm = ({
                         {option.recommended && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
                             Recomendado
+                          </span>
+                        )}
+                        {option.danger && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 animate-pulse">
+                            ⚠️ Risco
                           </span>
                         )}
                         {option.comingSoon && (

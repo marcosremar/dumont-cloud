@@ -399,6 +399,7 @@ async def list_instances(
 async def create_instance(
     request: CreateInstanceRequest,
     background_tasks: BackgroundTasks,
+    http_request: Request,
     instance_service: InstanceService = Depends(get_instance_service),
     usage_service: UsageService = Depends(get_usage_service),
     user_id: str = Depends(get_current_user_email),
@@ -414,6 +415,45 @@ async def create_instance(
     - Verificar saldo suficiente
     - Verificar se oferta ainda está disponível
     """
+    from ....core.config import settings
+    import random
+    from datetime import datetime
+
+    # Check if demo mode
+    demo_param = http_request.query_params.get("demo", "").lower() == "true"
+    is_demo = settings.app.demo_mode or demo_param
+
+    # Demo mode: Return fake instance without calling VAST.ai
+    if is_demo:
+        demo_id = random.randint(10000000, 99999999)
+        logger.info(f"Demo mode: Creating fake instance {demo_id} for offer {request.offer_id}")
+        return InstanceResponse(
+            id=demo_id,
+            status="running",
+            actual_status="running",
+            gpu_name="RTX 4090",
+            num_gpus=1,
+            gpu_ram=24.0,
+            cpu_cores=8,
+            cpu_ram=32.0,
+            disk_space=100.0,
+            dph_total=0.55,
+            public_ipaddr="demo.dumontcloud.com",
+            ssh_host="demo.dumontcloud.com",
+            ssh_port=22,
+            start_date=datetime.now().isoformat(),
+            label=request.label or "Demo Instance",
+            ports=[8080],
+            gpu_util=0.0,
+            gpu_temp=35.0,
+            cpu_util=5.0,
+            ram_used=2.0,
+            ram_total=32.0,
+            provider="demo",
+            cpu_standby=None,
+            total_dph=0.55,
+        )
+
     # =========================================================================
     # PRÉ-VALIDAÇÕES - Verificar antes de executar (pode ser pulada para testes)
     # =========================================================================
