@@ -16,6 +16,8 @@ class ReliabilityScoreItem(BaseModel):
     history_days: int
     total_rentals: int
     recommendation: str = Field(..., description="excellent, good, fair, poor")
+    user_rating_count: Optional[int] = Field(default=0, ge=0, description="Number of user ratings")
+    user_rating_average: Optional[float] = Field(default=None, ge=0, le=5, description="Average user rating (0-5 scale)")
 
 
 class ReliabilityScoreResponse(BaseModel):
