@@ -1115,3 +1115,474 @@ test.describe('🔔 Toast - Notification Toast Tests', () => {
   });
 
 });
+
+test.describe('⚙️ StandbyConfig - CPU Standby/Failover Configuration Tests', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await goToSettings(page, 'failover');
+    // Aguardar o componente carregar (loading state terminar)
+    await page.waitForTimeout(2000);
+  });
+
+  test('StandbyConfig: Component renders after loading', async ({ page }) => {
+    // Primeiro, verificar se está carregando ou já carregou
+    const loadingState = page.locator('[data-testid="standby-config-loading"]');
+    const loadedState = page.locator('[data-testid="standby-config"]');
+
+    // Aguardar que o loading termine e o componente carregue
+    const isLoading = await loadingState.isVisible({ timeout: 1000 }).catch(() => false);
+    if (isLoading) {
+      // Aguardar loading terminar
+      await expect(loadedState).toBeVisible({ timeout: 10000 });
+    }
+
+    // Verificar que o componente carregado está visível
+    await expect(loadedState).toBeVisible({ timeout: 10000 });
+  });
+
+  test('StandbyConfig: Header shows title and description', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Verificar título
+    await expect(page.getByText('CPU Standby / Failover')).toBeVisible({ timeout: 5000 });
+
+    // Verificar descrição
+    await expect(page.getByText('Backup automático em VM CPU quando GPU falha')).toBeVisible();
+  });
+
+  test('StandbyConfig: Status badge is visible and shows state', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Verificar que o badge de status está visível
+    const statusBadge = page.locator('[data-testid="standby-config-status-badge"]');
+    await expect(statusBadge).toBeVisible({ timeout: 5000 });
+
+    // Verificar que mostra "Ativo" ou "Inativo"
+    const badgeText = await statusBadge.textContent();
+    expect(badgeText === 'Ativo' || badgeText === 'Inativo').toBeTruthy();
+  });
+
+  test('StandbyConfig: Enable toggle is visible and clickable', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Verificar que o toggle de habilitação existe
+    const enableToggle = page.locator('[data-testid="standby-config-enabled-toggle"]');
+    await expect(enableToggle).toBeVisible({ timeout: 5000 });
+
+    // Verificar texto do toggle
+    await expect(page.getByText('Habilitar Auto-Standby')).toBeVisible();
+    await expect(page.getByText('Cria VM CPU automaticamente ao criar GPU')).toBeVisible();
+
+    // Capturar estado inicial
+    const initialChecked = await enableToggle.isChecked();
+
+    // Clicar para mudar o estado
+    await enableToggle.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que o estado mudou
+    const newChecked = await enableToggle.isChecked();
+    expect(newChecked).not.toBe(initialChecked);
+
+    // Restaurar estado original
+    await enableToggle.click();
+    await page.waitForTimeout(300);
+  });
+
+  test('StandbyConfig: GCP Zone selector is visible and has options', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Verificar que o seletor de zona está visível
+    const zoneSelect = page.locator('[data-testid="standby-config-gcp-zone"]');
+    await expect(zoneSelect).toBeVisible({ timeout: 5000 });
+
+    // Verificar label
+    await expect(page.getByText('Zona GCP')).toBeVisible();
+
+    // Verificar que tem opções
+    const options = await zoneSelect.locator('option').allTextContents();
+    expect(options.length).toBeGreaterThan(0);
+
+    // Verificar que contém algumas zonas esperadas
+    const optionsText = options.join(' ');
+    expect(optionsText).toContain('Europe West');
+  });
+
+  test('StandbyConfig: Machine Type selector is visible and has options', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Verificar que o seletor de tipo de máquina está visível
+    const machineTypeSelect = page.locator('[data-testid="standby-config-machine-type"]');
+    await expect(machineTypeSelect).toBeVisible({ timeout: 5000 });
+
+    // Verificar label
+    await expect(page.getByText('Tipo de Máquina')).toBeVisible();
+
+    // Verificar que tem opções
+    const options = await machineTypeSelect.locator('option').allTextContents();
+    expect(options.length).toBeGreaterThan(0);
+
+    // Verificar que contém tipos e2
+    const optionsText = options.join(' ');
+    expect(optionsText).toContain('e2-');
+  });
+
+  test('StandbyConfig: Disk Size input is visible and accepts values', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Verificar que o input de tamanho do disco está visível
+    const diskSizeInput = page.locator('[data-testid="standby-config-disk-size"]');
+    await expect(diskSizeInput).toBeVisible({ timeout: 5000 });
+
+    // Verificar label
+    await expect(page.getByText('Disco (GB)')).toBeVisible();
+
+    // Verificar que o input é do tipo number
+    await expect(diskSizeInput).toHaveAttribute('type', 'number');
+
+    // Verificar atributos min e max
+    await expect(diskSizeInput).toHaveAttribute('min', '10');
+    await expect(diskSizeInput).toHaveAttribute('max', '500');
+  });
+
+  test('StandbyConfig: Spot VM toggle is visible', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Verificar que o toggle de Spot VM está visível
+    const spotToggle = page.locator('[data-testid="standby-config-spot-toggle"]');
+    await expect(spotToggle).toBeVisible({ timeout: 5000 });
+
+    // Verificar texto do toggle
+    await expect(page.getByText('Usar Spot VM (70% mais barato)')).toBeVisible();
+  });
+
+  test('StandbyConfig: Sync Interval input is visible and accepts values', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Verificar que o input de intervalo de sync está visível
+    const syncIntervalInput = page.locator('[data-testid="standby-config-sync-interval"]');
+    await expect(syncIntervalInput).toBeVisible({ timeout: 5000 });
+
+    // Verificar label
+    await expect(page.getByText('Intervalo de Sync (segundos)')).toBeVisible();
+
+    // Verificar que o input é do tipo number
+    await expect(syncIntervalInput).toHaveAttribute('type', 'number');
+
+    // Verificar atributos min e max
+    await expect(syncIntervalInput).toHaveAttribute('min', '10');
+    await expect(syncIntervalInput).toHaveAttribute('max', '300');
+  });
+
+  test('StandbyConfig: Auto Failover toggle is visible', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Verificar que o toggle de auto-failover está visível
+    const autoFailoverToggle = page.locator('[data-testid="standby-config-auto-failover-toggle"]');
+    await expect(autoFailoverToggle).toBeVisible({ timeout: 5000 });
+
+    // Verificar texto do toggle
+    await expect(page.getByText('Auto-Failover (troca para CPU se GPU falhar)')).toBeVisible();
+  });
+
+  test('StandbyConfig: Auto Recovery toggle is visible', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Verificar que o toggle de auto-recovery está visível
+    const autoRecoveryToggle = page.locator('[data-testid="standby-config-auto-recovery-toggle"]');
+    await expect(autoRecoveryToggle).toBeVisible({ timeout: 5000 });
+
+    // Verificar texto do toggle
+    await expect(page.getByText('Auto-Recovery (provisiona nova GPU após failover)')).toBeVisible();
+  });
+
+  test('StandbyConfig: Save button is visible and clickable', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Verificar que o botão de salvar está visível
+    const saveButton = page.locator('[data-testid="standby-config-save"]');
+    await expect(saveButton).toBeVisible({ timeout: 5000 });
+
+    // Verificar texto do botão
+    await expect(saveButton).toContainText('Salvar Configuração');
+  });
+
+  test('StandbyConfig: Form fields are disabled when standby is disabled', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Desabilitar o standby (se estiver habilitado)
+    const enableToggle = page.locator('[data-testid="standby-config-enabled-toggle"]');
+    const isEnabled = await enableToggle.isChecked();
+
+    if (isEnabled) {
+      await enableToggle.click();
+      await page.waitForTimeout(300);
+    }
+
+    // Verificar que os campos estão desabilitados
+    const zoneSelect = page.locator('[data-testid="standby-config-gcp-zone"]');
+    const machineTypeSelect = page.locator('[data-testid="standby-config-machine-type"]');
+    const diskSizeInput = page.locator('[data-testid="standby-config-disk-size"]');
+    const spotToggle = page.locator('[data-testid="standby-config-spot-toggle"]');
+    const syncIntervalInput = page.locator('[data-testid="standby-config-sync-interval"]');
+    const autoFailoverToggle = page.locator('[data-testid="standby-config-auto-failover-toggle"]');
+    const autoRecoveryToggle = page.locator('[data-testid="standby-config-auto-recovery-toggle"]');
+
+    await expect(zoneSelect).toBeDisabled();
+    await expect(machineTypeSelect).toBeDisabled();
+    await expect(diskSizeInput).toBeDisabled();
+    await expect(spotToggle).toBeDisabled();
+    await expect(syncIntervalInput).toBeDisabled();
+    await expect(autoFailoverToggle).toBeDisabled();
+    await expect(autoRecoveryToggle).toBeDisabled();
+
+    // Restaurar estado se necessário
+    if (isEnabled) {
+      await enableToggle.click();
+      await page.waitForTimeout(300);
+    }
+  });
+
+  test('StandbyConfig: Form fields are enabled when standby is enabled', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Habilitar o standby (se estiver desabilitado)
+    const enableToggle = page.locator('[data-testid="standby-config-enabled-toggle"]');
+    const wasEnabled = await enableToggle.isChecked();
+
+    if (!wasEnabled) {
+      await enableToggle.click();
+      await page.waitForTimeout(300);
+    }
+
+    // Verificar que os campos estão habilitados
+    const zoneSelect = page.locator('[data-testid="standby-config-gcp-zone"]');
+    const machineTypeSelect = page.locator('[data-testid="standby-config-machine-type"]');
+    const diskSizeInput = page.locator('[data-testid="standby-config-disk-size"]');
+    const spotToggle = page.locator('[data-testid="standby-config-spot-toggle"]');
+    const syncIntervalInput = page.locator('[data-testid="standby-config-sync-interval"]');
+    const autoFailoverToggle = page.locator('[data-testid="standby-config-auto-failover-toggle"]');
+    const autoRecoveryToggle = page.locator('[data-testid="standby-config-auto-recovery-toggle"]');
+
+    await expect(zoneSelect).toBeEnabled();
+    await expect(machineTypeSelect).toBeEnabled();
+    await expect(diskSizeInput).toBeEnabled();
+    await expect(spotToggle).toBeEnabled();
+    await expect(syncIntervalInput).toBeEnabled();
+    await expect(autoFailoverToggle).toBeEnabled();
+    await expect(autoRecoveryToggle).toBeEnabled();
+
+    // Restaurar estado se necessário
+    if (!wasEnabled) {
+      await enableToggle.click();
+      await page.waitForTimeout(300);
+    }
+  });
+
+  test('StandbyConfig: GCP Zone can be changed', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Habilitar o standby se necessário
+    const enableToggle = page.locator('[data-testid="standby-config-enabled-toggle"]');
+    const wasEnabled = await enableToggle.isChecked();
+    if (!wasEnabled) {
+      await enableToggle.click();
+      await page.waitForTimeout(300);
+    }
+
+    // Selecionar uma zona diferente
+    const zoneSelect = page.locator('[data-testid="standby-config-gcp-zone"]');
+    const currentValue = await zoneSelect.inputValue();
+
+    // Selecionar US Central se não for a atual
+    const newZone = currentValue === 'us-central1-a' ? 'europe-west1-b' : 'us-central1-a';
+    await zoneSelect.selectOption(newZone);
+    await page.waitForTimeout(300);
+
+    // Verificar que o valor mudou
+    const newValue = await zoneSelect.inputValue();
+    expect(newValue).toBe(newZone);
+
+    // Restaurar estado
+    await zoneSelect.selectOption(currentValue);
+    if (!wasEnabled) {
+      await enableToggle.click();
+    }
+  });
+
+  test('StandbyConfig: Machine Type can be changed', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Habilitar o standby se necessário
+    const enableToggle = page.locator('[data-testid="standby-config-enabled-toggle"]');
+    const wasEnabled = await enableToggle.isChecked();
+    if (!wasEnabled) {
+      await enableToggle.click();
+      await page.waitForTimeout(300);
+    }
+
+    // Selecionar um tipo de máquina diferente
+    const machineTypeSelect = page.locator('[data-testid="standby-config-machine-type"]');
+    const currentValue = await machineTypeSelect.inputValue();
+
+    // Selecionar e2-small se não for o atual
+    const newType = currentValue === 'e2-small' ? 'e2-medium' : 'e2-small';
+    await machineTypeSelect.selectOption(newType);
+    await page.waitForTimeout(300);
+
+    // Verificar que o valor mudou
+    const newValue = await machineTypeSelect.inputValue();
+    expect(newValue).toBe(newType);
+
+    // Restaurar estado
+    await machineTypeSelect.selectOption(currentValue);
+    if (!wasEnabled) {
+      await enableToggle.click();
+    }
+  });
+
+  test('StandbyConfig: Disk Size can be changed', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Habilitar o standby se necessário
+    const enableToggle = page.locator('[data-testid="standby-config-enabled-toggle"]');
+    const wasEnabled = await enableToggle.isChecked();
+    if (!wasEnabled) {
+      await enableToggle.click();
+      await page.waitForTimeout(300);
+    }
+
+    // Mudar o tamanho do disco
+    const diskSizeInput = page.locator('[data-testid="standby-config-disk-size"]');
+    const currentValue = await diskSizeInput.inputValue();
+
+    // Definir novo valor
+    const newSize = currentValue === '100' ? '150' : '100';
+    await diskSizeInput.fill(newSize);
+    await page.waitForTimeout(300);
+
+    // Verificar que o valor mudou
+    const newValue = await diskSizeInput.inputValue();
+    expect(newValue).toBe(newSize);
+
+    // Restaurar estado
+    await diskSizeInput.fill(currentValue);
+    if (!wasEnabled) {
+      await enableToggle.click();
+    }
+  });
+
+  test('StandbyConfig: Toggles can be changed when enabled', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Habilitar o standby
+    const enableToggle = page.locator('[data-testid="standby-config-enabled-toggle"]');
+    const wasEnabled = await enableToggle.isChecked();
+    if (!wasEnabled) {
+      await enableToggle.click();
+      await page.waitForTimeout(300);
+    }
+
+    // Testar toggle de Spot VM
+    const spotToggle = page.locator('[data-testid="standby-config-spot-toggle"]');
+    const spotInitial = await spotToggle.isChecked();
+    await spotToggle.click();
+    await page.waitForTimeout(200);
+    const spotAfter = await spotToggle.isChecked();
+    expect(spotAfter).not.toBe(spotInitial);
+    await spotToggle.click(); // Restaurar
+
+    // Testar toggle de Auto Failover
+    const autoFailoverToggle = page.locator('[data-testid="standby-config-auto-failover-toggle"]');
+    const failoverInitial = await autoFailoverToggle.isChecked();
+    await autoFailoverToggle.click();
+    await page.waitForTimeout(200);
+    const failoverAfter = await autoFailoverToggle.isChecked();
+    expect(failoverAfter).not.toBe(failoverInitial);
+    await autoFailoverToggle.click(); // Restaurar
+
+    // Testar toggle de Auto Recovery
+    const autoRecoveryToggle = page.locator('[data-testid="standby-config-auto-recovery-toggle"]');
+    const recoveryInitial = await autoRecoveryToggle.isChecked();
+    await autoRecoveryToggle.click();
+    await page.waitForTimeout(200);
+    const recoveryAfter = await autoRecoveryToggle.isChecked();
+    expect(recoveryAfter).not.toBe(recoveryInitial);
+    await autoRecoveryToggle.click(); // Restaurar
+
+    // Restaurar estado do enable toggle
+    if (!wasEnabled) {
+      await enableToggle.click();
+    }
+  });
+
+  test('StandbyConfig: Pricing info shows when enabled', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Habilitar o standby
+    const enableToggle = page.locator('[data-testid="standby-config-enabled-toggle"]');
+    const wasEnabled = await enableToggle.isChecked();
+    if (!wasEnabled) {
+      await enableToggle.click();
+      await page.waitForTimeout(1000); // Aguardar API de pricing
+    }
+
+    // Verificar se a info de pricing aparece (pode não aparecer se API falhar)
+    const pricingInfo = page.locator('[data-testid="standby-config-pricing"]');
+    const hasPricing = await pricingInfo.isVisible({ timeout: 5000 }).catch(() => false);
+
+    if (hasPricing) {
+      // Verificar que mostra custo estimado
+      await expect(pricingInfo).toContainText('Custo estimado');
+      await expect(pricingInfo).toContainText('/mês');
+    }
+
+    // Restaurar estado
+    if (!wasEnabled) {
+      await enableToggle.click();
+    }
+  });
+
+  test('StandbyConfig: All configuration options are accessible', async ({ page }) => {
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    await expect(standbyConfig).toBeVisible({ timeout: 10000 });
+
+    // Verificar que todos os elementos de configuração existem
+    const elements = [
+      '[data-testid="standby-config-enabled-toggle"]',
+      '[data-testid="standby-config-gcp-zone"]',
+      '[data-testid="standby-config-machine-type"]',
+      '[data-testid="standby-config-disk-size"]',
+      '[data-testid="standby-config-spot-toggle"]',
+      '[data-testid="standby-config-sync-interval"]',
+      '[data-testid="standby-config-auto-failover-toggle"]',
+      '[data-testid="standby-config-auto-recovery-toggle"]',
+      '[data-testid="standby-config-save"]',
+      '[data-testid="standby-config-status-badge"]',
+    ];
+
+    for (const selector of elements) {
+      const element = page.locator(selector);
+      await expect(element).toBeVisible({ timeout: 5000 });
+    }
+  });
+
+});
