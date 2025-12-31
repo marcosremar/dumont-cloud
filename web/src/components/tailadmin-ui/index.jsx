@@ -575,11 +575,46 @@ export function Slider({ value = [0], onValueChange, min = 0, max = 100, step = 
 }
 
 // Dropdown Menu Components with state management
-const DropdownContext = React.createContext({ isOpen: false, setIsOpen: () => {} });
+const DropdownContext = React.createContext({
+  isOpen: false,
+  setIsOpen: () => {},
+  registerMenuItem: () => {},
+  unregisterMenuItem: () => {},
+  getMenuItems: () => [],
+  focusedIndex: -1,
+  setFocusedIndex: () => {}
+});
 
 export function DropdownMenu({ children }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const dropdownRef = useRef(null);
+  const menuItemsRef = useRef([]);
+
+  // Register a menu item ref for keyboard navigation
+  const registerMenuItem = useCallback((itemRef) => {
+    if (itemRef && !menuItemsRef.current.includes(itemRef)) {
+      menuItemsRef.current.push(itemRef);
+    }
+  }, []);
+
+  // Unregister a menu item ref when it unmounts
+  const unregisterMenuItem = useCallback((itemRef) => {
+    menuItemsRef.current = menuItemsRef.current.filter(ref => ref !== itemRef);
+  }, []);
+
+  // Get all registered menu item refs
+  const getMenuItems = useCallback(() => {
+    return menuItemsRef.current.filter(ref => ref && ref.current);
+  }, []);
+
+  // Reset focused index when dropdown closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFocusedIndex(-1);
+      menuItemsRef.current = [];
+    }
+  }, [isOpen]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -610,7 +645,15 @@ export function DropdownMenu({ children }) {
   }, [isOpen]);
 
   return (
-    <DropdownContext.Provider value={{ isOpen, setIsOpen }}>
+    <DropdownContext.Provider value={{
+      isOpen,
+      setIsOpen,
+      registerMenuItem,
+      unregisterMenuItem,
+      getMenuItems,
+      focusedIndex,
+      setFocusedIndex
+    }}>
       <div ref={dropdownRef} className="relative inline-block">
         {children}
       </div>
@@ -654,7 +697,19 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
 }
 
 export function DropdownMenuItem({ children, onClick, className = '', disabled }) {
-  const { setIsOpen } = React.useContext(DropdownContext);
+  const { setIsOpen, registerMenuItem, unregisterMenuItem } = React.useContext(DropdownContext);
+  const itemRef = useRef(null);
+
+  // Register this menu item for keyboard navigation
+  useEffect(() => {
+    const ref = itemRef;
+    if (!disabled) {
+      registerMenuItem(ref);
+    }
+    return () => {
+      unregisterMenuItem(ref);
+    };
+  }, [disabled, registerMenuItem, unregisterMenuItem]);
 
   const handleClick = (e) => {
     if (disabled) return;
@@ -664,6 +719,7 @@ export function DropdownMenuItem({ children, onClick, className = '', disabled }
 
   return (
     <button
+      ref={itemRef}
       onClick={handleClick}
       disabled={disabled}
       className={`w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}

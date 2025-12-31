@@ -7,7 +7,9 @@
   "planStatus": "approved",
   "workflow_type": "development",
   "spec_file": "spec.md",
-  "services_involved": ["web"],
+  "services_involved": [
+    "web"
+  ],
   "files_to_modify": [
     "web/src/components/tailadmin-ui/index.jsx"
   ],
@@ -31,12 +33,14 @@
           "description": "Add keydown event listener in DropdownMenu useEffect that closes dropdown when Escape is pressed while menu is open",
           "file": "web/src/components/tailadmin-ui/index.jsx",
           "estimated_lines": 15,
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "Pressing Escape when dropdown is open closes the dropdown",
             "Escape key handler is properly cleaned up when component unmounts",
             "Escape key handler only fires when dropdown is open"
-          ]
+          ],
+          "notes": "Added Escape key handler to DropdownMenu using same pattern as click-outside handler. Handler is properly cleaned up and only fires when dropdown is open.",
+          "updated_at": "2025-12-31T21:24:19.973731+00:00"
         },
         {
           "id": "1.2",
@@ -44,12 +48,14 @@
           "description": "Enable Enter and Space keys to toggle dropdown open/closed state on trigger button",
           "file": "web/src/components/tailadmin-ui/index.jsx",
           "estimated_lines": 10,
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "Pressing Enter on focused trigger opens dropdown",
             "Pressing Space on focused trigger opens dropdown",
             "Keys toggle dropdown state (open if closed, close if open)"
-          ]
+          ],
+          "notes": "Added handleKeyDown handler to DropdownMenuTrigger that handles Enter and Space keys. Handler uses preventDefault to prevent scrolling and toggles the dropdown state. Works for both direct button rendering and asChild mode with cloned elements.",
+          "updated_at": "2025-12-31T21:26:14.733379+00:00"
         }
       ]
     },
@@ -164,5 +170,6 @@
     "status": "pending",
     "tests_passed": "",
     "issues": ""
-  }
+  },
+  "last_updated": "2025-12-31T21:26:14.733391+00:00"
 }

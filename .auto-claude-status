@@ -3,8 +3,8 @@
   "spec": "030-add-escape-key-support-and-focus-management-to-dro",
   "state": "building",
   "subtasks": {
-    "completed": 0,
-    "total": 0,
+    "completed": 2,
+    "total": 8,
     "in_progress": 1,
     "failed": 0
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 2,
+    "number": 4,
     "started_at": "2025-12-31T22:20:01.875038"
   },
-  "last_update": "2025-12-31T22:23:02.202629"
+  "last_update": "2025-12-31T22:26:40.600906"
 }

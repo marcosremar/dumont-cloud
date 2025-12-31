@@ -1,8 +1,33 @@
 {
-  "subtasks": {},
+  "subtasks": {
+    "1.1": {
+      "attempts": [
+        {
+          "session": 2,
+          "timestamp": "2025-12-31T22:24:38.410663",
+          "approach": "Implemented: Add keydown event listener in DropdownMenu useEffect that closes dropdown when Escape is pressed whi",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "1.2": {
+      "attempts": [
+        {
+          "session": 3,
+          "timestamp": "2025-12-31T22:26:27.113171",
+          "approach": "Implemented: Enable Enter and Space keys to toggle dropdown open/closed state on trigger button",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    }
+  },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2025-12-31T22:20:01.817822",
-    "last_updated": "2025-12-31T22:20:01.817849"
+    "last_updated": "2025-12-31T22:26:27.113188"
   }
 }
