@@ -26,7 +26,13 @@ from ..schemas.metrics import (
     ComparisonResponse,
     GpuComparisonItem,
 )
-from ..schemas.spot.reliability import ReliabilityScoreItem, UptimeHistoryItem, UptimeHistoryResponse
+from ..schemas.spot.reliability import (
+    ReliabilityScoreItem,
+    UptimeHistoryItem,
+    UptimeHistoryResponse,
+    MachineRatingRequest,
+    MachineRatingResponse,
+)
 from ....config.database import get_session_factory
 from ....models.metrics import (
     MarketSnapshot,
@@ -850,6 +856,105 @@ async def get_machine_reliability_history(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao buscar histórico de uptime para máquina {machine_id}: {str(e)}"
+        )
+    finally:
+        db.close()
+
+
+@reliability_router.post("/machines/{machine_id}/rate", response_model=MachineRatingResponse)
+async def rate_machine(
+    machine_id: str = Path(..., description="ID da máquina a ser avaliada"),
+    request: MachineRatingRequest = ...,
+):
+    """
+    Submete uma avaliação de 1-5 estrelas para uma máquina.
+
+    O rating é usado no cálculo do score de confiabilidade da máquina,
+    contribuindo com 20% do peso no score final.
+
+    Cada usuário pode avaliar cada máquina apenas uma vez.
+    Se uma avaliação já existir, ela será atualizada.
+
+    Args:
+        machine_id: ID da máquina no provider
+        request: Dados da avaliação (rating 1-5, comentário opcional)
+
+    Returns:
+        Confirmação da avaliação submetida
+    """
+    db = get_session_factory()()
+    try:
+        # TODO: Obter user_id do token de autenticação
+        # Por enquanto, usar um placeholder
+        user_id = "anonymous_user"
+
+        # Verificar se já existe uma avaliação deste usuário para esta máquina
+        existing_rating = db.query(UserMachineRating).filter(
+            UserMachineRating.provider == request.provider,
+            UserMachineRating.machine_id == machine_id,
+            UserMachineRating.user_id == user_id
+        ).first()
+
+        if existing_rating:
+            # Atualizar avaliação existente
+            existing_rating.rating = request.rating
+            existing_rating.comment = request.comment
+            existing_rating.rental_duration_hours = request.rental_duration_hours
+            existing_rating.instance_id = request.instance_id
+            existing_rating.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(existing_rating)
+
+            return MachineRatingResponse(
+                id=existing_rating.id,
+                machine_id=machine_id,
+                provider=request.provider,
+                user_id=user_id,
+                rating=existing_rating.rating,
+                comment=existing_rating.comment,
+                created_at=existing_rating.created_at.isoformat() if existing_rating.created_at else datetime.utcnow().isoformat(),
+                message="Rating updated successfully"
+            )
+
+        # Criar nova avaliação
+        new_rating = UserMachineRating(
+            provider=request.provider,
+            machine_id=machine_id,
+            user_id=user_id,
+            rating=request.rating,
+            comment=request.comment,
+            rental_duration_hours=request.rental_duration_hours,
+            instance_id=request.instance_id,
+        )
+
+        # Buscar nome da GPU da máquina se disponível
+        machine_stats = db.query(MachineStats).filter(
+            MachineStats.provider == request.provider,
+            MachineStats.machine_id == machine_id
+        ).first()
+        if machine_stats:
+            new_rating.gpu_name = machine_stats.gpu_name
+
+        db.add(new_rating)
+        db.commit()
+        db.refresh(new_rating)
+
+        return MachineRatingResponse(
+            id=new_rating.id,
+            machine_id=machine_id,
+            provider=request.provider,
+            user_id=user_id,
+            rating=new_rating.rating,
+            comment=new_rating.comment,
+            created_at=new_rating.created_at.isoformat() if new_rating.created_at else datetime.utcnow().isoformat(),
+            message="Rating submitted successfully"
+        )
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao salvar avaliação para máquina {machine_id}: {str(e)}"
         )
     finally:
         db.close()

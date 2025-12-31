@@ -46,3 +46,24 @@ class UptimeHistoryResponse(BaseModel):
     history: List[UptimeHistoryItem]
     summary: Optional[dict] = Field(default=None, description="Resumo estatístico do período")
     generated_at: str
+
+
+class MachineRatingRequest(BaseModel):
+    """Request para avaliar uma máquina."""
+    rating: int = Field(..., ge=1, le=5, description="Avaliação de 1-5 estrelas")
+    comment: Optional[str] = Field(default=None, max_length=1000, description="Comentário opcional")
+    rental_duration_hours: Optional[float] = Field(default=None, ge=0, description="Duração do aluguel em horas")
+    instance_id: Optional[str] = Field(default=None, description="ID da instância relacionada")
+    provider: str = Field(default="vast", description="Provider da máquina")
+
+
+class MachineRatingResponse(BaseModel):
+    """Response após submeter uma avaliação."""
+    id: int
+    machine_id: str
+    provider: str
+    user_id: str
+    rating: int
+    comment: Optional[str]
+    created_at: str
+    message: str = "Rating submitted successfully"
