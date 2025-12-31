@@ -308,7 +308,9 @@
             "command": "grep -q \"export.*TemplateFilters\" web/src/components/marketplace/TemplateFilters.jsx && echo 'OK' || echo 'FAIL'",
             "expected": "OK"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Created TemplateFilters component with GPU VRAM filtering (4GB+, 8GB+, 16GB+, 24GB+), category filtering (Notebooks, Image Gen, LLM Inference), and verified-only toggle. Supports both compact inline mode and full sidebar card mode. Integrates with Redux templateSlice state management. Verification passed. Commit: 53fe11e",
+          "updated_at": "2025-12-31T22:40:57.029441+00:00"
         }
       ]
     },
@@ -342,7 +344,9 @@
               "Template cards visible"
             ]
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Created TemplatePage.jsx with grid/list view modes, integrated TemplateCard and TemplateFilters components, search functionality, Redux state management, demo mode support, loading/error/empty states, stats bar, and responsive design. Verification pending route registration in subtask-6-3. Commit: be800cf",
+          "updated_at": "2025-12-31T22:44:44.688733+00:00"
         },
         {
           "id": "subtask-6-2",
@@ -364,7 +368,9 @@
               "Deploy button visible"
             ]
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Created TemplateDetailPage.jsx with full template details display, GPU requirements card, technical specifications section, deployment form with GPU selection, demo mode support, deployment success/error alerts, and responsive layout. Following patterns from Machines.jsx. Commit: dc1f79e. Note: Routes need to be registered in App.jsx (subtask-6-3).",
+          "updated_at": "2025-12-31T22:50:03.109708+00:00"
         },
         {
           "id": "subtask-6-3",
@@ -597,5 +603,5 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2025-12-31T22:38:20.909401+00:00"
+  "last_updated": "2025-12-31T22:50:03.109736+00:00"
 }
