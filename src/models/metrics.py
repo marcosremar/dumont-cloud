@@ -271,3 +271,52 @@ class CostForecast(Base):
 
     def __repr__(self):
         return f"<CostForecast {self.gpu_name} ${self.total_forecasted_cost:.2f} valid_until={self.valid_until}>"
+
+
+class PredictionAccuracy(Base):
+    """
+    Rastreamento de precisão das previsões de preço.
+    Armazena métricas de acurácia comparando previsões com valores reais.
+    """
+    __tablename__ = "prediction_accuracy"
+
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    # Identificação
+    gpu_name = Column(String(100), nullable=False, index=True)
+    machine_type = Column(String(20), nullable=False, default="on-demand")
+
+    # Período de avaliação
+    evaluation_start = Column(DateTime, nullable=False)
+    evaluation_end = Column(DateTime, nullable=False)
+
+    # Métricas de acurácia
+    mape = Column(Float, nullable=False)  # Mean Absolute Percentage Error (0-100%)
+    mae = Column(Float)  # Mean Absolute Error (em $/hora)
+    rmse = Column(Float)  # Root Mean Square Error
+    r_squared = Column(Float)  # Coeficiente de determinação R²
+
+    # Contagem de amostras
+    num_predictions = Column(Integer, nullable=False)
+    num_actual_values = Column(Integer, nullable=False)
+
+    # Metadados do modelo avaliado
+    model_version = Column(String(50))
+
+    # Detalhes por hora (opcional)
+    # {"0": {"mape": 5.2, "mae": 0.02}, "1": {"mape": 4.8, "mae": 0.018}, ...}
+    hourly_accuracy = Column(JSONB)
+
+    # Detalhes por dia (opcional)
+    # {"monday": {"mape": 5.5, "mae": 0.022}, "tuesday": {"mape": 4.9, "mae": 0.019}, ...}
+    daily_accuracy = Column(JSONB)
+
+    __table_args__ = (
+        Index('idx_accuracy_gpu_type', 'gpu_name', 'machine_type'),
+        Index('idx_accuracy_created', 'created_at'),
+        Index('idx_accuracy_mape', 'mape'),
+    )
+
+    def __repr__(self):
+        return f"<PredictionAccuracy {self.gpu_name}:{self.machine_type} MAPE={self.mape:.2f}%>"

@@ -13,7 +13,7 @@ from collections import defaultdict
 import math
 
 from src.config.database import SessionLocal
-from src.models.metrics import MarketSnapshot, PricePrediction
+from src.models.metrics import MarketSnapshot, PricePrediction, PredictionAccuracy
 
 logger = logging.getLogger(__name__)
 
@@ -633,3 +633,328 @@ class PricePredictionService:
         except Exception as e:
             logger.error(f"Erro no forecast simples 7-day: {e}")
             return None
+
+    def calculate_mape(
+        self,
+        gpu_name: str,
+        machine_type: str = "on-demand",
+        days_to_evaluate: int = 7,
+        save_result: bool = True,
+    ) -> Optional[Dict]:
+        """
+        Calcula Mean Absolute Percentage Error (MAPE) comparando previsões com valores reais.
+
+        MAPE = (1/n) * Σ|actual - predicted| / |actual| * 100
+
+        Args:
+            gpu_name: Nome da GPU
+            machine_type: Tipo de máquina
+            days_to_evaluate: Dias de histórico para avaliar (padrão: 7)
+            save_result: Se deve salvar resultado no banco
+
+        Returns:
+            Dict com métricas de acurácia:
+            {
+                "mape": 5.2,  # Porcentagem
+                "mae": 0.025,  # $/hora
+                "rmse": 0.03,
+                "r_squared": 0.85,
+                "num_samples": 168,
+                "hourly_accuracy": {...},
+                "daily_accuracy": {...},
+            }
+            Retorna None se não houver dados suficientes.
+        """
+        db = SessionLocal()
+
+        try:
+            # Período de avaliação
+            end_time = datetime.utcnow()
+            start_time = end_time - timedelta(days=days_to_evaluate)
+
+            # Buscar previsões feitas no período
+            predictions = db.query(PricePrediction).filter(
+                PricePrediction.gpu_name == gpu_name,
+                PricePrediction.machine_type == machine_type,
+                PricePrediction.created_at >= start_time,
+                PricePrediction.created_at < end_time,
+            ).order_by(PricePrediction.created_at).all()
+
+            if not predictions:
+                logger.warning(f"Sem previsões para avaliar: {gpu_name}:{machine_type}")
+                return None
+
+            # Buscar preços reais no período
+            actuals = db.query(MarketSnapshot).filter(
+                MarketSnapshot.gpu_name == gpu_name,
+                MarketSnapshot.machine_type == machine_type,
+                MarketSnapshot.timestamp >= start_time,
+                MarketSnapshot.timestamp < end_time,
+            ).order_by(MarketSnapshot.timestamp).all()
+
+            if len(actuals) < 10:
+                logger.warning(f"Dados reais insuficientes para avaliar: {len(actuals)} registros")
+                return None
+
+            # Mapear preços reais por hora
+            actual_by_hour = defaultdict(list)
+            actual_by_day = defaultdict(list)
+
+            for record in actuals:
+                hour = record.timestamp.hour
+                day = record.timestamp.weekday()
+                actual_by_hour[hour].append(record.avg_price)
+                actual_by_day[day].append(record.avg_price)
+
+            # Calcular métricas de erro
+            errors = []
+            absolute_errors = []
+            squared_errors = []
+            hourly_errors = defaultdict(list)
+            daily_errors = defaultdict(list)
+
+            day_names = ['monday', 'tuesday', 'wednesday', 'thursday',
+                         'friday', 'saturday', 'sunday']
+
+            for prediction in predictions:
+                pred_hourly = prediction.predictions_hourly or {}
+
+                for hour_str, predicted_price in pred_hourly.items():
+                    hour = int(hour_str)
+                    actual_prices = actual_by_hour.get(hour, [])
+
+                    if not actual_prices:
+                        continue
+
+                    # Usar média dos preços reais nessa hora
+                    actual_avg = statistics.mean(actual_prices)
+
+                    if actual_avg > 0:
+                        # Erro percentual absoluto
+                        ape = abs(actual_avg - predicted_price) / actual_avg * 100
+                        errors.append(ape)
+                        hourly_errors[hour].append(ape)
+
+                        # Erro absoluto
+                        ae = abs(actual_avg - predicted_price)
+                        absolute_errors.append(ae)
+
+                        # Erro quadrático
+                        se = (actual_avg - predicted_price) ** 2
+                        squared_errors.append(se)
+
+                # Avaliar previsões por dia
+                pred_daily = prediction.predictions_daily or {}
+                for day_name, predicted_price in pred_daily.items():
+                    if day_name in day_names:
+                        day_idx = day_names.index(day_name)
+                        actual_prices = actual_by_day.get(day_idx, [])
+
+                        if actual_prices:
+                            actual_avg = statistics.mean(actual_prices)
+                            if actual_avg > 0:
+                                ape = abs(actual_avg - predicted_price) / actual_avg * 100
+                                daily_errors[day_name].append(ape)
+
+            if not errors:
+                logger.warning(f"Sem dados pareados para calcular MAPE: {gpu_name}:{machine_type}")
+                return None
+
+            # Calcular métricas agregadas
+            mape = statistics.mean(errors)
+            mae = statistics.mean(absolute_errors) if absolute_errors else 0
+            rmse = math.sqrt(statistics.mean(squared_errors)) if squared_errors else 0
+
+            # Calcular R² (coeficiente de determinação)
+            r_squared = self._calculate_r_squared(actuals, predictions)
+
+            # Métricas por hora
+            hourly_accuracy = {}
+            for hour, hour_errors in hourly_errors.items():
+                if hour_errors:
+                    hourly_accuracy[str(hour)] = {
+                        "mape": round(statistics.mean(hour_errors), 2),
+                        "num_samples": len(hour_errors),
+                    }
+
+            # Métricas por dia
+            daily_accuracy = {}
+            for day_name, day_errors in daily_errors.items():
+                if day_errors:
+                    daily_accuracy[day_name] = {
+                        "mape": round(statistics.mean(day_errors), 2),
+                        "num_samples": len(day_errors),
+                    }
+
+            result = {
+                "gpu_name": gpu_name,
+                "machine_type": machine_type,
+                "mape": round(mape, 2),
+                "mae": round(mae, 4),
+                "rmse": round(rmse, 4),
+                "r_squared": round(r_squared, 4) if r_squared is not None else None,
+                "num_predictions": len(predictions),
+                "num_actual_values": len(actuals),
+                "num_samples": len(errors),
+                "hourly_accuracy": hourly_accuracy,
+                "daily_accuracy": daily_accuracy,
+                "evaluation_start": start_time.isoformat(),
+                "evaluation_end": end_time.isoformat(),
+                "model_version": self.MODEL_VERSION,
+            }
+
+            # Salvar resultado no banco
+            if save_result:
+                self._save_accuracy_result(db, result, start_time, end_time)
+
+            logger.info(f"MAPE calculado para {gpu_name}:{machine_type}: {mape:.2f}%")
+            return result
+
+        except Exception as e:
+            logger.error(f"Erro ao calcular MAPE para {gpu_name}:{machine_type}: {e}")
+            return None
+        finally:
+            db.close()
+
+    def _calculate_r_squared(
+        self,
+        actuals: List[MarketSnapshot],
+        predictions: List[PricePrediction],
+    ) -> Optional[float]:
+        """
+        Calcula o coeficiente de determinação R².
+
+        R² = 1 - (SS_res / SS_tot)
+        Onde:
+            SS_res = Σ(actual - predicted)²
+            SS_tot = Σ(actual - mean_actual)²
+
+        Returns:
+            R² entre 0 e 1, ou None se não for possível calcular.
+        """
+        try:
+            if not actuals or not predictions:
+                return None
+
+            # Mapear previsões por hora
+            pred_by_hour = defaultdict(list)
+            for pred in predictions:
+                pred_hourly = pred.predictions_hourly or {}
+                for hour_str, price in pred_hourly.items():
+                    pred_by_hour[int(hour_str)].append(price)
+
+            # Calcular média das previsões por hora
+            pred_avg_by_hour = {
+                hour: statistics.mean(prices)
+                for hour, prices in pred_by_hour.items()
+            }
+
+            # Coletar pares (actual, predicted)
+            actual_values = []
+            predicted_values = []
+
+            for record in actuals:
+                hour = record.timestamp.hour
+                if hour in pred_avg_by_hour:
+                    actual_values.append(record.avg_price)
+                    predicted_values.append(pred_avg_by_hour[hour])
+
+            if len(actual_values) < 2:
+                return None
+
+            # Calcular R²
+            mean_actual = statistics.mean(actual_values)
+
+            ss_tot = sum((a - mean_actual) ** 2 for a in actual_values)
+            ss_res = sum((a - p) ** 2 for a, p in zip(actual_values, predicted_values))
+
+            if ss_tot == 0:
+                return None
+
+            r_squared = 1 - (ss_res / ss_tot)
+
+            # R² pode ser negativo se o modelo for pior que a média
+            return max(0, r_squared)
+
+        except Exception as e:
+            logger.error(f"Erro ao calcular R²: {e}")
+            return None
+
+    def _save_accuracy_result(
+        self,
+        db,
+        result: Dict,
+        start_time: datetime,
+        end_time: datetime,
+    ) -> bool:
+        """Salva resultado de acurácia no banco de dados."""
+        try:
+            record = PredictionAccuracy(
+                created_at=datetime.utcnow(),
+                gpu_name=result['gpu_name'],
+                machine_type=result['machine_type'],
+                evaluation_start=start_time,
+                evaluation_end=end_time,
+                mape=result['mape'],
+                mae=result['mae'],
+                rmse=result['rmse'],
+                r_squared=result['r_squared'],
+                num_predictions=result['num_predictions'],
+                num_actual_values=result['num_actual_values'],
+                model_version=result['model_version'],
+                hourly_accuracy=result['hourly_accuracy'],
+                daily_accuracy=result['daily_accuracy'],
+            )
+            db.add(record)
+            db.commit()
+            logger.info(f"Resultado de acurácia salvo para {result['gpu_name']}")
+            return True
+        except Exception as e:
+            logger.error(f"Erro ao salvar resultado de acurácia: {e}")
+            db.rollback()
+            return False
+
+    def get_accuracy_history(
+        self,
+        gpu_name: str,
+        machine_type: str = "on-demand",
+        limit: int = 30,
+    ) -> List[Dict]:
+        """
+        Busca histórico de acurácia do modelo.
+
+        Args:
+            gpu_name: Nome da GPU
+            machine_type: Tipo de máquina
+            limit: Número máximo de registros
+
+        Returns:
+            Lista de dicts com histórico de MAPE e outras métricas.
+        """
+        db = SessionLocal()
+        try:
+            records = db.query(PredictionAccuracy).filter(
+                PredictionAccuracy.gpu_name == gpu_name,
+                PredictionAccuracy.machine_type == machine_type,
+            ).order_by(PredictionAccuracy.created_at.desc()).limit(limit).all()
+
+            return [
+                {
+                    "created_at": r.created_at.isoformat() if r.created_at else None,
+                    "mape": r.mape,
+                    "mae": r.mae,
+                    "rmse": r.rmse,
+                    "r_squared": r.r_squared,
+                    "num_predictions": r.num_predictions,
+                    "num_actual_values": r.num_actual_values,
+                    "evaluation_start": r.evaluation_start.isoformat() if r.evaluation_start else None,
+                    "evaluation_end": r.evaluation_end.isoformat() if r.evaluation_end else None,
+                    "model_version": r.model_version,
+                }
+                for r in records
+            ]
+        except Exception as e:
+            logger.error(f"Erro ao buscar histórico de acurácia: {e}")
+            return []
+        finally:
+            db.close()
