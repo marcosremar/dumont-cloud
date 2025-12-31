@@ -97,7 +97,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
 
     if (loading) {
         return (
-            <div className="standby-config loading">
+            <div className="standby-config loading" data-testid="standby-config-loading">
                 <div className="spinner" />
                 <p>Carregando configuração...</p>
             </div>
@@ -105,7 +105,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
     }
 
     return (
-        <div className="standby-config">
+        <div className="standby-config" data-testid="standby-config">
             <div className="config-header">
                 <div className="header-title">
                     <Server size={22} />
@@ -114,14 +114,14 @@ export default function StandbyConfig({ getAuthHeaders }) {
                         <p>Backup automático em VM CPU quando GPU falha</p>
                     </div>
                 </div>
-                <div className={`status-badge ${status?.auto_standby_enabled ? 'active' : 'inactive'}`}>
+                <div className={`status-badge ${status?.auto_standby_enabled ? 'active' : 'inactive'}`} data-testid="standby-config-status-badge">
                     <Power size={14} />
                     {status?.auto_standby_enabled ? 'Ativo' : 'Inativo'}
                 </div>
             </div>
 
             {error && (
-                <div className="error-banner">
+                <div className="error-banner" data-testid="standby-config-error">
                     <AlertCircle size={16} />
                     {error}
                 </div>
@@ -135,6 +135,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
                             type="checkbox"
                             checked={config.enabled}
                             onChange={(e) => setConfig({ ...config, enabled: e.target.checked })}
+                            data-testid="standby-config-enabled-toggle"
                         />
                         <span className="toggle-slider"></span>
                         <span className="toggle-text">
@@ -151,6 +152,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
                         value={config.gcp_zone}
                         onChange={(e) => setConfig({ ...config, gcp_zone: e.target.value })}
                         disabled={!config.enabled}
+                        data-testid="standby-config-gcp-zone"
                     >
                         <option value="europe-west1-b">Europe West 1 (B)</option>
                         <option value="us-central1-a">US Central 1 (A)</option>
@@ -167,6 +169,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
                         value={config.gcp_machine_type}
                         onChange={(e) => setConfig({ ...config, gcp_machine_type: e.target.value })}
                         disabled={!config.enabled}
+                        data-testid="standby-config-machine-type"
                     >
                         <option value="e2-micro">e2-micro (2 vCPU, 1 GB)</option>
                         <option value="e2-small">e2-small (2 vCPU, 2 GB)</option>
@@ -186,6 +189,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
                         min={10}
                         max={500}
                         disabled={!config.enabled}
+                        data-testid="standby-config-disk-size"
                     />
                 </div>
 
@@ -197,6 +201,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
                             checked={config.gcp_spot}
                             onChange={(e) => setConfig({ ...config, gcp_spot: e.target.checked })}
                             disabled={!config.enabled}
+                            data-testid="standby-config-spot-toggle"
                         />
                         <span className="toggle-slider"></span>
                         <span className="toggle-text">Usar Spot VM (70% mais barato)</span>
@@ -213,6 +218,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
                         min={10}
                         max={300}
                         disabled={!config.enabled}
+                        data-testid="standby-config-sync-interval"
                     />
                 </div>
 
@@ -224,6 +230,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
                             checked={config.auto_failover}
                             onChange={(e) => setConfig({ ...config, auto_failover: e.target.checked })}
                             disabled={!config.enabled}
+                            data-testid="standby-config-auto-failover-toggle"
                         />
                         <span className="toggle-slider"></span>
                         <span className="toggle-text">Auto-Failover (troca para CPU se GPU falhar)</span>
@@ -238,6 +245,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
                             checked={config.auto_recovery}
                             onChange={(e) => setConfig({ ...config, auto_recovery: e.target.checked })}
                             disabled={!config.enabled}
+                            data-testid="standby-config-auto-recovery-toggle"
                         />
                         <span className="toggle-slider"></span>
                         <span className="toggle-text">Auto-Recovery (provisiona nova GPU após failover)</span>
@@ -247,7 +255,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
 
             {/* Pricing Info */}
             {pricing && config.enabled && (
-                <div className="pricing-info">
+                <div className="pricing-info" data-testid="standby-config-pricing">
                     <DollarSign size={16} />
                     <span>
                         Custo estimado: <strong>${pricing.estimated_monthly_usd}/mês</strong>
@@ -258,7 +266,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
 
             {/* Current Associations */}
             {status && status.active_associations > 0 && (
-                <div className="associations-info">
+                <div className="associations-info" data-testid="standby-config-associations">
                     <Shield size={16} />
                     <span>
                         <strong>{status.active_associations}</strong> GPU(s) com backup ativo
@@ -272,6 +280,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
                     className="save-button"
                     onClick={saveConfig}
                     disabled={saving}
+                    data-testid="standby-config-save"
                 >
                     {saving ? (
                         <>
