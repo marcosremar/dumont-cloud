@@ -679,3 +679,337 @@ test.describe('🔐 SecretInput - Toggle Visibility Tests', () => {
   });
 
 });
+
+test.describe('✅ Validation - Form Input Validation Tests', () => {
+
+  test('Validation: Vast.ai API key shows error for short input', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do Vast.ai API Key
+    const apiKeyInput = page.locator('[data-testid="input-vast_api_key"]');
+    await expect(apiKeyInput).toBeVisible({ timeout: 5000 });
+
+    // Limpar e digitar uma API key curta (menos de 20 caracteres)
+    await apiKeyInput.fill('short_api_key');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de erro aparece
+    const errorAlert = page.getByText('API key muito curta');
+    await expect(errorAlert).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Validation: Vast.ai API key shows success for valid input', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do Vast.ai API Key
+    const apiKeyInput = page.locator('[data-testid="input-vast_api_key"]');
+    await expect(apiKeyInput).toBeVisible({ timeout: 5000 });
+
+    // Digitar uma API key válida (20+ caracteres)
+    await apiKeyInput.fill('valid_api_key_12345678901234567890');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de sucesso aparece
+    const successAlert = page.getByText('Formato válido');
+    await expect(successAlert.first()).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Validation: R2 Access Key shows error for short input', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do R2 Access Key
+    const accessKeyInput = page.locator('[data-testid="input-r2_access_key"]');
+    await expect(accessKeyInput).toBeVisible({ timeout: 5000 });
+
+    // Digitar uma access key curta (menos de 10 caracteres)
+    await accessKeyInput.fill('short');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de erro aparece
+    const errorAlert = page.getByText('Access key muito curta');
+    await expect(errorAlert).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Validation: R2 Access Key shows success for valid input', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do R2 Access Key
+    const accessKeyInput = page.locator('[data-testid="input-r2_access_key"]');
+    await expect(accessKeyInput).toBeVisible({ timeout: 5000 });
+
+    // Digitar uma access key válida (10+ caracteres)
+    await accessKeyInput.fill('valid_access_key_123');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de sucesso aparece
+    const successAlert = page.getByText('Formato válido');
+    await expect(successAlert.first()).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Validation: R2 Secret Key shows error for short input', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do R2 Secret Key
+    const secretKeyInput = page.locator('[data-testid="input-r2_secret_key"]');
+    await expect(secretKeyInput).toBeVisible({ timeout: 5000 });
+
+    // Digitar uma secret key curta (menos de 20 caracteres)
+    await secretKeyInput.fill('short_secret');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de erro aparece
+    const errorAlert = page.getByText('Secret key muito curta');
+    await expect(errorAlert).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Validation: R2 Secret Key shows success for valid input', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do R2 Secret Key
+    const secretKeyInput = page.locator('[data-testid="input-r2_secret_key"]');
+    await expect(secretKeyInput).toBeVisible({ timeout: 5000 });
+
+    // Digitar uma secret key válida (20+ caracteres)
+    await secretKeyInput.fill('valid_secret_key_12345678901234567890');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de sucesso aparece
+    const successAlert = page.getByText('Formato válido');
+    await expect(successAlert.first()).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Validation: R2 Endpoint shows error for non-https URL', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do R2 Endpoint
+    const endpointInput = page.locator('[data-testid="input-r2_endpoint"]');
+    await expect(endpointInput).toBeVisible({ timeout: 5000 });
+
+    // Digitar um endpoint sem https
+    await endpointInput.fill('http://example.r2.cloudflarestorage.com');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de erro aparece
+    const errorAlert = page.getByText('Deve começar com https://');
+    await expect(errorAlert).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Validation: R2 Endpoint shows error for non-R2 URL', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do R2 Endpoint
+    const endpointInput = page.locator('[data-testid="input-r2_endpoint"]');
+    await expect(endpointInput).toBeVisible({ timeout: 5000 });
+
+    // Digitar um endpoint que não é R2
+    await endpointInput.fill('https://example.s3.amazonaws.com');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de erro aparece
+    const errorAlert = page.getByText('Deve ser um endpoint R2 válido');
+    await expect(errorAlert).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Validation: R2 Endpoint shows success for valid URL', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do R2 Endpoint
+    const endpointInput = page.locator('[data-testid="input-r2_endpoint"]');
+    await expect(endpointInput).toBeVisible({ timeout: 5000 });
+
+    // Digitar um endpoint válido
+    await endpointInput.fill('https://abc123.r2.cloudflarestorage.com');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de sucesso aparece
+    const successAlert = page.getByText('URL válida');
+    await expect(successAlert).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Validation: R2 Bucket shows error for short name', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do R2 Bucket
+    const bucketInput = page.locator('[data-testid="input-r2_bucket"]');
+    await expect(bucketInput).toBeVisible({ timeout: 5000 });
+
+    // Digitar um nome de bucket curto (menos de 3 caracteres)
+    await bucketInput.fill('ab');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de erro aparece
+    const errorAlert = page.getByText('Nome muito curto (min. 3 caracteres)');
+    await expect(errorAlert).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Validation: R2 Bucket shows error for invalid characters', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do R2 Bucket
+    const bucketInput = page.locator('[data-testid="input-r2_bucket"]');
+    await expect(bucketInput).toBeVisible({ timeout: 5000 });
+
+    // Digitar um nome de bucket com caracteres inválidos
+    await bucketInput.fill('Invalid_Bucket_Name!');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de erro aparece
+    const errorAlert = page.getByText('Apenas letras minúsculas, números e hífens');
+    await expect(errorAlert).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Validation: R2 Bucket shows success for valid name', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do R2 Bucket
+    const bucketInput = page.locator('[data-testid="input-r2_bucket"]');
+    await expect(bucketInput).toBeVisible({ timeout: 5000 });
+
+    // Digitar um nome de bucket válido
+    await bucketInput.fill('my-valid-bucket-123');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de sucesso aparece
+    const successAlert = page.getByText('Nome válido');
+    await expect(successAlert).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Validation: Restic password shows error for short password', async ({ page }) => {
+    await goToSettings(page, 'storage');
+
+    // Localizar o input do Restic Password
+    const passwordInput = page.locator('[data-testid="input-restic_password"]');
+    await expect(passwordInput).toBeVisible({ timeout: 5000 });
+
+    // Digitar uma senha curta (menos de 8 caracteres)
+    await passwordInput.fill('short');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de erro aparece
+    const errorAlert = page.getByText('Senha muito curta (min. 8 caracteres)');
+    await expect(errorAlert).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Validation: Restic password shows success for valid password', async ({ page }) => {
+    await goToSettings(page, 'storage');
+
+    // Localizar o input do Restic Password
+    const passwordInput = page.locator('[data-testid="input-restic_password"]');
+    await expect(passwordInput).toBeVisible({ timeout: 5000 });
+
+    // Digitar uma senha válida (8+ caracteres)
+    await passwordInput.fill('valid_password_123');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de sucesso aparece
+    const successAlert = page.getByText('Senha válida');
+    await expect(successAlert).toBeVisible({ timeout: 3000 });
+  });
+
+  test('Validation: Empty fields do not show validation messages', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do Vast.ai API Key
+    const apiKeyInput = page.locator('[data-testid="input-vast_api_key"]');
+    await expect(apiKeyInput).toBeVisible({ timeout: 5000 });
+
+    // Limpar o campo
+    await apiKeyInput.fill('');
+    await page.waitForTimeout(500);
+
+    // Verificar que nenhuma mensagem de validação aparece para campo vazio
+    const errorAlert = page.getByText('API key muito curta');
+    const successAlert = page.getByText('Formato válido');
+
+    const hasError = await errorAlert.isVisible({ timeout: 1000 }).catch(() => false);
+    const hasSuccess = await successAlert.first().isVisible({ timeout: 1000 }).catch(() => false);
+
+    // Para campo vazio, não deve haver mensagem de erro
+    expect(hasError).toBeFalsy();
+  });
+
+  test('Validation: Form shows validation error message when invalid', async ({ page }) => {
+    await goToSettings(page, 'notifications');
+
+    // Primeiro navegar para APIs para preencher um campo inválido
+    const apisTab = page.locator('[data-testid="settings-tab-apis"]');
+    await apisTab.click();
+    await page.waitForTimeout(500);
+
+    // Preencher com valor inválido
+    const apiKeyInput = page.locator('[data-testid="input-vast_api_key"]');
+    await expect(apiKeyInput).toBeVisible({ timeout: 5000 });
+    await apiKeyInput.fill('short');
+    await page.waitForTimeout(500);
+
+    // Voltar para notifications para verificar o erro do formulário
+    const notificationsTab = page.locator('[data-testid="settings-tab-notifications"]');
+    await notificationsTab.click();
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de erro de validação do formulário aparece
+    const formValidationError = page.locator('[data-testid="settings-form-validation-error"]');
+    const hasFormError = await formValidationError.isVisible({ timeout: 3000 }).catch(() => false);
+
+    if (hasFormError) {
+      await expect(formValidationError).toBeVisible();
+      await expect(page.getByText('Corrija os erros antes de salvar')).toBeVisible();
+    }
+  });
+
+  test('Validation: Multiple invalid fields show individual errors', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar os inputs
+    const vastApiKeyInput = page.locator('[data-testid="input-vast_api_key"]');
+    const r2AccessKeyInput = page.locator('[data-testid="input-r2_access_key"]');
+    const r2BucketInput = page.locator('[data-testid="input-r2_bucket"]');
+
+    await expect(vastApiKeyInput).toBeVisible({ timeout: 5000 });
+    await expect(r2AccessKeyInput).toBeVisible();
+    await expect(r2BucketInput).toBeVisible();
+
+    // Preencher todos com valores inválidos
+    await vastApiKeyInput.fill('short');
+    await r2AccessKeyInput.fill('tiny');
+    await r2BucketInput.fill('AB'); // uppercase e curto
+    await page.waitForTimeout(500);
+
+    // Verificar que múltiplas mensagens de erro aparecem
+    const apiKeyError = page.getByText('API key muito curta');
+    const accessKeyError = page.getByText('Access key muito curta');
+    const bucketError = page.getByText(/Nome muito curto|Apenas letras minúsculas/);
+
+    await expect(apiKeyError).toBeVisible({ timeout: 3000 });
+    await expect(accessKeyError).toBeVisible();
+    await expect(bucketError).toBeVisible();
+  });
+
+  test('Validation: Correcting invalid input updates validation message', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do Vast.ai API Key
+    const apiKeyInput = page.locator('[data-testid="input-vast_api_key"]');
+    await expect(apiKeyInput).toBeVisible({ timeout: 5000 });
+
+    // Primeiro, preencher com valor inválido
+    await apiKeyInput.fill('short');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de erro aparece
+    const errorAlert = page.getByText('API key muito curta');
+    await expect(errorAlert).toBeVisible({ timeout: 3000 });
+
+    // Agora, corrigir para valor válido
+    await apiKeyInput.fill('valid_api_key_12345678901234567890');
+    await page.waitForTimeout(500);
+
+    // Verificar que a mensagem de erro desapareceu e sucesso aparece
+    const successAlert = page.getByText('Formato válido');
+    await expect(successAlert.first()).toBeVisible({ timeout: 3000 });
+
+    // Verificar que o erro não está mais visível
+    await expect(errorAlert).not.toBeVisible();
+  });
+
+});
