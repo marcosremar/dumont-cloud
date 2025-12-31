@@ -171,6 +171,18 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"⚠ PeriodicSnapshotService not started: {e}")
 
+        # Initialize Exchange Rate Scheduler (updates rates daily at midnight UTC)
+        try:
+            from .core.scheduler import init_scheduler
+
+            # Run without immediate fetch on startup to avoid blocking
+            # The scheduler will fetch rates at midnight UTC or when triggered manually
+            await init_scheduler(run_immediately=False)
+            agents_started.append("ExchangeRateScheduler")
+            logger.info("✓ Exchange rate scheduler started (daily at 00:00 UTC)")
+        except Exception as e:
+            logger.warning(f"⚠ Exchange rate scheduler not started: {e}")
+
         logger.info(f"   Started agents: {', '.join(agents_started) if agents_started else 'None'}")
         
     except Exception as e:
@@ -180,7 +192,7 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("🛑 Shutting down Dumont Cloud FastAPI application...")
-    
+
     # Stop background agents
     try:
         from .services.standby.hibernation import get_auto_hibernation_manager
@@ -189,7 +201,15 @@ async def lifespan(app: FastAPI):
             manager.stop()
             logger.info("✓ AutoHibernationManager stopped")
     except Exception as e:
-        logger.error(f"Error stopping agents: {e}")
+        logger.error(f"Error stopping AutoHibernationManager: {e}")
+
+    # Stop exchange rate scheduler
+    try:
+        from .core.scheduler import shutdown_scheduler
+        await shutdown_scheduler()
+        logger.info("✓ Exchange rate scheduler stopped")
+    except Exception as e:
+        logger.error(f"Error stopping exchange rate scheduler: {e}")
 
 
 
