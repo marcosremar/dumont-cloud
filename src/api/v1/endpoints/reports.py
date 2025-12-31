@@ -1,9 +1,15 @@
 """
 Endpoints para Relatórios de Economia Compartilháveis.
+
+Privacy Filtering:
+- Public endpoints only return aggregate savings data
+- Sensitive fields (user_email, api_keys, instance_ids, etc.) are filtered out
+- Uses whitelist-based filtering for maximum security
 """
 
 import secrets
 from datetime import datetime
+from typing import Dict, Any, Optional, Set
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -18,6 +24,136 @@ from src.api.v1.schemas.reports import (
 )
 
 router = APIRouter()
+
+# =============================================================================
+# PRIVACY FILTERING - Whitelisted fields for public endpoints
+# =============================================================================
+
+# Fields allowed in savings_data (aggregate data only, no user-identifying info)
+ALLOWED_SAVINGS_DATA_FIELDS: Set[str] = {
+    # Aggregate savings amounts
+    "total_savings_vs_aws",
+    "total_savings_vs_gcp",
+    "total_savings_vs_azure",
+    # Percentage metrics
+    "savings_percentage_avg",
+    "savings_percentage",
+    # Time metrics (no user-identifying info)
+    "total_hours",
+    "period",
+    # Monthly/annual aggregates
+    "monthly_savings",
+    "annual_savings",
+}
+
+# Fields allowed in config (only display preferences, no sensitive settings)
+ALLOWED_CONFIG_FIELDS: Set[str] = {
+    # Display toggles
+    "monthly_savings",
+    "annual_savings",
+    "percentage_saved",
+    "provider_comparison",
+    # Format preferences
+    "format",
+    "theme",
+}
+
+# Fields that must NEVER appear in public responses (defensive blacklist)
+SENSITIVE_FIELDS: Set[str] = {
+    # User identification
+    "user_id",
+    "user_email",
+    "email",
+    "account_id",
+    "customer_id",
+    # API credentials
+    "api_key",
+    "api_keys",
+    "api_secret",
+    "access_token",
+    "refresh_token",
+    "secret_key",
+    "password",
+    "credentials",
+    # Instance-specific data
+    "instance_id",
+    "instance_ids",
+    "instance_name",
+    "ssh_key",
+    "ip_address",
+    "private_ip",
+    # Internal data
+    "internal_id",
+    "database_id",
+}
+
+
+def filter_dict_by_whitelist(
+    data: Optional[Dict[str, Any]],
+    allowed_fields: Set[str],
+    sensitive_fields: Set[str] = SENSITIVE_FIELDS
+) -> Optional[Dict[str, Any]]:
+    """
+    Filter a dictionary to only include whitelisted fields.
+
+    Uses dual approach:
+    1. Whitelist: Only include fields in allowed_fields
+    2. Blacklist: Double-check to exclude any sensitive fields
+
+    This ensures maximum privacy protection.
+    """
+    if data is None:
+        return None
+
+    if not isinstance(data, dict):
+        return None
+
+    filtered = {}
+    for key, value in data.items():
+        # First check: field must be in whitelist
+        if key not in allowed_fields:
+            continue
+
+        # Second check: field must NOT be in sensitive blacklist
+        key_lower = key.lower()
+        if any(sensitive in key_lower for sensitive in sensitive_fields):
+            continue
+
+        # Handle nested dicts recursively (but only allow simple values in public data)
+        if isinstance(value, dict):
+            # For nested dicts, we don't recurse - just skip them for safety
+            # Public reports should only contain flat, aggregate data
+            continue
+
+        # Handle lists - filter out any that might contain sensitive data
+        if isinstance(value, list):
+            # Only allow lists of primitive values (numbers, strings, bools)
+            if all(isinstance(item, (int, float, str, bool, type(None))) for item in value):
+                filtered[key] = value
+            continue
+
+        # Allow primitive values
+        filtered[key] = value
+
+    return filtered if filtered else None
+
+
+def sanitize_savings_data(savings_data: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """
+    Sanitize savings_data for public consumption.
+
+    Only returns aggregate financial metrics, no user-identifying information.
+    """
+    return filter_dict_by_whitelist(savings_data, ALLOWED_SAVINGS_DATA_FIELDS)
+
+
+def sanitize_config(config: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """
+    Sanitize config for public consumption.
+
+    Only returns display preferences, no sensitive settings.
+    """
+    return filter_dict_by_whitelist(config, ALLOWED_CONFIG_FIELDS)
 
 
 def generate_shareable_id(length: int = 10) -> str:
@@ -103,6 +239,7 @@ async def get_report(
 
     - Endpoint público (não requer autenticação)
     - Retorna apenas dados agregados de economia (sem informações sensíveis)
+    - Privacy filtering: excludes user_email, api_keys, instance_ids, and other sensitive data
     """
     report = db.query(ShareableReport).filter(
         ShareableReport.shareable_id == shareable_id
@@ -114,10 +251,14 @@ async def get_report(
             detail="Report not found"
         )
 
-    # Retornar apenas dados públicos (privacy filtering)
+    # Apply privacy filtering to savings_data
+    # This removes any sensitive fields that might have been stored accidentally
+    filtered_savings_data = sanitize_savings_data(report.savings_data)
+
+    # Retornar apenas dados públicos (privacy filtering applied)
     return ReportDataResponse(
         shareable_id=report.shareable_id,
         format=report.format,
-        savings_data=report.savings_data,
+        savings_data=filtered_savings_data,
         created_at=report.created_at,
     )
