@@ -386,3 +386,229 @@ ROLE_PERMISSIONS = {
         'cost.view_own',
     ],
 }
+
+
+class AuditLog(Base):
+    """Tabela para armazenar logs de auditoria de ações no sistema."""
+
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Who performed the action
+    user_id = Column(String(100), nullable=False, index=True)
+    team_id = Column(Integer, ForeignKey('teams.id', ondelete='SET NULL'), nullable=True, index=True)
+
+    # Action details
+    action = Column(String(100), nullable=False, index=True)  # e.g., "member.added", "role.changed", "gpu.provisioned"
+    resource_type = Column(String(100), nullable=False, index=True)  # e.g., "team_member", "role", "gpu_instance"
+    resource_id = Column(String(100), nullable=True, index=True)  # ID of the affected resource
+
+    # Action metadata
+    details = Column(Text, nullable=True)  # JSON string with additional action details
+    old_value = Column(Text, nullable=True)  # JSON string with previous state (for updates)
+    new_value = Column(Text, nullable=True)  # JSON string with new state (for updates)
+
+    # Request context
+    ip_address = Column(String(45), nullable=True)  # IPv4/IPv6 address
+    user_agent = Column(String(500), nullable=True)  # Browser/client user agent
+
+    # Result
+    status = Column(String(50), default='success', nullable=False, index=True)  # 'success', 'failure', 'denied'
+    error_message = Column(String(500), nullable=True)  # Error message if status is 'failure' or 'denied'
+
+    # Timestamp
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    # Indices
+    __table_args__ = (
+        Index('idx_audit_user_action', 'user_id', 'action'),
+        Index('idx_audit_team_action', 'team_id', 'action'),
+        Index('idx_audit_resource', 'resource_type', 'resource_id'),
+        Index('idx_audit_timestamp', 'created_at'),
+        Index('idx_audit_team_timestamp', 'team_id', 'created_at'),
+    )
+
+    def __repr__(self):
+        return f"<AuditLog(id={self.id}, user_id={self.user_id}, action={self.action}, resource={self.resource_type})>"
+
+    def to_dict(self):
+        """Converte para dicionário para API responses."""
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'team_id': self.team_id,
+            'action': self.action,
+            'resource_type': self.resource_type,
+            'resource_id': self.resource_id,
+            'details': self.details,
+            'old_value': self.old_value,
+            'new_value': self.new_value,
+            'ip_address': self.ip_address,
+            'user_agent': self.user_agent,
+            'status': self.status,
+            'error_message': self.error_message,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class TeamQuota(Base):
+    """Tabela para armazenar quotas e limites de recursos por time."""
+
+    __tablename__ = "team_quotas"
+
+    id = Column(Integer, primary_key=True, index=True)
+    team_id = Column(Integer, ForeignKey('teams.id', ondelete='CASCADE'), unique=True, nullable=False, index=True)
+
+    # GPU quotas
+    max_gpu_hours_per_month = Column(Float, nullable=True)  # NULL means unlimited
+    max_concurrent_instances = Column(Integer, nullable=True)  # NULL means unlimited
+
+    # Budget quotas
+    max_monthly_budget_usd = Column(Float, nullable=True)  # NULL means unlimited
+
+    # Current usage tracking
+    current_gpu_hours_used = Column(Float, default=0.0, nullable=False)
+    current_concurrent_instances = Column(Integer, default=0, nullable=False)
+    current_monthly_spend_usd = Column(Float, default=0.0, nullable=False)
+
+    # Usage period
+    usage_period_start = Column(DateTime, nullable=True)  # Start of current billing period
+    usage_period_end = Column(DateTime, nullable=True)  # End of current billing period
+
+    # Soft limits (warnings before hard limits)
+    warn_at_gpu_hours_percent = Column(Float, default=80.0, nullable=False)  # Warn at 80% of limit
+    warn_at_budget_percent = Column(Float, default=80.0, nullable=False)  # Warn at 80% of budget
+
+    # Notification settings
+    notify_on_warning = Column(Boolean, default=True, nullable=False)
+    notify_on_limit_reached = Column(Boolean, default=True, nullable=False)
+    last_warning_sent_at = Column(DateTime, nullable=True)
+    last_limit_reached_sent_at = Column(DateTime, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Relationships
+    team = relationship("Team")
+
+    # Indices
+    __table_args__ = (
+        Index('idx_quota_team', 'team_id'),
+        Index('idx_quota_usage_period', 'usage_period_start', 'usage_period_end'),
+    )
+
+    def __repr__(self):
+        return f"<TeamQuota(id={self.id}, team_id={self.team_id}, gpu_hours={self.current_gpu_hours_used}/{self.max_gpu_hours_per_month})>"
+
+    def to_dict(self):
+        """Converte para dicionário para API responses."""
+        return {
+            'id': self.id,
+            'team_id': self.team_id,
+            'limits': {
+                'max_gpu_hours_per_month': self.max_gpu_hours_per_month,
+                'max_concurrent_instances': self.max_concurrent_instances,
+                'max_monthly_budget_usd': self.max_monthly_budget_usd,
+            },
+            'usage': {
+                'gpu_hours_used': self.current_gpu_hours_used,
+                'concurrent_instances': self.current_concurrent_instances,
+                'monthly_spend_usd': self.current_monthly_spend_usd,
+            },
+            'usage_period': {
+                'start': self.usage_period_start.isoformat() if self.usage_period_start else None,
+                'end': self.usage_period_end.isoformat() if self.usage_period_end else None,
+            },
+            'warnings': {
+                'warn_at_gpu_hours_percent': self.warn_at_gpu_hours_percent,
+                'warn_at_budget_percent': self.warn_at_budget_percent,
+            },
+            'notifications': {
+                'notify_on_warning': self.notify_on_warning,
+                'notify_on_limit_reached': self.notify_on_limit_reached,
+                'last_warning_sent_at': self.last_warning_sent_at.isoformat() if self.last_warning_sent_at else None,
+                'last_limit_reached_sent_at': self.last_limit_reached_sent_at.isoformat() if self.last_limit_reached_sent_at else None,
+            },
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def is_gpu_hours_exceeded(self):
+        """Verifica se o limite de horas de GPU foi excedido."""
+        if self.max_gpu_hours_per_month is None:
+            return False
+        return self.current_gpu_hours_used >= self.max_gpu_hours_per_month
+
+    def is_concurrent_instances_exceeded(self):
+        """Verifica se o limite de instâncias concorrentes foi excedido."""
+        if self.max_concurrent_instances is None:
+            return False
+        return self.current_concurrent_instances >= self.max_concurrent_instances
+
+    def is_budget_exceeded(self):
+        """Verifica se o orçamento mensal foi excedido."""
+        if self.max_monthly_budget_usd is None:
+            return False
+        return self.current_monthly_spend_usd >= self.max_monthly_budget_usd
+
+    def is_any_quota_exceeded(self):
+        """Verifica se algum limite foi excedido."""
+        return (
+            self.is_gpu_hours_exceeded() or
+            self.is_concurrent_instances_exceeded() or
+            self.is_budget_exceeded()
+        )
+
+    def get_gpu_hours_percent_used(self):
+        """Retorna a porcentagem de horas de GPU utilizadas."""
+        if self.max_gpu_hours_per_month is None or self.max_gpu_hours_per_month == 0:
+            return 0.0
+        return (self.current_gpu_hours_used / self.max_gpu_hours_per_month) * 100
+
+    def get_budget_percent_used(self):
+        """Retorna a porcentagem do orçamento utilizado."""
+        if self.max_monthly_budget_usd is None or self.max_monthly_budget_usd == 0:
+            return 0.0
+        return (self.current_monthly_spend_usd / self.max_monthly_budget_usd) * 100
+
+    def should_warn_gpu_hours(self):
+        """Verifica se deve enviar aviso sobre horas de GPU."""
+        return self.get_gpu_hours_percent_used() >= self.warn_at_gpu_hours_percent
+
+    def should_warn_budget(self):
+        """Verifica se deve enviar aviso sobre orçamento."""
+        return self.get_budget_percent_used() >= self.warn_at_budget_percent
+
+
+# Audit log action constants
+AUDIT_ACTIONS = {
+    # Member actions
+    'member.added': 'Member added to team',
+    'member.removed': 'Member removed from team',
+    'member.role_changed': 'Member role changed',
+    # Role actions
+    'role.created': 'Custom role created',
+    'role.updated': 'Role updated',
+    'role.deleted': 'Role deleted',
+    # GPU actions
+    'gpu.provisioned': 'GPU instance provisioned',
+    'gpu.deleted': 'GPU instance deleted',
+    'gpu.hibernated': 'GPU instance hibernated',
+    'gpu.woke': 'GPU instance woke from hibernation',
+    # Settings actions
+    'settings.updated': 'Team settings updated',
+    # Quota actions
+    'quota.updated': 'Team quota updated',
+    'quota.exceeded': 'Team quota exceeded',
+    # Team actions
+    'team.created': 'Team created',
+    'team.updated': 'Team updated',
+    'team.deleted': 'Team deleted',
+    # Invitation actions
+    'invitation.sent': 'Invitation sent',
+    'invitation.accepted': 'Invitation accepted',
+    'invitation.revoked': 'Invitation revoked',
+    'invitation.expired': 'Invitation expired',
+}
