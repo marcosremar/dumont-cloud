@@ -28,6 +28,10 @@ google-cloud-compute==1.40.0
 numpy==2.4.0
 scikit-learn==1.8.0
 
+# Internationalization
+Flask-Babel>=4.0.0
+Babel>=2.14.0
+
 # Utilities
 python-dateutil==2.9.0.post0
 colorama==0.4.6
