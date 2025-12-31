@@ -1,0 +1,139 @@
+=== AUTO-BUILD PROGRESS ===
+
+Project: Multi-Currency Pricing System
+Spec: 016
+Workspace: [managed by orchestrator]
+Started: 2025-12-31 22:30:00 UTC
+
+Workflow Type: feature
+Rationale: New feature adding multi-currency support (not a bug fix or refactor). Requires new database models, API endpoints, scheduled tasks, and frontend components.
+
+Session 1 (Planner):
+- Completed deep codebase investigation
+- Created context.json with patterns and technical decisions
+- Created implementation_plan.json with 7 phases and 16 subtasks
+- Created init.sh for environment setup
+- Analyzed parallelism opportunities
+
+Phase Summary:
+- Phase 1: Database Models (2 subtasks) - depends on: []
+  * Create ExchangeRate and UserCurrencyPreference SQLAlchemy models
+  * Create database migration for currency tables
+
+- Phase 2: Exchange Rate Service (2 subtasks) - depends on: [phase-1]
+  * Create exchange rate fetching service with httpx, Redis caching, DB storage
+  * Add EXCHANGE_RATE_API_KEY and EXCHANGE_RATE_API_URL to .env
+
+- Phase 3: Scheduler Setup (2 subtasks) - depends on: [phase-2]
+  * Create APScheduler module with AsyncIOScheduler and CronTrigger
+  * Integrate scheduler with FastAPI lifespan events
+
+- Phase 4: Backend API Endpoints (2 subtasks) - depends on: [phase-2]
+  * Create Pydantic schemas for currency requests/responses
+  * Create FastAPI endpoints for /currency/rates, /user/currency, /currency/convert
+
+- Phase 5: Frontend Redux State (2 subtasks) - depends on: [phase-4]
+  * Create currencySlice with selectedCurrency, exchangeRates, localStorage persistence
+  * Create formatCurrency utility using Dinero.js v2
+
+- Phase 6: Frontend Components (3 subtasks) - depends on: [phase-5]
+  * Create CurrencySelector dropdown with Radix UI
+  * Add CurrencySelector to navigation/header
+  * Update OfferCard and price displays to use selected currency
+
+- Phase 7: Integration & Verification (3 subtasks) - depends on: [phase-3, phase-6]
+  * End-to-end currency selection and price conversion flow
+  * Test graceful fallback when exchange rate API fails
+  * Install Python and JavaScript dependencies
+
+Services Involved:
+- backend (src/) - FastAPI backend with SQLAlchemy models, API endpoints, scheduler
+- frontend (web/) - React frontend with Redux state management and currency selector
+- database (PostgreSQL) - Exchange rates and user preferences storage
+- cache (Redis) - Exchange rate caching for performance
+
+Parallelism Analysis:
+- Max parallel phases: 2
+- Recommended workers: 2
+- Speedup estimate: 1.4x faster than sequential
+- Parallel groups:
+  * Phase 2 (Exchange Rate Service) + Phase 4 (API Endpoints) - both depend on Phase 1, no file conflicts
+  * Phase 4 (API Endpoints) + Phase 5 (Frontend State) - backend vs frontend, can run in parallel
+
+Technical Decisions:
+- Base currency: USD (all prices stored in USD, converted on-demand)
+- Exchange rate API: exchangerate-api.io (free tier ~1500 req/month)
+- Scheduler: APScheduler with AsyncIOScheduler (in-process with FastAPI)
+- Caching: Redis for exchange rates
+- Formatting: Babel (backend), Dinero.js v2 (frontend)
+- Supported currencies: USD, EUR, GBP, BRL
+
+Dependencies to Add:
+Backend (Python):
+  - babel>=2.12.0 (currency formatting)
+  - apscheduler>=3.10.0 (scheduled tasks)
+  - httpx>=0.24.0 (async HTTP client for exchange rate API)
+
+Frontend (JavaScript):
+  - dinero.js@^2.0.0 (money calculations)
+  - @dinero.js/currencies@^2.0.0 (currency definitions)
+
+Files to Create (Backend):
+  - src/models/currency.py (ExchangeRate, UserCurrencyPreference models)
+  - src/migrations/add_currency_tables.py (database migration)
+  - src/services/exchange_rate.py (ExchangeRateService)
+  - src/core/scheduler.py (APScheduler setup)
+  - src/api/v1/schemas/currency.py (Pydantic schemas)
+  - src/api/v1/endpoints/currency.py (FastAPI endpoints)
+
+Files to Create (Frontend):
+  - web/src/store/slices/currencySlice.js (Redux slice)
+  - web/src/utils/formatCurrency.js (formatting utilities)
+  - web/src/components/CurrencySelector.jsx (dropdown component)
+
+Files to Modify:
+  - src/main.py (add scheduler initialization)
+  - src/api/v1/__init__.py (register currency router)
+  - web/src/store/index.js (add currencySlice)
+  - web/src/components/Layout.jsx (add CurrencySelector)
+  - web/src/components/dashboard/OfferCard.jsx (update price display)
+  - .env (add EXCHANGE_RATE_API_KEY, EXCHANGE_RATE_API_URL)
+  - requirements.txt (add babel, apscheduler, httpx)
+  - web/package.json (add dinero.js, @dinero.js/currencies)
+
+Patterns to Follow:
+- Backend API: FastAPI with APIRouter, prefix='/currency', tags=['Currency'], Depends() for DI
+- Backend Models: SQLAlchemy with src.config.database.Base, Numeric(18,6) for exchange rates
+- Frontend State: Redux Toolkit with createSlice, createAsyncThunk, localStorage persistence
+- Frontend Components: React functional components, Radix UI for dropdowns, Tailwind CSS
+
+Verification Strategy:
+- Risk level: medium
+- Test types: unit, integration, e2e
+- Backend unit tests: test_currency_models.py, test_exchange_rate_service.py
+- API integration tests: test_currency_api.py
+- E2E tests: currency-selection.spec.js (Playwright)
+- Browser verification: Currency selector visible, 4 currencies, prices convert correctly
+
+=== STARTUP COMMAND ===
+
+To continue building this spec, run:
+
+  source auto-claude/.venv/bin/activate && python auto-claude/run.py --spec 016 --parallel 2
+
+This will start 2 parallel workers to implement the subtasks following the dependency graph.
+
+Alternative (sequential):
+  source auto-claude/.venv/bin/activate && python auto-claude/run.py --spec 016
+
+=== NOTES ===
+
+- No existing scheduler found in codebase - APScheduler will be new
+- Backend is FastAPI (not Flask) - src/main.py is entry point
+- Frontend uses Vite dev server - port may be 5173 or 8000
+- Redis is already configured (REDIS_URL in .env)
+- PostgreSQL is already configured (DB_* vars in .env)
+- Radix UI components are already in use (@radix-ui/react-select)
+- Redux Toolkit is already configured (web/src/store/)
+
+=== END SESSION 1 ===
