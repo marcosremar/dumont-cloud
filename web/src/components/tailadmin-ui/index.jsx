@@ -762,6 +762,22 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
     }
   }, [isOpen, handleKeyDown]);
 
+  // Focus first enabled item when dropdown opens
+  useEffect(() => {
+    if (isOpen) {
+      // Use requestAnimationFrame to ensure items have registered
+      const animFrame = requestAnimationFrame(() => {
+        const firstEnabledIndex = findNextEnabledIndex(-1, 'down');
+        if (firstEnabledIndex !== -1) {
+          const items = getItemRefs();
+          setFocusedIndex(firstEnabledIndex);
+          items[firstEnabledIndex]?.ref?.focus();
+        }
+      });
+      return () => cancelAnimationFrame(animFrame);
+    }
+  }, [isOpen, findNextEnabledIndex, getItemRefs, setFocusedIndex]);
+
   if (!isOpen) return null;
 
   const alignClass = align === 'end' ? 'right-0' : 'left-0';
