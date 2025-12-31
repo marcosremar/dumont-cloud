@@ -684,13 +684,19 @@ export function DropdownMenuTrigger({ children, asChild, ...props }) {
     setIsOpen(!isOpen);
   };
 
+  const ariaProps = {
+    'aria-haspopup': 'menu',
+    'aria-expanded': isOpen
+  };
+
   if (asChild) {
     return React.cloneElement(children, {
       onClick: handleClick,
-      ref: triggerRef
+      ref: triggerRef,
+      ...ariaProps
     });
   }
-  return <button ref={triggerRef} onClick={handleClick} {...props}>{children}</button>;
+  return <button ref={triggerRef} onClick={handleClick} {...ariaProps} {...props}>{children}</button>;
 }
 
 export function DropdownMenuContent({ children, align = 'end', className = '' }) {
@@ -804,6 +810,7 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
   return (
     <div
       ref={contentRef}
+      role="menu"
       className={`absolute ${alignClass} mt-2 w-56 rounded-lg bg-dark-surface-card border border-white/10 shadow-lg z-50 py-1 ${className}`}
     >
       {children}
@@ -837,8 +844,10 @@ export function DropdownMenuItem({ children, onClick, className = '', disabled }
   return (
     <button
       ref={itemRef}
+      role="menuitem"
       onClick={handleClick}
       disabled={disabled}
+      aria-disabled={disabled || undefined}
       className={`w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gray-100 dark:focus:bg-gray-800 focus:outline-none transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >
       {children}
@@ -847,12 +856,12 @@ export function DropdownMenuItem({ children, onClick, className = '', disabled }
 }
 
 export function DropdownMenuSeparator() {
-  return <div className="my-1 h-px bg-gray-200 dark:bg-gray-800" />;
+  return <div role="separator" className="my-1 h-px bg-gray-200 dark:bg-gray-800" />;
 }
 
 export function DropdownMenuLabel({ children, className = '' }) {
   return (
-    <div className={`px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider ${className}`}>
+    <div role="group" aria-label={typeof children === 'string' ? children : undefined} className={`px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider ${className}`}>
       {children}
     </div>
   );
