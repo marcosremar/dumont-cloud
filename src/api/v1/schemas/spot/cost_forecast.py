@@ -101,3 +101,35 @@ class OptimalTimingResponse(BaseModel):
     max_potential_savings: float = Field(..., ge=0, description="Economia maxima possivel $")
     model_confidence: float = Field(..., ge=0, le=1, description="Confianca do modelo (0-1)")
     generated_at: str = Field(..., description="Timestamp de geracao")
+
+
+class HourlyAccuracyItem(BaseModel):
+    """Metricas de acuracia por hora."""
+    mape: float = Field(..., ge=0, description="MAPE para esta hora")
+    num_samples: int = Field(..., ge=0, description="Numero de amostras")
+
+
+class DailyAccuracyItem(BaseModel):
+    """Metricas de acuracia por dia da semana."""
+    mape: float = Field(..., ge=0, description="MAPE para este dia")
+    num_samples: int = Field(..., ge=0, description="Numero de amostras")
+
+
+class ForecastAccuracyResponse(BaseModel):
+    """Resposta com metricas de acuracia do modelo de previsao."""
+    gpu_name: str = Field(..., description="Nome da GPU")
+    machine_type: str = Field(default="interruptible", description="Tipo de maquina")
+    mape: float = Field(..., ge=0, description="Mean Absolute Percentage Error (%)")
+    mae: float = Field(..., ge=0, description="Mean Absolute Error ($/hora)")
+    rmse: float = Field(..., ge=0, description="Root Mean Square Error ($/hora)")
+    r_squared: Optional[float] = Field(None, ge=0, le=1, description="Coeficiente de determinacao R2")
+    num_predictions: int = Field(..., ge=0, description="Numero de previsoes avaliadas")
+    num_actual_values: int = Field(..., ge=0, description="Numero de valores reais")
+    num_samples: int = Field(..., ge=0, description="Numero de amostras pareadas")
+    evaluation_period_days: int = Field(default=30, description="Periodo de avaliacao em dias")
+    evaluation_start: str = Field(..., description="Inicio do periodo de avaliacao (ISO)")
+    evaluation_end: str = Field(..., description="Fim do periodo de avaliacao (ISO)")
+    hourly_accuracy: dict = Field(default_factory=dict, description="Acuracia por hora do dia")
+    daily_accuracy: dict = Field(default_factory=dict, description="Acuracia por dia da semana")
+    model_version: str = Field(..., description="Versao do modelo")
+    generated_at: str = Field(..., description="Timestamp de geracao")

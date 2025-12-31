@@ -10,6 +10,7 @@ from typing import List
 from ...schemas.spot.cost_forecast import (
     CostForecastResponse,
     DailyCostForecastItem,
+    ForecastAccuracyResponse,
     HourlyPredictionItem,
     OptimalTimingRequest,
     OptimalTimingResponse,
@@ -276,5 +277,68 @@ async def get_optimal_timing(request: OptimalTimingRequest):
         best_time_cost=round(best_cost, 2),
         max_potential_savings=round(worst_cost - best_cost, 2),
         model_confidence=round(model_confidence, 2),
+        generated_at=datetime.utcnow().isoformat(),
+    )
+
+
+@router.get("/forecast-accuracy/{gpu_name}", response_model=ForecastAccuracyResponse)
+async def get_forecast_accuracy(
+    gpu_name: str,
+    machine_type: str = Query(
+        default="interruptible",
+        description="Tipo de maquina (interruptible ou on-demand)"
+    ),
+    days: int = Query(
+        default=30,
+        ge=1,
+        le=90,
+        description="Periodo de avaliacao em dias (padrao: 30)"
+    ),
+):
+    """
+    Metricas de acuracia do modelo de previsao de custos.
+
+    Retorna MAPE (Mean Absolute Percentage Error), MAE, RMSE e R-squared
+    comparando previsoes com valores reais do periodo especificado.
+
+    - **gpu_name**: Nome da GPU (ex: RTX 4090, A100)
+    - **machine_type**: Tipo de maquina - interruptible (spot) ou on-demand
+    - **days**: Periodo de avaliacao em dias (padrao: 30, max: 90)
+    """
+    service = PricePredictionService()
+
+    # Calcular metricas de acuracia
+    accuracy = service.calculate_mape(
+        gpu_name=gpu_name,
+        machine_type=machine_type,
+        days_to_evaluate=days,
+        save_result=True,
+    )
+
+    if accuracy is None:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "Insufficient data to calculate accuracy metrics",
+                "message": "Need at least 10 actual price records and predictions to evaluate accuracy",
+            }
+        )
+
+    return ForecastAccuracyResponse(
+        gpu_name=accuracy["gpu_name"],
+        machine_type=accuracy["machine_type"],
+        mape=accuracy["mape"],
+        mae=accuracy["mae"],
+        rmse=accuracy["rmse"],
+        r_squared=accuracy["r_squared"],
+        num_predictions=accuracy["num_predictions"],
+        num_actual_values=accuracy["num_actual_values"],
+        num_samples=accuracy["num_samples"],
+        evaluation_period_days=days,
+        evaluation_start=accuracy["evaluation_start"],
+        evaluation_end=accuracy["evaluation_end"],
+        hourly_accuracy=accuracy["hourly_accuracy"],
+        daily_accuracy=accuracy["daily_accuracy"],
+        model_version=accuracy["model_version"],
         generated_at=datetime.utcnow().isoformat(),
     )
