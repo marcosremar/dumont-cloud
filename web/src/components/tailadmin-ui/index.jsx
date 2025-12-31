@@ -582,7 +582,10 @@ const DropdownContext = React.createContext({
   unregisterMenuItem: () => {},
   getMenuItems: () => [],
   focusedIndex: -1,
-  setFocusedIndex: () => {}
+  setFocusedIndex: () => {},
+  triggerRef: null,
+  setTriggerRef: () => {},
+  closeAndRestoreFocus: () => {}
 });
 
 export function DropdownMenu({ children }) {
@@ -590,6 +593,23 @@ export function DropdownMenu({ children }) {
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const dropdownRef = useRef(null);
   const menuItemsRef = useRef([]);
+  const triggerRef = useRef(null);
+
+  // Set the trigger ref from DropdownMenuTrigger
+  const setTriggerRef = useCallback((ref) => {
+    triggerRef.current = ref;
+  }, []);
+
+  // Close dropdown and restore focus to trigger
+  const closeAndRestoreFocus = useCallback(() => {
+    setIsOpen(false);
+    // Use setTimeout to ensure focus is restored after state update
+    setTimeout(() => {
+      if (triggerRef.current) {
+        triggerRef.current.focus();
+      }
+    }, 0);
+  }, []);
 
   // Register a menu item ref for keyboard navigation
   const registerMenuItem = useCallback((itemRef) => {
@@ -635,7 +655,7 @@ export function DropdownMenu({ children }) {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
+        closeAndRestoreFocus();
       }
     };
 
@@ -643,13 +663,13 @@ export function DropdownMenu({ children }) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [isOpen]);
+  }, [isOpen, closeAndRestoreFocus]);
 
   // Close dropdown when Escape key is pressed
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
-        setIsOpen(false);
+        closeAndRestoreFocus();
       }
     };
 
@@ -657,7 +677,7 @@ export function DropdownMenu({ children }) {
       document.addEventListener('keydown', handleKeyDown);
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isOpen]);
+  }, [isOpen, closeAndRestoreFocus]);
 
   // Handle arrow key navigation between menu items
   useEffect(() => {
@@ -718,7 +738,9 @@ export function DropdownMenu({ children }) {
       unregisterMenuItem,
       getMenuItems,
       focusedIndex,
-      setFocusedIndex
+      setFocusedIndex,
+      setTriggerRef,
+      closeAndRestoreFocus
     }}>
       <div ref={dropdownRef} className="relative inline-block">
         {children}
@@ -728,7 +750,15 @@ export function DropdownMenu({ children }) {
 }
 
 export function DropdownMenuTrigger({ children, asChild, ...props }) {
-  const { isOpen, setIsOpen } = React.useContext(DropdownContext);
+  const { isOpen, setIsOpen, setTriggerRef } = React.useContext(DropdownContext);
+  const buttonRef = useRef(null);
+
+  // Register the trigger ref with the context
+  useEffect(() => {
+    if (buttonRef.current) {
+      setTriggerRef(buttonRef.current);
+    }
+  }, [setTriggerRef]);
 
   const handleClick = (e) => {
     e.stopPropagation();
@@ -744,9 +774,15 @@ export function DropdownMenuTrigger({ children, asChild, ...props }) {
   };
 
   if (asChild) {
-    return React.cloneElement(children, { onClick: handleClick, onKeyDown: handleKeyDown });
+    // For asChild mode, we need to merge refs and handlers
+    const childProps = {
+      onClick: handleClick,
+      onKeyDown: handleKeyDown,
+      ref: buttonRef
+    };
+    return React.cloneElement(children, childProps);
   }
-  return <button onClick={handleClick} onKeyDown={handleKeyDown} {...props}>{children}</button>;
+  return <button ref={buttonRef} onClick={handleClick} onKeyDown={handleKeyDown} {...props}>{children}</button>;
 }
 
 export function DropdownMenuContent({ children, align = 'end', className = '' }) {
@@ -763,7 +799,7 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
 }
 
 export function DropdownMenuItem({ children, onClick, className = '', disabled }) {
-  const { setIsOpen, registerMenuItem, unregisterMenuItem } = React.useContext(DropdownContext);
+  const { closeAndRestoreFocus, registerMenuItem, unregisterMenuItem } = React.useContext(DropdownContext);
   const itemRef = useRef(null);
 
   // Register this menu item for keyboard navigation
@@ -779,7 +815,7 @@ export function DropdownMenuItem({ children, onClick, className = '', disabled }
 
   const handleClick = (e) => {
     if (disabled) return;
-    setIsOpen(false);
+    closeAndRestoreFocus();
     if (onClick) onClick(e);
   };
 
