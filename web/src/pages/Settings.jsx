@@ -46,7 +46,7 @@ const validators = {
 
 
 // Componente para inputs de campos sensíveis com toggle show/hide e validação
-function SecretInput({ name, value, onChange, placeholder, validation }) {
+function SecretInput({ name, value, onChange, placeholder, validation, testId }) {
   const [show, setShow] = useState(false)
 
   return (
@@ -61,12 +61,14 @@ function SecretInput({ name, value, onChange, placeholder, validation }) {
           onChange={onChange}
           placeholder={placeholder}
           style={validation ? { borderColor: 'transparent' } : {}}
+          data-testid={testId || `input-${name}`}
         />
         <button
           type="button"
           className="secret-toggle-btn"
           onClick={() => setShow(!show)}
           title={show ? "Ocultar" : "Mostrar"}
+          data-testid={`toggle-visibility-${name}`}
         >
           {show ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
@@ -83,7 +85,7 @@ function SecretInput({ name, value, onChange, placeholder, validation }) {
 }
 
 // Input com validação
-function ValidatedInput({ name, value, onChange, placeholder, type = 'text', validation }) {
+function ValidatedInput({ name, value, onChange, placeholder, type = 'text', validation, testId }) {
   return (
     <div>
       <input
@@ -94,6 +96,7 @@ function ValidatedInput({ name, value, onChange, placeholder, type = 'text', val
         onChange={onChange}
         placeholder={placeholder}
         style={validation ? { borderColor: validation.valid ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)' } : {}}
+        data-testid={testId || `input-${name}`}
       />
       {validation && (
         <div className="mt-2">
@@ -536,7 +539,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container" data-testid="settings-page">
       {/* Toast de notificação */}
       {showToast && (
         <Toast
@@ -549,7 +552,7 @@ export default function Settings() {
 
       {/* Page Header - TailAdmin Style */}
       <div className="page-header">
-        <h1 className="page-title">Configurações</h1>
+        <h1 className="page-title" data-testid="settings-page-title">Configurações</h1>
         <p className="page-subtitle">Gerencie suas APIs, armazenamento e preferências</p>
       </div>
 
@@ -575,6 +578,7 @@ export default function Settings() {
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
+                    data-testid={`settings-tab-${item.id}`}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left mb-1 ${
                       isActive
                         ? 'bg-brand-500/10 text-brand-400'
@@ -594,7 +598,7 @@ export default function Settings() {
 
         {/* Main Content */}
         <div className="lg:col-span-3">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" data-testid="settings-form">
           {message && (
             <Alert variant={message.type === 'success' ? 'success' : 'error'}>
               {message.text}
@@ -756,6 +760,7 @@ export default function Settings() {
                         checked={cloudStorageSettings.enabled}
                         onChange={handleCloudStorageChange}
                         className="sr-only peer"
+                        data-testid="settings-cloudstorage-enabled-toggle"
                       />
                       <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
                     </label>
@@ -770,6 +775,7 @@ export default function Settings() {
                       value={cloudStorageSettings.primary_provider}
                       onChange={handleCloudStorageChange}
                       style={{ cursor: 'pointer' }}
+                      data-testid="settings-cloudstorage-provider"
                     >
                       {CLOUD_STORAGE_PROVIDERS.map(provider => (
                         <option key={provider.id} value={provider.id}>
@@ -1067,6 +1073,7 @@ export default function Settings() {
                   type="button"
                   onClick={testCloudStorageConnection}
                   disabled={testingConnection || !cloudStorageSettings.enabled}
+                  data-testid="settings-cloudstorage-test-connection"
                   className="py-3 px-6 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {testingConnection ? (
@@ -1085,6 +1092,7 @@ export default function Settings() {
                   type="button"
                   onClick={saveCloudStorageSettings}
                   disabled={savingCloudStorage}
+                  data-testid="settings-cloudstorage-save"
                   className="flex-1 py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 bg-brand-800/30 hover:bg-brand-800/50 border border-brand-700/40 text-brand-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {savingCloudStorage ? (
@@ -1129,6 +1137,7 @@ export default function Settings() {
               <Button
                 type="button"
                 onClick={testNotification}
+                data-testid="settings-test-notification"
                 className="bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 border border-brand-500/30"
               >
                 Testar Notificação
@@ -1141,6 +1150,7 @@ export default function Settings() {
                 <button
                   type="submit"
                   disabled={saving || !isFormValid}
+                  data-testid="settings-notifications-save"
                   className="flex-1 py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 bg-brand-800/30 hover:bg-brand-800/50 border border-brand-700/40 text-brand-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? (
@@ -1156,7 +1166,7 @@ export default function Settings() {
                   )}
                 </button>
                 {!isFormValid && (
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 flex items-center gap-2 text-red-400 text-sm">
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 flex items-center gap-2 text-red-400 text-sm" data-testid="settings-form-validation-error">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     <span>Corrija os erros antes de salvar</span>
                   </div>
@@ -1196,6 +1206,7 @@ export default function Settings() {
                 value={agentSettings.sync_interval}
                 onChange={handleAgentChange}
                 style={{ cursor: 'pointer' }}
+                data-testid="settings-agent-sync-interval"
               >
                 <option value="30">30 segundos</option>
                 <option value="60">1 minuto</option>
@@ -1215,6 +1226,7 @@ export default function Settings() {
                 value={agentSettings.keep_last}
                 onChange={handleAgentChange}
                 style={{ cursor: 'pointer' }}
+                data-testid="settings-agent-keep-last"
               >
                 <option value="5">Últimos 5</option>
                 <option value="10">Últimos 10</option>
@@ -1230,6 +1242,7 @@ export default function Settings() {
             type="button"
             onClick={saveAgentSettings}
             disabled={savingAgent}
+            data-testid="settings-agent-save"
             className="py-2 px-4 rounded-lg font-semibold transition-all flex items-center gap-2 bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 border border-brand-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {savingAgent ? (
