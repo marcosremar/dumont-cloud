@@ -11,14 +11,13 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
-  Clock,
   RefreshCw,
   Eye,
   EyeOff,
-  Copy
 } from 'lucide-react'
 import { useToast } from './Toast'
 import { Card, Alert, Button } from './tailadmin-ui'
+import { WebhookLogsInline } from './WebhookLogViewer'
 import {
   fetchWebhooks,
   fetchEventTypes,
@@ -31,8 +30,6 @@ import {
   selectEventTypes,
   selectWebhooksLoading,
   selectTestingWebhookId,
-  selectWebhookLogs,
-  selectLogsLoading,
 } from '../store/slices/webhooksSlice'
 
 // Available webhook events
@@ -197,78 +194,6 @@ function WebhookForm({ webhook, onSave, onCancel, loading }) {
   )
 }
 
-function WebhookLogs({ webhookId }) {
-  const dispatch = useDispatch()
-  const logs = useSelector(selectWebhookLogs(webhookId))
-  const logsLoading = useSelector(selectLogsLoading)
-
-  useEffect(() => {
-    if (webhookId) {
-      dispatch(fetchWebhookLogs(webhookId))
-    }
-  }, [dispatch, webhookId])
-
-  if (logsLoading) {
-    return (
-      <div className="flex items-center justify-center py-4 text-gray-400">
-        <RefreshCw size={16} className="animate-spin mr-2" />
-        Loading logs...
-      </div>
-    )
-  }
-
-  if (logs.length === 0) {
-    return (
-      <div className="text-center py-4 text-gray-500 text-sm">
-        No delivery logs yet
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-2 max-h-64 overflow-y-auto">
-      {logs.map((log, index) => (
-        <div
-          key={log.id || index}
-          className="flex items-start gap-3 p-3 bg-white/5 rounded-lg text-sm"
-        >
-          <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-            log.status_code >= 200 && log.status_code < 300
-              ? 'bg-green-500'
-              : log.status_code >= 400
-                ? 'bg-red-500'
-                : 'bg-yellow-500'
-          }`} />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-white font-medium">{log.event_type}</span>
-              <span className={`px-2 py-0.5 rounded text-xs ${
-                log.status_code >= 200 && log.status_code < 300
-                  ? 'bg-green-500/20 text-green-400'
-                  : log.status_code >= 400
-                    ? 'bg-red-500/20 text-red-400'
-                    : 'bg-yellow-500/20 text-yellow-400'
-              }`}>
-                {log.status_code || 'Failed'}
-              </span>
-              {log.attempt > 1 && (
-                <span className="text-gray-500 text-xs">Attempt {log.attempt}</span>
-              )}
-            </div>
-            <div className="text-gray-500 text-xs mt-1 flex items-center gap-2">
-              <Clock size={12} />
-              {new Date(log.created_at).toLocaleString()}
-            </div>
-            {log.error && (
-              <div className="text-red-400 text-xs mt-1 truncate">{log.error}</div>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function WebhookRow({ webhook, onEdit, onDelete, onTest }) {
   const [expanded, setExpanded] = useState(false)
   const testingWebhookId = useSelector(selectTestingWebhookId)
@@ -334,8 +259,7 @@ function WebhookRow({ webhook, onEdit, onDelete, onTest }) {
 
       {expanded && (
         <div className="border-t border-white/10 p-4 bg-black/20">
-          <div className="text-gray-400 text-sm font-medium mb-2">Delivery Logs</div>
-          <WebhookLogs webhookId={webhook.id} />
+          <WebhookLogsInline webhookId={webhook.id} />
         </div>
       )}
     </div>
