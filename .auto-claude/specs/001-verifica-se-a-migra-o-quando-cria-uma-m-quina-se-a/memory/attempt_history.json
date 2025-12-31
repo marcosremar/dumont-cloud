@@ -1,0 +1,21 @@
+{
+  "subtasks": {
+    "subtask-1-1": {
+      "attempts": [
+        {
+          "session": 1,
+          "timestamp": "2025-12-31T22:16:33.274913",
+          "approach": "Session ended without progress",
+          "success": false,
+          "error": "Subtask status is failed"
+        }
+      ],
+      "status": "failed"
+    }
+  },
+  "stuck_subtasks": [],
+  "metadata": {
+    "created_at": "2025-12-31T22:15:09.844474",
+    "last_updated": "2025-12-31T22:16:33.274943"
+  }
+}
