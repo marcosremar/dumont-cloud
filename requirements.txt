@@ -31,6 +31,9 @@ scikit-learn==1.8.0
 # Scheduler
 apscheduler>=3.10.0
 
+# Internationalization
+babel>=2.12.0
+
 # Utilities
 python-dateutil==2.9.0.post0
 colorama==0.4.6
