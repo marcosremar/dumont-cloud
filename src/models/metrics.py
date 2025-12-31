@@ -6,6 +6,7 @@ Inclui:
 - ProviderReliability: Histórico de confiabilidade por host
 - PricePrediction: Previsões de preço geradas por ML
 - CostEfficiencyRanking: Rankings de custo-benefício
+- CostForecast: Previsões de custo para 7 dias
 """
 
 from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Index, Text
@@ -207,3 +208,66 @@ class CostEfficiencyRanking(Base):
 
     def __repr__(self):
         return f"<CostEfficiencyRanking {self.gpu_name} rank={self.rank_overall} score={self.efficiency_score:.1f}>"
+
+
+class CostForecast(Base):
+    """
+    Previsões de custo para os próximos 7 dias.
+    Armazena previsões horárias (168 horas) e custos diários agregados.
+    """
+    __tablename__ = "cost_forecasts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    # Identificação do usuário (para forecasts personalizados)
+    user_id = Column(Integer, nullable=True, index=True)
+
+    # Alvo da previsão
+    gpu_name = Column(String(100), nullable=False, index=True)
+    machine_type = Column(String(20), nullable=False, default="on-demand")
+
+    # Período da previsão
+    forecast_start = Column(DateTime, nullable=False)
+    forecast_end = Column(DateTime, nullable=False)
+
+    # Previsões horárias (168 horas = 7 dias)
+    # {"0": 0.45, "1": 0.42, ..., "167": 0.48}
+    hourly_prices = Column(JSONB, nullable=False)
+
+    # Custos diários agregados
+    # [{"date": "2024-01-01", "cost": 10.50, "hours": 24}, ...]
+    daily_costs = Column(JSONB, nullable=False)
+
+    # Intervalos de confiança por dia
+    # [{"date": "2024-01-01", "lower": 9.50, "upper": 11.50}, ...]
+    confidence_intervals = Column(JSONB)
+
+    # Custo total previsto para os 7 dias
+    total_forecasted_cost = Column(Float, nullable=False)
+
+    # Metadados do modelo
+    model_version = Column(String(50))
+    model_confidence = Column(Float)  # 0-1
+
+    # Padrões de uso do usuário considerados
+    # {"avg_hours_per_day": 8, "typical_start_hour": 9, "typical_end_hour": 17}
+    usage_pattern = Column(JSONB)
+
+    # Melhor janela de custo prevista
+    best_window_start = Column(DateTime)
+    best_window_end = Column(DateTime)
+    best_window_cost = Column(Float)
+
+    # Validade da previsão
+    valid_until = Column(DateTime, nullable=False)
+
+    __table_args__ = (
+        Index('idx_forecast_user', 'user_id'),
+        Index('idx_forecast_gpu_type', 'gpu_name', 'machine_type'),
+        Index('idx_forecast_validity', 'valid_until'),
+        Index('idx_forecast_period', 'forecast_start', 'forecast_end'),
+    )
+
+    def __repr__(self):
+        return f"<CostForecast {self.gpu_name} ${self.total_forecasted_cost:.2f} valid_until={self.valid_until}>"
