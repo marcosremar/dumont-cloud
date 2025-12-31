@@ -443,3 +443,193 @@ class PricePredictionService:
 
         logger.info(f"Geradas {count} previsões")
         return count
+
+    def forecast_costs_7day(
+        self,
+        gpu_name: str,
+        machine_type: str = "on-demand",
+        hours_per_day: float = 24.0,
+    ) -> Optional[List[Dict]]:
+        """
+        Gera previsão de custos para os próximos 7 dias.
+
+        Retorna previsões horárias agregadas por dia com intervalos de confiança.
+
+        Args:
+            gpu_name: Nome da GPU
+            machine_type: Tipo de máquina (on-demand ou interruptible)
+            hours_per_day: Horas de uso por dia para cálculo de custo
+
+        Returns:
+            Lista de dicts com previsões diárias:
+            [
+                {
+                    "day": "2024-01-15",
+                    "forecasted_cost": 12.50,
+                    "confidence_interval": [11.20, 13.80],
+                    "hourly_predictions": [...]
+                },
+                ...
+            ]
+            Retorna None se não houver dados suficientes para treinar modelo.
+        """
+        key = f"{gpu_name}:{machine_type}"
+
+        # Verificar/treinar modelo
+        if key not in self.models:
+            if not self.train_model(gpu_name, machine_type):
+                logger.warning(f"Dados insuficientes para forecast 7-day: {key}")
+                return None
+
+        if self._ml_available and key in self.scalers:
+            return self._forecast_7day_ml(key, gpu_name, machine_type, hours_per_day)
+        else:
+            return self._forecast_7day_simple(key, gpu_name, machine_type, hours_per_day)
+
+    def _forecast_7day_ml(
+        self,
+        key: str,
+        gpu_name: str,
+        machine_type: str,
+        hours_per_day: float,
+    ) -> Optional[List[Dict]]:
+        """Gera forecast de 7 dias usando modelo ML com intervalos de confiança."""
+        try:
+            import numpy as np
+
+            model = self.models[key]
+            scaler = self.scalers[key]
+
+            now = datetime.utcnow()
+            daily_forecasts = []
+
+            for day_offset in range(7):
+                day_start = (now + timedelta(days=day_offset)).replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
+                day_date = day_start.strftime("%Y-%m-%d")
+
+                hourly_predictions = []
+                all_tree_predictions = []
+
+                # Prever para cada hora do dia
+                for hour in range(24):
+                    future_time = day_start + timedelta(hours=hour)
+                    features = self._extract_features(future_time)
+                    features_scaled = scaler.transform([features])
+
+                    # Previsão principal
+                    prediction = model.predict(features_scaled)[0]
+                    hourly_predictions.append({
+                        "hour": hour,
+                        "timestamp": future_time.isoformat(),
+                        "price": round(prediction, 4),
+                    })
+
+                    # Coletar previsões de cada árvore para intervalo de confiança
+                    tree_preds = [
+                        tree.predict(features_scaled)[0]
+                        for tree in model.estimators_
+                    ]
+                    all_tree_predictions.append(tree_preds)
+
+                # Calcular custo diário e intervalo de confiança
+                avg_price = statistics.mean([p["price"] for p in hourly_predictions])
+                daily_cost = avg_price * hours_per_day
+
+                # Intervalo de confiança baseado nas previsões das árvores
+                all_preds_flat = [p for hour_preds in all_tree_predictions for p in hour_preds]
+                if len(all_preds_flat) >= 2:
+                    std_dev = statistics.stdev(all_preds_flat)
+                    # 95% confidence interval (1.96 sigma), capped at 3 sigma
+                    margin = min(1.96 * std_dev * hours_per_day, 3 * std_dev * hours_per_day)
+                    lower_bound = max(0, daily_cost - margin)
+                    upper_bound = daily_cost + margin
+                else:
+                    lower_bound = daily_cost * 0.9
+                    upper_bound = daily_cost * 1.1
+
+                daily_forecasts.append({
+                    "day": day_date,
+                    "forecasted_cost": round(daily_cost, 2),
+                    "confidence_interval": [
+                        round(lower_bound, 2),
+                        round(upper_bound, 2),
+                    ],
+                    "avg_hourly_price": round(avg_price, 4),
+                    "hourly_predictions": hourly_predictions,
+                    "gpu_name": gpu_name,
+                    "machine_type": machine_type,
+                })
+
+            logger.info(f"Forecast 7-day gerado para {key}")
+            return daily_forecasts
+
+        except Exception as e:
+            logger.error(f"Erro no forecast ML 7-day: {e}")
+            return None
+
+    def _forecast_7day_simple(
+        self,
+        key: str,
+        gpu_name: str,
+        machine_type: str,
+        hours_per_day: float,
+    ) -> Optional[List[Dict]]:
+        """Gera forecast de 7 dias usando modelo simples baseado em médias."""
+        try:
+            model_data = self.models[key]
+            hourly_avg = model_data['hourly']
+            daily_avg = model_data['daily']
+            overall_avg = model_data['overall_avg']
+
+            now = datetime.utcnow()
+            daily_forecasts = []
+
+            for day_offset in range(7):
+                day_start = (now + timedelta(days=day_offset)).replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
+                day_date = day_start.strftime("%Y-%m-%d")
+                day_of_week = day_start.weekday()
+
+                hourly_predictions = []
+
+                # Prever para cada hora do dia
+                for hour in range(24):
+                    future_time = day_start + timedelta(hours=hour)
+                    price = hourly_avg.get(hour, overall_avg)
+                    hourly_predictions.append({
+                        "hour": hour,
+                        "timestamp": future_time.isoformat(),
+                        "price": round(price, 4),
+                    })
+
+                # Custo diário baseado na média do dia da semana
+                day_avg_price = daily_avg.get(day_of_week, overall_avg)
+                daily_cost = day_avg_price * hours_per_day
+
+                # Intervalo de confiança simples (±10% para modelo simples)
+                margin = daily_cost * 0.1
+                lower_bound = max(0, daily_cost - margin)
+                upper_bound = daily_cost + margin
+
+                daily_forecasts.append({
+                    "day": day_date,
+                    "forecasted_cost": round(daily_cost, 2),
+                    "confidence_interval": [
+                        round(lower_bound, 2),
+                        round(upper_bound, 2),
+                    ],
+                    "avg_hourly_price": round(day_avg_price, 4),
+                    "hourly_predictions": hourly_predictions,
+                    "gpu_name": gpu_name,
+                    "machine_type": machine_type,
+                })
+
+            logger.info(f"Forecast 7-day simples gerado para {key}")
+            return daily_forecasts
+
+        except Exception as e:
+            logger.error(f"Erro no forecast simples 7-day: {e}")
+            return None
