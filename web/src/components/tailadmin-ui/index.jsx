@@ -644,6 +644,57 @@ export function DropdownMenu({ children }) {
     }
   }, [isOpen]);
 
+  // Handle arrow key navigation between menu items
+  useEffect(() => {
+    const handleArrowNavigation = (event) => {
+      if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
+        return;
+      }
+
+      event.preventDefault();
+      const items = getMenuItems();
+      if (items.length === 0) return;
+
+      const direction = event.key === 'ArrowDown' ? 1 : -1;
+
+      // Find the currently focused element index based on actual DOM focus
+      let currentIndex = -1;
+      const activeElement = document.activeElement;
+      items.forEach((ref, index) => {
+        if (ref.current === activeElement) {
+          currentIndex = index;
+        }
+      });
+
+      // Calculate next index with wrapping
+      let nextIndex;
+      if (currentIndex === -1) {
+        // No item currently focused, start from beginning or end
+        nextIndex = direction === 1 ? 0 : items.length - 1;
+      } else {
+        nextIndex = currentIndex + direction;
+        // Wrap around
+        if (nextIndex < 0) {
+          nextIndex = items.length - 1;
+        } else if (nextIndex >= items.length) {
+          nextIndex = 0;
+        }
+      }
+
+      // Focus the next item
+      const nextItem = items[nextIndex];
+      if (nextItem && nextItem.current) {
+        nextItem.current.focus();
+        setFocusedIndex(nextIndex);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleArrowNavigation);
+      return () => document.removeEventListener('keydown', handleArrowNavigation);
+    }
+  }, [isOpen, getMenuItems, setFocusedIndex]);
+
   return (
     <DropdownContext.Provider value={{
       isOpen,
@@ -722,7 +773,7 @@ export function DropdownMenuItem({ children, onClick, className = '', disabled }
       ref={itemRef}
       onClick={handleClick}
       disabled={disabled}
-      className={`w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gray-100 dark:focus:bg-gray-800 focus:outline-none transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >
       {children}
     </button>
