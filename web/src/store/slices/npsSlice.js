@@ -154,13 +154,13 @@ export const fetchDetractors = createAsyncThunk(
  */
 export const updateFollowup = createAsyncThunk(
   'nps/updateFollowup',
-  async ({ responseId, followedUp, followupNotes }, { rejectWithValue }) => {
+  async ({ responseId, followupCompleted, followupNotes }, { rejectWithValue }) => {
     try {
       const res = await fetch(`${API_BASE}/api/v1/nps/responses/${responseId}/followup`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
-          followed_up: followedUp,
+          followup_completed: followupCompleted,
           followup_notes: followupNotes || null,
         }),
       })
@@ -168,7 +168,7 @@ export const updateFollowup = createAsyncThunk(
       if (!res.ok) {
         return rejectWithValue(data.detail || 'Failed to update follow-up status')
       }
-      return { responseId, ...data }
+      return { responseId, followupCompleted, followupNotes, ...data }
     } catch (error) {
       return rejectWithValue(error.message || 'Connection error')
     }
@@ -308,10 +308,10 @@ const npsSlice = createSlice({
       })
       .addCase(checkShouldShow.fulfilled, (state, action) => {
         state.shouldShowLoading = false
-        state.shouldShow = action.payload.show
+        state.shouldShow = action.payload.should_show
         state.shouldShowReason = action.payload.reason || null
         state.triggerType = action.payload.triggerType
-        if (action.payload.show) {
+        if (action.payload.should_show) {
           state.isOpen = true
         }
       })
@@ -378,8 +378,8 @@ const npsSlice = createSlice({
       })
       .addCase(fetchDetractors.fulfilled, (state, action) => {
         state.detractorsLoading = false
-        state.detractors = action.payload.responses || []
-        state.detractorsTotal = action.payload.total || 0
+        state.detractors = action.payload.detractors || []
+        state.detractorsTotal = action.payload.count || 0
       })
       .addCase(fetchDetractors.rejected, (state, action) => {
         state.detractorsLoading = false
@@ -395,8 +395,8 @@ const npsSlice = createSlice({
         if (index !== -1) {
           state.detractors[index] = {
             ...state.detractors[index],
-            followed_up: action.payload.followed_up,
-            followup_notes: action.payload.followup_notes,
+            followup_completed: action.payload.followupCompleted,
+            followup_notes: action.payload.followupNotes,
           }
         }
       })

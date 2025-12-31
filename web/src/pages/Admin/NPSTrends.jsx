@@ -167,7 +167,7 @@ function NPSTrendChart({ data, loading }) {
     )
   }
 
-  const scores = data.daily_scores || []
+  const scores = data.scores || []
 
   const chartData = {
     labels: scores.map(s => formatDate(s.date)),
@@ -316,7 +316,7 @@ function DetractorItem({ response, onFollowUp }) {
             <span className="text-xs text-gray-500">
               {formatDate(response.created_at)}
             </span>
-            {response.followed_up && (
+            {response.followup_completed && (
               <span className="inline-flex items-center gap-1 text-xs text-green-400 bg-green-900/30 px-2 py-0.5 rounded">
                 <CheckCircle2 className="w-3 h-3" />
                 Followed up
@@ -339,7 +339,7 @@ function DetractorItem({ response, onFollowUp }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          {!response.followed_up ? (
+          {!response.followup_completed ? (
             <Button
               variant="outline"
               size="sm"
@@ -442,8 +442,8 @@ export default function NPSTrends() {
   }
 
   // Handle follow-up update
-  const handleFollowUp = (responseId, followedUp, notes) => {
-    dispatch(updateFollowup({ responseId, followedUp, followupNotes: notes }))
+  const handleFollowUp = (responseId, followupCompleted, notes) => {
+    dispatch(updateFollowup({ responseId, followupCompleted, followupNotes: notes }))
   }
 
   // Calculate summary stats
