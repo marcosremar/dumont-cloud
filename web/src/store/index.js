@@ -8,6 +8,7 @@ import userSlice from './slices/userSlice'
 import instancesSlice from './slices/instancesSlice'
 import uiSlice from './slices/uiSlice'
 import referralSlice from './slices/referralSlice'
+import affiliateSlice from './slices/affiliateSlice'
 
 export const store = configureStore({
   reducer: {
@@ -16,12 +17,13 @@ export const store = configureStore({
     instances: instancesSlice,
     ui: uiSlice,
     referral: referralSlice,
+    affiliate: affiliateSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
         // Ignore these action types for serialization check
-        ignoredActions: ['instances/setSelectedOffer'],
+        ignoredActions: ['instances/setSelectedOffer', 'affiliate/exportData/fulfilled'],
       },
     }),
   devTools: import.meta.env.DEV,
