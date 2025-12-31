@@ -4,14 +4,20 @@ Endpoint: Cost Forecast.
 Previsao de custos para os proximos 7 dias baseada em ML.
 """
 from fastapi import APIRouter, Query, HTTPException
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import List
 
 from ...schemas.spot.cost_forecast import (
     CostForecastResponse,
     DailyCostForecastItem,
     HourlyPredictionItem,
+    OptimalTimingRequest,
+    OptimalTimingResponse,
+    TimeWindowItem,
 )
 from .....services.price_prediction_service import PricePredictionService
+from .....config.database import SessionLocal
+from .....models.metrics import MarketSnapshot
 
 router = APIRouter(tags=["Cost Forecast"])
 
@@ -109,5 +115,166 @@ async def get_cost_forecast(
         best_day=best_day,
         lowest_daily_cost=round(lowest_cost, 2) if lowest_cost != float('inf') else None,
         model_confidence=model_confidence,
+        generated_at=datetime.utcnow().isoformat(),
+    )
+
+
+@router.post("/optimal-timing", response_model=OptimalTimingResponse)
+async def get_optimal_timing(request: OptimalTimingRequest):
+    """
+    Recomendacao de horarios otimos para executar jobs.
+
+    Analisa previsoes de preco para os proximos 7 dias e retorna
+    as melhores janelas de tempo para iniciar um job, ordenadas
+    por economia de custo.
+
+    - **gpu_name**: Nome da GPU (ex: RTX 4090, A100)
+    - **job_duration_hours**: Duracao do job em horas
+    - **machine_type**: Tipo de maquina - interruptible (spot) ou on-demand
+    """
+    service = PricePredictionService()
+
+    # Gerar forecast de 7 dias com 1 hora de uso para obter precos horarios
+    forecast = service.forecast_costs_7day(
+        gpu_name=request.gpu_name,
+        machine_type=request.machine_type,
+        hours_per_day=1.0,  # Para obter precos por hora
+    )
+
+    if forecast is None:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "Need at least 50 hours of price history to generate recommendations",
+                "required_data_points": 50,
+            }
+        )
+
+    # Coletar todas as previsoes horarias dos 7 dias
+    all_hourly: List[dict] = []
+    for day_data in forecast:
+        for hp in day_data.get("hourly_predictions", []):
+            all_hourly.append({
+                "timestamp": hp["timestamp"],
+                "price": hp["price"],
+            })
+
+    if not all_hourly:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "No hourly predictions available",
+            }
+        )
+
+    # Calcular janelas de tempo possiveis
+    job_hours = int(request.job_duration_hours)
+    if job_hours < 1:
+        job_hours = 1
+
+    # Limitar ao numero de horas disponiveis
+    max_start_idx = len(all_hourly) - job_hours
+    if max_start_idx < 0:
+        max_start_idx = 0
+
+    windows = []
+    for start_idx in range(max_start_idx + 1):
+        end_idx = start_idx + job_hours
+        if end_idx > len(all_hourly):
+            end_idx = len(all_hourly)
+
+        window_hours = all_hourly[start_idx:end_idx]
+        if not window_hours:
+            continue
+
+        # Calcular custo da janela
+        total_cost = sum(h["price"] for h in window_hours)
+        avg_price = total_cost / len(window_hours)
+
+        # Ajustar para duracao fracionaria
+        actual_cost = avg_price * request.job_duration_hours
+
+        start_time = window_hours[0]["timestamp"]
+        end_time_dt = datetime.fromisoformat(start_time) + timedelta(hours=request.job_duration_hours)
+
+        windows.append({
+            "start_time": start_time,
+            "end_time": end_time_dt.isoformat(),
+            "estimated_cost": actual_cost,
+            "avg_hourly_price": avg_price,
+        })
+
+    if not windows:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "Could not calculate time windows",
+            }
+        )
+
+    # Ordenar por custo (menor primeiro)
+    windows.sort(key=lambda x: x["estimated_cost"])
+
+    # Calcular pior custo para savings
+    worst_cost = max(w["estimated_cost"] for w in windows)
+    best_cost = windows[0]["estimated_cost"]
+
+    # Obter preco atual
+    db = SessionLocal()
+    try:
+        recent = db.query(MarketSnapshot).filter(
+            MarketSnapshot.gpu_name == request.gpu_name,
+            MarketSnapshot.machine_type == request.machine_type,
+        ).order_by(MarketSnapshot.timestamp.desc()).first()
+        current_price = recent.avg_price if recent else all_hourly[0]["price"]
+    finally:
+        db.close()
+
+    # Calcular confianca do modelo
+    model_confidence = service._calculate_confidence(request.gpu_name, request.machine_type)
+
+    # Construir top 3 janelas
+    top_windows = []
+    for rank, window in enumerate(windows[:3], start=1):
+        savings = worst_cost - window["estimated_cost"]
+        savings_pct = (savings / worst_cost * 100) if worst_cost > 0 else 0
+
+        # Determinar recomendacao
+        if savings_pct >= 15:
+            rec = "excellent"
+        elif savings_pct >= 5:
+            rec = "good"
+        else:
+            rec = "fair"
+
+        # Confianca da janela baseada em quao perto esta do inicio
+        # Janelas mais proximas tem maior confianca
+        start_dt = datetime.fromisoformat(window["start_time"])
+        hours_from_now = (start_dt - datetime.utcnow()).total_seconds() / 3600
+        window_confidence = max(0.5, model_confidence - (hours_from_now * 0.005))
+        window_confidence = min(1.0, window_confidence)
+
+        top_windows.append(TimeWindowItem(
+            rank=rank,
+            start_time=window["start_time"],
+            end_time=window["end_time"],
+            estimated_cost=round(window["estimated_cost"], 2),
+            avg_hourly_price=round(window["avg_hourly_price"], 4),
+            savings_vs_worst=round(savings, 2),
+            savings_percentage=round(savings_pct, 1),
+            confidence=round(window_confidence, 2),
+            recommendation=rec,
+        ))
+
+    return OptimalTimingResponse(
+        gpu_name=request.gpu_name,
+        machine_type=request.machine_type,
+        job_duration_hours=request.job_duration_hours,
+        current_price=round(current_price, 4),
+        time_windows=top_windows,
+        worst_time_cost=round(worst_cost, 2),
+        best_time_cost=round(best_cost, 2),
+        max_potential_savings=round(worst_cost - best_cost, 2),
+        model_confidence=round(model_confidence, 2),
         generated_at=datetime.utcnow().isoformat(),
     )
