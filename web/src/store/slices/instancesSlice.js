@@ -157,6 +157,12 @@ const initialState = {
   offersLoading: false,
   error: null,
   lastFetch: null,
+  // Reliability scoring state
+  reliabilityData: {},        // Map of machine_id -> reliability data
+  sortByReliability: false,   // Whether to sort by reliability score
+  reliabilityThreshold: 70,   // Minimum reliability score threshold (0-100)
+  excludeBelowThreshold: true, // Whether to exclude machines below threshold
+  reliabilityLoading: false,  // Loading state for reliability data
 }
 
 const instancesSlice = createSlice({
@@ -195,6 +201,36 @@ const instancesSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null
+    },
+    // Reliability scoring reducers
+    setReliabilityData: (state, action) => {
+      // action.payload: { machineId: reliabilityData } or { [machineId]: reliabilityData, ... }
+      state.reliabilityData = { ...state.reliabilityData, ...action.payload }
+    },
+    updateMachineReliability: (state, action) => {
+      const { machineId, data } = action.payload
+      state.reliabilityData[machineId] = data
+    },
+    clearReliabilityData: (state) => {
+      state.reliabilityData = {}
+    },
+    toggleReliabilitySort: (state) => {
+      state.sortByReliability = !state.sortByReliability
+    },
+    setSortByReliability: (state, action) => {
+      state.sortByReliability = action.payload
+    },
+    setReliabilityThreshold: (state, action) => {
+      state.reliabilityThreshold = action.payload
+    },
+    toggleThresholdExclusion: (state) => {
+      state.excludeBelowThreshold = !state.excludeBelowThreshold
+    },
+    setExcludeBelowThreshold: (state, action) => {
+      state.excludeBelowThreshold = action.payload
+    },
+    setReliabilityLoading: (state, action) => {
+      state.reliabilityLoading = action.payload
     },
   },
   extraReducers: (builder) => {
@@ -277,6 +313,16 @@ export const {
   updateInstanceStatus,
   calculateStats,
   clearError,
+  // Reliability scoring actions
+  setReliabilityData,
+  updateMachineReliability,
+  clearReliabilityData,
+  toggleReliabilitySort,
+  setSortByReliability,
+  setReliabilityThreshold,
+  toggleThresholdExclusion,
+  setExcludeBelowThreshold,
+  setReliabilityLoading,
 } = instancesSlice.actions
 
 // Selectors
@@ -290,5 +336,48 @@ export const selectOffersLoading = (state) => state.instances.offersLoading
 export const selectInstancesError = (state) => state.instances.error
 export const selectRunningInstances = (state) =>
   state.instances.instances.filter(i => i.status === 'running')
+
+// Reliability scoring selectors
+export const selectReliabilityData = (state) => state.instances.reliabilityData
+export const selectSortByReliability = (state) => state.instances.sortByReliability
+export const selectReliabilityThreshold = (state) => state.instances.reliabilityThreshold
+export const selectExcludeBelowThreshold = (state) => state.instances.excludeBelowThreshold
+export const selectReliabilityLoading = (state) => state.instances.reliabilityLoading
+export const selectMachineReliability = (machineId) => (state) =>
+  state.instances.reliabilityData[machineId] || null
+
+// Derived selector: filter offers based on reliability settings
+export const selectFilteredOffersByReliability = (state) => {
+  const offers = state.instances.offers
+  const reliabilityData = state.instances.reliabilityData
+  const threshold = state.instances.reliabilityThreshold
+  const excludeBelow = state.instances.excludeBelowThreshold
+  const sortByReliability = state.instances.sortByReliability
+
+  let filteredOffers = [...offers]
+
+  // Filter by reliability threshold if enabled
+  if (excludeBelow) {
+    filteredOffers = filteredOffers.filter(offer => {
+      const reliability = reliabilityData[offer.machine_id]
+      // If no reliability data, show the offer (don't exclude for insufficient data)
+      if (!reliability) return true
+      return (reliability.overall_score || reliability.reliability_score || 0) >= threshold
+    })
+  }
+
+  // Sort by reliability if enabled
+  if (sortByReliability) {
+    filteredOffers.sort((a, b) => {
+      const reliabilityA = reliabilityData[a.machine_id]
+      const reliabilityB = reliabilityData[b.machine_id]
+      const scoreA = reliabilityA ? (reliabilityA.overall_score || reliabilityA.reliability_score || 0) : 0
+      const scoreB = reliabilityB ? (reliabilityB.overall_score || reliabilityB.reliability_score || 0) : 0
+      return scoreB - scoreA // Descending order (highest first)
+    })
+  }
+
+  return filteredOffers
+}
 
 export default instancesSlice.reducer
