@@ -423,6 +423,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "flow6: Warm Pool")
     config.addinivalue_line("markers", "flow7: Monitoramento")
     config.addinivalue_line("markers", "flow8: Auth e Settings")
+    config.addinivalue_line("markers", "flow9: Webhook Integration")
     config.addinivalue_line("markers", "real_gpu: Requer GPU real (custa $$$)")
     config.addinivalue_line("markers", "slow: Teste lento (>1 min)")
     config.addinivalue_line("markers", "destructive: Pode destruir recursos")
