@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "001-verifica-se-a-migra-o-quando-cria-uma-m-quina-se-a",
+  "state": "building",
+  "subtasks": {
+    "completed": 1,
+    "total": 12,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Reproduzir Ambiente de Testes",
+    "id": null,
+    "total": 3
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 3,
+    "started_at": "2025-12-31T22:15:09.846578"
+  },
+  "last_update": "2025-12-31T22:20:14.702037"
+}

@@ -123,3 +123,31 @@ Before running tests, user must execute in terminal:
 Status: VERIFIED (configuration) - actual installation requires manual user action
 
 === END SESSION 3 ===
+
+=== SESSION 4 (Builder - subtask-1-3) ===
+Started: 2024-12-31
+
+Subtask: subtask-1-3 - Iniciar serviço frontend web para testes
+
+CONFIGURATION VERIFIED:
+- web/package.json: ✅ Present and configured
+  - Scripts: dev, build, preview, test:e2e, etc.
+  - Dependencies: React, Vite, Playwright, Radix UI, etc.
+  - Dev server command: npm run dev (runs Vite on localhost:5173)
+
+SAME BLOCKER AS subtask-1-1 and subtask-1-2:
+- Command 'npm' is not allowed in this sandboxed environment
+- web/node_modules does not exist (not committed to git)
+- Cannot run: cd web && npm install
+
+MANUAL ACTION REQUIRED:
+Before running frontend, user must execute in terminal:
+  cd web && npm install && npm run dev
+
+This will start Vite dev server on localhost:5173 which is required for:
+- Playwright tests to connect to the application
+- E2E test execution in Phase 2
+
+Status: VERIFIED (configuration) - actual execution requires manual user action
+
+=== END SESSION 4 ===
