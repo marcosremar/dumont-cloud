@@ -1,0 +1,284 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "submit": "Enviar",
+    "reset": "Restablecer",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "refresh": "Actualizar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "yes": "Sí",
+    "no": "No",
+    "enabled": "Habilitado",
+    "disabled": "Deshabilitado",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "online": "En línea",
+    "offline": "Desconectado",
+    "pending": "Pendiente",
+    "success": "Éxito",
+    "error": "Error",
+    "warning": "Advertencia",
+    "info": "Información",
+    "learnMore": "Más información",
+    "viewAll": "Ver todo",
+    "showMore": "Mostrar más",
+    "showLess": "Mostrar menos",
+    "noResults": "No se encontraron resultados",
+    "selectAll": "Seleccionar todo",
+    "deselectAll": "Deseleccionar todo"
+  },
+  "navigation": {
+    "dashboard": "Panel",
+    "machines": "Máquinas",
+    "serverless": "Serverless",
+    "jobs": "Trabajos",
+    "models": "Modelos",
+    "finetuning": "Ajuste Fino",
+    "gpuMetrics": "Métricas GPU",
+    "documentation": "Documentación",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión",
+    "signup": "Registrarse",
+    "balance": "Saldo"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "welcome": "Bienvenido a Dumont Cloud",
+    "subtitle": "Plataforma de GPU en la nube para cargas de trabajo de IA",
+    "activeMachines": "Máquinas Activas",
+    "totalMachines": "Total de Máquinas",
+    "dailyCost": "Costo Diario",
+    "savings": "Ahorros",
+    "uptime": "Tiempo Activo",
+    "wizard": {
+      "title": "Asistente GPU",
+      "description": "Encuentra la GPU perfecta para tu carga de trabajo",
+      "aiAssistant": "Asistente de IA",
+      "askQuestion": "Haz una pregunta sobre GPUs",
+      "suggestedPrompts": "Sugerencias"
+    },
+    "filters": {
+      "title": "Filtros",
+      "gpuType": "Tipo de GPU",
+      "region": "Región",
+      "priceRange": "Rango de Precio",
+      "cudaVersion": "Versión CUDA",
+      "rentalType": "Tipo de Alquiler",
+      "availability": "Disponibilidad"
+    },
+    "offers": {
+      "title": "Ofertas Disponibles",
+      "noOffers": "No hay ofertas que coincidan con tus criterios",
+      "pricePerHour": "por hora",
+      "rent": "Alquilar Ahora",
+      "viewDetails": "Ver Detalles"
+    }
+  },
+  "machines": {
+    "title": "Máquinas",
+    "description": "Administra tus instancias GPU",
+    "noMachines": "No se encontraron máquinas",
+    "noMachinesDescription": "Aún no tienes ninguna máquina. Comienza alquilando una GPU desde el Panel.",
+    "createMachine": "Crear Máquina",
+    "instance": {
+      "title": "Detalles de la Instancia",
+      "status": "Estado",
+      "type": "Tipo",
+      "region": "Región",
+      "created": "Creada",
+      "uptime": "Tiempo Activo",
+      "cost": "Costo",
+      "ipAddress": "Dirección IP",
+      "sshCommand": "Comando SSH"
+    },
+    "actions": {
+      "start": "Iniciar",
+      "stop": "Detener",
+      "restart": "Reiniciar",
+      "terminate": "Terminar",
+      "hibernate": "Hibernar",
+      "connect": "Conectar"
+    },
+    "status": {
+      "running": "En ejecución",
+      "stopped": "Detenida",
+      "starting": "Iniciando",
+      "stopping": "Deteniendo",
+      "hibernating": "Hibernando",
+      "terminated": "Terminada",
+      "error": "Error"
+    }
+  },
+  "serverless": {
+    "title": "Serverless",
+    "description": "Despliega funciones GPU sin servidor",
+    "noEndpoints": "No hay endpoints serverless",
+    "noEndpointsDescription": "Crea tu primer endpoint serverless para comenzar a desplegar funciones GPU.",
+    "createEndpoint": "Crear Endpoint",
+    "endpoint": {
+      "title": "Detalles del Endpoint",
+      "name": "Nombre",
+      "status": "Estado",
+      "requests": "Solicitudes",
+      "latency": "Latencia",
+      "cost": "Costo"
+    }
+  },
+  "jobs": {
+    "title": "Trabajos",
+    "description": "Administra trabajos de procesamiento por lotes",
+    "noJobs": "No se encontraron trabajos",
+    "noJobsDescription": "Envía un nuevo trabajo para comenzar a procesar.",
+    "submitJob": "Enviar Trabajo",
+    "job": {
+      "title": "Detalles del Trabajo",
+      "status": "Estado",
+      "progress": "Progreso",
+      "duration": "Duración",
+      "cost": "Costo"
+    },
+    "status": {
+      "queued": "En cola",
+      "running": "En ejecución",
+      "completed": "Completado",
+      "failed": "Fallido",
+      "cancelled": "Cancelado"
+    }
+  },
+  "models": {
+    "title": "Modelos",
+    "description": "Despliega y administra modelos de IA",
+    "noModels": "No hay modelos desplegados",
+    "noModelsDescription": "Despliega tu primer modelo para comenzar.",
+    "deployModel": "Desplegar Modelo",
+    "model": {
+      "title": "Detalles del Modelo",
+      "name": "Nombre",
+      "version": "Versión",
+      "status": "Estado",
+      "endpoint": "Endpoint"
+    }
+  },
+  "finetuning": {
+    "title": "Ajuste Fino",
+    "description": "Ajusta modelos con tus datos",
+    "noJobs": "No hay trabajos de ajuste fino",
+    "noJobsDescription": "Inicia un nuevo trabajo de ajuste fino para personalizar modelos.",
+    "startJob": "Iniciar Ajuste Fino",
+    "job": {
+      "title": "Trabajo de Ajuste Fino",
+      "baseModel": "Modelo Base",
+      "dataset": "Conjunto de Datos",
+      "status": "Estado",
+      "progress": "Progreso",
+      "epochs": "Épocas"
+    }
+  },
+  "gpuMetrics": {
+    "title": "Métricas GPU",
+    "description": "Monitorea el rendimiento y uso de GPU",
+    "utilization": "Utilización GPU",
+    "memory": "Uso de Memoria",
+    "temperature": "Temperatura",
+    "power": "Consumo de Energía"
+  },
+  "documentation": {
+    "title": "Documentación",
+    "description": "Aprende a usar Dumont Cloud",
+    "gettingStarted": "Primeros Pasos",
+    "apiReference": "Referencia API",
+    "tutorials": "Tutoriales",
+    "faq": "Preguntas Frecuentes"
+  },
+  "settings": {
+    "title": "Configuración",
+    "description": "Administra la configuración de tu cuenta",
+    "profile": {
+      "title": "Perfil",
+      "name": "Nombre",
+      "email": "Correo electrónico",
+      "avatar": "Avatar"
+    },
+    "preferences": {
+      "title": "Preferencias",
+      "language": "Idioma",
+      "languageDescription": "Elige tu idioma preferido",
+      "theme": "Tema",
+      "themeDescription": "Elige tu tema preferido",
+      "notifications": "Notificaciones",
+      "notificationsDescription": "Administra las preferencias de notificación"
+    },
+    "security": {
+      "title": "Seguridad",
+      "password": "Contraseña",
+      "twoFactor": "Autenticación de Dos Factores",
+      "apiKeys": "Claves API"
+    },
+    "billing": {
+      "title": "Facturación",
+      "plan": "Plan Actual",
+      "usage": "Uso",
+      "invoices": "Facturas",
+      "paymentMethod": "Método de Pago"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Iniciar Sesión",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "rememberMe": "Recordarme",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "noAccount": "¿No tienes una cuenta?",
+      "signUp": "Regístrate"
+    },
+    "signup": {
+      "title": "Registrarse",
+      "name": "Nombre Completo",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar Contraseña",
+      "termsAgree": "Acepto los Términos de Servicio y la Política de Privacidad",
+      "haveAccount": "¿Ya tienes una cuenta?",
+      "logIn": "Inicia sesión"
+    },
+    "forgotPassword": {
+      "title": "¿Olvidaste tu Contraseña?",
+      "description": "Ingresa tu correo electrónico y te enviaremos un enlace para restablecer",
+      "email": "Correo electrónico",
+      "sendLink": "Enviar Enlace de Restablecimiento",
+      "backToLogin": "Volver al inicio de sesión"
+    }
+  },
+  "errors": {
+    "network": "Error de red. Por favor, intenta de nuevo.",
+    "auth": "Autenticación fallida. Por favor, inicia sesión de nuevo.",
+    "notFound": "Página no encontrada",
+    "serverError": "Error del servidor. Por favor, intenta más tarde.",
+    "timeout": "La solicitud expiró. Por favor, intenta de nuevo.",
+    "unauthorized": "No estás autorizado para realizar esta acción.",
+    "forbidden": "Acceso prohibido.",
+    "validation": "Por favor, verifica tu entrada e intenta de nuevo.",
+    "generic": "Algo salió mal. Por favor, intenta de nuevo."
+  },
+  "emptyState": {
+    "noData": "No hay datos disponibles",
+    "noResults": "No se encontraron resultados",
+    "tryAgain": "Intenta ajustar tus filtros o criterios de búsqueda"
+  },
+  "languages": {
+    "en": "Inglés",
+    "es": "Español"
+  }
+}

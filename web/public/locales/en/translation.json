@@ -1,0 +1,284 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "submit": "Submit",
+    "reset": "Reset",
+    "search": "Search",
+    "filter": "Filter",
+    "refresh": "Refresh",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "yes": "Yes",
+    "no": "No",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "active": "Active",
+    "inactive": "Inactive",
+    "online": "Online",
+    "offline": "Offline",
+    "pending": "Pending",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info",
+    "learnMore": "Learn More",
+    "viewAll": "View All",
+    "showMore": "Show More",
+    "showLess": "Show Less",
+    "noResults": "No results found",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "machines": "Machines",
+    "serverless": "Serverless",
+    "jobs": "Jobs",
+    "models": "Models",
+    "finetuning": "Fine-Tuning",
+    "gpuMetrics": "GPU Metrics",
+    "documentation": "Documentation",
+    "settings": "Settings",
+    "logout": "Log Out",
+    "login": "Log In",
+    "signup": "Sign Up",
+    "balance": "Balance"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to Dumont Cloud",
+    "subtitle": "GPU cloud platform for AI workloads",
+    "activeMachines": "Active Machines",
+    "totalMachines": "Total Machines",
+    "dailyCost": "Daily Cost",
+    "savings": "Savings",
+    "uptime": "Uptime",
+    "wizard": {
+      "title": "GPU Wizard",
+      "description": "Find the perfect GPU for your workload",
+      "aiAssistant": "AI Assistant",
+      "askQuestion": "Ask a question about GPUs",
+      "suggestedPrompts": "Suggested Prompts"
+    },
+    "filters": {
+      "title": "Filters",
+      "gpuType": "GPU Type",
+      "region": "Region",
+      "priceRange": "Price Range",
+      "cudaVersion": "CUDA Version",
+      "rentalType": "Rental Type",
+      "availability": "Availability"
+    },
+    "offers": {
+      "title": "Available Offers",
+      "noOffers": "No offers match your criteria",
+      "pricePerHour": "per hour",
+      "rent": "Rent Now",
+      "viewDetails": "View Details"
+    }
+  },
+  "machines": {
+    "title": "Machines",
+    "description": "Manage your GPU instances",
+    "noMachines": "No machines found",
+    "noMachinesDescription": "You don't have any machines yet. Start by renting a GPU from the Dashboard.",
+    "createMachine": "Create Machine",
+    "instance": {
+      "title": "Instance Details",
+      "status": "Status",
+      "type": "Type",
+      "region": "Region",
+      "created": "Created",
+      "uptime": "Uptime",
+      "cost": "Cost",
+      "ipAddress": "IP Address",
+      "sshCommand": "SSH Command"
+    },
+    "actions": {
+      "start": "Start",
+      "stop": "Stop",
+      "restart": "Restart",
+      "terminate": "Terminate",
+      "hibernate": "Hibernate",
+      "connect": "Connect"
+    },
+    "status": {
+      "running": "Running",
+      "stopped": "Stopped",
+      "starting": "Starting",
+      "stopping": "Stopping",
+      "hibernating": "Hibernating",
+      "terminated": "Terminated",
+      "error": "Error"
+    }
+  },
+  "serverless": {
+    "title": "Serverless",
+    "description": "Deploy serverless GPU functions",
+    "noEndpoints": "No serverless endpoints",
+    "noEndpointsDescription": "Create your first serverless endpoint to start deploying GPU functions.",
+    "createEndpoint": "Create Endpoint",
+    "endpoint": {
+      "title": "Endpoint Details",
+      "name": "Name",
+      "status": "Status",
+      "requests": "Requests",
+      "latency": "Latency",
+      "cost": "Cost"
+    }
+  },
+  "jobs": {
+    "title": "Jobs",
+    "description": "Manage batch processing jobs",
+    "noJobs": "No jobs found",
+    "noJobsDescription": "Submit a new job to start processing.",
+    "submitJob": "Submit Job",
+    "job": {
+      "title": "Job Details",
+      "status": "Status",
+      "progress": "Progress",
+      "duration": "Duration",
+      "cost": "Cost"
+    },
+    "status": {
+      "queued": "Queued",
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "models": {
+    "title": "Models",
+    "description": "Deploy and manage AI models",
+    "noModels": "No models deployed",
+    "noModelsDescription": "Deploy your first model to get started.",
+    "deployModel": "Deploy Model",
+    "model": {
+      "title": "Model Details",
+      "name": "Name",
+      "version": "Version",
+      "status": "Status",
+      "endpoint": "Endpoint"
+    }
+  },
+  "finetuning": {
+    "title": "Fine-Tuning",
+    "description": "Fine-tune models on your data",
+    "noJobs": "No fine-tuning jobs",
+    "noJobsDescription": "Start a new fine-tuning job to customize models.",
+    "startJob": "Start Fine-Tuning",
+    "job": {
+      "title": "Fine-Tuning Job",
+      "baseModel": "Base Model",
+      "dataset": "Dataset",
+      "status": "Status",
+      "progress": "Progress",
+      "epochs": "Epochs"
+    }
+  },
+  "gpuMetrics": {
+    "title": "GPU Metrics",
+    "description": "Monitor GPU performance and usage",
+    "utilization": "GPU Utilization",
+    "memory": "Memory Usage",
+    "temperature": "Temperature",
+    "power": "Power Usage"
+  },
+  "documentation": {
+    "title": "Documentation",
+    "description": "Learn how to use Dumont Cloud",
+    "gettingStarted": "Getting Started",
+    "apiReference": "API Reference",
+    "tutorials": "Tutorials",
+    "faq": "FAQ"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your account settings",
+    "profile": {
+      "title": "Profile",
+      "name": "Name",
+      "email": "Email",
+      "avatar": "Avatar"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "language": "Language",
+      "languageDescription": "Choose your preferred language",
+      "theme": "Theme",
+      "themeDescription": "Choose your preferred theme",
+      "notifications": "Notifications",
+      "notificationsDescription": "Manage notification preferences"
+    },
+    "security": {
+      "title": "Security",
+      "password": "Password",
+      "twoFactor": "Two-Factor Authentication",
+      "apiKeys": "API Keys"
+    },
+    "billing": {
+      "title": "Billing",
+      "plan": "Current Plan",
+      "usage": "Usage",
+      "invoices": "Invoices",
+      "paymentMethod": "Payment Method"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Log In",
+      "email": "Email",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up"
+    },
+    "signup": {
+      "title": "Sign Up",
+      "name": "Full Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "termsAgree": "I agree to the Terms of Service and Privacy Policy",
+      "haveAccount": "Already have an account?",
+      "logIn": "Log in"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "description": "Enter your email and we'll send you a reset link",
+      "email": "Email",
+      "sendLink": "Send Reset Link",
+      "backToLogin": "Back to login"
+    }
+  },
+  "errors": {
+    "network": "Network error. Please try again.",
+    "auth": "Authentication failed. Please log in again.",
+    "notFound": "Page not found",
+    "serverError": "Server error. Please try again later.",
+    "timeout": "Request timed out. Please try again.",
+    "unauthorized": "You are not authorized to perform this action.",
+    "forbidden": "Access forbidden.",
+    "validation": "Please check your input and try again.",
+    "generic": "Something went wrong. Please try again."
+  },
+  "emptyState": {
+    "noData": "No data available",
+    "noResults": "No results found",
+    "tryAgain": "Try adjusting your filters or search criteria"
+  },
+  "languages": {
+    "en": "English",
+    "es": "Spanish"
+  }
+}
