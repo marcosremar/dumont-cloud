@@ -48,9 +48,19 @@
     "documentation": "Documentation",
     "settings": "Settings",
     "logout": "Log Out",
+    "exitDemo": "Exit Demo",
     "login": "Log In",
     "signup": "Sign Up",
-    "balance": "Balance"
+    "balance": "Balance",
+    "analytics": "Analytics",
+    "metrics": "Metrics",
+    "savings": "Savings",
+    "aiAdvisor": "AI Advisor"
+  },
+  "layout": {
+    "brandName": "Dumont",
+    "brandHighlight": "Cloud",
+    "demoBadge": "DEMO"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -61,6 +71,27 @@
     "dailyCost": "Daily Cost",
     "savings": "Savings",
     "uptime": "Uptime",
+    "newInstance": {
+      "title": "New GPU Instance",
+      "subtitle": "Provision your machine in minutes"
+    },
+    "deployMethods": {
+      "guided": {
+        "title": "Guided Configuration",
+        "description": "Choose region, GPU and performance in a simple and intuitive way",
+        "badge": "✓ Recommended"
+      },
+      "advanced": {
+        "title": "Advanced Configuration",
+        "description": "Full control with detailed hardware and network filters",
+        "badge": "For specialists"
+      },
+      "ai": {
+        "title": "AI Assistant",
+        "description": "Chat and let AI recommend the best configuration",
+        "badge": "✨ Smart"
+      }
+    },
     "wizard": {
       "title": "GPU Wizard",
       "description": "Find the perfect GPU for your workload",
@@ -83,6 +114,26 @@
       "pricePerHour": "per hour",
       "rent": "Rent Now",
       "viewDetails": "View Details"
+    },
+    "results": {
+      "title": "Available Machines",
+      "resultsFound": "{{count}} results found",
+      "sortBy": "Sort by:",
+      "limit": "Limit:",
+      "noMachinesFound": "No machines found",
+      "noMachinesDescription": "We couldn't find offers with the selected filters. Try adjusting the search criteria.",
+      "adjustFilters": "Adjust filters"
+    },
+    "toasts": {
+      "machinesFound": "{{count}} machines found!",
+      "showingDemoOffers": "Showing demo offers",
+      "errorShowingDemo": "Error fetching offers. Showing demo data.",
+      "machineSelected": "Machine {{name}} selected!",
+      "guidedModeSelected": "Guided Mode already selected. Start by choosing a region below.",
+      "advancedModeSelected": "Advanced Mode selected. Configure detailed filters.",
+      "aiAssistantActivated": "AI Assistant activated. Describe what you need.",
+      "noMachinesForTier": "No machines found for this tier. Try another.",
+      "filtersReset": "Filters reset"
     }
   },
   "machines": {

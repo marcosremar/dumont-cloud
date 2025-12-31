@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import OnboardingWizard from '../components/onboarding/OnboardingWizard';
@@ -83,6 +84,7 @@ export default function Dashboard({ onStatsUpdate }) {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
+  const { t } = useTranslation();
 
   // Determine base path for routing (demo vs real)
   const basePath = location.pathname.startsWith('/demo-app') ? '/demo-app' : '/app';
@@ -469,7 +471,7 @@ export default function Dashboard({ onStatsUpdate }) {
     if (isDemoMode()) {
       await new Promise(r => setTimeout(r, 500)); // Simular delay
       setOffers(DEMO_OFFERS);
-      toast.success(`${DEMO_OFFERS.length} máquinas encontradas!`);
+      toast.success(t('dashboard.toasts.machinesFound', { count: DEMO_OFFERS.length }));
       setLoading(false);
       return;
     }
@@ -491,15 +493,15 @@ export default function Dashboard({ onStatsUpdate }) {
       // Use demo offers as fallback when API returns empty (e.g., no VAST_API_KEY)
       if (realOffers.length === 0) {
         setOffers(DEMO_OFFERS);
-        toast.info('Mostrando ofertas de demonstração');
+        toast.info(t('dashboard.toasts.showingDemoOffers'));
       } else {
         setOffers(realOffers);
-        toast.success(`${realOffers.length} máquinas encontradas!`);
+        toast.success(t('dashboard.toasts.machinesFound', { count: realOffers.length }));
       }
     } catch (err) {
       // Use demo offers on API error for testing
       setOffers(DEMO_OFFERS);
-      toast.warning('Erro ao buscar ofertas. Mostrando dados de demonstração.');
+      toast.warning(t('dashboard.toasts.errorShowingDemo'));
     } finally {
       setLoading(false);
     }
@@ -529,7 +531,7 @@ export default function Dashboard({ onStatsUpdate }) {
   };
 
   const handleSelectOffer = (offer) => {
-    toast.success(`Máquina ${offer.gpu_name} selecionada!`);
+    toast.success(t('dashboard.toasts.machineSelected', { name: offer.gpu_name }));
     navigate(`${basePath}/machines`, { state: { selectedOffer: offer } });
   };
 
@@ -1146,7 +1148,7 @@ export default function Dashboard({ onStatsUpdate }) {
           if (offersToUse.length > 0) {
             startProvisioningRace(offersToUse);
           } else {
-            toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
+            toast.error(t('dashboard.toasts.noMachinesForTier'));
           }
         })
         .catch(() => {
@@ -1156,7 +1158,7 @@ export default function Dashboard({ onStatsUpdate }) {
           if (filteredDemoOffers.length > 0) {
             startProvisioningRace(filteredDemoOffers);
           } else {
-            toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
+            toast.error(t('dashboard.toasts.noMachinesForTier'));
           }
         });
     }
@@ -1203,7 +1205,7 @@ export default function Dashboard({ onStatsUpdate }) {
           if (offersToUse.length > 0) {
             startProvisioningRaceIntegrated(offersToUse);
           } else {
-            toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
+            toast.error(t('dashboard.toasts.noMachinesForTier'));
           }
         })
         .catch(() => {
@@ -1214,7 +1216,7 @@ export default function Dashboard({ onStatsUpdate }) {
           if (filteredDemoOffers.length > 0) {
             startProvisioningRaceIntegrated(filteredDemoOffers);
           } else {
-            toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
+            toast.error(t('dashboard.toasts.noMachinesForTier'));
           }
         });
     }
@@ -1282,7 +1284,7 @@ export default function Dashboard({ onStatsUpdate }) {
       min_reliability: 0, region: 'any', verified_only: false, datacenter: false,
       static_ip: false, order_by: 'dph_total', limit: 100
     });
-    toast.info('Filtros resetados');
+    toast.info(t('dashboard.toasts.filtersReset'));
   };
 
   return (
@@ -1307,8 +1309,8 @@ export default function Dashboard({ onStatsUpdate }) {
                 <Cpu className="w-5 h-5 text-brand-500" />
               </div>
               <div>
-                <CardTitle className="text-lg">Nova Instância GPU</CardTitle>
-                <CardDescription className="text-xs">Provisione sua máquina em minutos</CardDescription>
+                <CardTitle className="text-lg">{t('dashboard.newInstance.title')}</CardTitle>
+                <CardDescription className="text-xs">{t('dashboard.newInstance.subtitle')}</CardDescription>
               </div>
             </div>
 
@@ -1326,7 +1328,7 @@ export default function Dashboard({ onStatsUpdate }) {
                       document.getElementById('wizard-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 100);
                     if (deployMethod === 'manual' && mode === 'wizard') {
-                      toast.info('Modo Guiado já selecionado. Comece escolhendo uma região abaixo.');
+                      toast.info(t('dashboard.toasts.guidedModeSelected'));
                     }
                   }}
                   data-testid="config-guided"
@@ -1346,9 +1348,9 @@ export default function Dashboard({ onStatsUpdate }) {
                       {deployMethod === 'manual' && mode === 'wizard' && <Check className="w-3 h-3 text-white" />}
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-brand-300 transition-colors">Configuração Guiada</p>
-                      <p className="text-xs text-gray-400 leading-relaxed mb-3">Escolha região, GPU e performance de forma simples e intuitiva</p>
-                      <span className="inline-block text-[10px] font-semibold text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-md border border-brand-800/20">✓ Recomendado</span>
+                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-brand-300 transition-colors">{t('dashboard.deployMethods.guided.title')}</p>
+                      <p className="text-xs text-gray-400 leading-relaxed mb-3">{t('dashboard.deployMethods.guided.description')}</p>
+                      <span className="inline-block text-[10px] font-semibold text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-md border border-brand-800/20">{t('dashboard.deployMethods.guided.badge')}</span>
                     </div>
                   </div>
                 </button>
@@ -1362,7 +1364,7 @@ export default function Dashboard({ onStatsUpdate }) {
                     setTimeout(() => {
                       document.getElementById('wizard-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 100);
-                    toast.info('Modo Avançado selecionado. Configure filtros detalhados.');
+                    toast.info(t('dashboard.toasts.advancedModeSelected'));
                   }}
                   data-testid="config-advanced"
                   className={`p-6 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:shadow-brand-500/10 active:scale-[0.98] ${
@@ -1381,9 +1383,9 @@ export default function Dashboard({ onStatsUpdate }) {
                       {deployMethod === 'manual' && mode === 'advanced' && <Check className="w-3 h-3 text-white" />}
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-brand-300 transition-colors">Configuração Avançada</p>
-                      <p className="text-xs text-gray-400 leading-relaxed mb-3">Controle total com filtros detalhados de hardware e rede</p>
-                      <span className="inline-block text-[10px] font-semibold text-gray-500 bg-gray-800 px-2.5 py-1 rounded-md border border-gray-700">Para especialistas</span>
+                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-brand-300 transition-colors">{t('dashboard.deployMethods.advanced.title')}</p>
+                      <p className="text-xs text-gray-400 leading-relaxed mb-3">{t('dashboard.deployMethods.advanced.description')}</p>
+                      <span className="inline-block text-[10px] font-semibold text-gray-500 bg-gray-800 px-2.5 py-1 rounded-md border border-gray-700">{t('dashboard.deployMethods.advanced.badge')}</span>
                     </div>
                   </div>
                 </button>
@@ -1396,7 +1398,7 @@ export default function Dashboard({ onStatsUpdate }) {
                     setTimeout(() => {
                       document.getElementById('wizard-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 100);
-                    toast.info('Assistente IA ativado. Descreva o que você precisa.');
+                    toast.info(t('dashboard.toasts.aiAssistantActivated'));
                   }}
                   data-testid="config-ai"
                   className={`p-6 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/10 active:scale-[0.98] ${
@@ -1415,9 +1417,9 @@ export default function Dashboard({ onStatsUpdate }) {
                       {deployMethod === 'ai' && <Check className="w-3 h-3 text-white" />}
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-purple-300 transition-colors">Assistente IA</p>
-                      <p className="text-xs text-gray-400 leading-relaxed mb-3">Converse e deixe a IA recomendar a melhor configuração</p>
-                      <span className="inline-block text-[10px] font-semibold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-md border border-purple-500/20">✨ Inteligente</span>
+                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-purple-300 transition-colors">{t('dashboard.deployMethods.ai.title')}</p>
+                      <p className="text-xs text-gray-400 leading-relaxed mb-3">{t('dashboard.deployMethods.ai.description')}</p>
+                      <span className="inline-block text-[10px] font-semibold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-md border border-purple-500/20">{t('dashboard.deployMethods.ai.badge')}</span>
                     </div>
                   </div>
                 </button>
@@ -1494,8 +1496,8 @@ export default function Dashboard({ onStatsUpdate }) {
               <div className="flex flex-col gap-4 mb-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-gray-900 dark:text-white text-lg font-semibold">Máquinas Disponíveis</h2>
-                    <p className="text-gray-500 text-xs">{offers.length} resultados encontrados</p>
+                    <h2 className="text-gray-900 dark:text-white text-lg font-semibold">{t('dashboard.results.title')}</h2>
+                    <p className="text-gray-500 text-xs">{t('dashboard.results.resultsFound', { count: offers.length })}</p>
                   </div>
                   <Button
                     variant="outline"
@@ -1503,7 +1505,7 @@ export default function Dashboard({ onStatsUpdate }) {
                     onClick={() => setShowResults(false)}
                   >
                     <ChevronLeft className="w-4 h-4" />
-                    Voltar
+                    {t('common.back')}
                   </Button>
                 </div>
 
@@ -1512,7 +1514,7 @@ export default function Dashboard({ onStatsUpdate }) {
                   <div className="flex items-center gap-4 p-3 bg-gray-800 rounded-lg border border-gray-700">
                     <div className="flex items-center gap-2">
                       <Activity className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Ordenar por:</span>
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{t('dashboard.results.sortBy')}</span>
                     </div>
                     <Select value={advancedFilters.order_by} onValueChange={(v) => handleAdvancedFilterChange('order_by', v)}>
                       <SelectTrigger className="w-[200px] h-9 bg-gray-900">
@@ -1525,7 +1527,7 @@ export default function Dashboard({ onStatsUpdate }) {
                       </SelectContent>
                     </Select>
                     <div className="flex items-center gap-2 ml-4">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Limite:</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.results.limit')}</span>
                       <Input
                         type="number"
                         min="10"
@@ -1550,17 +1552,17 @@ export default function Dashboard({ onStatsUpdate }) {
                     setError(null);
                     setShowResults(false);
                   }}
-                  retryText="Tentar novamente"
+                  retryText={t('common.refresh')}
                 />
               )}
 
               {!loading && !error && offers.length === 0 && (
                 <EmptyState
                   icon="search"
-                  title="Nenhuma máquina encontrada"
-                  description="Não encontramos ofertas com os filtros selecionados. Tente ajustar os critérios de busca."
+                  title={t('dashboard.results.noMachinesFound')}
+                  description={t('dashboard.results.noMachinesDescription')}
                   action={() => setShowResults(false)}
-                  actionText="Ajustar filtros"
+                  actionText={t('dashboard.results.adjustFilters')}
                 />
               )}
 
