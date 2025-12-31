@@ -4,6 +4,7 @@ from .price_history import PriceHistory, PriceAlert
 from .instance_status import InstanceStatus, HibernationEvent
 from .metrics import MarketSnapshot, ProviderReliability, PricePrediction, CostEfficiencyRanking
 from .machine_history import MachineAttempt, MachineBlacklist, MachineStats
+from .snapshot_config import SnapshotConfig
 
 __all__ = [
     'PriceHistory',
@@ -19,4 +20,6 @@ __all__ = [
     'MachineAttempt',
     'MachineBlacklist',
     'MachineStats',
+    # Snapshot scheduling
+    'SnapshotConfig',
 ]
