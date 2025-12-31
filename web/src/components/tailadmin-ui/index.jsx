@@ -740,6 +740,15 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
     } else if (event.key === 'Escape') {
       setIsOpen(false);
       triggerRef.current?.focus();
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      // Trigger click on focused item if not disabled
+      if (focusedIndex !== -1) {
+        const focusedItem = items[focusedIndex];
+        if (focusedItem && !focusedItem.disabled && focusedItem.ref) {
+          focusedItem.ref.click();
+        }
+      }
     }
   }, [focusedIndex, setFocusedIndex, getItemRefs, findNextEnabledIndex, setIsOpen, triggerRef]);
 
