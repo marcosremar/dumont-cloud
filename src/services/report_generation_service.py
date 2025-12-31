@@ -311,19 +311,37 @@ class ReportGenerationService:
         return removed
 
 
+# Nanoid-compatible alphabet for URL-safe IDs
+# Uses same alphabet as nanoid: A-Za-z0-9_-
+NANOID_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-'
+
+
 def generate_shareable_id(length: int = 10) -> str:
     """
     Gera um ID unico, URL-safe para relatorios compartilhaveis.
 
-    Utiliza secrets.token_urlsafe para gerar IDs seguros,
-    nao-sequenciais e nao-adivinhaveis.
+    Implementacao compativel com nanoid usando o mesmo alfabeto
+    (A-Za-z0-9_-) e geracao criptograficamente segura.
+
+    Caracteristicas:
+    - URL-safe: todos os caracteres sao seguros para URLs
+    - Nao-sequencial: impossivel prever o proximo ID
+    - Nao-adivinhavel: entropia suficiente para prevenir brute-force
+    - Compacto: 10-12 caracteres fornecem ~60-72 bits de entropia
 
     Args:
-        length: Comprimento desejado do ID (10-12 recomendado)
+        length: Comprimento desejado do ID (10-12 recomendado).
+                Default: 10 caracteres (~60 bits de entropia)
 
     Returns:
         String URL-safe de tamanho especificado
+
+    Example:
+        >>> id = generate_shareable_id()
+        >>> len(id)
+        10
+        >>> generate_shareable_id(12)
+        'aB3xY9zK2mNp'
     """
     import secrets
-    # token_urlsafe retorna ~1.3x o numero de bytes, entao ajustamos
-    return secrets.token_urlsafe(length)[:length]
+    return ''.join(secrets.choice(NANOID_ALPHABET) for _ in range(length))
