@@ -26,6 +26,7 @@ import {
     CheckCircle,
     Sparkles,
 } from 'lucide-react'
+import AffiliateStatsChart from './AffiliateStatsChart'
 
 // Demo data for when API is not available
 const DEMO_DATA = {
@@ -488,6 +489,11 @@ export default function AffiliateDashboard() {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Conversion Tracking Chart */}
+                <div className="mt-6">
+                    <AffiliateStatsChart useDemo={useDemo} />
                 </div>
             </div>
         </div>
