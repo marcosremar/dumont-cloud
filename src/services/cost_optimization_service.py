@@ -354,13 +354,19 @@ class CostOptimizationService:
         idle_periods: List[int]
     ) -> Dict[str, Any]:
         """
-        Calculate optimal hibernation timeout based on idle periods.
+        Calculate optimal hibernation timeout based on idle period patterns.
+
+        Analyzes all idle periods to find an optimal hibernation timeout that
+        balances responsiveness with cost savings. Uses the median of all idle
+        periods to be robust against outliers, then applies a 50% factor to
+        ensure hibernation triggers before typical idle sessions end.
 
         Args:
             idle_periods: List of idle period durations in minutes
 
         Returns:
-            Dict with recommended timeout_minutes and estimated savings
+            Dict with recommended timeout_minutes, reason, estimated savings,
+            and confidence score based on data quality
         """
         if not idle_periods:
             return {
@@ -370,42 +376,73 @@ class CostOptimizationService:
                 "confidence_score": 0.3,
             }
 
-        # Filter idle periods > 60 minutes (significant gaps)
-        significant_idle = [p for p in idle_periods if p > 60]
+        # Analyze all idle periods to understand usage patterns
+        # Using median is robust against outliers (very short or very long idles)
+        median_idle = statistics.median(idle_periods)
+        mean_idle = statistics.mean(idle_periods)
+        min_idle = min(idle_periods)
+        max_idle = max(idle_periods)
 
-        if not significant_idle:
-            # No significant idle periods found
-            return {
-                "timeout_minutes": 60,  # Conservative default
-                "reason": "No significant idle periods detected (>1 hour). Using 60-minute timeout.",
-                "estimated_monthly_savings_usd": 0.0,
-                "confidence_score": 0.5,
-            }
-
-        # Calculate median idle period
-        median_idle = statistics.median(significant_idle)
-
-        # Set hibernation timeout to 50% of median to balance responsiveness vs waste
+        # Set hibernation timeout to 50% of median
+        # This ensures we catch most idle sessions while still being responsive
         recommended_timeout = int(median_idle * 0.5)
 
         # Ensure reasonable bounds (15 min to 120 min)
+        # Below 15 min causes too many hibernate/resume cycles
+        # Above 120 min wastes too much money on truly idle instances
         recommended_timeout = max(15, min(120, recommended_timeout))
 
-        # Calculate estimated savings
-        # Assume saving ~65% of idle time cost (some overhead for hibernate/resume)
-        total_idle_minutes = sum(significant_idle)
-        saved_minutes = total_idle_minutes * 0.65
+        # Calculate variance to assess pattern consistency
+        if len(idle_periods) > 1:
+            std_dev = statistics.stdev(idle_periods)
+            cv = std_dev / mean_idle if mean_idle > 0 else 0  # Coefficient of variation
+        else:
+            std_dev = 0.0
+            cv = 0.0
 
-        # Rough estimate: $0.50/hour average GPU cost
+        # Calculate estimated savings
+        # Hibernation saves ~65% of idle time cost (overhead for hibernate/resume cycles)
+        total_idle_minutes = sum(idle_periods)
+        hibernation_efficiency = 0.65
+
+        # Only count idle time above the timeout as saveable
+        saveable_minutes = sum(max(0, p - recommended_timeout) for p in idle_periods)
+        saved_minutes = saveable_minutes * hibernation_efficiency
+
+        # Estimate using average GPU cost ($0.50/hour)
         avg_hourly_cost = 0.50
         estimated_monthly_savings = (saved_minutes / 60) * avg_hourly_cost
 
+        # Calculate confidence based on:
+        # - Number of data points (more = higher confidence)
+        # - Consistency of patterns (lower variance = higher confidence)
+        base_confidence = min(0.8, 0.4 + len(idle_periods) / 20)
+        variance_penalty = min(0.3, cv * 0.2) if cv > 0.5 else 0
+        confidence = max(0.3, min(0.95, base_confidence - variance_penalty))
+
+        # Calculate idle percentage of total time
+        # Assumes 30 days of monitoring, 1440 minutes per day
+        total_minutes = 1440 * 30
+        idle_percentage = round(100 * total_idle_minutes / (total_idle_minutes + total_minutes), 1)
+
+        # Build descriptive reason
+        if cv > 0.5:
+            pattern_desc = "with variable patterns"
+        else:
+            pattern_desc = "with consistent patterns"
+
         return {
             "timeout_minutes": recommended_timeout,
-            "reason": f"Instance idle {len(significant_idle)} times with median duration of {median_idle:.0f} minutes",
+            "reason": f"Analyzed {len(idle_periods)} idle periods (median: {median_idle:.0f}min, range: {min_idle}-{max_idle}min) {pattern_desc}",
             "estimated_monthly_savings_usd": round(estimated_monthly_savings, 2),
-            "confidence_score": min(0.9, 0.5 + len(significant_idle) / 20),
-            "idle_percentage": round(100 * sum(idle_periods) / (sum(idle_periods) + 1440 * 30), 1),  # Rough estimate
+            "confidence_score": round(confidence, 2),
+            "idle_percentage": idle_percentage,
+            "analysis_details": {
+                "median_idle_minutes": round(median_idle, 1),
+                "mean_idle_minutes": round(mean_idle, 1),
+                "idle_period_count": len(idle_periods),
+                "pattern_consistency": "high" if cv <= 0.5 else "variable",
+            },
         }
 
     def optimize_hibernation(
