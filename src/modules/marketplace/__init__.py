@@ -18,11 +18,12 @@ Uso:
     deployment = await service.deploy_template(slug="jupyter-lab", gpu_id=123)
 """
 
-# Models will be imported here after subtask-1-2 creates them
-# from .models import (
-#     Template,
-#     TemplateGPURequirements,
-# )
+# Models
+from .models import (
+    Template,
+    TemplateGPURequirements,
+    TemplateCategory,
+)
 
 # Service will be imported here after subtask-2-1 creates it
 # from .service import (
@@ -31,9 +32,11 @@ Uso:
 # )
 
 __all__: list[str] = [
-    # Future exports will be added as submodules are created:
-    # "Template",
-    # "TemplateGPURequirements",
+    # Models
+    "Template",
+    "TemplateGPURequirements",
+    "TemplateCategory",
+    # Service will be added after subtask-2-1:
     # "TemplateService",
     # "get_template_service",
 ]
