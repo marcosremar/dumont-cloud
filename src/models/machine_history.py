@@ -459,3 +459,70 @@ class OfferStability(Base):
 
     def __repr__(self):
         return f"<OfferStability {self.provider}:{self.machine_id} score={self.stability_score:.2f} [{self.stability_status}]>"
+
+
+class UserMachineRating(Base):
+    """
+    Avaliações de máquinas feitas por usuários.
+
+    Permite que usuários avaliem máquinas que já alugaram,
+    contribuindo para o score de confiabilidade comunitário.
+    Rating de 1-5 estrelas com comentário opcional.
+    """
+    __tablename__ = "user_machine_ratings"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Identificação da máquina
+    provider = Column(String(50), nullable=False, index=True)  # vast, tensordock, etc
+    machine_id = Column(String(100), nullable=False, index=True)  # ID no provider
+
+    # Identificação do usuário
+    user_id = Column(String(100), nullable=False, index=True)  # ID do usuário que avaliou
+
+    # Avaliação
+    rating = Column(Integer, nullable=False)  # 1-5 estrelas
+    comment = Column(Text, nullable=True)  # Comentário opcional
+
+    # Contexto da avaliação
+    rental_duration_hours = Column(Float, nullable=True)  # Quanto tempo usou a máquina
+    instance_id = Column(String(100), nullable=True)  # ID da instância relacionada
+    gpu_name = Column(String(100), nullable=True)  # Para referência
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        Index('idx_rating_provider_machine', 'provider', 'machine_id'),
+        Index('idx_rating_user', 'user_id'),
+        Index('idx_rating_created', 'created_at'),
+        # Garante que cada usuário pode avaliar cada máquina apenas uma vez
+        Index('idx_rating_unique_user_machine', 'provider', 'machine_id', 'user_id', unique=True),
+    )
+
+    # Configurações de validação
+    MIN_RATING = 1
+    MAX_RATING = 5
+
+    def validate_rating(self) -> bool:
+        """Valida se o rating está dentro do intervalo permitido."""
+        return self.MIN_RATING <= self.rating <= self.MAX_RATING
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "provider": self.provider,
+            "machine_id": self.machine_id,
+            "user_id": self.user_id,
+            "rating": self.rating,
+            "comment": self.comment,
+            "rental_duration_hours": self.rental_duration_hours,
+            "gpu_name": self.gpu_name,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        stars = "★" * self.rating + "☆" * (5 - self.rating)
+        return f"<UserMachineRating {stars} {self.provider}:{self.machine_id} by {self.user_id}>"
