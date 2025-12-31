@@ -464,3 +464,98 @@ def get_user_region_preferences():
             'error': 'Erro ao buscar preferencias',
             'details': str(e)
         }), 500
+
+
+@users_regions_bp.route('/region-preferences', methods=['PUT'])
+def update_user_region_preferences():
+    """
+    Atualiza as preferencias de regiao do usuario logado.
+
+    Request Body:
+    {
+        "preferred_region": "eu-west",
+        "fallback_regions": ["eu-central", "us-east"],  // opcional
+        "data_residency_requirement": "EU_GDPR"  // opcional
+    }
+
+    Retorna:
+    {
+        "user_id": "user@example.com",
+        "preferred_region": "eu-west",
+        "fallback_regions": ["eu-central", "us-east"],
+        "data_residency_requirement": "EU_GDPR",
+        "created_at": "2025-01-01T12:00:00",
+        "updated_at": "2025-01-01T12:00:00"
+    }
+    """
+    user_id = get_current_user_id()
+    if not user_id:
+        return jsonify({'error': 'Nao autenticado'}), 401
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Request body obrigatorio'}), 400
+
+    # Validar campo obrigatorio
+    preferred_region = data.get('preferred_region')
+    if not preferred_region:
+        return jsonify({'error': 'Campo preferred_region e obrigatorio'}), 400
+
+    # Validar preferred_region e uma string valida
+    if not isinstance(preferred_region, str) or len(preferred_region) > 100:
+        return jsonify({'error': 'Campo preferred_region deve ser uma string de ate 100 caracteres'}), 400
+
+    # Campos opcionais
+    fallback_regions = data.get('fallback_regions')
+    data_residency_requirement = data.get('data_residency_requirement')
+
+    # Validar fallback_regions se fornecido
+    if fallback_regions is not None:
+        if not isinstance(fallback_regions, list):
+            return jsonify({'error': 'Campo fallback_regions deve ser uma lista'}), 400
+        if not all(isinstance(r, str) for r in fallback_regions):
+            return jsonify({'error': 'Todos os itens de fallback_regions devem ser strings'}), 400
+        # Limitar a 5 regioes de fallback
+        if len(fallback_regions) > 5:
+            return jsonify({'error': 'Maximo de 5 regioes de fallback permitidas'}), 400
+
+    # Validar data_residency_requirement se fornecido
+    valid_residency_requirements = ['EU_GDPR', 'US_ONLY', 'APAC_ONLY', None]
+    if data_residency_requirement is not None:
+        if data_residency_requirement not in valid_residency_requirements:
+            return jsonify({
+                'error': f'Campo data_residency_requirement invalido. Valores permitidos: {valid_residency_requirements}'
+            }), 400
+
+    try:
+        db = get_db_session()
+
+        # Buscar preferencia existente ou criar nova
+        preference = db.query(UserRegionPreference).filter_by(user_id=user_id).first()
+
+        if preference:
+            # Atualizar preferencia existente
+            preference.preferred_region = preferred_region
+            preference.fallback_regions = fallback_regions
+            preference.data_residency_requirement = data_residency_requirement
+        else:
+            # Criar nova preferencia
+            preference = UserRegionPreference(
+                user_id=user_id,
+                preferred_region=preferred_region,
+                fallback_regions=fallback_regions,
+                data_residency_requirement=data_residency_requirement,
+            )
+            db.add(preference)
+
+        db.commit()
+        db.refresh(preference)
+
+        return jsonify(preference.to_dict())
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({
+            'error': 'Erro ao atualizar preferencias',
+            'details': str(e)
+        }), 500
