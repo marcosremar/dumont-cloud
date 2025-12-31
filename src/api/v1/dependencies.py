@@ -10,8 +10,8 @@ from ...core.config import get_settings
 from ...core.jwt import create_access_token, verify_token, decode_token
 from ...domain.services import InstanceService, SnapshotService, AuthService, MigrationService, SyncService
 from ...domain.repositories import IGpuProvider, ISnapshotProvider, IUserRepository
-from ...infrastructure.providers import VastProvider, ResticProvider, FileUserRepository
-from ...config.database import get_db
+from ...infrastructure.providers import VastProvider, ResticProvider, FileUserRepository, SQLAlchemyUserRepository
+from ...config.database import get_db, SessionLocal
 from ...infrastructure.providers import SQLAlchemyRoleRepository
 
 # Security
@@ -46,11 +46,11 @@ def get_session_manager() -> SessionManager:
 
 # Repository Dependencies
 
-def get_user_repository() -> Generator[IUserRepository, None, None]:
-    """Get user repository instance"""
-    settings = get_settings()
-    repo = FileUserRepository(config_file=settings.app.config_file)
-    yield repo
+def get_user_repository(
+    db: Session = Depends(get_db),
+) -> SQLAlchemyUserRepository:
+    """Get user repository instance (SQLAlchemy-based)"""
+    return SQLAlchemyUserRepository(session=db)
 
 
 # Authentication Dependencies (must be defined before service dependencies)
@@ -423,6 +423,7 @@ def get_auth_service(
 
 def get_instance_service(
     user_email: str = Depends(get_current_user_email),
+    user_repo: SQLAlchemyUserRepository = Depends(get_user_repository),
 ) -> InstanceService:
     """Get instance service"""
     import logging
@@ -437,7 +438,6 @@ def get_instance_service(
         return InstanceService(gpu_provider=gpu_provider)
 
     # Get user's vast API key, fallback to env var
-    user_repo = next(get_user_repository())
     user = user_repo.get_user(user_email)
 
     # Try user's key first, then fall back to system key from .env
@@ -459,10 +459,10 @@ def get_instance_service(
 
 def get_snapshot_service(
     user_email: str = Depends(get_current_user_email),
+    user_repo: SQLAlchemyUserRepository = Depends(get_user_repository),
 ) -> SnapshotService:
     """Get snapshot service"""
     # Get user's settings
-    user_repo = next(get_user_repository())
     user = user_repo.get_user(user_email)
 
     if not user:
@@ -495,8 +495,12 @@ def get_snapshot_service(
 
 def get_snapshot_service_for_user(user_email: str) -> SnapshotService:
     """Get snapshot service for a specific user (callable without Depends)"""
-    user_repo = next(get_user_repository())
-    user = user_repo.get_user(user_email)
+    db = SessionLocal()
+    try:
+        user_repo = SQLAlchemyUserRepository(session=db)
+        user = user_repo.get_user(user_email)
+    finally:
+        db.close()
 
     if not user:
         raise HTTPException(
@@ -527,13 +531,13 @@ def get_snapshot_service_for_user(user_email: str) -> SnapshotService:
 
 def get_migration_service(
     user_email: str = Depends(get_current_user_email),
+    user_repo: SQLAlchemyUserRepository = Depends(get_user_repository),
 ) -> MigrationService:
     """Get migration service"""
     from ...services.gpu.vast import VastService
 
     # Get user's settings
     settings = get_settings()
-    user_repo = next(get_user_repository())
     user = user_repo.get_user(user_email)
 
     # Try user's key first, then fall back to system key from .env
@@ -579,13 +583,13 @@ _sync_service_instance: Optional[SyncService] = None
 
 def get_sync_service(
     user_email: str = Depends(get_current_user_email),
+    user_repo: SQLAlchemyUserRepository = Depends(get_user_repository),
 ) -> SyncService:
     """Get sync service (singleton to maintain sync state)"""
     global _sync_service_instance
 
     # Get user's settings
     settings = get_settings()
-    user_repo = next(get_user_repository())
     user = user_repo.get_user(user_email)
 
     # Try user's key first, then fall back to system key from .env
@@ -628,6 +632,7 @@ def get_sync_service(
 def get_job_manager(
     request: Request,
     user_email: str = Depends(get_current_user_email),
+    user_repo: SQLAlchemyUserRepository = Depends(get_user_repository),
 ):
     """Get job manager service"""
     from ...services.job import JobManager
@@ -647,7 +652,6 @@ def get_job_manager(
         return JobManager(vast_api_key="demo", demo_mode=True)
 
     # Get user's vast API key, fallback to env var
-    user_repo = next(get_user_repository())
     user = user_repo.get_user(user_email)
 
     # Try user's key first, then fall back to system key from .env
