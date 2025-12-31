@@ -130,6 +130,34 @@ export const destroyInstance = createAsyncThunk(
   }
 )
 
+export const fetchMachineReliability = createAsyncThunk(
+  'instances/fetchMachineReliability',
+  async (machineIds = [], { rejectWithValue }) => {
+    try {
+      const params = new URLSearchParams()
+      if (Array.isArray(machineIds) && machineIds.length > 0) {
+        machineIds.forEach(id => params.append('machine_id', id))
+      }
+      const queryString = params.toString()
+      const url = queryString
+        ? `${API_BASE}/api/v1/reliability/machines?${queryString}`
+        : `${API_BASE}/api/v1/reliability/machines`
+
+      const res = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${getToken()}` },
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        return rejectWithValue(data.detail || 'Failed to fetch machine reliability')
+      }
+      // Expected response: { reliability: { machine_id: reliabilityData, ... } }
+      return data.reliability || data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 const initialState = {
   instances: [],
   offers: [],
@@ -301,6 +329,19 @@ const instancesSlice = createSlice({
       // Destroy Instance
       .addCase(destroyInstance.fulfilled, (state, action) => {
         state.instances = state.instances.filter(i => i.id !== action.payload)
+      })
+      // Fetch Machine Reliability
+      .addCase(fetchMachineReliability.pending, (state) => {
+        state.reliabilityLoading = true
+      })
+      .addCase(fetchMachineReliability.fulfilled, (state, action) => {
+        state.reliabilityLoading = false
+        // Merge new reliability data with existing
+        state.reliabilityData = { ...state.reliabilityData, ...action.payload }
+      })
+      .addCase(fetchMachineReliability.rejected, (state, action) => {
+        state.reliabilityLoading = false
+        state.error = action.payload
       })
   },
 })
