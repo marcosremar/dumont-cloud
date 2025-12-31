@@ -17,6 +17,7 @@ from typing import Optional, Dict, Any
 from dataclasses import dataclass, field
 from enum import Enum
 
+from src.services.webhook_service import trigger_webhooks
 from src.config.failover_settings import (
     FailoverStrategy,
     get_failover_settings_manager,
@@ -116,6 +117,7 @@ class FailoverOrchestrator:
         failover_id: Optional[str] = None,
         workspace_path: str = "/workspace",
         force_strategy: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> OrchestratedFailoverResult:
         """
         Execute failover using configured strategies.
@@ -133,6 +135,7 @@ class FailoverOrchestrator:
             failover_id: Unique failover ID (auto-generated if not provided)
             workspace_path: Path to backup/restore
             force_strategy: Override settings and use specific strategy
+            user_id: Optional user ID for webhook delivery
 
         Returns:
             OrchestratedFailoverResult with details
@@ -203,6 +206,26 @@ class FailoverOrchestrator:
                 result.new_gpu_name = warm_pool_result.get('new_gpu_name')
                 result.phase_history.append((FailoverPhase.COMPLETED.value, time.time()))
                 result.total_ms = int((time.time() - start_time) * 1000)
+
+                # Fire webhook for failover.triggered event (fire-and-forget)
+                asyncio.create_task(
+                    trigger_webhooks(
+                        event_type="failover.triggered",
+                        data={
+                            "failover_id": failover_id,
+                            "machine_id": machine_id,
+                            "strategy": "warm_pool",
+                            "success": True,
+                            "original_gpu_id": gpu_instance_id,
+                            "new_gpu_id": result.new_gpu_id,
+                            "new_ssh_host": result.new_ssh_host,
+                            "new_ssh_port": result.new_ssh_port,
+                            "total_ms": result.total_ms,
+                        },
+                        user_id=user_id,
+                    )
+                )
+
                 return result
             else:
                 result.warm_pool_error = warm_pool_result.get('error', 'Unknown error')
@@ -235,6 +258,26 @@ class FailoverOrchestrator:
                 result.new_ssh_port = cpu_result.get('new_ssh_port')
                 result.phase_history.append((FailoverPhase.COMPLETED.value, time.time()))
                 result.total_ms = int((time.time() - start_time) * 1000)
+
+                # Fire webhook for failover.triggered event (fire-and-forget)
+                asyncio.create_task(
+                    trigger_webhooks(
+                        event_type="failover.triggered",
+                        data={
+                            "failover_id": failover_id,
+                            "machine_id": machine_id,
+                            "strategy": "cpu_standby",
+                            "success": True,
+                            "original_gpu_id": gpu_instance_id,
+                            "new_gpu_id": result.new_gpu_id,
+                            "new_ssh_host": result.new_ssh_host,
+                            "new_ssh_port": result.new_ssh_port,
+                            "total_ms": result.total_ms,
+                        },
+                        user_id=user_id,
+                    )
+                )
+
                 return result
             else:
                 result.cpu_standby_error = cpu_result.get('error', 'Unknown error')
