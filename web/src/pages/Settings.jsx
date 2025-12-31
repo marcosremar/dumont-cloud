@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive } from 'lucide-react'
+import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive, Webhook } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import StandbyConfig from '../components/StandbyConfig'
 import FailoverReport from '../components/FailoverReport'
+import WebhookManager from '../components/WebhookManager'
 import { Alert, Card, Button } from '../components/tailadmin-ui'
 
 const API_BASE = ''
@@ -235,6 +236,7 @@ const SETTINGS_MENU = [
   { id: 'storage', label: 'Armazenamento', icon: Database, color: 'blue' },
   { id: 'cloudstorage', label: 'Cloud Storage Failover', icon: Cloud, color: 'purple' },
   { id: 'agent', label: 'Agent Sync', icon: Server, color: 'cyan' },
+  { id: 'webhooks', label: 'Webhooks', icon: Webhook, color: 'orange' },
   { id: 'notifications', label: 'Notificações', icon: AlertCircle, color: 'yellow' },
   { id: 'failover', label: 'CPU Failover', icon: Shield, color: 'red' },
 ]
@@ -566,6 +568,7 @@ export default function Settings() {
                   blue: 'stat-card-icon-primary',
                   cyan: 'stat-card-icon-primary',
                   purple: 'bg-purple-500/20 text-purple-400',
+                  orange: 'bg-orange-500/20 text-orange-400',
                   yellow: 'stat-card-icon-warning',
                   red: 'stat-card-icon-error',
                 }
@@ -1246,6 +1249,11 @@ export default function Settings() {
           </button>
         </Card>
             </div>
+          )}
+
+          {/* Webhooks Tab */}
+          {activeTab === 'webhooks' && (
+            <WebhookManager />
           )}
 
           {/* Failover Tab */}

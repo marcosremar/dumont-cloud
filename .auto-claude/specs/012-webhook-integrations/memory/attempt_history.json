@@ -1,0 +1,141 @@
+{
+  "subtasks": {
+    "subtask-1-1": {
+      "attempts": [
+        {
+          "session": 1,
+          "timestamp": "2025-12-31T22:43:35.351757",
+          "approach": "Implemented: Create WebhookConfig and WebhookLog SQLAlchemy models",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-1-2": {
+      "attempts": [
+        {
+          "session": 2,
+          "timestamp": "2025-12-31T22:47:05.239729",
+          "approach": "Implemented: Create database migration script for webhook tables",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-2-1": {
+      "attempts": [
+        {
+          "session": 3,
+          "timestamp": "2025-12-31T22:49:35.167429",
+          "approach": "Implemented: Create HMAC-SHA256 signature utility functions",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-2-2": {
+      "attempts": [
+        {
+          "session": 4,
+          "timestamp": "2025-12-31T22:54:59.431626",
+          "approach": "Implemented: Create async webhook delivery service with retry logic",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-3-1": {
+      "attempts": [
+        {
+          "session": 5,
+          "timestamp": "2025-12-31T23:00:21.181913",
+          "approach": "Implemented: Create webhook API endpoints (CRUD + test)",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-3-2": {
+      "attempts": [
+        {
+          "session": 6,
+          "timestamp": "2025-12-31T23:04:19.127702",
+          "approach": "Implemented: Register webhook router in main API",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-4-1": {
+      "attempts": [
+        {
+          "session": 7,
+          "timestamp": "2025-12-31T23:18:20.208550",
+          "approach": "Implemented: Add webhook triggers to instance lifecycle events",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-4-2": {
+      "attempts": [
+        {
+          "session": 8,
+          "timestamp": "2025-12-31T23:26:54.363999",
+          "approach": "Implemented: Add webhook trigger to snapshot completion",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-4-3": {
+      "attempts": [
+        {
+          "session": 9,
+          "timestamp": "2025-12-31T23:32:10.661521",
+          "approach": "Implemented: Add webhook trigger to failover events",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-4-4": {
+      "attempts": [
+        {
+          "session": 10,
+          "timestamp": "2025-12-31T23:35:14.070391",
+          "approach": "Implemented: Add webhook trigger to cost threshold alerts (if cost_monitor exists)",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-5-1": {
+      "attempts": [
+        {
+          "session": 11,
+          "timestamp": "2025-12-31T23:38:03.003497",
+          "approach": "Implemented: Create webhooks Redux slice for state management",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    }
+  },
+  "stuck_subtasks": [],
+  "metadata": {
+    "created_at": "2025-12-31T22:40:18.268535",
+    "last_updated": "2025-12-31T23:38:03.003519"
+  }
+}

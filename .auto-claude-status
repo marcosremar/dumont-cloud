@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "012-webhook-integrations",
+  "state": "building",
+  "subtasks": {
+    "completed": 11,
+    "total": 14,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Frontend Webhook Management UI",
+    "id": null,
+    "total": 3
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 12,
+    "started_at": "2025-12-31T22:40:18.290540"
+  },
+  "last_update": "2025-12-31T23:38:17.669210"
+}

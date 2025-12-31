@@ -275,8 +275,9 @@
             "command": "cd web && npm run build 2>&1 | grep -q 'error' && echo 'Build failed' || echo 'Build successful'",
             "expected": "Build successful"
           },
-          "status": "pending",
-          "notes": "Redux slice with actions: fetchWebhooks, createWebhook, updateWebhook, deleteWebhook, testWebhook, fetchWebhookLogs. Use createAsyncThunk for API calls. Register in store/index.js"
+          "status": "completed",
+          "notes": "Created webhooksSlice.js with full CRUD operations, test webhook, logs fetching, and event types. Registered in Redux store. Follows instancesSlice pattern exactly.",
+          "updated_at": "2025-12-31T22:37:45.739249+00:00"
         },
         {
           "id": "subtask-5-2",
@@ -577,5 +578,5 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2025-12-31T22:34:22.571914+00:00"
+  "last_updated": "2025-12-31T22:37:45.739287+00:00"
 }
