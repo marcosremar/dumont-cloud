@@ -11,6 +11,7 @@ class User:
     email: str
     password_hash: str
     vast_api_key: Optional[str] = None
+    stripe_account_id: Optional[str] = None
     settings: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -18,6 +19,7 @@ class User:
         return {
             'email': self.email,
             'vast_api_key': self.vast_api_key,
+            'stripe_account_id': self.stripe_account_id,
             'settings': self.settings,
         }
 
