@@ -575,12 +575,16 @@ export function Slider({ value = [0], onValueChange, min = 0, max = 100, step = 
 }
 
 // Dropdown Menu Components with state management
+let dropdownMenuIdCounter = 0;
 const DropdownContext = React.createContext({
   isOpen: false,
   setIsOpen: () => {},
   triggerRef: null,
   focusedIndex: -1,
   setFocusedIndex: () => {},
+  focusedItemId: null,
+  setFocusedItemId: () => {},
+  menuId: '',
   registerItem: () => {},
   unregisterItem: () => {},
   getItemRefs: () => []
@@ -589,17 +593,19 @@ const DropdownContext = React.createContext({
 export function DropdownMenu({ children }) {
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [focusedItemId, setFocusedItemId] = useState(null);
   const dropdownRef = useRef(null);
   const triggerRef = useRef(null);
   const itemRefsRef = useRef([]);
+  const menuIdRef = useRef(`dropdown-menu-${++dropdownMenuIdCounter}`);
 
   // Register an item ref
-  const registerItem = useCallback((ref, disabled) => {
+  const registerItem = useCallback((ref, disabled, id) => {
     const existingIndex = itemRefsRef.current.findIndex(item => item.ref === ref);
     if (existingIndex === -1) {
-      itemRefsRef.current.push({ ref, disabled });
+      itemRefsRef.current.push({ ref, disabled, id });
     } else {
-      itemRefsRef.current[existingIndex] = { ref, disabled };
+      itemRefsRef.current[existingIndex] = { ref, disabled, id };
     }
     return itemRefsRef.current.findIndex(item => item.ref === ref);
   }, []);
@@ -619,6 +625,7 @@ export function DropdownMenu({ children }) {
   useEffect(() => {
     if (!isOpen) {
       setFocusedIndex(-1);
+      setFocusedItemId(null);
       itemRefsRef.current = [];
     }
   }, [isOpen]);
@@ -665,6 +672,9 @@ export function DropdownMenu({ children }) {
       triggerRef,
       focusedIndex,
       setFocusedIndex,
+      focusedItemId,
+      setFocusedItemId,
+      menuId: menuIdRef.current,
       registerItem,
       unregisterItem,
       getItemRefs
@@ -700,7 +710,7 @@ export function DropdownMenuTrigger({ children, asChild, ...props }) {
 }
 
 export function DropdownMenuContent({ children, align = 'end', className = '' }) {
-  const { isOpen, focusedIndex, setFocusedIndex, getItemRefs, setIsOpen, triggerRef } = React.useContext(DropdownContext);
+  const { isOpen, focusedIndex, setFocusedIndex, focusedItemId, setFocusedItemId, getItemRefs, setIsOpen, triggerRef } = React.useContext(DropdownContext);
   const contentRef = useRef(null);
 
   // Find next enabled item index (wraps around)
@@ -736,6 +746,7 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
       const nextIndex = findNextEnabledIndex(focusedIndex, 'down');
       if (nextIndex !== -1) {
         setFocusedIndex(nextIndex);
+        setFocusedItemId(items[nextIndex]?.id || null);
         items[nextIndex]?.ref?.focus();
       }
     } else if (event.key === 'ArrowUp') {
@@ -743,6 +754,7 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
       const nextIndex = findNextEnabledIndex(focusedIndex, 'up');
       if (nextIndex !== -1) {
         setFocusedIndex(nextIndex);
+        setFocusedItemId(items[nextIndex]?.id || null);
         items[nextIndex]?.ref?.focus();
       }
     } else if (event.key === 'Tab') {
@@ -753,6 +765,7 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
         const nextIndex = findNextEnabledIndex(focusedIndex, 'up');
         if (nextIndex !== -1) {
           setFocusedIndex(nextIndex);
+          setFocusedItemId(items[nextIndex]?.id || null);
           items[nextIndex]?.ref?.focus();
         }
       } else {
@@ -760,6 +773,7 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
         const nextIndex = findNextEnabledIndex(focusedIndex, 'down');
         if (nextIndex !== -1) {
           setFocusedIndex(nextIndex);
+          setFocusedItemId(items[nextIndex]?.id || null);
           items[nextIndex]?.ref?.focus();
         }
       }
@@ -776,7 +790,7 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
         }
       }
     }
-  }, [focusedIndex, setFocusedIndex, getItemRefs, findNextEnabledIndex, setIsOpen, triggerRef]);
+  }, [focusedIndex, setFocusedIndex, setFocusedItemId, getItemRefs, findNextEnabledIndex, setIsOpen, triggerRef]);
 
   // Add keyboard listener when content is open
   useEffect(() => {
@@ -797,12 +811,13 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
         if (firstEnabledIndex !== -1) {
           const items = getItemRefs();
           setFocusedIndex(firstEnabledIndex);
+          setFocusedItemId(items[firstEnabledIndex]?.id || null);
           items[firstEnabledIndex]?.ref?.focus();
         }
       });
       return () => cancelAnimationFrame(animFrame);
     }
-  }, [isOpen, findNextEnabledIndex, getItemRefs, setFocusedIndex]);
+  }, [isOpen, findNextEnabledIndex, getItemRefs, setFocusedIndex, setFocusedItemId]);
 
   if (!isOpen) return null;
 
@@ -811,6 +826,7 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
     <div
       ref={contentRef}
       role="menu"
+      aria-activedescendant={focusedItemId || undefined}
       className={`absolute ${alignClass} mt-2 w-56 rounded-lg bg-dark-surface-card border border-white/10 shadow-lg z-50 py-1 ${className}`}
     >
       {children}
@@ -818,15 +834,19 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
   );
 }
 
+let dropdownMenuItemIdCounter = 0;
+
 export function DropdownMenuItem({ children, onClick, className = '', disabled }) {
-  const { setIsOpen, registerItem, unregisterItem } = React.useContext(DropdownContext);
+  const { setIsOpen, registerItem, unregisterItem, menuId } = React.useContext(DropdownContext);
   const itemRef = useRef(null);
+  const itemIdRef = useRef(`${menuId}-item-${++dropdownMenuItemIdCounter}`);
 
   // Register this item with the dropdown context
   useEffect(() => {
     const ref = itemRef.current;
+    const id = itemIdRef.current;
     if (ref) {
-      registerItem(ref, disabled);
+      registerItem(ref, disabled, id);
     }
     return () => {
       if (ref) {
@@ -844,6 +864,7 @@ export function DropdownMenuItem({ children, onClick, className = '', disabled }
   return (
     <button
       ref={itemRef}
+      id={itemIdRef.current}
       role="menuitem"
       onClick={handleClick}
       disabled={disabled}
