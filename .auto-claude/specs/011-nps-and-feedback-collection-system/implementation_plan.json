@@ -209,8 +209,9 @@
             "command": "grep -q 'useNPSTrigger' web/src/hooks/useNPSTrigger.js && echo 'Hook created'",
             "expected": "Hook created"
           },
-          "status": "pending",
-          "notes": "Hook should call checkShouldShow API on mount and after key events (deployment success, etc.). Return { shouldShow, triggerType, handleDismiss, handleSubmit }"
+          "status": "completed",
+          "notes": "Created useNPSTrigger custom hook (web/src/hooks/useNPSTrigger.js) with: 1) checkTrigger() to check if survey should show based on trigger type and rate limiting, 2) triggerSurvey() for manual override, 3) handleDismiss() to record dismissals, 4) handleSubmit() for survey submission with validation, 5) handleScoreChange() and handleCommentChange() for form state, 6) NPS_TRIGGER_TYPES constants export. Hook integrates with Redux state for auth checking and NPS slice operations. Follows existing hook patterns with useCallback for memoization. Verification passed.",
+          "updated_at": "2025-12-31T22:09:45.463022+00:00"
         }
       ]
     },
@@ -246,8 +247,9 @@
               "Submit and dismiss buttons work"
             ]
           },
-          "status": "pending",
-          "notes": "Use Dialog from web/src/components/ui/dialog.jsx. Display 0-10 buttons horizontally. Add optional textarea for comment. Validate score 0-10 before submission. Show loading state during submission."
+          "status": "completed",
+          "notes": "Created NPSSurvey modal component (web/src/components/NPSSurvey.jsx) with: 1) 0-10 score selection buttons with color-coded visual feedback (red for detractors 0-6, yellow for passives 7-8, green for promoters 9-10), 2) Optional comment textarea with 1000 character limit, 3) Score category indicator showing Detractor/Passive/Promoter with contextual messaging, 4) Submit and dismiss buttons with loading states and disabled state handling, 5) Error display for submission failures, 6) Keyboard accessible with proper ARIA attributes (aria-label, aria-pressed), 7) Dark mode styling following HibernationConfigModal.jsx patterns, 8) NPSSurveyStandalone variant for independent usage. Component uses Dialog from ui/dialog.jsx, Button from ui/button.jsx, and Label from ui/label.jsx. Icons from lucide-react (MessageSquare, Send, ThumbsUp, ThumbsDown, Meh, X).",
+          "updated_at": "2025-12-31T22:17:28.602603+00:00"
         },
         {
           "id": "subtask-4-2",
@@ -266,8 +268,9 @@
               "No console errors"
             ]
           },
-          "status": "pending",
-          "notes": "Import NPSSurvey and useNPSTrigger hook. Render NPSSurvey conditionally based on shouldShow. Pass handlers from hook."
+          "status": "completed",
+          "notes": "Integrated NPSSurvey into App.jsx with trigger logic. Added NPSSurveyManager component that uses useNPSTrigger hook with monthly trigger type and 5-second delay. Synced Redux auth state with App.jsx local state on login/logout/auth-check. Rendered NPSSurvey modal inside ToastProvider context.",
+          "updated_at": "2025-12-31T22:29:05.724755+00:00"
         },
         {
           "id": "subtask-4-3",
@@ -289,8 +292,9 @@
               "Date range filter works"
             ]
           },
-          "status": "pending",
-          "notes": "Use ApexCharts or Chart.js (already installed). Display NPS trend line chart over time. Show breakdown: Detractors (0-6), Passives (7-8), Promoters (9-10). Include detractor list with scores and comments."
+          "status": "completed",
+          "notes": "Created NPSTrends admin dashboard page (web/src/pages/Admin/NPSTrends.jsx) with comprehensive features: 1) NPS score trend line chart using Chart.js showing daily NPS scores over time, 2) Doughnut chart for Detractor/Passive/Promoter breakdown with percentages, 3) Summary stat cards showing NPS score, total responses, and individual category counts, 4) Date range filter with options for 7d, 30d, 90d, 1y, and all time, 5) Detractor follow-up list with ability to mark follow-ups complete and add notes, 6) Loading skeleton states and error handling, 7) Responsive design following DashboardReports.jsx and SavingsHistoryGraph.jsx patterns. Uses Redux selectors from npsSlice for state management (fetchTrends, fetchDetractors, updateFollowup). Route registration is handled in subtask-4-4.",
+          "updated_at": "2025-12-31T22:34:10.500796+00:00"
         },
         {
           "id": "subtask-4-4",
@@ -488,5 +492,5 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2025-12-31T22:01:39.707463+00:00"
+  "last_updated": "2025-12-31T22:34:10.500818+00:00"
 }

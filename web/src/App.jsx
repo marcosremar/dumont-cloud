@@ -24,6 +24,7 @@ import Models from './pages/Models'
 import Documentation from './pages/Documentation'
 import ButtonShowcase from './pages/ButtonShowcase'
 import ForgotPassword from './pages/ForgotPassword'
+import NPSTrends from './pages/Admin/NPSTrends'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import NPSSurvey from './components/NPSSurvey'
@@ -458,6 +459,15 @@ export default function App() {
             <Route path="/docs/:docId" element={
               <ProtectedRoute user={user}>
                 <Documentation />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin Routes */}
+            <Route path="/app/admin/nps" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <NPSTrends />
+                </AppLayout>
               </ProtectedRoute>
             } />
 
