@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, createContext, useContext, useMemo, useCallback } from 'react'
 import { Provider } from 'react-redux'
 import { store } from './store'
+import { setToken } from './store/slices/authSlice'
 import AppLayout from './components/layout/AppLayout'
 import { SidebarProvider } from './context/SidebarContext'
 import { ThemeProvider } from './context/ThemeContext'
@@ -25,6 +26,8 @@ import ButtonShowcase from './pages/ButtonShowcase'
 import ForgotPassword from './pages/ForgotPassword'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
+import NPSSurvey from './components/NPSSurvey'
+import useNPSTrigger, { NPS_TRIGGER_TYPES } from './hooks/useNPSTrigger'
 import './styles/landing.css'
 
 const API_BASE = ''
@@ -51,6 +54,60 @@ function DemoRoute({ children }) {
     <DemoContext.Provider value={true}>
       {children}
     </DemoContext.Provider>
+  )
+}
+
+/**
+ * NPSSurveyManager - Manages NPS survey display and submission
+ * This component uses the useNPSTrigger hook to handle survey logic
+ * and renders the NPSSurvey modal when appropriate.
+ */
+function NPSSurveyManager() {
+  const {
+    isOpen,
+    score,
+    comment,
+    triggerType,
+    submitting,
+    submitError,
+    isAuthenticated,
+    handleDismiss,
+    handleSubmit,
+    handleScoreChange,
+    handleCommentChange,
+    checkTrigger,
+  } = useNPSTrigger({
+    triggerType: NPS_TRIGGER_TYPES.MONTHLY,
+    autoCheck: false,
+    checkOnAuth: true,
+  })
+
+  // Check for monthly trigger when component mounts and user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Add a small delay to avoid checking immediately on page load
+      const timer = setTimeout(() => {
+        checkTrigger(NPS_TRIGGER_TYPES.MONTHLY)
+      }, 5000) // 5 second delay after authentication
+
+      return () => clearTimeout(timer)
+    }
+  }, [isAuthenticated, checkTrigger])
+
+  return (
+    <NPSSurvey
+      isOpen={isOpen}
+      onClose={handleDismiss}
+      onDismiss={handleDismiss}
+      onSubmit={handleSubmit}
+      score={score}
+      onScoreChange={handleScoreChange}
+      comment={comment}
+      onCommentChange={handleCommentChange}
+      submitting={submitting}
+      error={submitError}
+      triggerType={triggerType}
+    />
   )
 }
 
@@ -118,9 +175,13 @@ export default function App() {
 
       if (data.authenticated) {
         setUser(data.user)
+        // Sync Redux auth state
+        store.dispatch(setToken(token))
       } else {
         localStorage.removeItem('auth_token')
         sessionStorage.removeItem('auth_token')
+        // Clear Redux auth state
+        store.dispatch(setToken(null))
       }
     } catch (e) {
       console.error('[App.jsx] Auth check failed:', e)
@@ -208,6 +269,8 @@ export default function App() {
         }
 
         setUser(data.user)
+        // Sync Redux auth state
+        store.dispatch(setToken(data.token))
         return { success: true }
       }
 
@@ -262,6 +325,8 @@ export default function App() {
     sessionStorage.removeItem('auth_token')
     localStorage.removeItem('demo_mode')  // Clear demo mode flag
     setUser(null)
+    // Clear Redux auth state
+    store.dispatch(setToken(null))
   }
 
   if (loading) {
@@ -278,6 +343,8 @@ export default function App() {
         <ThemeProvider>
           <SidebarProvider>
             <ToastProvider>
+              {/* NPS Survey Manager - handles survey triggers and display */}
+              <NPSSurveyManager />
               <Routes>
             {/* Rotas Públicas */}
             <Route path="/" element={
