@@ -457,3 +457,225 @@ test.describe('📄 Tab Content - Settings Tab Content Rendering', () => {
   });
 
 });
+
+test.describe('🔐 SecretInput - Toggle Visibility Tests', () => {
+
+  test('SecretInput: Vast.ai API key toggle visibility works', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do Vast.ai API Key
+    const apiKeyInput = page.locator('[data-testid="input-vast_api_key"]');
+    await expect(apiKeyInput).toBeVisible({ timeout: 5000 });
+
+    // Verificar que o input começa como type="password"
+    await expect(apiKeyInput).toHaveAttribute('type', 'password');
+
+    // Localizar e clicar no botão de toggle
+    const toggleButton = page.locator('[data-testid="toggle-visibility-vast_api_key"]');
+    await expect(toggleButton).toBeVisible();
+    await toggleButton.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que o input agora é type="text" (visível)
+    await expect(apiKeyInput).toHaveAttribute('type', 'text');
+
+    // Clicar novamente para ocultar
+    await toggleButton.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que voltou para type="password"
+    await expect(apiKeyInput).toHaveAttribute('type', 'password');
+  });
+
+  test('SecretInput: R2 Access Key toggle visibility works', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do R2 Access Key
+    const accessKeyInput = page.locator('[data-testid="input-r2_access_key"]');
+    await expect(accessKeyInput).toBeVisible({ timeout: 5000 });
+
+    // Verificar estado inicial (password)
+    await expect(accessKeyInput).toHaveAttribute('type', 'password');
+
+    // Toggle para mostrar
+    const toggleButton = page.locator('[data-testid="toggle-visibility-r2_access_key"]');
+    await expect(toggleButton).toBeVisible();
+    await toggleButton.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que está visível
+    await expect(accessKeyInput).toHaveAttribute('type', 'text');
+
+    // Toggle para ocultar
+    await toggleButton.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que está oculto novamente
+    await expect(accessKeyInput).toHaveAttribute('type', 'password');
+  });
+
+  test('SecretInput: R2 Secret Key toggle visibility works', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o input do R2 Secret Key
+    const secretKeyInput = page.locator('[data-testid="input-r2_secret_key"]');
+    await expect(secretKeyInput).toBeVisible({ timeout: 5000 });
+
+    // Verificar estado inicial (password)
+    await expect(secretKeyInput).toHaveAttribute('type', 'password');
+
+    // Toggle para mostrar
+    const toggleButton = page.locator('[data-testid="toggle-visibility-r2_secret_key"]');
+    await expect(toggleButton).toBeVisible();
+    await toggleButton.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que está visível
+    await expect(secretKeyInput).toHaveAttribute('type', 'text');
+
+    // Toggle para ocultar
+    await toggleButton.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que está oculto novamente
+    await expect(secretKeyInput).toHaveAttribute('type', 'password');
+  });
+
+  test('SecretInput: Restic password toggle visibility works', async ({ page }) => {
+    await goToSettings(page, 'storage');
+
+    // Localizar o input do Restic Password
+    const passwordInput = page.locator('[data-testid="input-restic_password"]');
+    await expect(passwordInput).toBeVisible({ timeout: 5000 });
+
+    // Verificar estado inicial (password)
+    await expect(passwordInput).toHaveAttribute('type', 'password');
+
+    // Toggle para mostrar
+    const toggleButton = page.locator('[data-testid="toggle-visibility-restic_password"]');
+    await expect(toggleButton).toBeVisible();
+    await toggleButton.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que está visível
+    await expect(passwordInput).toHaveAttribute('type', 'text');
+
+    // Toggle para ocultar
+    await toggleButton.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que está oculto novamente
+    await expect(passwordInput).toHaveAttribute('type', 'password');
+  });
+
+  test('SecretInput: Toggle button shows correct icon state', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar o botão de toggle do Vast.ai API Key
+    const toggleButton = page.locator('[data-testid="toggle-visibility-vast_api_key"]');
+    await expect(toggleButton).toBeVisible({ timeout: 5000 });
+
+    // Verificar que o botão tem título "Mostrar" quando oculto
+    await expect(toggleButton).toHaveAttribute('title', 'Mostrar');
+
+    // Clicar para mostrar
+    await toggleButton.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que o botão tem título "Ocultar" quando visível
+    await expect(toggleButton).toHaveAttribute('title', 'Ocultar');
+
+    // Clicar para ocultar novamente
+    await toggleButton.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que voltou para "Mostrar"
+    await expect(toggleButton).toHaveAttribute('title', 'Mostrar');
+  });
+
+  test('SecretInput: Multiple toggles work independently', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Localizar os inputs
+    const vastApiKeyInput = page.locator('[data-testid="input-vast_api_key"]');
+    const r2AccessKeyInput = page.locator('[data-testid="input-r2_access_key"]');
+    const r2SecretKeyInput = page.locator('[data-testid="input-r2_secret_key"]');
+
+    // Localizar os toggles
+    const vastToggle = page.locator('[data-testid="toggle-visibility-vast_api_key"]');
+    const r2AccessToggle = page.locator('[data-testid="toggle-visibility-r2_access_key"]');
+    const r2SecretToggle = page.locator('[data-testid="toggle-visibility-r2_secret_key"]');
+
+    // Aguardar que todos estejam visíveis
+    await expect(vastApiKeyInput).toBeVisible({ timeout: 5000 });
+    await expect(r2AccessKeyInput).toBeVisible();
+    await expect(r2SecretKeyInput).toBeVisible();
+
+    // Todos começam ocultos
+    await expect(vastApiKeyInput).toHaveAttribute('type', 'password');
+    await expect(r2AccessKeyInput).toHaveAttribute('type', 'password');
+    await expect(r2SecretKeyInput).toHaveAttribute('type', 'password');
+
+    // Mostrar apenas o Vast API Key
+    await vastToggle.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que apenas o Vast está visível
+    await expect(vastApiKeyInput).toHaveAttribute('type', 'text');
+    await expect(r2AccessKeyInput).toHaveAttribute('type', 'password');
+    await expect(r2SecretKeyInput).toHaveAttribute('type', 'password');
+
+    // Mostrar também o R2 Access Key
+    await r2AccessToggle.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que Vast e R2 Access estão visíveis, R2 Secret ainda oculto
+    await expect(vastApiKeyInput).toHaveAttribute('type', 'text');
+    await expect(r2AccessKeyInput).toHaveAttribute('type', 'text');
+    await expect(r2SecretKeyInput).toHaveAttribute('type', 'password');
+
+    // Ocultar o Vast
+    await vastToggle.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que Vast está oculto, R2 Access ainda visível
+    await expect(vastApiKeyInput).toHaveAttribute('type', 'password');
+    await expect(r2AccessKeyInput).toHaveAttribute('type', 'text');
+    await expect(r2SecretKeyInput).toHaveAttribute('type', 'password');
+  });
+
+  test('SecretInput: Cloud Storage Backblaze B2 toggle visibility works', async ({ page }) => {
+    await goToSettings(page, 'cloudstorage');
+
+    // Backblaze B2 é o provedor padrão, então os campos devem estar visíveis
+    // Localizar o input do B2 Key ID
+    const b2KeyIdInput = page.locator('[data-testid="input-b2_key_id"]');
+    const hasB2KeyId = await b2KeyIdInput.isVisible({ timeout: 5000 }).catch(() => false);
+
+    if (hasB2KeyId) {
+      // Verificar estado inicial (password)
+      await expect(b2KeyIdInput).toHaveAttribute('type', 'password');
+
+      // Toggle para mostrar
+      const toggleButton = page.locator('[data-testid="toggle-visibility-b2_key_id"]');
+      await expect(toggleButton).toBeVisible();
+      await toggleButton.click();
+      await page.waitForTimeout(300);
+
+      // Verificar que está visível
+      await expect(b2KeyIdInput).toHaveAttribute('type', 'text');
+
+      // Toggle para ocultar
+      await toggleButton.click();
+      await page.waitForTimeout(300);
+
+      // Verificar que está oculto novamente
+      await expect(b2KeyIdInput).toHaveAttribute('type', 'password');
+    } else {
+      // Se Backblaze B2 não é o provedor padrão, verificar que a seção de provedor existe
+      const providerSelect = page.locator('[data-testid="settings-cloudstorage-provider"]');
+      await expect(providerSelect).toBeVisible();
+    }
+  });
+
+});
