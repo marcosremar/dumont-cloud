@@ -37,6 +37,9 @@ def get_db():
 
 def init_db():
     """Inicializa o banco de dados criando todas as tabelas."""
+    # Import all models to register them with Base.metadata
+    from src.models.webhook_config import WebhookConfig, WebhookLog
+
     Base.metadata.create_all(bind=engine)
 
 
