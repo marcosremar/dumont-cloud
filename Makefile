@@ -11,7 +11,8 @@
 # =============================================================================
 
 .PHONY: help test test-mock test-gpu test-quick test-smoke test-full \
-        test-shared test-lifecycle lint format clean install dev
+        test-shared test-lifecycle lint format clean install dev \
+        migrate migrate-verify
 
 # Default target
 .DEFAULT_GOAL := help
@@ -191,3 +192,19 @@ run: ## Run development server
 
 run-prod: ## Run production server
 	uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --workers 4
+
+# =============================================================================
+# Database
+# =============================================================================
+
+migrate: ## Apply all pending migrations
+	@echo "$(CYAN)=== APPLYING MIGRATIONS ===$(NC)"
+	@python3 scripts/apply_nps_migration.py
+
+migrate-verify: ## Verify NPS tables exist
+	@echo "$(CYAN)=== VERIFYING NPS TABLES ===$(NC)"
+	@python3 -c "from src.config.database import engine; from sqlalchemy import text; \
+		result = engine.connect().execute(text(\"SELECT table_name FROM information_schema.tables WHERE table_name IN ('nps_responses', 'nps_survey_config', 'nps_user_interactions')\")); \
+		tables = [r[0] for r in result.fetchall()]; \
+		print(f'Tables found: {tables}'); \
+		exit(0 if len(tables) == 3 else 1)"
