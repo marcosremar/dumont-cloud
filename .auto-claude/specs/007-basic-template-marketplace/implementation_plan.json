@@ -190,7 +190,9 @@
             "command": "grep -q \"templates_bp\" app.py && echo 'OK' || echo 'FAIL'",
             "expected": "OK"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Created Flask blueprint for templates at src/api/templates.py with endpoints: GET /api/templates (list), GET /api/templates/{slug} (get by slug), GET /api/templates/{slug}/gpu-requirements, POST /api/templates/{slug}/deploy, GET /api/templates/{slug}/offers. Registered templates_bp in app.py. Verification passed: grep -q \"templates_bp\" app.py returns OK. Commit: 8418a92",
+          "updated_at": "2025-12-31T22:31:20.265173+00:00"
         }
       ]
     },
@@ -220,7 +222,9 @@
             "command": "grep -q \"createAsyncThunk\" web/src/store/slices/templateSlice.js && echo 'OK' || echo 'FAIL'",
             "expected": "OK"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Created templateSlice.js with Redux Toolkit createAsyncThunk for API calls. Implements fetchTemplates, fetchTemplateBySlug, fetchTemplateOffers, and deployTemplate async thunks. Includes state management for templates list, selectedTemplate, offers, filters (min_vram, category, verified_only), and deployment status. Exports actions and selectors following instancesSlice.js patterns. Verification passed. Commit: 7611123",
+          "updated_at": "2025-12-31T22:33:54.875215+00:00"
         },
         {
           "id": "subtask-4-2",
@@ -236,7 +240,9 @@
             "command": "grep -q \"templateReducer\" web/src/store/index.js && echo 'OK' || echo 'FAIL'",
             "expected": "OK"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Registered templateReducer in Redux store. Added import for templateSlice and added templates: templateReducer to the reducer configuration. Verification passed.",
+          "updated_at": "2025-12-31T22:35:27.159612+00:00"
         }
       ]
     },
@@ -587,5 +593,5 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2025-12-31T22:25:25.511518+00:00"
+  "last_updated": "2025-12-31T22:35:27.159631+00:00"
 }
