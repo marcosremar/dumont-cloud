@@ -1,10 +1,10 @@
 {
   "discovered_files": {
-    "tests/playwright.config.js": {
-      "description": "Playwright configuration is correctly set up with Chromium project, auth setup, 10-minute timeout, and baseURL pointing to localhost:5173",
-      "category": "configuration",
-      "discovered_at": "2025-12-31T21:18:47.866416+00:00"
+    "tests/auth.setup.js": {
+      "description": "Auth test supports DEMO MODE (USE_DEMO_MODE=true) and REAL MODE. Demo mode navigates to /demo-app directly, Real mode performs login with credentials. Existing auth state in .auth/user.json indicates previous successful authentication.",
+      "category": "testing",
+      "discovered_at": "2025-12-31T21:50:52.029098+00:00"
     }
   },
-  "last_updated": "2025-12-31T21:18:47.866436+00:00"
+  "last_updated": "2025-12-31T21:50:52.029122+00:00"
 }
