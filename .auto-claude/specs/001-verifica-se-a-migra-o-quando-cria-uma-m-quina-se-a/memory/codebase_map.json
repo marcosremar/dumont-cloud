@@ -4,7 +4,12 @@
       "description": "Auth test supports DEMO MODE (USE_DEMO_MODE=true) and REAL MODE. Demo mode navigates to /demo-app directly, Real mode performs login with credentials. Existing auth state in .auth/user.json indicates previous successful authentication.",
       "category": "testing",
       "discovered_at": "2025-12-31T21:50:52.029098+00:00"
+    },
+    "tests/e2e-journeys/cpu-standby-failover.spec.js": {
+      "description": "Contains 11 E2E tests in 3 suites: CPU Standby Failover (4 tests), Metrics (2 tests), Failover Report (5 tests). Tests use flexible Playwright patterns with .first(), .catch(() => false), and force clicks. Some tests have weak assertions that always pass.",
+      "category": "testing",
+      "discovered_at": "2025-12-31T21:57:20.578036+00:00"
     }
   },
-  "last_updated": "2025-12-31T21:50:52.029122+00:00"
+  "last_updated": "2025-12-31T21:57:20.578065+00:00"
 }

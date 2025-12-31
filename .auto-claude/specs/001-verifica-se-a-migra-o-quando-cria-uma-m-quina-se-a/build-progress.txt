@@ -124,3 +124,133 @@ Expected Results:
 - If app not running: Test fails with connection error
 
 === END subtask-2-1 ===
+
+=== SESSION: subtask-2-2 ===
+Date: 2025-12-31
+
+Subtask: Executar testes cpu-standby-failover.spec.js e analisar resultados
+Status: ANALYSIS COMPLETE (sandbox blocks npm/npx - manual execution required)
+
+=== STATIC ANALYSIS OF cpu-standby-failover.spec.js ===
+
+Total Tests Identified: 11 tests in 3 test suites
+
+Test Suite 1: '🔄 CPU Standby e Failover Automático' (4 tests)
+-------------------------------------------------------------
+1. 'Verificar que máquina tem CPU Standby configurado'
+   - Navigates to /app/machines
+   - Checks for: Backup badge, Backup button, GCP text, machine cards
+   - Uses flexible matching with .first() and .catch(() => false)
+   - PASS CONDITION: Any indicator of backup/failover found OR machines visible
+
+2. 'Simular failover completo: GPU roubada → CPU Standby → Nova GPU'
+   - Navigates to /app/machines
+   - Looks for GPU text (RTX/A100/H100/4090/3090)
+   - Checks for "Simular Failover" button (demo mode only)
+   - If found: clicks and checks for progress panel
+   - PASS CONDITION: Machines visible OR simulate button exists
+
+3. 'Verificar que máquina está Online após failover'
+   - Checks for "Online" text
+   - Looks for backup button without "Sem backup"
+   - Clicks backup button to verify standby status
+   - PASS CONDITION: Always passes (expect(true))
+
+4. 'Verificar configuração de CPU Standby em Settings'
+   - Navigates to /app/settings
+   - Closes welcome modal if present ("Pular tudo")
+   - Clicks on CPU Failover tab
+   - Checks for config elements and cost estimate
+   - PASS CONDITION: Always passes (expect(true))
+
+Test Suite 2: '📊 Métricas e Status do CPU Standby' (2 tests)
+-------------------------------------------------------------
+5. 'Verificar métricas de sync do CPU Standby'
+   - Navigates to /app/machines
+   - Looks for Backup button, clicks to open popover
+   - Checks for: sync count, cost/hour, GCP zone
+   - PASS CONDITION: Any metric visible OR machines found
+
+6. 'Verificar custo total inclui CPU Standby'
+   - Navigates to /app/machines
+   - Looks for cost text ($X.XX format)
+   - Checks for "+backup" indicator
+   - PASS CONDITION: Cost visible OR machines found
+
+Test Suite 3: '📈 Relatório de Failover' (5 tests)
+-------------------------------------------------
+7. 'Verificar página de relatório de failover'
+   - Navigates directly to /app/failover-report
+   - Checks page loaded (main element visible)
+   - Looks for failover content in page text
+   - PASS CONDITION: Main content visible
+
+8. 'Verificar métricas de latência na página de failover'
+   - Navigates to /app/failover-report
+   - Searches for latency patterns (ms, sec, tempo, etc)
+   - Counts interactive elements
+   - PASS CONDITION: Interactive elements > 0
+
+9. 'Verificar histórico de failovers na página'
+   - Navigates to /app/failover-report
+   - Looks for list/table/grid structures
+   - Checks for history text
+   - PASS CONDITION: Any structure found
+
+10. 'Verificar navegação do menu para failover'
+    - Starts at /app
+    - Looks for failover link in menu
+    - Falls back to Settings if not found
+    - PASS CONDITION: Navigation works
+
+11. 'Verificar estatísticas de failover no dashboard'
+    - Navigates to /app
+    - Searches for: Backup, Failover, Recovery, Uptime, Savings, etc.
+    - Counts found statistics
+    - PASS CONDITION: Main content length > 50
+
+=== CODE QUALITY OBSERVATIONS ===
+
+STRENGTHS:
+✅ Flexible element matching with .first() and .catch(() => false)
+✅ Appropriate timeouts (2000ms waits, 5000ms visibility checks)
+✅ Force clicks to avoid overlay issues: .click({ force: true })
+✅ Graceful fallbacks for missing elements
+✅ Good console logging for debugging
+
+POTENTIAL ISSUES:
+⚠️ Many tests use expect(true).toBeTruthy() - always pass
+⚠️ Tests are highly conditional - may pass even if feature broken
+⚠️ Some tests don't verify actual data, only UI presence
+⚠️ No explicit failure cases tested
+
+=== EXPECTED TEST BEHAVIOR ===
+
+In DEMO MODE (USE_DEMO_MODE=true):
+- Auth setup navigates to /demo-app
+- Mock data should provide machines with CPU Standby
+- Simulate Failover button should be visible
+- All 11 tests should pass
+
+In REAL MODE:
+- Requires valid login credentials
+- Depends on actual machine state
+- Some tests may skip or fail based on data
+
+=== MANUAL EXECUTION REQUIRED ===
+
+To run the actual tests, execute outside sandbox:
+
+1. Start frontend:
+   cd web && npm run dev
+
+2. Run tests in demo mode:
+   cd tests && USE_DEMO_MODE=true npx playwright test e2e-journeys/cpu-standby-failover.spec.js --reporter=line
+
+Expected output format:
+  ✓ [chromium] › cpu-standby-failover.spec.js:XX:X › Suite › Test name (XXms)
+
+3. Generate HTML report:
+   cd tests && npx playwright show-report
+
+=== END subtask-2-2 ===
