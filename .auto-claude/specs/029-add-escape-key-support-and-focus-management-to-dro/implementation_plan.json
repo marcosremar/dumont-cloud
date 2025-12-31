@@ -1,0 +1,212 @@
+{
+  "spec_id": "029-add-escape-key-support-and-focus-management-to-dro",
+  "title": "Add Escape key support and focus management to DropdownMenu",
+  "description": "Implement keyboard accessibility for the custom DropdownMenu component in TailAdmin UI. This includes Escape to close, Arrow keys for navigation, Enter/Space to select, and proper focus management when opening/closing. This addresses WCAG 2.1.1 Keyboard accessibility requirements.",
+  "created_at": "2025-12-31T21:16:46.490Z",
+  "updated_at": "2025-12-31T21:16:46.490Z",
+  "status": "in_progress",
+  "planStatus": "approved",
+  "workflow_type": "development",
+  "spec_file": "spec.md",
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Core Keyboard Support",
+      "description": "Add essential keyboard event handlers for Escape, Arrow keys, and Enter/Space",
+      "subtasks": [
+        {
+          "id": "1.1",
+          "title": "Add Escape key handler to close dropdown",
+          "description": "Implement useEffect hook to listen for Escape key press when dropdown is open, similar to the pattern used in modal-dumont.jsx",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "status": "completed",
+          "acceptance_criteria": [
+            "Dropdown closes when Escape is pressed while open",
+            "Event listener is properly cleaned up on unmount",
+            "Focus returns to trigger element after closing"
+          ],
+          "implementation_notes": "Add keydown event listener in the DropdownMenu component's useEffect, following the existing pattern from modal-dumont.jsx lines 22-36",
+          "notes": "Implemented Escape key handler following the modal-dumont.jsx pattern. Added useEffect hook that listens for Escape key when dropdown is open, properly cleans up event listener on unmount, and returns focus to trigger element after closing.",
+          "updated_at": "2025-12-31T21:27:15.031178+00:00"
+        },
+        {
+          "id": "1.2",
+          "title": "Add Arrow key navigation for menu items",
+          "description": "Implement Up/Down arrow key navigation to move focus between DropdownMenuItem elements",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "status": "completed",
+          "acceptance_criteria": [
+            "ArrowDown moves focus to next menu item",
+            "ArrowUp moves focus to previous menu item",
+            "Navigation wraps around (last to first, first to last)",
+            "Disabled items are skipped during navigation"
+          ],
+          "implementation_notes": "Track focusedIndex in context, use useRef to store item refs, handle keyboard events on DropdownMenuContent",
+          "notes": "Implemented Up/Down arrow key navigation for DropdownMenuItem elements. Added focusedIndex state tracking in DropdownContext, registerItem/unregisterItem callbacks for menu item refs, findNextEnabledIndex function with wrap-around support, ArrowUp/ArrowDown keyboard handlers in DropdownMenuContent, and focus styles for menu items. Disabled items are properly skipped during navigation.",
+          "updated_at": "2025-12-31T21:30:11.598625+00:00"
+        },
+        {
+          "id": "1.3",
+          "title": "Add Enter and Space key handlers for item selection",
+          "description": "Allow selecting the focused menu item using Enter or Space keys",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "status": "completed",
+          "acceptance_criteria": [
+            "Enter key triggers onClick of focused item",
+            "Space key triggers onClick of focused item",
+            "Dropdown closes after selection",
+            "Works correctly with disabled items (no action)"
+          ],
+          "implementation_notes": "Handle keydown events on focused DropdownMenuItem, trigger click handler and close dropdown",
+          "notes": "Added Enter and Space key handlers to DropdownMenuContent's handleKeyDown function. When Enter or Space is pressed, the handler checks if a menu item is focused (focusedIndex !== -1), verifies the item is not disabled, and triggers a click on the item's ref. The click invokes the existing handleClick which closes the dropdown and calls the onClick handler. All acceptance criteria met: Enter triggers onClick, Space triggers onClick, dropdown closes after selection, disabled items are ignored.",
+          "updated_at": "2025-12-31T21:32:26.997730+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "Focus Management",
+      "description": "Implement proper focus management for accessibility",
+      "subtasks": [
+        {
+          "id": "2.1",
+          "title": "Focus first item when dropdown opens",
+          "description": "Automatically focus the first non-disabled menu item when the dropdown is opened",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "status": "completed",
+          "acceptance_criteria": [
+            "First menu item receives focus when dropdown opens",
+            "If first item is disabled, focus moves to next enabled item",
+            "Visual focus indicator is visible on focused item"
+          ],
+          "implementation_notes": "Use useEffect to focus first item when isOpen changes to true, store item refs in context",
+          "notes": "Implemented automatic focus on first enabled menu item when dropdown opens. Added useEffect in DropdownMenuContent that uses requestAnimationFrame to wait for items to register, then calls findNextEnabledIndex(-1, 'down') to find the first enabled item and focuses it. Visual focus indicator is visible via the existing focus:bg-gray-800 style on menu items.",
+          "updated_at": "2025-12-31T21:34:37.775971+00:00"
+        },
+        {
+          "id": "2.2",
+          "title": "Return focus to trigger when dropdown closes",
+          "description": "Restore focus to the trigger element when dropdown is closed via keyboard or click outside",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Focus returns to trigger button when Escape is pressed",
+            "Focus returns to trigger when clicking outside",
+            "Focus does NOT return to trigger when item is selected (natural tab order)",
+            "Trigger ref is properly stored and accessible"
+          ],
+          "implementation_notes": "Store trigger ref, call triggerRef.current.focus() on close in appropriate scenarios"
+        },
+        {
+          "id": "2.3",
+          "title": "Add focus trap within dropdown",
+          "description": "Trap Tab key navigation within the dropdown menu while open",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Tab moves focus to next item (same as ArrowDown)",
+            "Shift+Tab moves focus to previous item (same as ArrowUp)",
+            "Focus does not escape dropdown while open",
+            "Pressing Tab on last item wraps to first"
+          ],
+          "implementation_notes": "Handle Tab and Shift+Tab in keydown handler, prevent default and manage focus manually"
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "ARIA Attributes and Accessibility",
+      "description": "Add proper ARIA attributes for screen reader support",
+      "subtasks": [
+        {
+          "id": "3.1",
+          "title": "Add ARIA attributes to dropdown components",
+          "description": "Add role, aria-haspopup, aria-expanded, aria-labelledby attributes",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Trigger has aria-haspopup='menu' and aria-expanded attribute",
+            "Content has role='menu'",
+            "Items have role='menuitem'",
+            "Separator has role='separator'",
+            "Label has role='group' or appropriate aria-label"
+          ],
+          "implementation_notes": "Update DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel with proper ARIA roles"
+        },
+        {
+          "id": "3.2",
+          "title": "Add aria-activedescendant for focus tracking",
+          "description": "Use aria-activedescendant to indicate which item is currently focused",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Each menu item has unique id",
+            "Menu content has aria-activedescendant pointing to focused item",
+            "aria-activedescendant updates as focus changes"
+          ],
+          "implementation_notes": "Generate unique IDs for items, track focused item ID in context, update aria-activedescendant on Content"
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "name": "Testing",
+      "description": "Create Playwright e2e tests for keyboard accessibility",
+      "subtasks": [
+        {
+          "id": "4.1",
+          "title": "Create keyboard accessibility tests for DropdownMenu",
+          "description": "Add Playwright tests to verify Escape, Arrow keys, Enter/Space, and focus management work correctly",
+          "file": "tests/e2e-journeys/dropdown-keyboard-accessibility.spec.js",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Test Escape key closes dropdown",
+            "Test Arrow Up/Down navigation",
+            "Test Enter/Space selection",
+            "Test focus is on first item when opened",
+            "Test focus returns to trigger on Escape",
+            "Test Tab trap within menu"
+          ],
+          "implementation_notes": "Follow existing test patterns from machine-details-actions.spec.js, use page.keyboard API for key presses"
+        }
+      ]
+    }
+  ],
+  "services_involved": [
+    "web"
+  ],
+  "dependencies": {
+    "files_to_modify": [
+      "web/src/components/tailadmin-ui/index.jsx"
+    ],
+    "files_to_create": [
+      "tests/e2e-journeys/dropdown-keyboard-accessibility.spec.js"
+    ],
+    "external_dependencies": []
+  },
+  "risks": [
+    {
+      "description": "Changes to DropdownMenu may affect existing usages in MachineCard and other components",
+      "mitigation": "Test all existing dropdown usages after implementation"
+    },
+    {
+      "description": "Focus trap may interfere with nested components or portals",
+      "mitigation": "Test with complex dropdown content and ensure proper event propagation"
+    }
+  ],
+  "final_acceptance": [
+    "Escape key closes dropdown and returns focus to trigger",
+    "Arrow Up/Down navigates menu items with wrap-around",
+    "Enter/Space selects focused item",
+    "First item is focused when dropdown opens",
+    "Tab is trapped within dropdown menu",
+    "All ARIA attributes are correct for screen readers",
+    "E2E tests pass for all keyboard interactions"
+  ],
+  "qa_sign_off": {
+    "status": "pending",
+    "issues": [],
+    "tests_passed": []
+  },
+  "last_updated": "2025-12-31T21:34:37.775985+00:00"
+}

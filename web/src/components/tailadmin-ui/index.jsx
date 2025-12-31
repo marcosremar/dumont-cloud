@@ -647,6 +647,8 @@ export function DropdownMenu({ children }) {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
+        // Return focus to trigger element after closing via click outside
+        triggerRef.current?.focus();
       }
     };
 
