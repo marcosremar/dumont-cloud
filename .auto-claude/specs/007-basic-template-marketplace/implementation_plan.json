@@ -290,9 +290,9 @@
             "command": "grep -q \"export.*TemplateCard\" web/src/components/marketplace/TemplateCard.jsx && echo 'OK' || echo 'FAIL'",
             "expected": "OK"
           },
-          "status": "in_progress",
-          "notes": "Creating TemplateCard component with GPU requirements badge following MachineCard patterns",
-          "updated_at": "2025-12-31T22:37:11.401865+00:00"
+          "status": "completed",
+          "notes": "Created TemplateCard component with GPU requirements badge following MachineCard.jsx patterns. Features: GPU requirements badge with min/recommended VRAM, VRAM tier classification, category badges, verified badge, compact/full modes, specs display, Deploy Now button. Verification passed. Commit: 1cd96f9",
+          "updated_at": "2025-12-31T22:38:20.909385+00:00"
         },
         {
           "id": "subtask-5-3",
@@ -597,5 +597,5 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2025-12-31T22:37:11.401880+00:00"
+  "last_updated": "2025-12-31T22:38:20.909401+00:00"
 }
