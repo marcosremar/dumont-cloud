@@ -26,7 +26,7 @@ from ..schemas.metrics import (
     ComparisonResponse,
     GpuComparisonItem,
 )
-from ..schemas.spot.reliability import ReliabilityScoreItem
+from ..schemas.spot.reliability import ReliabilityScoreItem, UptimeHistoryItem, UptimeHistoryResponse
 from ....config.database import get_session_factory
 from ....models.metrics import (
     MarketSnapshot,
@@ -772,6 +772,84 @@ async def get_machine_reliability(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Dados de confiabilidade não encontrados para máquina {machine_id}: {str(e)}"
+        )
+    finally:
+        db.close()
+
+
+@reliability_router.get("/machines/{machine_id}/history", response_model=UptimeHistoryResponse)
+async def get_machine_reliability_history(
+    machine_id: str = Path(..., description="ID da máquina"),
+    provider: str = Query("vast", description="Provider da máquina"),
+    days: int = Query(30, ge=1, le=90, description="Número de dias de histórico (máx 90)"),
+):
+    """
+    Retorna histórico de uptime e interrupções de uma máquina.
+
+    Dados diários dos últimos N dias (padrão: 30 dias) incluindo:
+    - Percentual de uptime por dia
+    - Contagem de interrupções
+    - Duração média de interrupções
+    - Resumo estatístico do período
+    """
+    db = get_session_factory()()
+    try:
+        # Calcular data de início
+        start_date = datetime.utcnow() - timedelta(days=days)
+
+        # Buscar registros de histórico
+        uptime_records = db.query(MachineUptimeHistory).filter(
+            MachineUptimeHistory.provider == provider,
+            MachineUptimeHistory.machine_id == machine_id,
+            MachineUptimeHistory.date >= start_date.date()
+        ).order_by(MachineUptimeHistory.date.desc()).all()
+
+        # Converter para items de resposta
+        history_items = [
+            UptimeHistoryItem(
+                date=record.date.isoformat() if record.date else None,
+                uptime_percentage=record.uptime_percentage or 0.0,
+                interruption_count=record.interruption_count or 0,
+                uptime_seconds=record.uptime_seconds,
+                avg_interruption_duration=record.avg_interruption_duration_seconds,
+            )
+            for record in uptime_records
+        ]
+
+        # Calcular resumo estatístico
+        summary = None
+        if uptime_records:
+            total_uptime = sum(r.uptime_percentage or 0 for r in uptime_records)
+            total_interruptions = sum(r.interruption_count or 0 for r in uptime_records)
+            avg_uptime = total_uptime / len(uptime_records)
+
+            # Encontrar min e max uptime
+            uptimes = [r.uptime_percentage for r in uptime_records if r.uptime_percentage is not None]
+            min_uptime = min(uptimes) if uptimes else 0
+            max_uptime = max(uptimes) if uptimes else 0
+
+            summary = {
+                "avg_uptime_percentage": round(avg_uptime, 2),
+                "min_uptime_percentage": round(min_uptime, 2),
+                "max_uptime_percentage": round(max_uptime, 2),
+                "total_interruptions": total_interruptions,
+                "days_with_data": len(uptime_records),
+            }
+
+        return UptimeHistoryResponse(
+            machine_id=machine_id,
+            provider=provider,
+            days_requested=days,
+            total_records=len(uptime_records),
+            history=history_items,
+            summary=summary,
+            generated_at=datetime.utcnow().isoformat(),
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar histórico de uptime para máquina {machine_id}: {str(e)}"
         )
     finally:
         db.close()

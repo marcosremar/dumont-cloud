@@ -26,3 +26,23 @@ class ReliabilityScoreResponse(BaseModel):
     excellent_providers: int
     avg_score: float
     generated_at: str
+
+
+class UptimeHistoryItem(BaseModel):
+    """Item de histórico de uptime diário."""
+    date: str = Field(..., description="Data no formato YYYY-MM-DD")
+    uptime_percentage: float = Field(..., ge=0, le=100, description="Percentual de uptime no dia")
+    interruption_count: int = Field(..., ge=0, description="Número de interrupções no dia")
+    uptime_seconds: Optional[int] = Field(default=None, description="Segundos de uptime no dia")
+    avg_interruption_duration: Optional[float] = Field(default=None, description="Duração média de interrupções em segundos")
+
+
+class UptimeHistoryResponse(BaseModel):
+    """Resposta do histórico de uptime de uma máquina."""
+    machine_id: str
+    provider: str
+    days_requested: int
+    total_records: int
+    history: List[UptimeHistoryItem]
+    summary: Optional[dict] = Field(default=None, description="Resumo estatístico do período")
+    generated_at: str
