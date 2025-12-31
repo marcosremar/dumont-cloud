@@ -575,11 +575,31 @@ export function Slider({ value = [0], onValueChange, min = 0, max = 100, step = 
 }
 
 // Dropdown Menu Components with state management
-const DropdownContext = React.createContext({ isOpen: false, setIsOpen: () => {} });
+const DropdownContext = React.createContext({ isOpen: false, setIsOpen: () => {}, triggerRef: null });
 
 export function DropdownMenu({ children }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const triggerRef = useRef(null);
+
+  // Handle Escape key
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+        // Return focus to trigger element after closing
+        triggerRef.current?.focus();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -596,7 +616,7 @@ export function DropdownMenu({ children }) {
   }, [isOpen]);
 
   return (
-    <DropdownContext.Provider value={{ isOpen, setIsOpen }}>
+    <DropdownContext.Provider value={{ isOpen, setIsOpen, triggerRef }}>
       <div ref={dropdownRef} className="relative inline-block">
         {children}
       </div>
@@ -605,7 +625,7 @@ export function DropdownMenu({ children }) {
 }
 
 export function DropdownMenuTrigger({ children, asChild, ...props }) {
-  const { isOpen, setIsOpen } = React.useContext(DropdownContext);
+  const { isOpen, setIsOpen, triggerRef } = React.useContext(DropdownContext);
 
   const handleClick = (e) => {
     e.stopPropagation();
@@ -613,9 +633,12 @@ export function DropdownMenuTrigger({ children, asChild, ...props }) {
   };
 
   if (asChild) {
-    return React.cloneElement(children, { onClick: handleClick });
+    return React.cloneElement(children, {
+      onClick: handleClick,
+      ref: triggerRef
+    });
   }
-  return <button onClick={handleClick} {...props}>{children}</button>;
+  return <button ref={triggerRef} onClick={handleClick} {...props}>{children}</button>;
 }
 
 export function DropdownMenuContent({ children, align = 'end', className = '' }) {
