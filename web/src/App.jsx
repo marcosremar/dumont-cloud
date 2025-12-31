@@ -23,6 +23,7 @@ import Models from './pages/Models'
 import Documentation from './pages/Documentation'
 import ButtonShowcase from './pages/ButtonShowcase'
 import ForgotPassword from './pages/ForgotPassword'
+import ShareableReportView from './components/tailadmin/reports/ShareableReportView'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import './styles/landing.css'
@@ -288,6 +289,9 @@ export default function App() {
               user ? <Navigate to="/app" replace /> : <Login onLogin={handleLogin} />
             } />
             <Route path="/esqueci-senha" element={<ForgotPassword />} />
+
+            {/* Shareable Reports - Public route (no auth required) */}
+            <Route path="/reports/:id" element={<ShareableReportView />} />
 
             {/* Rotas Protegidas (requer login) */}
             <Route path="/app" element={
