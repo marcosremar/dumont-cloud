@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "018-cost-prediction-dashboard",
+  "state": "building",
+  "subtasks": {
+    "completed": 6,
+    "total": 22,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Cost Forecast API Endpoints",
+    "id": null,
+    "total": 4
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 7,
+    "started_at": "2025-12-31T23:15:09.248371"
+  },
+  "last_update": "2025-12-31T23:43:53.691733"
+}

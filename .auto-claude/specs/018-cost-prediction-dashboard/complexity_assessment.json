@@ -1,0 +1,74 @@
+{
+  "complexity": "complex",
+  "workflow_type": "feature",
+  "confidence": 0.90,
+  "reasoning": "Multiple integrations (ML price prediction service + calendar system), infrastructure changes (database for historical tracking), cross-cutting architecture (frontend, backend, ML, alerts), and research required for both integrations. Financial predictions and budget alerts are high-stakes features requiring careful design.",
+
+  "analysis": {
+    "scope": {
+      "estimated_files": 15,
+      "estimated_services": 3,
+      "is_cross_cutting": true,
+      "notes": "Dashboard components, API endpoints, ML service integration, alert system, calendar sync, database models - touches frontend, backend, ML, and notification layers"
+    },
+    "integrations": {
+      "external_services": ["ML Price Prediction Service", "Calendar System", "Alert/Notification System"],
+      "new_dependencies": ["calendar-api-client", "potentially ML libraries"],
+      "research_needed": true,
+      "notes": "Need to understand existing price prediction service API, research calendar integration patterns, and potentially notification service APIs"
+    },
+    "infrastructure": {
+      "docker_changes": false,
+      "database_changes": true,
+      "config_changes": true,
+      "notes": "Database schema needed for historical predictions, budget thresholds, forecast data, calendar sync. New env vars for ML endpoints, calendar credentials, alert thresholds"
+    },
+    "knowledge": {
+      "patterns_exist": false,
+      "research_required": true,
+      "unfamiliar_tech": ["calendar-integration-apis", "ml-forecasting-patterns"],
+      "notes": "Need to research existing ML service architecture, calendar API patterns, and forecasting accuracy tracking mechanisms"
+    },
+    "risk": {
+      "level": "high",
+      "concerns": [
+        "ML prediction accuracy affects user trust and financial decisions",
+        "Budget alerts have real financial impact - must be reliable",
+        "Calendar integration security and data privacy",
+        "Performance of real-time forecasting calculations",
+        "Historical data storage and retrieval at scale",
+        "User data privacy for usage patterns"
+      ],
+      "notes": "Financial predictions and budget alerts are high-stakes features. Users will make spending decisions based on forecasts. Calendar access requires careful security handling."
+    }
+  },
+
+  "recommended_phases": [
+    "discovery",
+    "requirements",
+    "research",
+    "context",
+    "spec_writing",
+    "self_critique",
+    "planning",
+    "validation"
+  ],
+
+  "flags": {
+    "needs_research": true,
+    "needs_self_critique": true,
+    "needs_infrastructure_setup": true
+  },
+
+  "validation_recommendations": {
+    "risk_level": "high",
+    "skip_validation": false,
+    "minimal_mode": false,
+    "test_types_required": ["unit", "integration", "e2e"],
+    "security_scan_required": true,
+    "staging_deployment_required": false,
+    "reasoning": "Financial predictions and budget alerts are high-stakes features requiring comprehensive testing. Security scan needed for calendar integration and user data privacy. E2E tests critical to verify forecasting accuracy and alert reliability."
+  },
+
+  "created_at": "2025-12-31T00:00:00Z"
+}

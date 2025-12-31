@@ -1,0 +1,4 @@
+{
+  "task_description": "# Cost Prediction Dashboard\n\nPredictive analytics dashboard showing estimated costs for planned workloads. Uses ML to forecast spot prices and suggest optimal timing.\n\n## Rationale\nBuilds on existing price prediction service. Addresses budget planning needs. Differentiates from competitors with no cost forecasting. Helps users time spot purchases.\n\n## User Stories\n- As a budget-conscious user, I want to forecast my GPU costs so that I can plan my monthly spending\n- As a researcher, I want to know the best time to run my training job so that I minimize costs\n\n## Acceptance Criteria\n- [ ] Forecast costs for next 7 days based on usage patterns\n- [ ] Show optimal timing for planned jobs\n- [ ] Budget alerts when forecasted spending exceeds threshold\n- [ ] Historical accuracy tracking for predictions\n- [ ] Integration with calendar for scheduled workloads\n",
+  "workflow_type": "feature"
+}

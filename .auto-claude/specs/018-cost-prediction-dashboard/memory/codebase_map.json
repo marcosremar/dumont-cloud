@@ -1,0 +1,20 @@
+{
+  "discovered_files": {
+    "src/models/metrics.py": {
+      "description": "CostForecast model added for 7-day cost forecasting. Uses JSONB for hourly_prices (168 hours), daily_costs, confidence_intervals, and usage_pattern. Includes best_window_* fields for optimal timing recommendations.",
+      "category": "database_model",
+      "discovered_at": "2025-12-31T22:27:45.859171+00:00"
+    },
+    "src/services/price_prediction_service.py": {
+      "description": "Added calculate_mape method for computing MAPE, MAE, RMSE, R\u00b2 accuracy metrics comparing predictions with actual MarketSnapshot data. Also added get_accuracy_history for querying historical accuracy. PredictionAccuracy model stores these metrics with hourly/daily breakdowns.",
+      "category": "feature",
+      "discovered_at": "2025-12-31T22:32:19.681450+00:00"
+    },
+    "src/api/v1/endpoints/spot/cost_forecast.py": {
+      "description": "Cost forecast endpoint created at GET /cost-forecast/{gpu_name}. Returns 7-day cost predictions with daily aggregations and confidence intervals. Uses PricePredictionService.forecast_costs_7day(). Query params: usage_hours_per_day (default 8), machine_type (default interruptible). Schema file at src/api/v1/schemas/spot/cost_forecast.py.",
+      "category": "api_endpoint",
+      "discovered_at": "2025-12-31T22:36:17.466820+00:00"
+    }
+  },
+  "last_updated": "2025-12-31T22:36:17.466837+00:00"
+}
