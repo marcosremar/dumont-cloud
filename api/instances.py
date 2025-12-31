@@ -1,11 +1,15 @@
 """
 API Routes para gerenciamento de instancias GPU
 """
+import logging
 import subprocess
 import time
 from flask import Blueprint, jsonify, request, g
 from src.services import VastService, ResticService
 from src.services.codeserver_service import CodeServerService, CodeServerConfig
+from src.services.region_service import RegionService
+
+logger = logging.getLogger(__name__)
 
 instances_bp = Blueprint('instances', __name__, url_prefix='/api')
 
@@ -234,6 +238,12 @@ def get_restic_service() -> ResticService:
     )
 
 
+def get_region_service() -> RegionService:
+    """Factory para criar RegionService com API key do usuario"""
+    api_key = getattr(g, 'vast_api_key', '')
+    return RegionService(api_key)
+
+
 @instances_bp.route('/offers')
 def list_offers():
     """Lista ofertas de GPU disponiveis"""
@@ -282,13 +292,116 @@ def list_instances():
 
 @instances_bp.route('/instances', methods=['POST'])
 def create_instance():
-    """Cria uma nova instancia com Tailscale opcional"""
+    """
+    Cria uma nova instancia com suporte a regiao e failover.
+
+    Request body:
+        offer_id: ID da oferta (obrigatorio se region nao especificado)
+        region: ID da regiao (e.g., "eu-de", "na-us-ca") para selecao automatica
+        gpu_name: Nome da GPU para filtro (opcional, usado com region)
+        max_price: Preco maximo por hora (opcional, usado com region)
+        image: Imagem Docker (opcional)
+        enable_failover: Habilita failover automatico para a regiao (default: True)
+        fallback_regions: Lista de regioes de fallback para failover (opcional)
+
+    Se region for especificado sem offer_id, a melhor oferta da regiao sera selecionada.
+    Se ambos forem especificados, offer_id tem precedencia.
+    """
     vast = get_vast_service()
-    data = request.get_json()
+    region_service = get_region_service()
+    data = request.get_json() or {}
 
     offer_id = data.get('offer_id')
-    if not offer_id:
-        return jsonify({'error': 'offer_id obrigatorio'}), 400
+    region = data.get('region')
+    gpu_name = data.get('gpu_name')
+    max_price = data.get('max_price', 2.0)
+    enable_failover = data.get('enable_failover', True)
+    fallback_regions = data.get('fallback_regions', [])
+
+    # Validar entrada: precisa de offer_id ou region
+    if not offer_id and not region:
+        return jsonify({
+            'error': 'offer_id ou region obrigatorio',
+            'details': 'Especifique um offer_id direto ou uma region para selecao automatica'
+        }), 400
+
+    selected_region = None
+    region_metadata = None
+
+    # Se region especificado sem offer_id, buscar melhor oferta na regiao
+    if region and not offer_id:
+        logger.info(f"Buscando ofertas na regiao {region} (gpu={gpu_name}, max_price={max_price})")
+
+        # Verificar disponibilidade na regiao
+        availability = region_service.check_region_availability(
+            region_id=region,
+            gpu_name=gpu_name,
+            num_gpus=1,
+            max_price=max_price,
+        )
+
+        if not availability.get('available', False):
+            # Tentar regioes de fallback se configuradas
+            if fallback_regions:
+                for fallback_region in fallback_regions:
+                    logger.info(f"Regiao {region} sem ofertas, tentando fallback: {fallback_region}")
+                    fallback_availability = region_service.check_region_availability(
+                        region_id=fallback_region,
+                        gpu_name=gpu_name,
+                        num_gpus=1,
+                        max_price=max_price,
+                    )
+                    if fallback_availability.get('available', False):
+                        region = fallback_region
+                        availability = fallback_availability
+                        break
+
+            # Se ainda nao disponivel apos fallbacks
+            if not availability.get('available', False):
+                return jsonify({
+                    'error': f'Nenhuma oferta disponivel na regiao {region}',
+                    'region': region,
+                    'gpu_name': gpu_name,
+                    'max_price': max_price,
+                    'fallback_regions_tried': fallback_regions,
+                    'suggestion': 'Tente aumentar max_price ou escolher outra regiao'
+                }), 404
+
+        # Buscar ofertas na regiao selecionada
+        offers = vast.search_offers_by_region_id(
+            region_id=region,
+            gpu_name=gpu_name,
+            num_gpus=1,
+            max_price=max_price,
+            limit=10,
+        )
+
+        if not offers:
+            return jsonify({
+                'error': f'Nenhuma oferta encontrada na regiao {region}',
+                'region': region,
+            }), 404
+
+        # Selecionar melhor oferta (menor preco com boa confiabilidade)
+        offers.sort(key=lambda o: (
+            -o.get('reliability2', 0),  # Maior confiabilidade primeiro
+            o.get('dph_total', float('inf'))  # Menor preco
+        ))
+        best_offer = offers[0]
+        offer_id = best_offer.get('id')
+        selected_region = region
+        region_metadata = region_service.get_region_metadata(region)
+
+        logger.info(
+            f"Oferta selecionada: {offer_id} em {region} "
+            f"(${best_offer.get('dph_total', 0):.3f}/hr, "
+            f"reliability={best_offer.get('reliability2', 0):.2f})"
+        )
+
+    # Se offer_id foi especificado diretamente, obter info da regiao
+    elif offer_id and region:
+        selected_region = region
+        region_metadata = region_service.get_region_metadata(region)
 
     image = data.get('image', 'pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime')
 
@@ -296,16 +409,45 @@ def create_instance():
     user_settings = getattr(g, 'user_settings', {})
     tailscale_authkey = user_settings.get('tailscale_authkey')
 
+    # Criar instancia
     instance_id = vast.create_instance(
         offer_id=offer_id,
         image=image,
         tailscale_authkey=tailscale_authkey,
-        instance_id_hint=offer_id,  # Usar offer_id como hint para hostname
+        instance_id_hint=offer_id,
     )
-    if instance_id:
-        return jsonify({'instance_id': instance_id, 'success': True})
-    else:
+
+    if not instance_id:
         return jsonify({'error': 'Falha ao criar instancia'}), 500
+
+    # Montar resposta com info de regiao e failover
+    response = {
+        'success': True,
+        'instance_id': instance_id,
+        'offer_id': offer_id,
+    }
+
+    # Adicionar info de regiao se disponivel
+    if selected_region:
+        response['region'] = {
+            'region_id': selected_region,
+            'metadata': region_metadata,
+        }
+
+    # Adicionar configuracao de failover
+    if enable_failover and selected_region:
+        response['failover'] = {
+            'enabled': True,
+            'primary_region': selected_region,
+            'fallback_regions': fallback_regions,
+            'strategy': 'region_aware',
+        }
+        logger.info(
+            f"Failover habilitado para instancia {instance_id}: "
+            f"primary={selected_region}, fallbacks={fallback_regions}"
+        )
+
+    return jsonify(response), 201
 
 
 @instances_bp.route('/instances/<int:instance_id>')
