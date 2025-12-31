@@ -172,7 +172,8 @@ function Toast({ message, title = 'Saldo Baixo!', type = 'warning', onClose }) {
       position: 'fixed',
       top: '20px',
       right: isVisible && !isLeaving ? '20px' : '-400px',
-      width: '360px',
+      width: 'calc(100% - 40px)',
+      maxWidth: '360px',
       backgroundColor: '#1c2128',
       borderRadius: '12px',
       border: `2px solid ${bgColor}`,
@@ -1300,62 +1301,45 @@ export default function Settings() {
             />
           </div>
 
-          <div style={{
-            background: '#0d1117',
-            borderRadius: '8px',
-            padding: '16px',
-            marginTop: '16px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ color: '#9ca3af' }}>Storage ({r2Costs.effectiveStorage} GB efetivo)</span>
-              <span style={{ color: '#c9d1d9' }}>${r2Costs.storage.toFixed(3)}/mes</span>
+          <div className="bg-dark-surface rounded-lg p-4 mt-4">
+            <div className="flex flex-col xsm:flex-row justify-between mb-3 gap-1">
+              <span className="text-gray-400">Storage ({r2Costs.effectiveStorage} GB efetivo)</span>
+              <span className="text-gray-200">${r2Costs.storage.toFixed(3)}/mes</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ color: '#9ca3af' }}>Operacoes (~{r2Costs.syncsPerMonth.toLocaleString()} syncs/mes)</span>
-              <span style={{ color: '#c9d1d9' }}>${r2Costs.operations.toFixed(3)}/mes</span>
+            <div className="flex flex-col xsm:flex-row justify-between mb-3 gap-1">
+              <span className="text-gray-400 break-words">Operacoes (~{r2Costs.syncsPerMonth.toLocaleString()} syncs/mes)</span>
+              <span className="text-gray-200">${r2Costs.operations.toFixed(3)}/mes</span>
             </div>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              borderTop: '1px solid #30363d',
-              paddingTop: '12px',
-              marginTop: '4px'
-            }}>
-              <span style={{ color: '#c9d1d9', fontWeight: '600' }}>Total Estimado</span>
-              <span style={{ color: '#3fb950', fontWeight: '700', fontSize: '1.1em' }}>
+            <div className="flex flex-col xsm:flex-row justify-between border-t border-white/10 pt-3 mt-1 gap-1">
+              <span className="text-gray-200 font-semibold">Total Estimado</span>
+              <span className="text-success-400 font-bold text-lg">
                 ${r2Costs.total.toFixed(2)}/mes
               </span>
             </div>
           </div>
 
-          <small style={{ color: '#6e7681', marginTop: '12px', display: 'block' }}>
+          <small className="text-gray-500 mt-3 block text-xs">
             * Estimativa baseada em ~70% de deduplicacao pelo Restic e ~50 operacoes por sync.
             Egress (download) e gratuito no R2.
           </small>
 
-          <div style={{
-            background: '#1c2128',
-            borderRadius: '8px',
-            padding: '12px',
-            marginTop: '16px',
-            fontSize: '13px'
-          }}>
-            <strong style={{ color: '#58a6ff' }}>Comparativo de Intervalos:</strong>
-            <div style={{ marginTop: '8px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-              <div style={{ textAlign: 'center', padding: '8px', background: '#0d1117', borderRadius: '4px' }}>
-                <div style={{ color: '#9ca3af', fontSize: '11px' }}>30 segundos</div>
-                <div style={{ color: '#3fb950', fontWeight: '600' }}>~$0.25/mes</div>
+          <div className="bg-dark-surface-card rounded-lg p-3 mt-4 text-[13px]">
+            <strong className="text-blue-light-500">Comparativo de Intervalos:</strong>
+            <div className="mt-2 grid grid-cols-1 xsm:grid-cols-3 gap-2">
+              <div className="text-center p-2 bg-dark-surface rounded">
+                <div className="text-gray-400 text-[11px]">30 segundos</div>
+                <div className="text-success-400 font-semibold">~$0.25/mes</div>
               </div>
-              <div style={{ textAlign: 'center', padding: '8px', background: '#0d1117', borderRadius: '4px' }}>
-                <div style={{ color: '#9ca3af', fontSize: '11px' }}>1 minuto</div>
-                <div style={{ color: '#3fb950', fontWeight: '600' }}>~$0.15/mes</div>
+              <div className="text-center p-2 bg-dark-surface rounded">
+                <div className="text-gray-400 text-[11px]">1 minuto</div>
+                <div className="text-success-400 font-semibold">~$0.15/mes</div>
               </div>
-              <div style={{ textAlign: 'center', padding: '8px', background: '#0d1117', borderRadius: '4px' }}>
-                <div style={{ color: '#9ca3af', fontSize: '11px' }}>5 minutos</div>
-                <div style={{ color: '#3fb950', fontWeight: '600' }}>~$0.07/mes</div>
+              <div className="text-center p-2 bg-dark-surface rounded">
+                <div className="text-gray-400 text-[11px]">5 minutos</div>
+                <div className="text-success-400 font-semibold">~$0.07/mes</div>
               </div>
             </div>
-            <div style={{ color: '#9ca3af', marginTop: '8px', fontSize: '11px' }}>
+            <div className="text-gray-400 mt-2 text-[11px]">
               * Valores para 10GB de dados
             </div>
           </div>
