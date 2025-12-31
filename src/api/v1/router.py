@@ -5,7 +5,7 @@ from fastapi import APIRouter
 
 from .endpoints import auth, instances, snapshots, settings, metrics, ai_wizard, standby, agent, savings, advisor, hibernation, finetune, chat
 from .endpoints import warmpool, failover_settings, failover, serverless, spot_deploy, machine_history, jobs, models
-from .endpoints import market, hosts
+from .endpoints import market, hosts, webhooks
 from .endpoints.settings import balance_router
 from .endpoints.spot import router as spot_router
 
@@ -63,3 +63,6 @@ api_router.include_router(market.router, tags=["Market"])
 
 # Hosts - Host management and blacklist
 api_router.include_router(hosts.router, tags=["Hosts"])
+
+# Webhooks - Webhook configuration and delivery
+api_router.include_router(webhooks.router, tags=["Webhooks"])
