@@ -45,6 +45,7 @@ import {
   Info,
   Clock,
   Hash,
+  Activity,
 } from 'lucide-react'
 import HibernationConfigModal from '../HibernationConfigModal'
 import FailoverMigrationModal from '../FailoverMigrationModal'
@@ -190,6 +191,23 @@ export default function MachineCard({
   }
 
   const statusDisplay = getStatusDisplay(status)
+
+  // Get reliability score badge color based on score thresholds
+  const getReliabilityBadge = (score) => {
+    if (score === null || score === undefined) {
+      return { variant: 'gray', label: 'N/A' }
+    }
+    const numScore = Number(score)
+    if (numScore > 80) {
+      return { variant: 'success', label: `${Math.round(numScore)}` }
+    } else if (numScore >= 60) {
+      return { variant: 'warning', label: `${Math.round(numScore)}` }
+    } else {
+      return { variant: 'error', label: `${Math.round(numScore)}` }
+    }
+  }
+  const reliabilityScore = machine.reliability_score
+  const reliabilityBadge = getReliabilityBadge(reliabilityScore)
 
   const cpuStandby = machine.cpu_standby
   const hasCpuStandby = cpuStandby?.enabled
@@ -438,6 +456,16 @@ export default function MachineCard({
             <span className="text-gray-900 dark:text-white font-semibold text-sm truncate">{gpuName}</span>
             <Badge variant={statusDisplay.variant} dot className={`text-[9px] ${statusDisplay.animate ? 'animate-pulse' : ''}`}>
               {statusDisplay.label}
+            </Badge>
+            {/* Reliability Score Badge */}
+            <Badge
+              variant={reliabilityBadge.variant}
+              className="text-[9px]"
+              title={`Reliability Score: ${reliabilityScore !== null && reliabilityScore !== undefined ? Math.round(reliabilityScore) : 'N/A'}/100`}
+              data-testid="reliability-badge"
+            >
+              <Activity className="w-2.5 h-2.5 mr-0.5" />
+              {reliabilityBadge.label}
             </Badge>
           </div>
           <div className="flex items-center gap-1 flex-wrap">
