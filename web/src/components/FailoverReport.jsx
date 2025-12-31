@@ -274,6 +274,7 @@ const RealFailoverCard = ({ test }) => {
           ? 'border-brand-500/30 bg-brand-500/5'
           : 'border-red-500/30 bg-red-500/5'
       }`}
+      data-testid={`real-failover-card-${test.failover_id}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
@@ -518,7 +519,7 @@ export default function FailoverReport({ isDemo = true }) {
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="p-6" data-testid="failover-loading">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-700/50 rounded w-1/3"></div>
           <div className="grid grid-cols-4 gap-4">
@@ -534,7 +535,7 @@ export default function FailoverReport({ isDemo = true }) {
   return (
     <div className="space-y-6" data-testid="failover-report">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" data-testid="failover-header">
         <div className="flex items-center gap-3">
           <div className="stat-card-icon stat-card-icon-error">
             <Zap className="w-5 h-5" />
@@ -546,12 +547,13 @@ export default function FailoverReport({ isDemo = true }) {
         </div>
 
         {/* Time Range Selector */}
-        <div className="ta-tabs">
+        <div className="ta-tabs" data-testid="failover-time-range">
           {['7d', '30d', '90d'].map(range => (
             <button
               key={range}
               onClick={() => setTimeRange(range)}
               className={`ta-tab ${timeRange === range ? 'ta-tab-active' : ''}`}
+              data-testid={`failover-time-range-${range}`}
             >
               {range === '7d' ? '7 dias' : range === '30d' ? '30 dias' : '90 dias'}
             </button>
