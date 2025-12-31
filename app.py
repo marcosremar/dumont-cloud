@@ -10,6 +10,7 @@ from flask import Flask, g, session, redirect, url_for, request, Response, jsoni
 from flask_cors import CORS
 from functools import wraps
 import requests
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST, REGISTRY
 
 # Adiciona src ao path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -311,6 +312,27 @@ def create_app():
                 }
 
         return jsonify(results)
+
+    # ========== PROMETHEUS METRICS ENDPOINT ==========
+
+    @app.route('/metrics')
+    def prometheus_metrics():
+        """
+        Exposes Prometheus metrics for scraping.
+        Returns all metrics from the default Prometheus registry in text format.
+
+        Used by Prometheus to scrape snapshot, scheduler, and other app metrics.
+        """
+        # Initialize snapshot metrics on first access to ensure they're registered
+        try:
+            from src.services.snapshot_metrics import get_snapshot_metrics
+            get_snapshot_metrics()
+        except ImportError:
+            pass  # Metrics module not yet available
+
+        # Generate metrics in Prometheus text format
+        metrics_output = generate_latest(REGISTRY)
+        return Response(metrics_output, mimetype=CONTENT_TYPE_LATEST)
 
     # ========== SETTINGS ROUTES ==========
 
