@@ -270,7 +270,9 @@
             "command": "test -d web/src/components/marketplace && echo 'OK' || echo 'FAIL'",
             "expected": "OK"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Created marketplace components directory with .gitkeep file. Verification passed.",
+          "updated_at": "2025-12-31T22:36:21.369244+00:00"
         },
         {
           "id": "subtask-5-2",
@@ -288,7 +290,9 @@
             "command": "grep -q \"export.*TemplateCard\" web/src/components/marketplace/TemplateCard.jsx && echo 'OK' || echo 'FAIL'",
             "expected": "OK"
           },
-          "status": "pending"
+          "status": "in_progress",
+          "notes": "Creating TemplateCard component with GPU requirements badge following MachineCard patterns",
+          "updated_at": "2025-12-31T22:37:11.401865+00:00"
         },
         {
           "id": "subtask-5-3",
@@ -593,5 +597,5 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2025-12-31T22:35:27.159631+00:00"
+  "last_updated": "2025-12-31T22:37:11.401880+00:00"
 }
