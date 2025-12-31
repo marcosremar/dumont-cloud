@@ -1,0 +1,15 @@
+{
+  "discovered_files": {
+    "web/src/components/tailadmin-ui/index.jsx": {
+      "description": "TailAdmin DropdownMenu (lines 577-665) is a custom implementation lacking keyboard accessibility. Only has click-outside to close. The Radix UI version at web/src/components/ui/dropdown-menu.jsx already has full keyboard support.",
+      "category": "accessibility",
+      "discovered_at": "2025-12-31T21:22:43.121887+00:00"
+    },
+    "web/src/components/machines/MachineCard.jsx": {
+      "description": "MachineCard uses TailAdmin DropdownMenu for the action menu (lines 621-665). This is the primary use case that needs keyboard accessibility.",
+      "category": "usage",
+      "discovered_at": "2025-12-31T21:22:43.369095+00:00"
+    }
+  },
+  "last_updated": "2025-12-31T21:22:43.369562+00:00"
+}

@@ -595,6 +595,20 @@ export function DropdownMenu({ children }) {
     }
   }, [isOpen]);
 
+  // Close dropdown when Escape key is pressed
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen]);
+
   return (
     <DropdownContext.Provider value={{ isOpen, setIsOpen }}>
       <div ref={dropdownRef} className="relative inline-block">
