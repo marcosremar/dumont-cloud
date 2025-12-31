@@ -10,8 +10,9 @@ Executa limpeza periodica de snapshots expirados:
 """
 
 import logging
+from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Callable
 
 from src.services.agent_manager import Agent
 from src.config.snapshot_lifecycle_config import (
@@ -28,6 +29,98 @@ from src.models.snapshot_metadata import (
 logger = logging.getLogger(__name__)
 
 
+class SnapshotRepository(ABC):
+    """
+    Interface abstrata para repositorio de snapshots.
+
+    Permite injecao de dependencia para testes e diferentes backends
+    de armazenamento de metadados de snapshots.
+    """
+
+    @abstractmethod
+    def get_all_active_snapshots(self) -> List[SnapshotMetadata]:
+        """
+        Retorna todos os snapshots ativos.
+
+        Returns:
+            Lista de metadados de snapshots ativos
+        """
+        pass
+
+    @abstractmethod
+    def get_snapshots_by_instance(self, instance_id: str) -> List[SnapshotMetadata]:
+        """
+        Retorna snapshots de uma instancia especifica.
+
+        Args:
+            instance_id: ID da instancia
+
+        Returns:
+            Lista de metadados de snapshots
+        """
+        pass
+
+    @abstractmethod
+    def update_snapshot(self, snapshot: SnapshotMetadata) -> bool:
+        """
+        Atualiza metadados de um snapshot.
+
+        Args:
+            snapshot: Metadados atualizados
+
+        Returns:
+            True se atualizado com sucesso
+        """
+        pass
+
+
+class InMemorySnapshotRepository(SnapshotRepository):
+    """
+    Repositorio de snapshots em memoria.
+
+    Usado para testes e desenvolvimento.
+    """
+
+    def __init__(self, snapshots: Optional[List[SnapshotMetadata]] = None):
+        self._snapshots: Dict[str, SnapshotMetadata] = {}
+        if snapshots:
+            for s in snapshots:
+                self._snapshots[s.snapshot_id] = s
+
+    def add_snapshot(self, snapshot: SnapshotMetadata) -> None:
+        """Adiciona um snapshot ao repositorio."""
+        self._snapshots[snapshot.snapshot_id] = snapshot
+
+    def get_all_active_snapshots(self) -> List[SnapshotMetadata]:
+        """Retorna todos os snapshots ativos."""
+        return [
+            s for s in self._snapshots.values()
+            if s.status == SnapshotStatus.ACTIVE
+        ]
+
+    def get_snapshots_by_instance(self, instance_id: str) -> List[SnapshotMetadata]:
+        """Retorna snapshots de uma instancia especifica."""
+        return [
+            s for s in self._snapshots.values()
+            if s.instance_id == instance_id and s.status == SnapshotStatus.ACTIVE
+        ]
+
+    def update_snapshot(self, snapshot: SnapshotMetadata) -> bool:
+        """Atualiza metadados de um snapshot."""
+        if snapshot.snapshot_id in self._snapshots:
+            self._snapshots[snapshot.snapshot_id] = snapshot
+            return True
+        return False
+
+    def get_snapshot(self, snapshot_id: str) -> Optional[SnapshotMetadata]:
+        """Retorna um snapshot pelo ID."""
+        return self._snapshots.get(snapshot_id)
+
+    def clear(self) -> None:
+        """Limpa todos os snapshots."""
+        self._snapshots.clear()
+
+
 class SnapshotCleanupAgent(Agent):
     """
     Agente que executa limpeza automatica de snapshots expirados.
@@ -41,6 +134,8 @@ class SnapshotCleanupAgent(Agent):
         interval_hours: int = 24,
         dry_run: bool = False,
         batch_size: int = 100,
+        snapshot_repository: Optional[SnapshotRepository] = None,
+        lifecycle_manager: Optional[SnapshotLifecycleManager] = None,
     ):
         """
         Inicializa o agente de limpeza de snapshots.
@@ -49,14 +144,19 @@ class SnapshotCleanupAgent(Agent):
             interval_hours: Intervalo entre ciclos de limpeza em horas (padrao: 24)
             dry_run: Se True, apenas simula a limpeza sem deletar (padrao: False)
             batch_size: Quantidade de snapshots a processar por lote (padrao: 100)
+            snapshot_repository: Repositorio de snapshots (injecao de dependencia)
+            lifecycle_manager: Manager de lifecycle (injecao de dependencia)
         """
         super().__init__(name="SnapshotCleanup")
         self.interval_seconds = interval_hours * 3600
         self.dry_run = dry_run
         self.batch_size = batch_size
 
+        # Injecao de dependencia para repositorio de snapshots
+        self._snapshot_repository: Optional[SnapshotRepository] = snapshot_repository
+
         # Lifecycle manager para configuracoes
-        self._lifecycle_manager: Optional[SnapshotLifecycleManager] = None
+        self._lifecycle_manager: Optional[SnapshotLifecycleManager] = lifecycle_manager
 
         # Estatisticas do ciclo atual
         self.current_cycle_stats: Dict[str, Any] = {
@@ -73,10 +173,24 @@ class SnapshotCleanupAgent(Agent):
 
     @property
     def lifecycle_manager(self) -> SnapshotLifecycleManager:
-        """Lazy load do lifecycle manager"""
+        """Lazy load do lifecycle manager."""
         if self._lifecycle_manager is None:
             self._lifecycle_manager = get_snapshot_lifecycle_manager()
         return self._lifecycle_manager
+
+    @property
+    def snapshot_repository(self) -> Optional[SnapshotRepository]:
+        """Retorna o repositorio de snapshots."""
+        return self._snapshot_repository
+
+    def set_snapshot_repository(self, repository: SnapshotRepository) -> None:
+        """
+        Define o repositorio de snapshots.
+
+        Args:
+            repository: Repositorio a ser usado
+        """
+        self._snapshot_repository = repository
 
     def run(self):
         """Loop principal do agente."""
@@ -155,49 +269,122 @@ class SnapshotCleanupAgent(Agent):
         """
         Identifica snapshots que expiraram e devem ser deletados.
 
+        Logica de identificacao:
+        1. Obtem todos os snapshots ativos do repositorio
+        2. Para cada snapshot, verifica se expirou baseado em:
+           - keep_forever: Se True, nunca expira
+           - retention_days do snapshot (ou da instancia/global)
+           - Idade do snapshot (now - created_at)
+        3. Retorna lista de snapshots expirados ordenada por idade (mais antigos primeiro)
+
         Returns:
             Lista de snapshots expirados
         """
-        expired = []
+        expired: List[SnapshotMetadata] = []
+
+        # Se nao ha repositorio configurado, nao ha snapshots para processar
+        if self._snapshot_repository is None:
+            logger.warning("Nenhum repositorio de snapshots configurado")
+            return expired
+
+        # Obter configuracao global
         global_config = self.lifecycle_manager.get_global_config()
         default_retention = global_config.default_retention_days
 
-        # Iterar por todas as instancias configuradas
-        instance_configs = self.lifecycle_manager.list_instance_configs()
+        # Obter todos os snapshots ativos do repositorio
+        all_snapshots = self._snapshot_repository.get_all_active_snapshots()
+        logger.debug(f"Verificando {len(all_snapshots)} snapshots ativos")
 
-        for instance_id, instance_config in instance_configs.items():
-            # Verificar se cleanup esta habilitado para esta instancia
-            if not instance_config.is_cleanup_enabled(global_config):
-                logger.debug(f"Cleanup desabilitado para instancia {instance_id}")
+        # Cache de configuracoes por instancia para evitar lookups repetidos
+        instance_config_cache: Dict[str, Any] = {}
+
+        for snapshot in all_snapshots:
+            # 1. Verificar keep_forever - nunca expira
+            if snapshot.keep_forever:
+                logger.debug(f"Snapshot {snapshot.snapshot_id} tem keep_forever=True, ignorando")
                 continue
 
-            # Obter snapshots da instancia (placeholder - sera implementado em subtask posterior)
-            instance_snapshots = self._get_instance_snapshots(instance_id)
+            # 2. Verificar status - apenas snapshots ACTIVE podem expirar
+            if snapshot.status != SnapshotStatus.ACTIVE:
+                logger.debug(f"Snapshot {snapshot.snapshot_id} nao esta ativo (status={snapshot.status.value})")
+                continue
 
-            # Obter retencao efetiva para esta instancia
-            effective_retention = instance_config.get_effective_retention_days(global_config)
+            # 3. Obter configuracao de retencao efetiva
+            effective_retention = self._get_effective_retention_for_snapshot(
+                snapshot, global_config, instance_config_cache
+            )
 
-            for snapshot in instance_snapshots:
-                # Verificar se snapshot expirou
-                if snapshot.is_expired(effective_retention):
-                    # Verificar keep_forever
-                    if snapshot.keep_forever:
-                        logger.debug(f"Snapshot {snapshot.snapshot_id} tem keep_forever=True, ignorando")
-                        continue
+            # 4. Verificar se snapshot expirou
+            if effective_retention == 0:
+                # retention_days=0 significa "manter indefinidamente"
+                logger.debug(f"Snapshot {snapshot.snapshot_id} tem retencao=0 (manter indefinidamente)")
+                continue
 
-                    logger.debug(f"Snapshot {snapshot.snapshot_id} expirou "
-                                f"(idade={snapshot.get_age_days()} dias, retencao={effective_retention})")
-                    expired.append(snapshot)
+            if snapshot.is_expired(effective_retention):
+                age_days = snapshot.get_age_days()
+                logger.debug(f"Snapshot {snapshot.snapshot_id} expirou "
+                            f"(idade={age_days} dias, retencao={effective_retention} dias)")
+                expired.append(snapshot)
 
-        logger.info(f"Identificados {len(expired)} snapshots expirados")
+        # Ordenar por idade (mais antigos primeiro) para deletar os mais antigos primeiro
+        expired.sort(key=lambda s: s.created_at)
+
+        logger.info(f"Identificados {len(expired)} snapshots expirados de {len(all_snapshots)} ativos")
         return expired
+
+    def _get_effective_retention_for_snapshot(
+        self,
+        snapshot: SnapshotMetadata,
+        global_config: SnapshotLifecycleConfig,
+        instance_config_cache: Dict[str, Any],
+    ) -> int:
+        """
+        Calcula o periodo de retencao efetivo para um snapshot.
+
+        Ordem de precedencia:
+        1. retention_days do snapshot (se definido)
+        2. retention_days da instancia (se configurado)
+        3. retention_days global (default: 7)
+
+        Args:
+            snapshot: Metadados do snapshot
+            global_config: Configuracao global
+            instance_config_cache: Cache de configuracoes de instancia
+
+        Returns:
+            Dias de retencao efetivos (0 = manter indefinidamente)
+        """
+        # 1. Verificar se snapshot tem retention_days proprio
+        if snapshot.retention_days is not None:
+            return snapshot.retention_days
+
+        # 2. Verificar configuracao da instancia
+        instance_id = snapshot.instance_id
+        if instance_id:
+            # Usar cache para evitar lookups repetidos
+            if instance_id not in instance_config_cache:
+                instance_config = self.lifecycle_manager.get_instance_config(instance_id)
+                instance_config_cache[instance_id] = {
+                    'config': instance_config,
+                    'effective_retention': instance_config.get_effective_retention_days(global_config),
+                    'cleanup_enabled': instance_config.is_cleanup_enabled(global_config),
+                }
+
+            cached = instance_config_cache[instance_id]
+
+            # Verificar se cleanup esta habilitado para esta instancia
+            if not cached['cleanup_enabled']:
+                logger.debug(f"Cleanup desabilitado para instancia {instance_id}")
+                return 0  # 0 = nao deletar
+
+            return cached['effective_retention']
+
+        # 3. Usar retencao global
+        return global_config.default_retention_days
 
     def _get_instance_snapshots(self, instance_id: str) -> List[SnapshotMetadata]:
         """
         Obtem snapshots de uma instancia.
-
-        Esta e uma implementacao placeholder. Sera expandida em subtask posterior
-        para integrar com o storage real.
 
         Args:
             instance_id: ID da instancia
@@ -205,9 +392,9 @@ class SnapshotCleanupAgent(Agent):
         Returns:
             Lista de metadados de snapshots
         """
-        # TODO: Implementar integracao com storage real em subtask-2-2
-        # Por enquanto, retorna lista vazia
-        return []
+        if self._snapshot_repository is None:
+            return []
+        return self._snapshot_repository.get_snapshots_by_instance(instance_id)
 
     def _delete_snapshot(self, snapshot: SnapshotMetadata) -> bool:
         """
@@ -228,12 +415,21 @@ class SnapshotCleanupAgent(Agent):
             # Marcar para delecao
             snapshot.mark_for_deletion(DeletionReason.EXPIRED)
 
+            # Atualizar repositorio com status pending_deletion
+            if self._snapshot_repository:
+                self._snapshot_repository.update_snapshot(snapshot)
+
             # TODO: Implementar delecao real do storage em subtask-2-3
             # Por enquanto, apenas simula o sucesso
             logger.info(f"Deletando snapshot {snapshot.snapshot_id} do storage {snapshot.storage_provider}")
 
             # Marcar como deletado
             snapshot.mark_deleted()
+
+            # Atualizar repositorio com status deleted
+            if self._snapshot_repository:
+                self._snapshot_repository.update_snapshot(snapshot)
+
             logger.info(f"Snapshot {snapshot.snapshot_id} deletado com sucesso "
                        f"({snapshot.size_bytes} bytes liberados)")
 
@@ -242,6 +438,11 @@ class SnapshotCleanupAgent(Agent):
         except Exception as e:
             error_msg = str(e)
             snapshot.mark_deletion_failed(error_msg)
+
+            # Atualizar repositorio com status failed
+            if self._snapshot_repository:
+                self._snapshot_repository.update_snapshot(snapshot)
+
             logger.error(f"Falha ao deletar snapshot {snapshot.snapshot_id}: {error_msg}")
             return False
 
