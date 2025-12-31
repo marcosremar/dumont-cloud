@@ -7,6 +7,7 @@ import authSlice from './slices/authSlice'
 import userSlice from './slices/userSlice'
 import instancesSlice from './slices/instancesSlice'
 import uiSlice from './slices/uiSlice'
+import webhooksSlice from './slices/webhooksSlice'
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     user: userSlice,
     instances: instancesSlice,
     ui: uiSlice,
+    webhooks: webhooksSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
