@@ -24,6 +24,7 @@ from src.api.hibernation import hibernation_bp
 from src.api.cpu_standby import cpu_standby_bp, init_standby_service
 from src.api.chat import chat_bp
 from src.api.referrals import referrals_bp
+from src.api.affiliates import affiliates_bp
 
 
 def create_app():
@@ -51,6 +52,7 @@ def create_app():
     app.register_blueprint(cpu_standby_bp)
     app.register_blueprint(chat_bp)
     app.register_blueprint(referrals_bp)
+    app.register_blueprint(affiliates_bp)
 
     # Inicializar sistema de agentes
     def init_agents():
