@@ -23,6 +23,7 @@ import Models from './pages/Models'
 import Documentation from './pages/Documentation'
 import ButtonShowcase from './pages/ButtonShowcase'
 import ForgotPassword from './pages/ForgotPassword'
+import AffiliateDashboard from './components/affiliate/AffiliateDashboard'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import './styles/landing.css'
@@ -381,6 +382,13 @@ export default function App() {
                 </AppLayout>
               </ProtectedRoute>
             } />
+            <Route path="/app/affiliate" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <AffiliateDashboard />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
 
             {/* Documentation Routes */}
             <Route path="/docs" element={
@@ -483,6 +491,13 @@ export default function App() {
               <DemoRoute>
                 <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
                   <Models />
+                </AppLayout>
+              </DemoRoute>
+            } />
+            <Route path="/demo-app/affiliate" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <AffiliateDashboard />
                 </AppLayout>
               </DemoRoute>
             } />
