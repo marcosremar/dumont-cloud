@@ -100,8 +100,9 @@
             "command": "python -c \"from src.domain.services.nps_service import NPSService; service = NPSService(); print('Service instantiated successfully')\"",
             "expected": "Service instantiated successfully"
           },
-          "status": "pending",
-          "notes": "Implement methods: should_show_survey(user_id, trigger_type), submit_response(user_id, score, comment, trigger_type), get_trends(start_date, end_date), get_detractors(). Include rate limiting logic (max 1 survey/month per user)."
+          "status": "completed",
+          "notes": "Created NPSService domain service with comprehensive business logic: should_show_survey() for rate limiting (max 1 survey per user per frequency_days), submit_response() for NPS submission with automatic category calculation, record_dismissal() for tracking dismissals, get_trends() for admin dashboard data aggregation, get_detractors() for follow-up listing, update_followup() for marking follow-ups complete, and config management methods. Service follows auth_service.py pattern with proper logging, exception handling, and optional session injection for flexibility.",
+          "updated_at": "2025-12-31T21:48:35.034684+00:00"
         },
         {
           "id": "subtask-2-3",
@@ -120,8 +121,9 @@
             "url": "http://localhost:8000/api/v1/nps/should-show?trigger_type=monthly",
             "expected_status": 200
           },
-          "status": "pending",
-          "notes": "Create routes: POST /nps/submit, GET /nps/trends, GET /nps/detractors, GET /nps/should-show. Use get_current_user_email dependency for authentication. Return proper HTTP status codes."
+          "status": "completed",
+          "notes": "Created src/api/v1/endpoints/nps.py with FastAPI endpoints for NPS operations. Endpoints include: GET /should-show (rate limiting check), POST /submit (NPS response submission), POST /dismiss (record dismissal), GET /trends (admin dashboard data), GET /detractors (follow-up list), PUT /responses/{id}/followup (update follow-up status), GET /config (survey configs), PUT /config/{trigger_type} (update config). All endpoints follow auth.py patterns with proper error handling, validation, and authentication via get_current_user_email. Import verification passed successfully.",
+          "updated_at": "2025-12-31T21:54:12.664420+00:00"
         },
         {
           "id": "subtask-2-4",
@@ -137,8 +139,9 @@
             "command": "grep -q 'from .endpoints import nps' src/api/v1/__init__.py && echo 'NPS router registered'",
             "expected": "NPS router registered"
           },
-          "status": "pending",
-          "notes": "Import nps router and add to api_router.include_router(nps.router)"
+          "status": "completed",
+          "notes": "Registered NPS router in main API router by adding 'nps' import and api_router.include_router(nps.router, tags=[\"NPS\"]) in src/api/v1/router.py",
+          "updated_at": "2025-12-31T21:56:55.509603+00:00"
         }
       ]
     },
@@ -483,5 +486,5 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2025-12-31T21:43:30.332089+00:00"
+  "last_updated": "2025-12-31T21:56:55.509627+00:00"
 }
