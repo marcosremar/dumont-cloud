@@ -1,0 +1,109 @@
+=== AUTO-BUILD PROGRESS ===
+
+Project: Verificar e Corrigir Migração GPU-para-CPU
+Workspace: dumont-cloud
+Started: 2024-12-31
+
+Workflow Type: investigation
+Rationale: Esta é uma tarefa de verificação de funcionalidade existente. O objetivo é confirmar que a migração GPU→CPU funciona via testes Playwright, identificar problemas e corrigir se necessário. Não é desenvolvimento de nova feature.
+
+Session 1 (Planner):
+- Created implementation_plan.json
+- Phases: 4
+- Total subtasks: 11
+- Created init.sh
+
+Phase Summary:
+- Phase 1 (Reproduce): 3 subtasks - Setup ambiente de testes e Playwright
+  - Depends on: none
+- Phase 2 (Investigate): 4 subtasks - Executar testes e identificar problemas
+  - Depends on: phase-1-reproduce
+- Phase 3 (Fix): 3 subtasks - Corrigir problemas identificados
+  - Depends on: phase-2-investigate (BLOQUEADO ATÉ FASE 2 COMPLETAR)
+- Phase 4 (Harden): 2 subtasks - Validação final e documentação
+  - Depends on: phase-3-fix
+
+Services Involved:
+- tests: Infraestrutura Playwright e testes E2E de failover/migração (primary)
+- web: Frontend React com UI de máquinas e migração (integration)
+
+Key Files:
+- tests/e2e-journeys/cpu-standby-failover.spec.js - Testes de CPU Standby
+- tests/e2e-journeys/failover-complete-journeys.spec.js - Jornadas completas de failover
+- tests/auth.setup.js - Setup de autenticação para testes
+- tests/playwright.config.js - Configuração Playwright
+- web/src/pages/Machines.jsx - Página de máquinas
+- src/domain/services/migration_service.py - Lógica de migração backend
+
+Parallelism Analysis:
+- Max parallel phases: 1
+- Recommended workers: 1
+- Parallel groups: None (investigation workflow requires sequential execution)
+
+Investigation Workflow Notes:
+- Phase 2 (Investigate) MUST complete before Phase 3 (Fix) can start
+- Root cause analysis is the primary output of Phase 2
+- Fix phase is blocked until investigation identifies specific problems
+
+=== STARTUP COMMAND ===
+
+To continue building this spec, run:
+
+  cd tests && npm install && npx playwright install chromium
+  cd web && npm run dev
+
+Then in another terminal:
+  cd tests && USE_DEMO_MODE=true npx playwright test e2e-journeys/cpu-standby-failover.spec.js
+
+Or use the orchestrator:
+  source auto-claude/.venv/bin/activate && python auto-claude/run.py --spec 001 --parallel 1
+
+=== END SESSION 1 ===
+
+=== SESSION 2: subtask-1-1 ===
+Date: 2024-12-31
+Task: Instalar dependências Playwright no diretório tests/
+
+BLOCKER ENCOUNTERED:
+- Command 'npm' is not in the allowed commands for this project
+- Cannot run: cd tests && npm install && npx playwright --version
+- The tests/package.json and tests/package-lock.json exist but node_modules is missing
+
+REQUIRED ACTION:
+- User needs to either:
+  1. Add 'npm' to allowed commands in project configuration
+  2. Or manually run: cd tests && npm install && npx playwright install chromium
+  3. Or provide an alternative package manager (yarn, pnpm) if available
+
+STATUS: BLOCKED - waiting for npm access or manual intervention
+
+=== END SESSION 2 ===
+
+=== SESSION 3: subtask-1-2 ===
+Date: 2024-12-31
+Task: Verificar instalação de browsers Playwright
+
+BLOCKER ENCOUNTERED (SAME AS SESSION 2):
+- Command 'npx' is not in the allowed commands for this project
+- Cannot run: cd tests && npx playwright install chromium
+- This subtask depends on subtask-1-1 which also failed for the same reason
+- node_modules directory does not exist (npm install was never run)
+
+VERIFICATION ATTEMPTED:
+- Checked tests/node_modules/.bin/playwright - NOT FOUND
+- Checked tests/node_modules/ - EMPTY/NOT EXISTS
+
+ROOT CAUSE:
+- npm and npx commands are blocked in this sandboxed environment
+- Playwright dependencies require npm install before browser installation can proceed
+
+REQUIRED ACTION FOR USER:
+- User must manually run the following commands in a terminal:
+  1. cd tests && npm install
+  2. npx playwright install chromium
+- Once complete, resume this task and mark subtask-1-2 as completed
+
+STATUS: BLOCKED - Cannot proceed without npm/npx access or manual intervention
+Subtask marked as: failed (dependency on npm/npx not available)
+
+=== END SESSION 3 ===
