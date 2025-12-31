@@ -1013,3 +1013,105 @@ test.describe('✅ Validation - Form Input Validation Tests', () => {
   });
 
 });
+
+test.describe('🔔 Toast - Notification Toast Tests', () => {
+
+  test('Toast: Test notification button triggers toast notification', async ({ page }) => {
+    await goToSettings(page, 'notifications');
+
+    // Localizar o botão de testar notificação
+    const testButton = page.locator('[data-testid="settings-test-notification"]');
+    await expect(testButton).toBeVisible({ timeout: 5000 });
+
+    // Clicar no botão de testar notificação
+    await testButton.click();
+
+    // Aguardar que o toast apareça
+    const toast = page.locator('.toast[role="alert"]');
+    await expect(toast).toBeVisible({ timeout: 5000 });
+
+    // Verificar que o toast tem a estrutura correta (tem conteúdo de mensagem)
+    const toastMessage = toast.locator('p');
+    await expect(toastMessage).toBeVisible();
+
+    // Verificar que o toast está no container correto
+    const toastContainer = page.locator('.toast-container');
+    await expect(toastContainer).toBeVisible();
+  });
+
+  test('Toast: Toast can be closed by clicking close button', async ({ page }) => {
+    await goToSettings(page, 'notifications');
+
+    // Localizar e clicar no botão de testar notificação
+    const testButton = page.locator('[data-testid="settings-test-notification"]');
+    await expect(testButton).toBeVisible({ timeout: 5000 });
+    await testButton.click();
+
+    // Aguardar que o toast apareça
+    const toast = page.locator('.toast[role="alert"]');
+    await expect(toast).toBeVisible({ timeout: 5000 });
+
+    // Localizar e clicar no botão de fechar (aria-label="Fechar notificacao")
+    const closeButton = toast.locator('button[aria-label="Fechar notificacao"]');
+    await expect(closeButton).toBeVisible();
+    await closeButton.click();
+
+    // Aguardar que o toast desapareça
+    await expect(toast).not.toBeVisible({ timeout: 3000 });
+  });
+
+  test('Toast: Toast has correct visual structure with accent bar and icon', async ({ page }) => {
+    await goToSettings(page, 'notifications');
+
+    // Clicar no botão de testar notificação
+    const testButton = page.locator('[data-testid="settings-test-notification"]');
+    await expect(testButton).toBeVisible({ timeout: 5000 });
+    await testButton.click();
+
+    // Aguardar que o toast apareça
+    const toast = page.locator('.toast[role="alert"]');
+    await expect(toast).toBeVisible({ timeout: 5000 });
+
+    // Verificar que tem borda arredondada (rounded-lg class)
+    await expect(toast).toHaveClass(/rounded-lg/);
+
+    // Verificar que tem o background escuro (bg-gray-900)
+    await expect(toast).toHaveClass(/bg-gray-900/);
+
+    // Verificar que tem a animação (animate-toast-in)
+    await expect(toast).toHaveClass(/animate-toast-in/);
+
+    // Verificar que o botão de fechar existe
+    const closeButton = toast.locator('button[aria-label="Fechar notificacao"]');
+    await expect(closeButton).toBeVisible();
+  });
+
+  test('Toast: Multiple toasts can be displayed simultaneously', async ({ page }) => {
+    await goToSettings(page, 'notifications');
+
+    // Localizar o botão de testar notificação
+    const testButton = page.locator('[data-testid="settings-test-notification"]');
+    await expect(testButton).toBeVisible({ timeout: 5000 });
+
+    // Clicar múltiplas vezes para criar múltiplos toasts
+    await testButton.click();
+    await page.waitForTimeout(200);
+    await testButton.click();
+    await page.waitForTimeout(200);
+
+    // Verificar que há pelo menos 2 toasts visíveis
+    const toasts = page.locator('.toast[role="alert"]');
+    const count = await toasts.count();
+    expect(count).toBeGreaterThanOrEqual(2);
+
+    // Fechar o primeiro toast
+    const firstToastCloseButton = toasts.first().locator('button[aria-label="Fechar notificacao"]');
+    await firstToastCloseButton.click();
+    await page.waitForTimeout(300);
+
+    // Verificar que ainda há pelo menos 1 toast
+    const remainingCount = await toasts.count();
+    expect(remainingCount).toBeGreaterThanOrEqual(1);
+  });
+
+});
