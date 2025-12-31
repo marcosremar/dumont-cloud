@@ -365,3 +365,154 @@ async def check_auth_state(
         valid=True,
         provider=auth_state.provider,
     )
+
+
+# Response schemas for callback
+class OIDCCallbackResponse(BaseModel):
+    """OIDC callback success response"""
+    success: bool = Field(True, description="Whether authentication was successful")
+    user: str = Field(..., description="Authenticated user email")
+    token: str = Field(..., description="Session token for API authentication")
+    provider: str = Field(..., description="OIDC provider used for authentication")
+
+
+class OIDCCallbackErrorResponse(BaseModel):
+    """OIDC callback error response"""
+    success: bool = Field(False, description="Authentication failed")
+    error: str = Field(..., description="Error type")
+    error_description: str = Field(..., description="Human-readable error description")
+
+
+@router.get("/callback", response_model=OIDCCallbackResponse)
+async def oidc_callback(
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None,
+    error_description: Optional[str] = None,
+    oidc_service: OIDCService = Depends(get_oidc_service_dependency),
+    auth_state_store: OIDCAuthStateStore = Depends(get_auth_state_store),
+):
+    """
+    OIDC callback endpoint
+
+    Handles the OAuth 2.0 authorization callback from Identity Providers.
+    This endpoint:
+    1. Validates the callback parameters (code, state) or handles errors
+    2. Retrieves stored auth state (PKCE verifier, nonce)
+    3. Exchanges authorization code for tokens
+    4. Validates ID token and extracts user information
+    5. Creates or updates user account
+    6. Creates session and returns authentication token
+
+    Query Parameters (from IdP redirect):
+        code: Authorization code (on success)
+        state: State parameter for CSRF validation
+        error: Error code (if IdP returns an error)
+        error_description: Human-readable error description
+
+    Returns:
+        On success: JSON with session token and user info
+        On error: HTTP 400/401 with error details
+    """
+    # Handle IdP error responses
+    if error:
+        error_desc = error_description or f"Identity provider returned error: {error}"
+        logger.warning(f"OIDC callback received error from IdP: {error} - {error_desc}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_desc,
+        )
+
+    # Validate required parameters
+    if not code:
+        logger.warning("OIDC callback missing authorization code")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing authorization code in callback",
+        )
+
+    if not state:
+        logger.warning("OIDC callback missing state parameter")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing state parameter in callback",
+        )
+
+    # Retrieve and consume auth state (one-time use)
+    auth_state = auth_state_store.consume(state)
+    if auth_state is None:
+        logger.warning(f"OIDC callback received invalid or expired state: {state[:20]}...")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired state parameter. Please restart the login process.",
+        )
+
+    provider = auth_state.provider
+
+    try:
+        # Complete authentication flow
+        user_info = await oidc_service.authenticate(
+            provider=provider,
+            code=code,
+            redirect_uri=auth_state.redirect_uri,
+            code_verifier=auth_state.code_verifier,
+            state=state,
+            expected_state=auth_state.state,
+            nonce=auth_state.nonce,
+        )
+
+        # Validate that we got an email
+        if not user_info.email:
+            logger.error(f"OIDC authentication for {provider} did not return email")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Identity provider did not return email address. Please ensure email scope is granted.",
+            )
+
+        # Import session manager here to avoid circular imports
+        from ..dependencies import get_session_manager
+
+        # Create session for the authenticated user
+        session_manager = get_session_manager()
+        session_token = session_manager.create_session(user_info.email)
+
+        logger.info(
+            f"OIDC callback successful: user={user_info.email}, provider={provider}, "
+            f"email_verified={user_info.email_verified}"
+        )
+
+        return OIDCCallbackResponse(
+            success=True,
+            user=user_info.email,
+            token=session_token,
+            provider=provider,
+        )
+
+    except ValidationException as e:
+        # State validation or input validation errors
+        logger.warning(f"OIDC validation error for {provider}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except AuthenticationException as e:
+        # Token exchange or validation errors
+        logger.warning(f"OIDC authentication error for {provider}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+        )
+    except ConfigurationException as e:
+        # Provider configuration errors (should not happen if login worked)
+        logger.error(f"OIDC configuration error during callback for {provider}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="OIDC provider configuration error",
+        )
+    except Exception as e:
+        # Unexpected errors
+        logger.exception(f"Unexpected error during OIDC callback for {provider}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred during authentication",
+        )
