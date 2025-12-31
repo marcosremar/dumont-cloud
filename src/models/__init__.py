@@ -4,6 +4,17 @@ from .price_history import PriceHistory, PriceAlert
 from .instance_status import InstanceStatus, HibernationEvent
 from .metrics import MarketSnapshot, ProviderReliability, PricePrediction, CostEfficiencyRanking
 from .machine_history import MachineAttempt, MachineBlacklist, MachineStats
+from .rbac import (
+    Team,
+    Role,
+    Permission,
+    TeamMember,
+    TeamInvitation,
+    role_permissions,
+    SYSTEM_ROLES,
+    PERMISSIONS,
+    ROLE_PERMISSIONS,
+)
 
 __all__ = [
     'PriceHistory',
@@ -19,4 +30,14 @@ __all__ = [
     'MachineAttempt',
     'MachineBlacklist',
     'MachineStats',
+    # RBAC models
+    'Team',
+    'Role',
+    'Permission',
+    'TeamMember',
+    'TeamInvitation',
+    'role_permissions',
+    'SYSTEM_ROLES',
+    'PERMISSIONS',
+    'ROLE_PERMISSIONS',
 ]
