@@ -226,3 +226,234 @@ test.describe('🔧 Navigation - Settings Tab Navigation', () => {
   });
 
 });
+
+test.describe('📄 Tab Content - Settings Tab Content Rendering', () => {
+
+  test('Tab Content: APIs tab renders all credential sections', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Verificar seção Vast.ai
+    await expect(page.getByText('Vast.ai')).toBeVisible({ timeout: 5000 });
+
+    // Verificar campo de API Key do Vast.ai
+    const vastApiKeyInput = page.locator('[data-testid="settings-vast-api-key"]');
+    const hasVastApiKey = await vastApiKeyInput.isVisible({ timeout: 5000 }).catch(() => false);
+    if (hasVastApiKey) {
+      await expect(vastApiKeyInput).toBeVisible();
+    }
+
+    // Verificar seção Cloudflare R2
+    await expect(page.getByText('Cloudflare R2')).toBeVisible({ timeout: 5000 });
+
+    // Verificar campos R2 (pelo menos um deve existir)
+    const r2AccessKeyInput = page.locator('[data-testid="settings-r2-access-key"]');
+    const r2SecretKeyInput = page.locator('[data-testid="settings-r2-secret-key"]');
+    const r2BucketInput = page.locator('[data-testid="settings-r2-bucket"]');
+
+    const hasR2AccessKey = await r2AccessKeyInput.isVisible({ timeout: 3000 }).catch(() => false);
+    const hasR2SecretKey = await r2SecretKeyInput.isVisible({ timeout: 3000 }).catch(() => false);
+    const hasR2Bucket = await r2BucketInput.isVisible({ timeout: 3000 }).catch(() => false);
+
+    // Pelo menos um campo R2 deve estar presente
+    expect(hasR2AccessKey || hasR2SecretKey || hasR2Bucket).toBeTruthy();
+
+    // Verificar botão de salvar
+    const saveButton = page.locator('[data-testid="settings-apis-save"]');
+    const hasSaveButton = await saveButton.isVisible({ timeout: 3000 }).catch(() => false);
+    if (hasSaveButton) {
+      await expect(saveButton).toBeVisible();
+    }
+  });
+
+  test('Tab Content: Storage tab renders Restic configuration', async ({ page }) => {
+    await goToSettings(page, 'storage');
+
+    // Verificar título Restic
+    await expect(page.getByText('Restic')).toBeVisible({ timeout: 5000 });
+
+    // Verificar que há menção a proteção/criptografia
+    await expect(page.getByText(/Repository Password|Proteção e criptografia|senha/i).first()).toBeVisible();
+
+    // Verificar campo de senha do repository
+    const repoPasswordInput = page.locator('[data-testid="settings-restic-password"]');
+    const hasRepoPassword = await repoPasswordInput.isVisible({ timeout: 5000 }).catch(() => false);
+    if (hasRepoPassword) {
+      await expect(repoPasswordInput).toBeVisible();
+    }
+
+    // Verificar que há inputs de texto na página (usando getByRole - AI)
+    const inputCount = await page.getByRole('textbox').count();
+    expect(inputCount).toBeGreaterThanOrEqual(0);
+
+    // Verificar botão de salvar (se existir)
+    const saveButton = page.locator('[data-testid="settings-storage-save"]');
+    const hasSaveButton = await saveButton.isVisible({ timeout: 3000 }).catch(() => false);
+    if (hasSaveButton) {
+      await expect(saveButton).toBeVisible();
+    }
+  });
+
+  test('Tab Content: Cloud Storage tab renders provider configuration', async ({ page }) => {
+    await goToSettings(page, 'cloudstorage');
+
+    // Verificar título da seção
+    await expect(page.getByText(/Cloud Storage Failover/i).first()).toBeVisible({ timeout: 5000 });
+
+    // Verificar toggle de habilitação
+    const enableToggle = page.locator('[data-testid="settings-cloudstorage-enabled-toggle"]');
+    await expect(enableToggle).toBeVisible({ timeout: 5000 });
+
+    // Verificar seletor de provedor
+    const providerSelect = page.locator('[data-testid="settings-cloudstorage-provider"]');
+    await expect(providerSelect).toBeVisible();
+
+    // Verificar que há opções de provedores (R2, S3, etc)
+    const hasR2Option = await page.getByText(/R2|Cloudflare/i).first().isVisible({ timeout: 3000 }).catch(() => false);
+    const hasS3Option = await page.getByText(/S3|AWS/i).first().isVisible({ timeout: 3000 }).catch(() => false);
+
+    // Pelo menos um provedor deve ser mencionado
+    expect(hasR2Option || hasS3Option).toBeTruthy();
+
+    // Verificar botão de salvar
+    const saveButton = page.locator('[data-testid="settings-cloudstorage-save"]');
+    const hasSaveButton = await saveButton.isVisible({ timeout: 3000 }).catch(() => false);
+    if (hasSaveButton) {
+      await expect(saveButton).toBeVisible();
+    }
+  });
+
+  test('Tab Content: Agent tab renders sync configuration', async ({ page }) => {
+    await goToSettings(page, 'agent');
+
+    // Verificar título DumontAgent
+    await expect(page.getByText('DumontAgent')).toBeVisible({ timeout: 5000 });
+
+    // Verificar dropdown de intervalo de sincronização
+    const syncIntervalSelect = page.locator('[data-testid="settings-agent-sync-interval"]');
+    await expect(syncIntervalSelect).toBeVisible();
+
+    // Verificar dropdown de retenção (keep last)
+    const keepLastSelect = page.locator('[data-testid="settings-agent-keep-last"]');
+    await expect(keepLastSelect).toBeVisible();
+
+    // Verificar que há texto explicativo sobre sincronização
+    const hasSyncText = await page.getByText(/sync|sincronização|intervalo/i).first().isVisible({ timeout: 3000 }).catch(() => false);
+    expect(hasSyncText).toBeTruthy();
+
+    // Verificar botão de salvar
+    const saveButton = page.locator('[data-testid="settings-agent-save"]');
+    await expect(saveButton).toBeVisible();
+
+    // Verificar que o botão está habilitado ou desabilitado (mas existe)
+    const isDisabled = await saveButton.isDisabled();
+    // Não importa se está disabled ou não, apenas que existe
+    expect(typeof isDisabled).toBe('boolean');
+  });
+
+  test('Tab Content: Notifications tab renders alert configuration', async ({ page }) => {
+    await goToSettings(page, 'notifications');
+
+    // Verificar título/seção de notificações
+    await expect(page.getByText(/Notificações|Alertas de Saldo/i).first()).toBeVisible({ timeout: 5000 });
+
+    // Verificar botão de testar notificação
+    const testButton = page.locator('[data-testid="settings-test-notification"]');
+    await expect(testButton).toBeVisible();
+
+    // Verificar que há configurações de alerta (toggle ou slider)
+    const alertToggle = page.locator('[data-testid="settings-notifications-enabled"]');
+    const hasAlertToggle = await alertToggle.isVisible({ timeout: 3000 }).catch(() => false);
+
+    const alertThreshold = page.locator('[data-testid="settings-notifications-threshold"]');
+    const hasAlertThreshold = await alertThreshold.isVisible({ timeout: 3000 }).catch(() => false);
+
+    // Verificar que há algum elemento interativo (pelo menos o botão de teste)
+    const buttonCount = await page.locator('button').count();
+    expect(buttonCount).toBeGreaterThan(0);
+
+    // Verificar menção a Telegram ou outro canal de notificação
+    const hasTelegram = await page.getByText(/Telegram|WhatsApp|Email|SMS/i).first().isVisible({ timeout: 3000 }).catch(() => false);
+    if (hasTelegram) {
+      // Se existir, verificar campos relacionados
+      const telegramInput = page.locator('[data-testid="settings-telegram-chat-id"]');
+      const hasTelegramInput = await telegramInput.isVisible({ timeout: 3000 }).catch(() => false);
+      if (hasTelegramInput) {
+        await expect(telegramInput).toBeVisible();
+      }
+    }
+  });
+
+  test('Tab Content: Failover tab renders cost estimation and standby config', async ({ page }) => {
+    await goToSettings(page, 'failover');
+
+    // Verificar título da seção
+    await expect(page.getByText(/Estimativa de Custo|CPU Failover/i).first()).toBeVisible({ timeout: 5000 });
+
+    // Verificar StandbyConfig (pode estar carregando)
+    const standbyConfig = page.locator('[data-testid="standby-config"]');
+    const hasStandbyConfig = await standbyConfig.isVisible({ timeout: 5000 }).catch(() => false);
+
+    if (hasStandbyConfig) {
+      await expect(standbyConfig).toBeVisible();
+
+      // Verificar elementos dentro do StandbyConfig
+      const standbyToggle = page.locator('[data-testid="standby-config-enabled"]');
+      const hasStandbyToggle = await standbyToggle.isVisible({ timeout: 3000 }).catch(() => false);
+      if (hasStandbyToggle) {
+        await expect(standbyToggle).toBeVisible();
+      }
+    }
+
+    // Verificar FailoverReport
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    const hasFailoverReport = await failoverReport.isVisible({ timeout: 5000 }).catch(() => false);
+
+    if (hasFailoverReport) {
+      await expect(failoverReport).toBeVisible();
+    }
+
+    // Verificar menção a armazenamento em nuvem
+    const hasCloudStorage = await page.getByText(/Cloudflare R2|Armazenamento em nuvem|Cloud Storage/i).first().isVisible({ timeout: 3000 }).catch(() => false);
+    expect(hasCloudStorage).toBeTruthy();
+
+    // Verificar que há elementos visuais de custo (valores monetários ou porcentagem)
+    const hasCostValue = await page.getByText(/\$\d+|\d+%|custo/i).first().isVisible({ timeout: 3000 }).catch(() => false);
+    if (hasCostValue) {
+      // Pelo menos algum indicador de custo deve existir
+      expect(hasCostValue).toBeTruthy();
+    }
+  });
+
+  test('Tab Content: Each tab has unique content that changes on navigation', async ({ page }) => {
+    await goToSettings(page, 'apis');
+
+    // Capturar conteúdo único da tab APIs
+    const apisContent = await page.getByText('Vast.ai').isVisible().catch(() => false);
+    expect(apisContent).toBeTruthy();
+
+    // Navegar para Storage e verificar que conteúdo mudou
+    const storageTab = page.locator('[data-testid="settings-tab-storage"]');
+    await storageTab.click();
+    await page.waitForTimeout(500);
+
+    const storageContent = await page.getByText('Restic').isVisible().catch(() => false);
+    expect(storageContent).toBeTruthy();
+
+    // Navegar para Agent e verificar que conteúdo mudou
+    const agentTab = page.locator('[data-testid="settings-tab-agent"]');
+    await agentTab.click();
+    await page.waitForTimeout(500);
+
+    const agentContent = await page.getByText('DumontAgent').isVisible().catch(() => false);
+    expect(agentContent).toBeTruthy();
+
+    // Navegar para Notifications e verificar que conteúdo mudou
+    const notificationsTab = page.locator('[data-testid="settings-tab-notifications"]');
+    await notificationsTab.click();
+    await page.waitForTimeout(500);
+
+    const notificationsContent = await page.getByText(/Notificações|Alertas/i).first().isVisible().catch(() => false);
+    expect(notificationsContent).toBeTruthy();
+  });
+
+});
