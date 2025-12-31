@@ -3,8 +3,11 @@ Template Marketplace API endpoints
 """
 import logging
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query, Depends, Request
 from pydantic import BaseModel, Field
+
+from ..dependencies import get_current_user_email, require_auth, get_user_repository
+from ....core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -228,4 +231,270 @@ async def get_template_gpu_requirements(slug: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get GPU requirements: {str(e)}"
+        )
+
+
+# =============================================================================
+# Deployment Schemas
+# =============================================================================
+
+class DeployTemplateRequest(BaseModel):
+    """Request to deploy a template"""
+    offer_id: int = Field(..., description="GPU offer ID from vast.ai")
+    disk_size: int = Field(50, description="Disk size in GB", ge=10, le=2000)
+    label: Optional[str] = Field(None, description="Optional label for the instance")
+    env_overrides: Optional[Dict[str, str]] = Field(None, description="Environment variable overrides")
+    skip_validation: bool = Field(False, description="Skip GPU validation (not recommended)")
+
+
+class DeployTemplateResponse(BaseModel):
+    """Response from template deployment"""
+    success: bool = Field(..., description="Whether deployment was successful")
+    instance_id: Optional[int] = Field(None, description="Created instance ID")
+    template_slug: str = Field(..., description="Template that was deployed")
+    template_name: str = Field(..., description="Template display name")
+    gpu_validation: Optional[Dict[str, Any]] = Field(None, description="GPU validation result")
+    message: str = Field(..., description="Status message")
+    connection_info: Optional[Dict[str, Any]] = Field(None, description="Connection details when available")
+
+
+class CompatibleOffersResponse(BaseModel):
+    """Response with compatible GPU offers for a template"""
+    template_slug: str = Field(..., description="Template slug")
+    template_name: str = Field(..., description="Template name")
+    min_vram: int = Field(..., description="Minimum VRAM required")
+    offers: List[Dict[str, Any]] = Field(..., description="List of compatible GPU offers")
+    count: int = Field(..., description="Number of compatible offers")
+
+
+# =============================================================================
+# Deployment Endpoints
+# =============================================================================
+
+def get_vast_service_for_user(user_email: str):
+    """Get VastService configured with user's API key"""
+    from services.vast_service import VastService
+
+    settings = get_settings()
+    user_repo = next(get_user_repository())
+    user = user_repo.get_user(user_email)
+
+    # Try user's key first, then fall back to system key from .env
+    api_key = (user.vast_api_key if user else None) or settings.vast.api_key
+
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vast.ai API key not configured. Please update settings."
+        )
+
+    return VastService(api_key=api_key)
+
+
+@router.get("/{slug}/offers", response_model=CompatibleOffersResponse)
+async def get_compatible_offers(
+    slug: str,
+    max_price: float = Query(2.0, description="Maximum price per hour in USD"),
+    region: Optional[str] = Query(None, description="Region filter: US, EU, ASIA"),
+    num_gpus: int = Query(1, ge=1, le=8, description="Number of GPUs"),
+    verified_only: bool = Query(False, description="Only verified hosts"),
+    limit: int = Query(20, le=100, description="Maximum results"),
+    user_email: str = Depends(get_current_user_email),
+):
+    """
+    Get GPU offers compatible with a template
+
+    Returns available GPU offers that meet the template's requirements.
+    Filters automatically by minimum VRAM and CUDA version.
+
+    Path Parameters:
+    - slug: Template slug (e.g., 'jupyter-lab', 'stable-diffusion')
+
+    Query Parameters:
+    - max_price: Maximum hourly price
+    - region: Region filter (US, EU, ASIA)
+    - num_gpus: Number of GPUs needed
+    - verified_only: Only verified hosts
+    - limit: Max results
+    """
+    try:
+        template_service = get_template_service()
+        template = template_service.get_template_by_slug(slug)
+
+        if not template:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Template '{slug}' not found"
+            )
+
+        vast_service = get_vast_service_for_user(user_email)
+
+        offers = vast_service.search_offers_for_template(
+            template=template,
+            num_gpus=num_gpus,
+            max_price=max_price,
+            region=region,
+            verified_only=verified_only,
+            limit=limit,
+        )
+
+        return CompatibleOffersResponse(
+            template_slug=template.slug,
+            template_name=template.name,
+            min_vram=template.gpu_min_vram,
+            offers=offers,
+            count=len(offers),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting compatible offers for {slug}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get compatible offers: {str(e)}"
+        )
+
+
+@router.post("/{slug}/deploy", response_model=DeployTemplateResponse, status_code=status.HTTP_201_CREATED)
+async def deploy_template(
+    slug: str,
+    request: DeployTemplateRequest,
+    http_request: Request,
+    user_email: str = Depends(get_current_user_email),
+):
+    """
+    Deploy a template to a GPU instance
+
+    Creates a new GPU instance with the template's Docker image, ports,
+    volumes, and launch command configured.
+
+    Path Parameters:
+    - slug: Template slug (e.g., 'jupyter-lab', 'stable-diffusion', 'comfy-ui', 'vllm')
+
+    Request Body:
+    - offer_id: GPU offer ID from vast.ai (required)
+    - disk_size: Disk size in GB (default: 50)
+    - label: Optional instance label
+    - env_overrides: Environment variables to override
+    - skip_validation: Skip GPU validation (not recommended)
+
+    Returns:
+    - Instance ID and connection details on success
+    - GPU validation warnings if applicable
+    """
+    import random
+    from datetime import datetime
+
+    settings = get_settings()
+    demo_param = http_request.query_params.get("demo", "").lower() == "true"
+    is_demo = settings.app.demo_mode or demo_param
+
+    try:
+        # Get template
+        template_service = get_template_service()
+        template = template_service.get_template_by_slug(slug)
+
+        if not template:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Template '{slug}' not found"
+            )
+
+        # Demo mode: Return simulated deployment
+        if is_demo:
+            demo_instance_id = random.randint(10000000, 99999999)
+            logger.info(f"Demo mode: Simulating deployment of {slug} to offer {request.offer_id}")
+            return DeployTemplateResponse(
+                success=True,
+                instance_id=demo_instance_id,
+                template_slug=slug,
+                template_name=template.name,
+                gpu_validation={
+                    "is_compatible": True,
+                    "is_recommended": True,
+                    "gpu_vram": 24,
+                    "required_vram": template.gpu_min_vram,
+                    "recommended_vram": template.gpu_recommended_vram,
+                    "messages": ["Demo mode: GPU validation simulated"]
+                },
+                message=f"Demo: Template '{template.name}' deployed successfully",
+                connection_info={
+                    "ssh_host": "demo.dumontcloud.com",
+                    "ssh_port": 22,
+                    "public_ip": "demo.dumontcloud.com",
+                    "ports": {str(p): p for p in template.ports},
+                }
+            )
+
+        vast_service = get_vast_service_for_user(user_email)
+
+        # Validate GPU meets template requirements
+        # First, get the offer details to validate
+        offers = vast_service.search_offers(
+            max_price=10.0,  # Wide search
+            limit=200,
+        )
+
+        # Find the selected offer
+        selected_offer = None
+        for offer in offers:
+            if offer.get("id") == request.offer_id:
+                selected_offer = offer
+                break
+
+        if not selected_offer:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"GPU offer {request.offer_id} not found or no longer available"
+            )
+
+        # Validate GPU for template
+        gpu_validation = vast_service.validate_gpu_for_template(selected_offer, template)
+
+        if not gpu_validation["is_compatible"] and not request.skip_validation:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"GPU does not meet template requirements: {'; '.join(gpu_validation['messages'])}"
+            )
+
+        # Create instance from template
+        instance_id = vast_service.create_instance_from_template(
+            offer_id=request.offer_id,
+            template=template,
+            disk=request.disk_size,
+            env_overrides=request.env_overrides,
+        )
+
+        if not instance_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create instance. Please try again."
+            )
+
+        logger.info(f"Successfully deployed template {slug} to instance {instance_id}")
+
+        return DeployTemplateResponse(
+            success=True,
+            instance_id=instance_id,
+            template_slug=slug,
+            template_name=template.name,
+            gpu_validation=gpu_validation,
+            message=f"Template '{template.name}' deployment started. Instance {instance_id} is being provisioned.",
+            connection_info={
+                "status": "provisioning",
+                "expected_ports": template.ports,
+                "note": "Connection details will be available once instance is running. Poll GET /api/instances/{instance_id} for status."
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deploying template {slug}: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to deploy template: {str(e)}"
         )

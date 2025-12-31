@@ -1,0 +1,98 @@
+=== AUTO-BUILD PROGRESS ===
+
+Project: Basic Template Marketplace
+Workspace: [managed by orchestrator]
+Started: 2025-12-31 22:30:00
+
+Workflow Type: feature
+Rationale: Building net-new marketplace functionality with pre-configured ML workload templates. Extends existing instance provisioning with template abstraction layer. Feature workflow follows service dependency order: backend models → backend API → frontend state → frontend UI.
+
+Session 1 (Planner):
+- Created implementation_plan.json
+- Phases: 7
+- Total subtasks: 19
+- Created init.sh
+- Created project_index.json
+- Created context.json
+
+Phase Summary:
+- Phase 1 (Backend Models & Data): 3 subtasks, no dependencies
+  * Create marketplace module structure
+  * Create Template dataclass model with GPU requirements
+  * Create templates seed data JSON file with 4 official templates
+
+- Phase 2 (Backend Service Layer): 2 subtasks, depends on phase-1-backend-models
+  * Create TemplateService class with CRUD operations
+  * Extend VastService with template-aware instance creation
+
+- Phase 3 (Backend API Routes): 3 subtasks, depends on phase-2-backend-service
+  * Create templates Flask blueprint with list and get endpoints
+  * Add template deployment endpoint to templates blueprint
+  * Register templates blueprint in main Flask app
+
+- Phase 4 (Frontend Redux State): 2 subtasks, depends on phase-3-backend-api
+  * Create templateSlice with async thunks for API calls
+  * Register templateSlice in Redux store
+
+- Phase 5 (Frontend Components): 3 subtasks, depends on phase-4-frontend-state
+  * Create marketplace components directory
+  * Create TemplateCard component with GPU requirements badge
+  * Create TemplateFilters component for GPU VRAM filtering
+
+- Phase 6 (Frontend Pages): 3 subtasks, depends on phase-5-frontend-components
+  * Create TemplatePage with grid layout and filters
+  * Create TemplateDetailPage with deployment form
+  * Add template routes to React Router in App.jsx
+
+- Phase 7 (Integration & E2E Testing): 3 subtasks, depends on phase-6-frontend-pages
+  * Manual E2E test: browse templates marketplace
+  * Manual E2E test: template deployment flow
+  * Verify no regressions in existing functionality
+
+Services Involved:
+- backend: Flask/FastAPI backend with dataclass models, services, and Flask blueprints
+- frontend: React 18 + Vite + Redux Toolkit + Radix UI + Tailwind CSS
+
+Parallelism Analysis:
+- Max parallel phases: 2
+- Recommended workers: 1
+- Parallel groups:
+  * Phase 1 can run independently (no dependencies)
+  * Phase 4 & Phase 5 could theoretically run in parallel after Phase 3
+- Speedup estimate: Sequential implementation recommended due to tight coupling between layers
+
+Key Technical Decisions:
+- Using dataclasses (not SQLAlchemy ORM) for models, following existing pattern in src/modules/
+- JSON-based seed data storage (templates_seed.json) for 4 official templates
+- Flask blueprints for REST API endpoints (following src/api/ pattern)
+- Redux Toolkit with createAsyncThunk for frontend state management
+- Radix UI components + Tailwind CSS for consistent styling
+- Vast.ai integration via existing services/vast_service.py
+
+Template Seed Data (4 templates):
+1. JupyterLab (jupyter-lab) - Min 4GB VRAM, Rec 8GB VRAM, CUDA 11.8
+2. Stable Diffusion WebUI (stable-diffusion) - Min 8GB VRAM, Rec 12GB VRAM, CUDA 11.8
+3. ComfyUI (comfy-ui) - Min 6GB VRAM, Rec 10GB VRAM, CUDA 11.8
+4. vLLM (vllm) - Min 16GB VRAM, Rec 24GB VRAM, CUDA 12.1
+
+Verification Strategy:
+- Risk Level: Medium
+- Required Tests: Integration (curl API), E2E (browser verification), browser rendering
+- Acceptance Criteria:
+  * All 4 templates accessible via API
+  * Template marketplace UI renders without errors
+  * Template deployment flow completes successfully
+  * No regressions in existing instance management
+
+=== STARTUP COMMAND ===
+
+To continue building this spec, run:
+
+  source auto-claude/.venv/bin/activate && python auto-claude/run.py --spec 007 --parallel 1
+
+Or to start the development environment manually:
+
+  cd /Users/marcos/OrbStack/dumontcloud/home/marcos/projects/dumont-cloud/.auto-claude/specs/007-basic-template-marketplace
+  ./init.sh
+
+=== END SESSION 1 ===

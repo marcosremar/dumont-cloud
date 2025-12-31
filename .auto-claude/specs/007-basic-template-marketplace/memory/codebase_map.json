@@ -1,0 +1,10 @@
+{
+  "discovered_files": {
+    "services/": {
+      "description": "Root-level services/ directory contains legacy services (vast_service.py, template_service.py, deploy_wizard.py). These are separate from src/services/ which contains the main app services. When importing from root services/, use relative imports within that package.",
+      "category": "architecture",
+      "discovered_at": "2025-12-31T22:11:24.663005+00:00"
+    }
+  },
+  "last_updated": "2025-12-31T22:11:24.673354+00:00"
+}
