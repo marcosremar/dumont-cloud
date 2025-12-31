@@ -88,14 +88,16 @@
           "title": "Return focus to trigger when dropdown closes",
           "description": "Restore focus to the trigger element when dropdown is closed via keyboard or click outside",
           "file": "web/src/components/tailadmin-ui/index.jsx",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "Focus returns to trigger button when Escape is pressed",
             "Focus returns to trigger when clicking outside",
             "Focus does NOT return to trigger when item is selected (natural tab order)",
             "Trigger ref is properly stored and accessible"
           ],
-          "implementation_notes": "Store trigger ref, call triggerRef.current.focus() on close in appropriate scenarios"
+          "implementation_notes": "Store trigger ref, call triggerRef.current.focus() on close in appropriate scenarios",
+          "notes": "Implemented focus restoration to trigger element when dropdown is closed via click outside. The Escape key handler (implemented in 1.1) already returns focus. Item selection correctly does NOT restore focus to allow natural tab order. All acceptance criteria met: (1) Focus returns to trigger when Escape is pressed, (2) Focus returns to trigger when clicking outside, (3) Focus does NOT return to trigger on item selection, (4) Trigger ref properly stored and accessible.",
+          "updated_at": "2025-12-31T21:36:41.889429+00:00"
         },
         {
           "id": "2.3",
@@ -208,5 +210,5 @@
     "issues": [],
     "tests_passed": []
   },
-  "last_updated": "2025-12-31T21:34:37.775985+00:00"
+  "last_updated": "2025-12-31T21:36:41.889454+00:00"
 }

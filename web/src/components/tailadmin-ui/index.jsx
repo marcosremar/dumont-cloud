@@ -739,6 +739,24 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
         setFocusedIndex(nextIndex);
         items[nextIndex]?.ref?.focus();
       }
+    } else if (event.key === 'Tab') {
+      // Trap Tab within dropdown - prevent focus from escaping
+      event.preventDefault();
+      if (event.shiftKey) {
+        // Shift+Tab moves focus to previous item (same as ArrowUp)
+        const nextIndex = findNextEnabledIndex(focusedIndex, 'up');
+        if (nextIndex !== -1) {
+          setFocusedIndex(nextIndex);
+          items[nextIndex]?.ref?.focus();
+        }
+      } else {
+        // Tab moves focus to next item (same as ArrowDown)
+        const nextIndex = findNextEnabledIndex(focusedIndex, 'down');
+        if (nextIndex !== -1) {
+          setFocusedIndex(nextIndex);
+          items[nextIndex]?.ref?.focus();
+        }
+      }
     } else if (event.key === 'Escape') {
       setIsOpen(false);
       triggerRef.current?.focus();
