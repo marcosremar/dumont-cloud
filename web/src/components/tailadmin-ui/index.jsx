@@ -626,10 +626,18 @@ export function DropdownMenuTrigger({ children, asChild, ...props }) {
     setIsOpen(!isOpen);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsOpen(!isOpen);
+    }
+  };
+
   if (asChild) {
-    return React.cloneElement(children, { onClick: handleClick });
+    return React.cloneElement(children, { onClick: handleClick, onKeyDown: handleKeyDown });
   }
-  return <button onClick={handleClick} {...props}>{children}</button>;
+  return <button onClick={handleClick} onKeyDown={handleKeyDown} {...props}>{children}</button>;
 }
 
 export function DropdownMenuContent({ children, align = 'end', className = '' }) {
