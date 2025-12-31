@@ -172,7 +172,9 @@
             },
             "expected_status": 201
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added POST /api/templates/{slug}/deploy endpoint with DeployTemplateRequest/DeployTemplateResponse schemas. Endpoint validates template exists, supports demo mode, validates GPU meets template VRAM requirements, creates instance via VastService.create_instance_from_template, returns 201 with deployment details. Also added GET /api/templates/{slug}/offers endpoint for listing compatible GPU offers. Verification passed: curl -X POST http://localhost:8000/api/templates/jupyter-lab/deploy returns 201. Commit: 70ab2b8",
+          "updated_at": "2025-12-31T22:25:25.511486+00:00"
         },
         {
           "id": "subtask-3-3",
@@ -585,5 +587,5 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2025-12-31T22:10:50.869474+00:00"
+  "last_updated": "2025-12-31T22:25:25.511518+00:00"
 }
