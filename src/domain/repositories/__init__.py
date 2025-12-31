@@ -4,5 +4,6 @@ Repository interfaces (abstractions for Dependency Inversion Principle)
 from .gpu_provider import IGpuProvider
 from .snapshot_provider import ISnapshotProvider
 from .user_repository import IUserRepository
+from .sso_repository import ISSORepository
 
-__all__ = ['IGpuProvider', 'ISnapshotProvider', 'IUserRepository']
+__all__ = ['IGpuProvider', 'ISnapshotProvider', 'IUserRepository', 'ISSORepository']
