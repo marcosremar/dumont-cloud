@@ -7,9 +7,11 @@ from .auth_service import AuthService
 from .migration_service import MigrationService
 from .sync_service import SyncService
 from .finetune_service import FineTuningService, get_finetune_service
+from .nps_service import NPSService
 
 __all__ = [
     'InstanceService', 'SnapshotService', 'AuthService',
     'MigrationService', 'SyncService',
     'FineTuningService', 'get_finetune_service',
+    'NPSService',
 ]

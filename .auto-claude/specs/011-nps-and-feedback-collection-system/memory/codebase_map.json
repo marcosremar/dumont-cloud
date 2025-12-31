@@ -1,0 +1,10 @@
+{
+  "discovered_files": {
+    "migrations/002_create_nps_tables.sql": {
+      "description": "NPS database migration creates 3 tables: nps_responses (survey data with score 0-10, category, followup tracking), nps_survey_config (trigger configs with defaults for first_deployment, monthly, issue_resolution), nps_user_interactions (rate limiting). Uses CHECK constraints for validation and indexes on user_id, created_at for performance.",
+      "category": "database",
+      "discovered_at": "2025-12-31T21:40:19.899064+00:00"
+    }
+  },
+  "last_updated": "2025-12-31T21:40:19.899081+00:00"
+}

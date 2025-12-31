@@ -1,0 +1,72 @@
+{
+  "complexity": "complex",
+  "workflow_type": "feature",
+  "confidence": 0.85,
+  "reasoning": "This task requires new architectural patterns (configurable trigger system, rate limiting), database schema design for trend analysis, and cross-cutting changes affecting 10+ files across multiple services. No external integrations, but the complexity comes from designing interconnected components that must work together reliably.",
+
+  "analysis": {
+    "scope": {
+      "estimated_files": 12,
+      "estimated_services": 2,
+      "is_cross_cutting": true,
+      "notes": "Frontend (survey modal, admin dashboard), backend (API endpoints, trigger logic, rate limiting), database schema, possibly event handlers for triggers"
+    },
+    "integrations": {
+      "external_services": [],
+      "new_dependencies": [],
+      "research_needed": false,
+      "notes": "No external integrations. May need charting library for dashboard but likely already exists in codebase"
+    },
+    "infrastructure": {
+      "docker_changes": false,
+      "database_changes": true,
+      "config_changes": true,
+      "notes": "New database schema for NPS responses and survey history. Environment variables for trigger configuration (timing, frequency limits)"
+    },
+    "knowledge": {
+      "patterns_exist": false,
+      "research_required": false,
+      "unfamiliar_tech": [],
+      "notes": "No existing NPS/survey infrastructure. Need to design new patterns for trigger system and rate limiting, but using standard web technologies"
+    },
+    "risk": {
+      "level": "medium",
+      "concerns": [
+        "Rate limiting must prevent survey fatigue",
+        "Trigger system reliability and configurability",
+        "Database schema must support trend analysis",
+        "Admin dashboard authorization",
+        "Survey UX must be truly non-intrusive"
+      ],
+      "notes": "Primary risk is poor user experience if surveys become annoying. Secondary risk is data model not supporting needed analytics"
+    }
+  },
+
+  "recommended_phases": [
+    "discovery",
+    "requirements",
+    "context",
+    "spec_writing",
+    "self_critique",
+    "planning",
+    "validation"
+  ],
+
+  "flags": {
+    "needs_research": false,
+    "needs_self_critique": true,
+    "needs_infrastructure_setup": false
+  },
+
+  "validation_recommendations": {
+    "risk_level": "medium",
+    "skip_validation": false,
+    "minimal_mode": false,
+    "test_types_required": ["unit", "integration"],
+    "security_scan_required": false,
+    "staging_deployment_required": false,
+    "reasoning": "Database schema changes and user data collection require thorough testing. Unit tests for trigger logic and rate limiting, integration tests for end-to-end survey flow. No security scan needed as data is non-sensitive feedback."
+  },
+
+  "created_at": "2025-01-07T12:00:00Z"
+}
