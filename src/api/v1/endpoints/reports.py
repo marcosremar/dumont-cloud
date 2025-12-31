@@ -5,12 +5,20 @@ Privacy Filtering:
 - Public endpoints only return aggregate savings data
 - Sensitive fields (user_email, api_keys, instance_ids, etc.) are filtered out
 - Uses whitelist-based filtering for maximum security
+
+Rate Limiting:
+- Report generation limited to 10 reports/hour per user
+- Uses in-memory sliding window counter
+- Returns 429 Too Many Requests with Retry-After header when exceeded
 """
 
 import secrets
+import time
+from collections import defaultdict
 from datetime import datetime
-from typing import Dict, Any, Optional, Set
-from fastapi import APIRouter, Depends, HTTPException, status
+from threading import Lock
+from typing import Dict, Any, Optional, Set, List, Tuple
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 
 from src.config.database import get_db
@@ -24,6 +32,80 @@ from src.api.v1.schemas.reports import (
 )
 
 router = APIRouter()
+
+# =============================================================================
+# RATE LIMITING - In-memory sliding window counter
+# =============================================================================
+
+# Rate limit configuration
+RATE_LIMIT_MAX_REQUESTS = 10  # Maximum reports per window
+RATE_LIMIT_WINDOW_SECONDS = 3600  # 1 hour window
+
+
+class RateLimiter:
+    """
+    In-memory sliding window rate limiter.
+
+    Tracks request timestamps per user and enforces a maximum number
+    of requests within a rolling time window.
+
+    Thread-safe implementation using a lock for concurrent access.
+    """
+
+    def __init__(self, max_requests: int = RATE_LIMIT_MAX_REQUESTS,
+                 window_seconds: int = RATE_LIMIT_WINDOW_SECONDS):
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self._requests: Dict[str, List[float]] = defaultdict(list)
+        self._lock = Lock()
+
+    def _cleanup_expired(self, user_id: str, current_time: float) -> None:
+        """Remove expired request timestamps for a user."""
+        cutoff = current_time - self.window_seconds
+        self._requests[user_id] = [
+            ts for ts in self._requests[user_id] if ts > cutoff
+        ]
+
+    def is_allowed(self, user_id: str) -> Tuple[bool, int]:
+        """
+        Check if a request is allowed for the user.
+
+        Returns:
+            Tuple of (is_allowed, seconds_until_reset)
+            - is_allowed: True if request is within rate limit
+            - seconds_until_reset: Seconds until oldest request expires (for Retry-After)
+        """
+        current_time = time.time()
+
+        with self._lock:
+            # Clean up expired timestamps
+            self._cleanup_expired(user_id, current_time)
+
+            request_count = len(self._requests[user_id])
+
+            if request_count >= self.max_requests:
+                # Calculate when the oldest request will expire
+                oldest_request = min(self._requests[user_id])
+                seconds_until_reset = int(
+                    (oldest_request + self.window_seconds) - current_time
+                ) + 1  # Add 1 second buffer
+                return False, max(1, seconds_until_reset)
+
+            # Request is allowed, record the timestamp
+            self._requests[user_id].append(current_time)
+            return True, 0
+
+    def get_remaining(self, user_id: str) -> int:
+        """Get remaining requests in the current window."""
+        current_time = time.time()
+
+        with self._lock:
+            self._cleanup_expired(user_id, current_time)
+            return max(0, self.max_requests - len(self._requests[user_id]))
+
+
+# Global rate limiter instance
+report_rate_limiter = RateLimiter()
 
 # =============================================================================
 # PRIVACY FILTERING - Whitelisted fields for public endpoints
@@ -168,6 +250,7 @@ def generate_shareable_id(length: int = 10) -> str:
 @router.post("/generate", response_model=GenerateReportResponse, status_code=status.HTTP_201_CREATED)
 async def generate_report(
     request: GenerateReportRequest,
+    response: Response,
     user_id: str = Depends(get_current_user_email),
     db: Session = Depends(get_db)
 ):
@@ -177,7 +260,33 @@ async def generate_report(
     - Requer autenticação
     - Aceita configuração de formato (twitter/linkedin/generic) e métricas
     - Retorna shareable_id para URL pública e image_url (após processamento)
+    - Rate limited: max 10 reports/hour per user
+
+    Rate Limit Headers:
+    - X-RateLimit-Limit: Maximum requests per window
+    - X-RateLimit-Remaining: Remaining requests in current window
+    - X-RateLimit-Reset: Seconds until window reset (when limit exceeded)
     """
+    # Check rate limit
+    is_allowed, retry_after = report_rate_limiter.is_allowed(user_id)
+
+    if not is_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Rate limit exceeded. Maximum {RATE_LIMIT_MAX_REQUESTS} reports per hour. Try again in {retry_after} seconds.",
+            headers={
+                "Retry-After": str(retry_after),
+                "X-RateLimit-Limit": str(RATE_LIMIT_MAX_REQUESTS),
+                "X-RateLimit-Remaining": "0",
+                "X-RateLimit-Reset": str(retry_after)
+            }
+        )
+
+    # Add rate limit headers to successful response
+    remaining = report_rate_limiter.get_remaining(user_id)
+    response.headers["X-RateLimit-Limit"] = str(RATE_LIMIT_MAX_REQUESTS)
+    response.headers["X-RateLimit-Remaining"] = str(remaining)
+
     # Gerar ID único para o relatório
     shareable_id = generate_shareable_id()
 
