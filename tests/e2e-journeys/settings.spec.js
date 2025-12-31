@@ -1586,3 +1586,328 @@ test.describe('⚙️ StandbyConfig - CPU Standby/Failover Configuration Tests',
   });
 
 });
+
+test.describe('📊 FailoverReport - Failover Report Component Tests', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await goToSettings(page, 'failover');
+    // Aguardar o componente carregar (loading state terminar)
+    await page.waitForTimeout(2000);
+  });
+
+  test('FailoverReport: Component renders after loading', async ({ page }) => {
+    // Primeiro, verificar se está carregando ou já carregou
+    const loadingState = page.locator('[data-testid="failover-loading"]');
+    const loadedState = page.locator('[data-testid="failover-report"]');
+
+    // Aguardar que o loading termine e o componente carregue
+    const isLoading = await loadingState.isVisible({ timeout: 1000 }).catch(() => false);
+    if (isLoading) {
+      // Aguardar loading terminar
+      await expect(loadedState).toBeVisible({ timeout: 10000 });
+    }
+
+    // Verificar que o componente carregado está visível
+    await expect(loadedState).toBeVisible({ timeout: 10000 });
+  });
+
+  test('FailoverReport: Header shows title and description', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar header
+    const header = page.locator('[data-testid="failover-header"]');
+    await expect(header).toBeVisible({ timeout: 5000 });
+
+    // Verificar título
+    await expect(page.getByText('Relatório de Failover')).toBeVisible({ timeout: 5000 });
+
+    // Verificar descrição
+    await expect(page.getByText('Histórico e métricas de recuperação automática')).toBeVisible();
+  });
+
+  test('FailoverReport: Time range selector is visible with all options', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar que o seletor de time range está visível
+    const timeRangeSelector = page.locator('[data-testid="failover-time-range"]');
+    await expect(timeRangeSelector).toBeVisible({ timeout: 5000 });
+
+    // Verificar que todos os botões de range estão visíveis
+    const range7d = page.locator('[data-testid="failover-time-range-7d"]');
+    const range30d = page.locator('[data-testid="failover-time-range-30d"]');
+    const range90d = page.locator('[data-testid="failover-time-range-90d"]');
+
+    await expect(range7d).toBeVisible();
+    await expect(range30d).toBeVisible();
+    await expect(range90d).toBeVisible();
+
+    // Verificar textos dos botões
+    await expect(range7d).toContainText('7 dias');
+    await expect(range30d).toContainText('30 dias');
+    await expect(range90d).toContainText('90 dias');
+  });
+
+  test('FailoverReport: Time range buttons are clickable and change state', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Clicar em cada botão de time range
+    const range7d = page.locator('[data-testid="failover-time-range-7d"]');
+    const range30d = page.locator('[data-testid="failover-time-range-30d"]');
+    const range90d = page.locator('[data-testid="failover-time-range-90d"]');
+
+    // Clicar em 7 dias
+    await range7d.click();
+    await page.waitForTimeout(300);
+    await expect(range7d).toHaveClass(/ta-tab-active/);
+
+    // Clicar em 30 dias
+    await range30d.click();
+    await page.waitForTimeout(300);
+    await expect(range30d).toHaveClass(/ta-tab-active/);
+
+    // Clicar em 90 dias
+    await range90d.click();
+    await page.waitForTimeout(300);
+    await expect(range90d).toHaveClass(/ta-tab-active/);
+  });
+
+  test('FailoverReport: Metrics cards are visible', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar que o grid de métricas está visível
+    const metricsGrid = page.locator('[data-testid="failover-metrics"]');
+    await expect(metricsGrid).toBeVisible({ timeout: 5000 });
+
+    // Verificar labels das métricas principais
+    await expect(page.getByText('Total de Failovers')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Taxa de Sucesso')).toBeVisible();
+    await expect(page.getByText('MTTR (Tempo Médio)')).toBeVisible();
+    await expect(page.getByText('Latência Detecção')).toBeVisible();
+  });
+
+  test('FailoverReport: Secondary metrics are visible', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar labels das métricas secundárias
+    await expect(page.getByText('Dados Restaurados')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('GPUs Provisionadas')).toBeVisible();
+    await expect(page.getByText('CPU Standby Ativo')).toBeVisible();
+    await expect(page.getByText('Causa Principal')).toBeVisible();
+  });
+
+  test('FailoverReport: Latency breakdown section is visible', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar que a seção de latency breakdown está visível
+    const latencyBreakdown = page.locator('[data-testid="latency-breakdown"]');
+    await expect(latencyBreakdown).toBeVisible({ timeout: 5000 });
+
+    // Verificar que o título da seção está visível
+    await expect(page.getByText('Latência por Fase (Média)')).toBeVisible();
+
+    // Verificar fases do breakdown
+    await expect(page.getByText('Detecção').first()).toBeVisible();
+    await expect(page.getByText('Failover para CPU')).toBeVisible();
+    await expect(page.getByText('Busca de GPU')).toBeVisible();
+    await expect(page.getByText('Provisionamento')).toBeVisible();
+    await expect(page.getByText('Restauração').first()).toBeVisible();
+  });
+
+  test('FailoverReport: Failover history section is visible', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar que a seção de histórico está visível
+    const historySection = page.locator('[data-testid="failover-history"]');
+    await expect(historySection).toBeVisible({ timeout: 5000 });
+
+    // Verificar título da seção
+    await expect(page.getByText('Histórico de Failovers')).toBeVisible();
+  });
+
+  test('FailoverReport: Failover history shows items or empty message', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar seção de histórico
+    const historySection = page.locator('[data-testid="failover-history"]');
+    await expect(historySection).toBeVisible({ timeout: 5000 });
+
+    // Verificar se há itens de failover ou mensagem de vazio
+    const failoverItems = page.locator('[data-testid^="failover-item-"]');
+    const itemCount = await failoverItems.count();
+
+    if (itemCount > 0) {
+      // Se há itens, verificar que o primeiro está visível
+      await expect(failoverItems.first()).toBeVisible();
+    } else {
+      // Se não há itens, verificar mensagem de vazio
+      await expect(page.getByText('Nenhum failover registrado')).toBeVisible();
+    }
+  });
+
+  test('FailoverReport: Failover items show GPU names and status', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar seção de histórico
+    const historySection = page.locator('[data-testid="failover-history"]');
+    await expect(historySection).toBeVisible({ timeout: 5000 });
+
+    // Procurar por itens de failover
+    const failoverItems = page.locator('[data-testid^="failover-item-"]');
+    const itemCount = await failoverItems.count();
+
+    if (itemCount > 0) {
+      // Verificar que o primeiro item tem informações de GPU
+      const firstItem = failoverItems.first();
+      await expect(firstItem).toBeVisible();
+
+      // Verificar que há indicador de status (checkmark ou X)
+      const hasCheckCircle = await firstItem.locator('svg').first().isVisible();
+      expect(hasCheckCircle).toBeTruthy();
+
+      // Verificar que há texto de tempo total
+      const hasTimeText = await firstItem.getByText('tempo total').isVisible().catch(() => false);
+      expect(hasTimeText).toBeTruthy();
+    }
+  });
+
+  test('FailoverReport: Metrics show percentage for success rate', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar que a taxa de sucesso mostra porcentagem
+    const metricsGrid = page.locator('[data-testid="failover-metrics"]');
+    await expect(metricsGrid).toBeVisible({ timeout: 5000 });
+
+    // Verificar que há um valor com % na seção de métricas
+    const percentageValue = page.getByText(/%/).first();
+    await expect(percentageValue).toBeVisible({ timeout: 5000 });
+  });
+
+  test('FailoverReport: Real failover tests section shows when available', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar se a seção de testes reais está visível (opcional)
+    const realTestsSection = page.locator('[data-testid="real-failover-tests"]');
+    const hasRealTests = await realTestsSection.isVisible({ timeout: 3000 }).catch(() => false);
+
+    if (hasRealTests) {
+      // Se há testes reais, verificar título
+      await expect(page.getByText('Testes Reais de Failover (com Snapshots B2)')).toBeVisible();
+
+      // Verificar que há cards de teste
+      const testCards = page.locator('[data-testid^="real-failover-card-"]');
+      const cardCount = await testCards.count();
+      expect(cardCount).toBeGreaterThan(0);
+    }
+  });
+
+  test('FailoverReport: Latency bars are rendered in breakdown', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar seção de latency breakdown
+    const latencyBreakdown = page.locator('[data-testid="latency-breakdown"]');
+    await expect(latencyBreakdown).toBeVisible({ timeout: 5000 });
+
+    // Verificar que há barras de progresso (divs com classes de cor)
+    const progressBars = latencyBreakdown.locator('.rounded-full');
+    const barCount = await progressBars.count();
+    expect(barCount).toBeGreaterThan(0);
+  });
+
+  test('FailoverReport: Default time range is 30 days', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar que o botão de 30 dias está ativo por padrão
+    const range30d = page.locator('[data-testid="failover-time-range-30d"]');
+    await expect(range30d).toBeVisible({ timeout: 5000 });
+    await expect(range30d).toHaveClass(/ta-tab-active/);
+  });
+
+  test('FailoverReport: All main sections are accessible', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar que todos os elementos principais existem
+    const elements = [
+      '[data-testid="failover-header"]',
+      '[data-testid="failover-time-range"]',
+      '[data-testid="failover-metrics"]',
+      '[data-testid="latency-breakdown"]',
+      '[data-testid="failover-history"]',
+    ];
+
+    for (const selector of elements) {
+      const element = page.locator(selector);
+      await expect(element).toBeVisible({ timeout: 5000 });
+    }
+  });
+
+  test('FailoverReport: Switching time range updates the view', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Clicar em diferentes ranges e verificar que a UI responde
+    const range7d = page.locator('[data-testid="failover-time-range-7d"]');
+    const range90d = page.locator('[data-testid="failover-time-range-90d"]');
+
+    // Mudar para 7 dias
+    await range7d.click();
+    await page.waitForTimeout(500);
+
+    // Verificar que 7d está ativo e 90d não
+    await expect(range7d).toHaveClass(/ta-tab-active/);
+    await expect(range90d).not.toHaveClass(/ta-tab-active/);
+
+    // Mudar para 90 dias
+    await range90d.click();
+    await page.waitForTimeout(500);
+
+    // Verificar que 90d está ativo e 7d não
+    await expect(range90d).toHaveClass(/ta-tab-active/);
+    await expect(range7d).not.toHaveClass(/ta-tab-active/);
+  });
+
+  test('FailoverReport: Component has correct visual structure', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar que o componente tem espaçamento correto (space-y-6)
+    await expect(failoverReport).toHaveClass(/space-y-6/);
+
+    // Verificar que os cards de métricas estão em grid
+    const metricsGrid = page.locator('[data-testid="failover-metrics"]');
+    await expect(metricsGrid).toHaveClass(/grid/);
+  });
+
+  test('FailoverReport: Success rate shows quality indicator', async ({ page }) => {
+    const failoverReport = page.locator('[data-testid="failover-report"]');
+    await expect(failoverReport).toBeVisible({ timeout: 10000 });
+
+    // Verificar que há indicador de qualidade (Excelente, Bom, ou Precisa atenção)
+    const qualityIndicators = ['Excelente', 'Bom', 'Precisa atenção'];
+    let foundIndicator = false;
+
+    for (const indicator of qualityIndicators) {
+      const hasIndicator = await page.getByText(indicator).isVisible({ timeout: 1000 }).catch(() => false);
+      if (hasIndicator) {
+        foundIndicator = true;
+        break;
+      }
+    }
+
+    expect(foundIndicator).toBeTruthy();
+  });
+
+});
