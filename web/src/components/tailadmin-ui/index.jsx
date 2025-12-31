@@ -616,6 +616,21 @@ export function DropdownMenu({ children }) {
     }
   }, [isOpen]);
 
+  // Focus first menu item when dropdown opens
+  useEffect(() => {
+    if (isOpen) {
+      // Use a small delay to allow menu items to register themselves
+      const timeoutId = setTimeout(() => {
+        const items = getMenuItems();
+        if (items.length > 0 && items[0].current) {
+          items[0].current.focus();
+          setFocusedIndex(0);
+        }
+      }, 0);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isOpen, getMenuItems, setFocusedIndex]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
