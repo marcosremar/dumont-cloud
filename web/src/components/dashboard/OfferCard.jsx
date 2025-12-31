@@ -1,8 +1,20 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 import { Cpu, Wifi, Zap, Check, AlertTriangle, Ban } from 'lucide-react';
 import { Card, CardContent, Button, Badge } from '../tailadmin-ui';
+import { selectSelectedCurrency, selectExchangeRate } from '../../store/slices/currencySlice';
+import { formatAmount } from '../../utils/formatCurrency';
 
 const OfferCard = ({ offer, onSelect }) => {
+  // Currency state
+  const selectedCurrency = useSelector(selectSelectedCurrency);
+  const exchangeRate = useSelector(selectExchangeRate(selectedCurrency));
+
+  // Convert and format the price
+  const basePrice = offer.dph_total || 0;
+  const convertedPrice = basePrice * exchangeRate;
+  const formattedPrice = formatAmount(convertedPrice, selectedCurrency);
+
   const reliability = offer.reliability || 0;
   const reliabilityColor = reliability >= 0.9 ? 'text-brand-500' : reliability >= 0.7 ? 'text-yellow-500' : 'text-red-500';
   const reliabilityBg = reliability >= 0.9 ? 'bg-brand-500/10' : reliability >= 0.7 ? 'bg-yellow-500/10' : 'bg-red-500/10';
@@ -47,7 +59,7 @@ const OfferCard = ({ offer, onSelect }) => {
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-brand-600 dark:text-brand-400">
-              ${offer.dph_total?.toFixed(2)}
+              {formattedPrice}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">por hora</div>
           </div>
