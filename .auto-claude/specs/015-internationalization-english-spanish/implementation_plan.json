@@ -86,7 +86,9 @@
             "command": "pip freeze | grep -E '(Flask-Babel|Babel)' | wc -l",
             "expected": "At least 2 packages"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added Flask-Babel>=4.0.0 and Babel>=2.14.0 to requirements.txt under new Internationalization section. Verified installation with pip3 freeze showing both packages installed.",
+          "updated_at": "2025-12-31T21:50:21.127524+00:00"
         },
         {
           "id": "subtask-1-5",
@@ -102,7 +104,9 @@
             "command": "test -f cli/babel.cfg && grep -q 'python:' cli/babel.cfg && echo 'OK'",
             "expected": "OK"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Created cli/babel.cfg with Babel extraction configuration for: (1) Python files (**.py) with UTF-8 encoding, (2) Jinja2 HTML templates (**/templates/**.html), and (3) Jinja2 .j2 templates (**/templates/**.j2). All Jinja2 extractors include i18n extension support. Verification passed.",
+          "updated_at": "2025-12-31T21:54:35.846466+00:00"
         },
         {
           "id": "subtask-1-6",
@@ -119,7 +123,9 @@
             "command": "test -d cli/translations/en/LC_MESSAGES && test -d cli/translations/es/LC_MESSAGES && echo 'OK'",
             "expected": "OK"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Created translation directory structure for CLI with en/LC_MESSAGES and es/LC_MESSAGES directories. Both contain .gitkeep files to ensure directories are tracked in git. Verification passed.",
+          "updated_at": "2025-12-31T21:56:29.697131+00:00"
         }
       ]
     },
@@ -890,5 +896,5 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2025-12-31T21:47:29.085806+00:00"
+  "last_updated": "2025-12-31T21:56:29.697148+00:00"
 }

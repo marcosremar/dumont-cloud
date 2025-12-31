@@ -4,7 +4,12 @@
       "description": "Translation files stored in web/public/locales/{lang}/translation.json format. English (en) and Spanish (es) locales created with nested JSON keys organized by feature/domain (common, navigation, dashboard, machines, serverless, jobs, models, finetuning, gpuMetrics, documentation, settings, auth, errors, emptyState, languages). i18n config in web/src/i18n.js loads from /locales/{{lng}}/translation.json path.",
       "category": "i18n",
       "discovered_at": "2025-12-31T21:47:35.429519+00:00"
+    },
+    "requirements.txt": {
+      "description": "Added Internationalization section with Flask-Babel>=4.0.0 and Babel>=2.14.0 for Python i18n support",
+      "category": "dependencies",
+      "discovered_at": "2025-12-31T21:51:01.335374+00:00"
     }
   },
-  "last_updated": "2025-12-31T21:47:35.429546+00:00"
+  "last_updated": "2025-12-31T21:51:01.335447+00:00"
 }
