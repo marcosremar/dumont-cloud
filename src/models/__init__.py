@@ -4,6 +4,8 @@ from .price_history import PriceHistory, PriceAlert
 from .instance_status import InstanceStatus, HibernationEvent
 from .metrics import MarketSnapshot, ProviderReliability, PricePrediction, CostEfficiencyRanking
 from .machine_history import MachineAttempt, MachineBlacklist, MachineStats
+from .reservation import Reservation, ReservationStatus
+from .reservation_credit import ReservationCredit, CreditStatus, CreditTransactionType
 
 __all__ = [
     'PriceHistory',
@@ -19,4 +21,10 @@ __all__ = [
     'MachineAttempt',
     'MachineBlacklist',
     'MachineStats',
+    # Reservation system models
+    'Reservation',
+    'ReservationStatus',
+    'ReservationCredit',
+    'CreditStatus',
+    'CreditTransactionType',
 ]
