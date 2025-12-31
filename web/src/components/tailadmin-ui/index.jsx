@@ -575,12 +575,53 @@ export function Slider({ value = [0], onValueChange, min = 0, max = 100, step = 
 }
 
 // Dropdown Menu Components with state management
-const DropdownContext = React.createContext({ isOpen: false, setIsOpen: () => {}, triggerRef: null });
+const DropdownContext = React.createContext({
+  isOpen: false,
+  setIsOpen: () => {},
+  triggerRef: null,
+  focusedIndex: -1,
+  setFocusedIndex: () => {},
+  registerItem: () => {},
+  unregisterItem: () => {},
+  getItemRefs: () => []
+});
 
 export function DropdownMenu({ children }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const dropdownRef = useRef(null);
   const triggerRef = useRef(null);
+  const itemRefsRef = useRef([]);
+
+  // Register an item ref
+  const registerItem = useCallback((ref, disabled) => {
+    const existingIndex = itemRefsRef.current.findIndex(item => item.ref === ref);
+    if (existingIndex === -1) {
+      itemRefsRef.current.push({ ref, disabled });
+    } else {
+      itemRefsRef.current[existingIndex] = { ref, disabled };
+    }
+    return itemRefsRef.current.findIndex(item => item.ref === ref);
+  }, []);
+
+  // Unregister an item ref
+  const unregisterItem = useCallback((ref) => {
+    const index = itemRefsRef.current.findIndex(item => item.ref === ref);
+    if (index !== -1) {
+      itemRefsRef.current.splice(index, 1);
+    }
+  }, []);
+
+  // Get item refs
+  const getItemRefs = useCallback(() => itemRefsRef.current, []);
+
+  // Reset focused index and clear refs when dropdown closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFocusedIndex(-1);
+      itemRefsRef.current = [];
+    }
+  }, [isOpen]);
 
   // Handle Escape key
   useEffect(() => {
@@ -616,7 +657,16 @@ export function DropdownMenu({ children }) {
   }, [isOpen]);
 
   return (
-    <DropdownContext.Provider value={{ isOpen, setIsOpen, triggerRef }}>
+    <DropdownContext.Provider value={{
+      isOpen,
+      setIsOpen,
+      triggerRef,
+      focusedIndex,
+      setFocusedIndex,
+      registerItem,
+      unregisterItem,
+      getItemRefs
+    }}>
       <div ref={dropdownRef} className="relative inline-block">
         {children}
       </div>
@@ -642,20 +692,96 @@ export function DropdownMenuTrigger({ children, asChild, ...props }) {
 }
 
 export function DropdownMenuContent({ children, align = 'end', className = '' }) {
-  const { isOpen } = React.useContext(DropdownContext);
+  const { isOpen, focusedIndex, setFocusedIndex, getItemRefs, setIsOpen, triggerRef } = React.useContext(DropdownContext);
+  const contentRef = useRef(null);
+
+  // Find next enabled item index (wraps around)
+  const findNextEnabledIndex = useCallback((currentIndex, direction) => {
+    const items = getItemRefs();
+    const itemCount = items.length;
+    if (itemCount === 0) return -1;
+
+    let nextIndex = currentIndex;
+    let attempts = 0;
+
+    do {
+      nextIndex = direction === 'down'
+        ? (nextIndex + 1) % itemCount
+        : (nextIndex - 1 + itemCount) % itemCount;
+      attempts++;
+    } while (items[nextIndex]?.disabled && attempts < itemCount);
+
+    // If all items are disabled, return -1
+    if (attempts >= itemCount && items[nextIndex]?.disabled) {
+      return -1;
+    }
+
+    return nextIndex;
+  }, [getItemRefs]);
+
+  // Handle keyboard navigation
+  const handleKeyDown = useCallback((event) => {
+    const items = getItemRefs();
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      const nextIndex = findNextEnabledIndex(focusedIndex, 'down');
+      if (nextIndex !== -1) {
+        setFocusedIndex(nextIndex);
+        items[nextIndex]?.ref?.focus();
+      }
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      const nextIndex = findNextEnabledIndex(focusedIndex, 'up');
+      if (nextIndex !== -1) {
+        setFocusedIndex(nextIndex);
+        items[nextIndex]?.ref?.focus();
+      }
+    } else if (event.key === 'Escape') {
+      setIsOpen(false);
+      triggerRef.current?.focus();
+    }
+  }, [focusedIndex, setFocusedIndex, getItemRefs, findNextEnabledIndex, setIsOpen, triggerRef]);
+
+  // Add keyboard listener when content is open
+  useEffect(() => {
+    if (isOpen && contentRef.current) {
+      contentRef.current.addEventListener('keydown', handleKeyDown);
+      return () => {
+        contentRef.current?.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [isOpen, handleKeyDown]);
 
   if (!isOpen) return null;
 
   const alignClass = align === 'end' ? 'right-0' : 'left-0';
   return (
-    <div className={`absolute ${alignClass} mt-2 w-56 rounded-lg bg-dark-surface-card border border-white/10 shadow-lg z-50 py-1 ${className}`}>
+    <div
+      ref={contentRef}
+      className={`absolute ${alignClass} mt-2 w-56 rounded-lg bg-dark-surface-card border border-white/10 shadow-lg z-50 py-1 ${className}`}
+    >
       {children}
     </div>
   );
 }
 
 export function DropdownMenuItem({ children, onClick, className = '', disabled }) {
-  const { setIsOpen } = React.useContext(DropdownContext);
+  const { setIsOpen, registerItem, unregisterItem } = React.useContext(DropdownContext);
+  const itemRef = useRef(null);
+
+  // Register this item with the dropdown context
+  useEffect(() => {
+    const ref = itemRef.current;
+    if (ref) {
+      registerItem(ref, disabled);
+    }
+    return () => {
+      if (ref) {
+        unregisterItem(ref);
+      }
+    };
+  }, [registerItem, unregisterItem, disabled]);
 
   const handleClick = (e) => {
     if (disabled) return;
@@ -665,9 +791,10 @@ export function DropdownMenuItem({ children, onClick, className = '', disabled }
 
   return (
     <button
+      ref={itemRef}
       onClick={handleClick}
       disabled={disabled}
-      className={`w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gray-100 dark:focus:bg-gray-800 focus:outline-none transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >
       {children}
     </button>
