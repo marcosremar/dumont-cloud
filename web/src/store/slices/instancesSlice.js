@@ -158,6 +158,29 @@ export const fetchMachineReliability = createAsyncThunk(
   }
 )
 
+export const submitMachineRating = createAsyncThunk(
+  'instances/submitMachineRating',
+  async ({ machineId, rating, comment = '' }, { rejectWithValue }) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/reliability/machines/${machineId}/rate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getToken()}`,
+        },
+        body: JSON.stringify({ rating, comment }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        return rejectWithValue(data.detail || 'Failed to submit rating')
+      }
+      return { machineId, ...data }
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 const initialState = {
   instances: [],
   offers: [],
@@ -191,6 +214,9 @@ const initialState = {
   reliabilityThreshold: 70,   // Minimum reliability score threshold (0-100)
   excludeBelowThreshold: true, // Whether to exclude machines below threshold
   reliabilityLoading: false,  // Loading state for reliability data
+  // Rating submission state
+  ratingSubmitting: false,    // Loading state for rating submission
+  ratingError: null,          // Error state for rating submission
 }
 
 const instancesSlice = createSlice({
@@ -259,6 +285,9 @@ const instancesSlice = createSlice({
     },
     setReliabilityLoading: (state, action) => {
       state.reliabilityLoading = action.payload
+    },
+    clearRatingError: (state) => {
+      state.ratingError = null
     },
   },
   extraReducers: (builder) => {
@@ -343,6 +372,26 @@ const instancesSlice = createSlice({
         state.reliabilityLoading = false
         state.error = action.payload
       })
+      // Submit Machine Rating
+      .addCase(submitMachineRating.pending, (state) => {
+        state.ratingSubmitting = true
+        state.ratingError = null
+      })
+      .addCase(submitMachineRating.fulfilled, (state, action) => {
+        state.ratingSubmitting = false
+        // Update reliability data with new rating info if returned
+        const { machineId, ...ratingData } = action.payload
+        if (machineId && state.reliabilityData[machineId]) {
+          state.reliabilityData[machineId] = {
+            ...state.reliabilityData[machineId],
+            ...ratingData,
+          }
+        }
+      })
+      .addCase(submitMachineRating.rejected, (state, action) => {
+        state.ratingSubmitting = false
+        state.ratingError = action.payload
+      })
   },
 })
 
@@ -364,6 +413,7 @@ export const {
   toggleThresholdExclusion,
   setExcludeBelowThreshold,
   setReliabilityLoading,
+  clearRatingError,
 } = instancesSlice.actions
 
 // Selectors
@@ -386,6 +436,10 @@ export const selectExcludeBelowThreshold = (state) => state.instances.excludeBel
 export const selectReliabilityLoading = (state) => state.instances.reliabilityLoading
 export const selectMachineReliability = (machineId) => (state) =>
   state.instances.reliabilityData[machineId] || null
+
+// Rating submission selectors
+export const selectRatingSubmitting = (state) => state.instances.ratingSubmitting
+export const selectRatingError = (state) => state.instances.ratingError
 
 // Derived selector: filter offers based on reliability settings
 export const selectFilteredOffersByReliability = (state) => {
