@@ -1,24 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Play, Square, RefreshCw, Clock, DollarSign, Cpu, Server,
   Plus, Loader2, CheckCircle, XCircle, AlertCircle, Terminal,
   Trash2, Eye, Download, ChevronDown, ChevronUp, ExternalLink
 } from 'lucide-react';
 
-// Status colors and icons
+// Status colors and icons (labels are translation keys)
 const STATUS_CONFIG = {
-  pending: { color: 'text-gray-400', bg: 'bg-gray-500/10', icon: Clock, label: 'Pendente' },
-  provisioning: { color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Loader2, label: 'Provisionando' },
-  starting: { color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Loader2, label: 'Iniciando' },
-  running: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: Play, label: 'Executando' },
-  completing: { color: 'text-amber-400', bg: 'bg-amber-500/10', icon: Loader2, label: 'Finalizando' },
-  completed: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: CheckCircle, label: 'Concluido' },
-  failed: { color: 'text-red-400', bg: 'bg-red-500/10', icon: XCircle, label: 'Falhou' },
-  cancelled: { color: 'text-gray-400', bg: 'bg-gray-500/10', icon: Square, label: 'Cancelado' },
-  timeout: { color: 'text-amber-400', bg: 'bg-amber-500/10', icon: AlertCircle, label: 'Timeout' },
+  pending: { color: 'text-gray-400', bg: 'bg-gray-500/10', icon: Clock, labelKey: 'jobs.status.pending' },
+  provisioning: { color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Loader2, labelKey: 'jobs.status.provisioning' },
+  starting: { color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Loader2, labelKey: 'jobs.status.starting' },
+  running: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: Play, labelKey: 'jobs.status.running' },
+  completing: { color: 'text-amber-400', bg: 'bg-amber-500/10', icon: Loader2, labelKey: 'jobs.status.completing' },
+  completed: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: CheckCircle, labelKey: 'jobs.status.completed' },
+  failed: { color: 'text-red-400', bg: 'bg-red-500/10', icon: XCircle, labelKey: 'jobs.status.failed' },
+  cancelled: { color: 'text-gray-400', bg: 'bg-gray-500/10', icon: Square, labelKey: 'jobs.status.cancelled' },
+  timeout: { color: 'text-amber-400', bg: 'bg-amber-500/10', icon: AlertCircle, labelKey: 'jobs.status.timeout' },
 };
 
 const Jobs = () => {
+  const { t } = useTranslation();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -134,18 +136,18 @@ const Jobs = () => {
         fetchJobs();
       } else {
         const error = await response.json();
-        alert(`Erro ao criar job: ${error.detail || 'Erro desconhecido'}`);
+        alert(`${t('jobs.errors.createError')}: ${error.detail || t('jobs.errors.unknownError')}`);
       }
     } catch (error) {
       console.error('Error creating job:', error);
-      alert('Erro ao criar job');
+      alert(t('jobs.errors.createError'));
     } finally {
       setCreating(false);
     }
   };
 
   const handleCancelJob = async (jobId) => {
-    if (!confirm('Tem certeza que deseja cancelar este job? A GPU sera destruida.')) {
+    if (!confirm(t('jobs.confirmCancel'))) {
       return;
     }
 
@@ -173,7 +175,7 @@ const Jobs = () => {
     return (
       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.color}`}>
         <Icon className={`w-3.5 h-3.5 ${isAnimated ? 'animate-spin' : ''}`} />
-        {config.label}
+        {t(config.labelKey)}
       </span>
     );
   };
@@ -183,9 +185,9 @@ const Jobs = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-100">Jobs</h1>
+          <h1 className="text-2xl font-bold text-gray-100">{t('jobs.title')}</h1>
           <p className="text-sm text-gray-400 mt-1">
-            Execute tarefas em GPU e destrua automaticamente ao terminar
+            {t('jobs.pageSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -201,7 +203,7 @@ const Jobs = () => {
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 transition-all"
           >
             <Plus className="w-4 h-4" />
-            Novo Job
+            {t('jobs.newJob')}
           </button>
         </div>
       </div>
@@ -213,9 +215,9 @@ const Jobs = () => {
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-100">Novo Job</h2>
+                  <h2 className="text-lg font-semibold text-gray-100">{t('jobs.form.title')}</h2>
                   <p className="text-xs text-gray-500 mt-1">
-                    Cria GPU, executa tarefa, destrói ao terminar
+                    {t('jobs.form.subtitle')}
                   </p>
                 </div>
                 <button
@@ -230,14 +232,14 @@ const Jobs = () => {
                 {/* Nome */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                    Nome do Job *
+                    {t('jobs.form.jobName')} *
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Ex: Fine-tune LLaMA"
+                    placeholder={t('jobs.form.jobNamePlaceholder')}
                     className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50"
                   />
                 </div>
@@ -245,13 +247,13 @@ const Jobs = () => {
                 {/* Source Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                    Tipo de Fonte
+                    {t('jobs.form.sourceType')}
                   </label>
                   <div className="flex gap-2">
                     {[
-                      { id: 'huggingface', label: 'Hugging Face' },
-                      { id: 'git', label: 'Git' },
-                      { id: 'command', label: 'Comando' },
+                      { id: 'huggingface', label: t('jobs.form.huggingface') },
+                      { id: 'git', label: t('jobs.form.git') },
+                      { id: 'command', label: t('jobs.form.command') },
                     ].map((source) => (
                       <button
                         key={source.id}
@@ -274,29 +276,29 @@ const Jobs = () => {
                   <div className="space-y-4 p-4 rounded-lg bg-white/5 border border-white/10">
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                        Repositorio Hugging Face *
+                        {t('jobs.form.hfRepo')} *
                       </label>
                       <input
                         type="text"
                         required
                         value={formData.hf_repo}
                         onChange={(e) => setFormData({ ...formData, hf_repo: e.target.value })}
-                        placeholder="Ex: unsloth/llama-3-8b-Instruct-bnb-4bit"
+                        placeholder={t('jobs.form.hfRepoPlaceholder')}
                         className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        O repositorio sera baixado para /workspace/model
+                        {t('jobs.form.hfRepoHint')}
                       </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                        Revision (opcional)
+                        {t('jobs.form.revision')}
                       </label>
                       <input
                         type="text"
                         value={formData.hf_revision}
                         onChange={(e) => setFormData({ ...formData, hf_revision: e.target.value })}
-                        placeholder="main, v1.0, commit-hash..."
+                        placeholder={t('jobs.form.revisionPlaceholder')}
                         className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50"
                       />
                     </div>
@@ -307,7 +309,7 @@ const Jobs = () => {
                   <div className="space-y-4 p-4 rounded-lg bg-white/5 border border-white/10">
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                        URL do Repositorio Git *
+                        {t('jobs.form.gitUrl')} *
                       </label>
                       <input
                         type="text"
@@ -320,7 +322,7 @@ const Jobs = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                        Branch (opcional)
+                        {t('jobs.form.branch')}
                       </label>
                       <input
                         type="text"
@@ -336,7 +338,7 @@ const Jobs = () => {
                 {/* Command */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                    Comando a Executar {formData.source !== 'command' && '(opcional)'}
+                    {t('jobs.form.commandLabel')} {formData.source !== 'command' && t('jobs.form.commandOptional')}
                   </label>
                   <textarea
                     value={formData.command}
@@ -349,7 +351,7 @@ const Jobs = () => {
                     className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50 font-mono"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Sera executado em /workspace. Crie /workspace/.job_complete quando terminar.
+                    {t('jobs.form.commandHint')}
                   </p>
                 </div>
 
@@ -357,7 +359,7 @@ const Jobs = () => {
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                      GPU
+                      {t('jobs.form.gpu')}
                     </label>
                     <select
                       value={formData.gpu_type}
@@ -374,7 +376,7 @@ const Jobs = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                      Disco (GB)
+                      {t('jobs.form.disk')}
                     </label>
                     <input
                       type="number"
@@ -387,7 +389,7 @@ const Jobs = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                      Timeout (min)
+                      {t('jobs.form.timeout')}
                     </label>
                     <input
                       type="number"
@@ -403,17 +405,17 @@ const Jobs = () => {
                 {/* Pip Packages */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                    Pip Packages (opcional)
+                    {t('jobs.form.pipPackages')}
                   </label>
                   <input
                     type="text"
                     value={formData.pip_packages}
                     onChange={(e) => setFormData({ ...formData, pip_packages: e.target.value })}
-                    placeholder="transformers, accelerate, bitsandbytes"
+                    placeholder={t('jobs.form.pipPackagesPlaceholder')}
                     className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Separados por virgula. Serao instalados antes do comando.
+                    {t('jobs.form.pipPackagesHint')}
                   </p>
                 </div>
 
@@ -424,7 +426,7 @@ const Jobs = () => {
                     onClick={() => setShowCreateForm(false)}
                     className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm transition-all"
                   >
-                    Cancelar
+                    {t('jobs.form.cancel')}
                   </button>
                   <button
                     type="submit"
@@ -434,12 +436,12 @@ const Jobs = () => {
                     {creating ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Criando...
+                        {t('jobs.form.creating')}
                       </>
                     ) : (
                       <>
                         <Play className="w-4 h-4" />
-                        Criar e Executar
+                        {t('jobs.form.createAndRun')}
                       </>
                     )}
                   </button>
@@ -454,21 +456,21 @@ const Jobs = () => {
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400 mr-3" />
-          <span className="text-gray-400">Carregando jobs...</span>
+          <span className="text-gray-400">{t('jobs.loading')}</span>
         </div>
       ) : jobs.length === 0 ? (
         <div className="text-center py-20 border border-dashed border-white/10 rounded-xl">
           <Server className="w-12 h-12 mx-auto text-gray-600 mb-4" />
-          <h3 className="text-lg font-medium text-gray-300 mb-2">Nenhum job criado</h3>
+          <h3 className="text-lg font-medium text-gray-300 mb-2">{t('jobs.noJobs')}</h3>
           <p className="text-sm text-gray-500 mb-6">
-            Jobs executam tarefas em GPU e destroem automaticamente ao terminar
+            {t('jobs.noJobsDescription')}
           </p>
           <button
             onClick={() => setShowCreateForm(true)}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 transition-all"
           >
             <Plus className="w-4 h-4" />
-            Criar Primeiro Job
+            {t('jobs.createFirstJob')}
           </button>
         </div>
       ) : (
@@ -517,7 +519,7 @@ const Jobs = () => {
                   <div className="flex items-center gap-3">
                     {job.total_cost > 0 && (
                       <div className="text-right">
-                        <div className="text-xs text-gray-500">Custo</div>
+                        <div className="text-xs text-gray-500">{t('jobs.details.cost')}</div>
                         <div className="text-sm font-mono text-gray-200">
                           ${job.total_cost.toFixed(4)}
                         </div>
@@ -533,7 +535,7 @@ const Jobs = () => {
                           handleCancelJob(job.id);
                         }}
                         className="p-1.5 rounded-lg hover:bg-red-500/10 text-red-400 transition-all"
-                        title="Cancelar job"
+                        title={t('jobs.details.cancelJob')}
                       >
                         <Square className="w-4 h-4" />
                       </button>
@@ -554,30 +556,30 @@ const Jobs = () => {
                   <div className="px-4 pb-4 pt-2 border-t border-white/5 space-y-4">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <div className="text-xs text-gray-500 mb-1">Criado</div>
+                        <div className="text-xs text-gray-500 mb-1">{t('jobs.details.created')}</div>
                         <div className="text-gray-300">
-                          {new Date(job.created_at).toLocaleString('pt-BR')}
+                          {new Date(job.created_at).toLocaleString()}
                         </div>
                       </div>
                       {job.started_at && (
                         <div>
-                          <div className="text-xs text-gray-500 mb-1">Iniciado</div>
+                          <div className="text-xs text-gray-500 mb-1">{t('jobs.details.started')}</div>
                           <div className="text-gray-300">
-                            {new Date(job.started_at).toLocaleString('pt-BR')}
+                            {new Date(job.started_at).toLocaleString()}
                           </div>
                         </div>
                       )}
                       {job.completed_at && (
                         <div>
-                          <div className="text-xs text-gray-500 mb-1">Concluido</div>
+                          <div className="text-xs text-gray-500 mb-1">{t('jobs.details.completed')}</div>
                           <div className="text-gray-300">
-                            {new Date(job.completed_at).toLocaleString('pt-BR')}
+                            {new Date(job.completed_at).toLocaleString()}
                           </div>
                         </div>
                       )}
                       {job.gpu_hours > 0 && (
                         <div>
-                          <div className="text-xs text-gray-500 mb-1">GPU Hours</div>
+                          <div className="text-xs text-gray-500 mb-1">{t('jobs.details.gpuHours')}</div>
                           <div className="text-gray-300">{job.gpu_hours.toFixed(4)}h</div>
                         </div>
                       )}
@@ -585,7 +587,7 @@ const Jobs = () => {
 
                     {job.ssh_host && job.ssh_port && (
                       <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                        <div className="text-xs text-gray-500 mb-1">SSH</div>
+                        <div className="text-xs text-gray-500 mb-1">{t('jobs.details.ssh')}</div>
                         <code className="text-sm text-gray-300 font-mono">
                           ssh -p {job.ssh_port} root@{job.ssh_host}
                         </code>
@@ -594,7 +596,7 @@ const Jobs = () => {
 
                     {job.error_message && (
                       <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                        <div className="text-xs text-red-400 mb-1">Erro</div>
+                        <div className="text-xs text-red-400 mb-1">{t('jobs.details.error')}</div>
                         <div className="text-sm text-red-300">{job.error_message}</div>
                       </div>
                     )}
@@ -607,7 +609,7 @@ const Jobs = () => {
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs transition-all"
                       >
                         <Terminal className="w-3.5 h-3.5" />
-                        Ver Logs
+                        {t('jobs.details.viewLogs')}
                       </a>
                     </div>
                   </div>
@@ -620,13 +622,13 @@ const Jobs = () => {
 
       {/* Info Box */}
       <div className="p-4 rounded-xl bg-brand-500/5 border border-brand-500/20">
-        <h4 className="text-sm font-medium text-brand-400 mb-2">Como funciona o modo Job?</h4>
+        <h4 className="text-sm font-medium text-brand-400 mb-2">{t('jobs.howItWorks.title')}</h4>
         <ul className="text-xs text-gray-400 space-y-1">
-          <li>• <strong>Cria</strong> uma GPU com a configuracao especificada</li>
-          <li>• <strong>Baixa</strong> o repositorio do Hugging Face ou Git</li>
-          <li>• <strong>Executa</strong> o comando especificado</li>
-          <li>• <strong>Destrói</strong> a GPU automaticamente ao terminar (ou timeout)</li>
-          <li>• Crie o arquivo <code className="bg-white/10 px-1 rounded">/workspace/.job_complete</code> para indicar conclusao</li>
+          <li>• {t('jobs.howItWorks.step1')}</li>
+          <li>• {t('jobs.howItWorks.step2')}</li>
+          <li>• {t('jobs.howItWorks.step3')}</li>
+          <li>• {t('jobs.howItWorks.step4')}</li>
+          <li>• {t('jobs.howItWorks.step5')}</li>
         </ul>
       </div>
     </div>

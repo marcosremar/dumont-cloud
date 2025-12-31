@@ -265,10 +265,13 @@
   },
   "serverless": {
     "title": "Serverless",
+    "pageTitle": "Serverless Endpoints",
+    "pageSubtitle": "Auto-scaling GPU endpoints with Spot pricing",
     "description": "Deploy serverless GPU functions",
     "noEndpoints": "No serverless endpoints",
-    "noEndpointsDescription": "Create your first serverless endpoint to start deploying GPU functions.",
+    "noEndpointsDescription": "Create your first auto-scaling endpoint with spot pricing",
     "createEndpoint": "Create Endpoint",
+    "createFirstEndpoint": "Create First Endpoint",
     "endpoint": {
       "title": "Endpoint Details",
       "name": "Name",
@@ -276,14 +279,28 @@
       "requests": "Requests",
       "latency": "Latency",
       "cost": "Cost"
+    },
+    "stats": {
+      "totalRequests24h": "Total Requests (24h)",
+      "activeEndpoints": "{{count}} active endpoints",
+      "avgLatency": "Average Latency",
+      "coldStarts": "{{count}} cold starts",
+      "cost24h": "Cost (24h)",
+      "perMonth": "~${{amount}}/month",
+      "activeInstances": "Active Instances",
+      "configuredEndpoints": "{{count}} configured endpoints"
     }
   },
   "jobs": {
     "title": "Jobs",
     "description": "Manage batch processing jobs",
-    "noJobs": "No jobs found",
-    "noJobsDescription": "Submit a new job to start processing.",
+    "pageSubtitle": "Run tasks on GPU and auto-destroy when finished",
+    "noJobs": "No jobs created",
+    "noJobsDescription": "Jobs run tasks on GPU and auto-destroy when finished",
     "submitJob": "Submit Job",
+    "newJob": "New Job",
+    "createFirstJob": "Create First Job",
+    "loading": "Loading jobs...",
     "job": {
       "title": "Job Details",
       "status": "Status",
@@ -292,25 +309,159 @@
       "cost": "Cost"
     },
     "status": {
-      "queued": "Queued",
+      "pending": "Pending",
+      "provisioning": "Provisioning",
+      "starting": "Starting",
       "running": "Running",
+      "completing": "Completing",
       "completed": "Completed",
       "failed": "Failed",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "timeout": "Timeout",
+      "queued": "Queued"
+    },
+    "form": {
+      "title": "New Job",
+      "subtitle": "Creates GPU, runs task, destroys when finished",
+      "jobName": "Job Name",
+      "jobNamePlaceholder": "E.g.: Fine-tune LLaMA",
+      "sourceType": "Source Type",
+      "huggingface": "Hugging Face",
+      "git": "Git",
+      "command": "Command",
+      "hfRepo": "Hugging Face Repository",
+      "hfRepoPlaceholder": "E.g.: unsloth/llama-3-8b-Instruct-bnb-4bit",
+      "hfRepoHint": "Repository will be downloaded to /workspace/model",
+      "revision": "Revision (optional)",
+      "revisionPlaceholder": "main, v1.0, commit-hash...",
+      "gitUrl": "Git Repository URL",
+      "branch": "Branch (optional)",
+      "commandLabel": "Command to Execute",
+      "commandOptional": "(optional)",
+      "commandHint": "Will be executed in /workspace. Create /workspace/.job_complete when finished.",
+      "gpu": "GPU",
+      "disk": "Disk (GB)",
+      "timeout": "Timeout (min)",
+      "pipPackages": "Pip Packages (optional)",
+      "pipPackagesPlaceholder": "transformers, accelerate, bitsandbytes",
+      "pipPackagesHint": "Comma-separated. Will be installed before the command.",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "createAndRun": "Create and Run"
+    },
+    "details": {
+      "created": "Created",
+      "started": "Started",
+      "completed": "Completed",
+      "gpuHours": "GPU Hours",
+      "ssh": "SSH",
+      "error": "Error",
+      "viewLogs": "View Logs",
+      "cost": "Cost",
+      "cancelJob": "Cancel job"
+    },
+    "confirmCancel": "Are you sure you want to cancel this job? The GPU will be destroyed.",
+    "errors": {
+      "createError": "Error creating job",
+      "unknownError": "Unknown error"
+    },
+    "howItWorks": {
+      "title": "How does Job mode work?",
+      "step1": "Creates a GPU with the specified configuration",
+      "step2": "Downloads the Hugging Face or Git repository",
+      "step3": "Executes the specified command",
+      "step4": "Destroys the GPU automatically when finished (or timeout)",
+      "step5": "Create the file /workspace/.job_complete to indicate completion"
     }
   },
   "models": {
     "title": "Models",
     "description": "Deploy and manage AI models",
+    "pageSubtitle": "Deploy ML/AI models with API endpoint",
     "noModels": "No models deployed",
-    "noModelsDescription": "Deploy your first model to get started.",
+    "noModelsDescription": "Deploy LLM, Speech-to-Text, Image Generation, or Embeddings models with one click",
     "deployModel": "Deploy Model",
+    "deployFirstModel": "Deploy First Model",
+    "loading": "Loading models...",
     "model": {
       "title": "Model Details",
       "name": "Name",
       "version": "Version",
       "status": "Status",
       "endpoint": "Endpoint"
+    },
+    "status": {
+      "pending": "Pending",
+      "deploying": "Deploying",
+      "downloading": "Downloading",
+      "starting": "Starting",
+      "running": "Running",
+      "stopped": "Stopped",
+      "error": "Error"
+    },
+    "types": {
+      "llm": "LLM",
+      "speech": "Speech",
+      "image": "Image",
+      "embeddings": "Embeddings"
+    },
+    "wizard": {
+      "title": "Deploy Model",
+      "stepOf": "Step {{current}} of {{total}}",
+      "chooseModelType": "Choose model type",
+      "chooseModel": "Choose model",
+      "gpuConfig": "GPU Configuration",
+      "accessConfig": "Access Configuration",
+      "popularModels": "Popular models",
+      "customModelLabel": "Or use a custom model (HuggingFace ID)",
+      "customModelPlaceholder": "E.g.: meta-llama/Llama-3.2-3B-Instruct",
+      "gpuType": "GPU Type",
+      "numGpus": "Number of GPUs",
+      "maxPrice": "Maximum price per hour ($/h)",
+      "name": "Name (optional)",
+      "namePlaceholder": "E.g.: My production LLM",
+      "accessType": "Access Type",
+      "private": "Private",
+      "privateDescription": "Access via auto-generated API key",
+      "public": "Public",
+      "publicDescription": "Anyone can access the endpoint",
+      "port": "Port",
+      "deploySummary": "Deploy Summary",
+      "type": "Type",
+      "modelLabel": "Model",
+      "notSelected": "Not selected",
+      "gpu": "GPU",
+      "access": "Access",
+      "privateApiKey": "Private (API Key)",
+      "cancel": "Cancel",
+      "back": "Back",
+      "next": "Next",
+      "deploying": "Deploying...",
+      "deploy": "Deploy",
+      "preparing": "Preparing...",
+      "downloadingModel": "Downloading model...",
+      "loadingIntoGpu": "Loading into GPU...",
+      "startingDeploy": "Starting deploy..."
+    },
+    "card": {
+      "stop": "Stop",
+      "logs": "Logs",
+      "delete": "Delete",
+      "copyUrl": "Copy URL",
+      "copyApiKey": "Copy API Key"
+    },
+    "confirmStop": "Are you sure you want to stop this model?",
+    "confirmDelete": "Are you sure you want to delete this deploy? This action cannot be undone.",
+    "errors": {
+      "deployError": "Error deploying",
+      "unknownError": "Unknown error"
+    },
+    "supportedTypes": {
+      "title": "Supported Model Types",
+      "llmDescription": "Chat & Completion (vLLM)",
+      "speechDescription": "Whisper (Transcription)",
+      "imageDescription": "SD, FLUX (Diffusers)",
+      "embeddingsDescription": "BGE, E5 (Sentence-Transformers)"
     }
   },
   "finetuning": {
@@ -449,7 +600,12 @@
     "gettingStarted": "Getting Started",
     "apiReference": "API Reference",
     "tutorials": "Tutorials",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "liveDocs": "Live Docs",
+    "backToApp": "← Back to App",
+    "loading": "Loading documentation...",
+    "copyLink": "Copy Link",
+    "footer": "Live Documentation System • Dumont Cloud © 2025"
   },
   "settings": {
     "title": "Settings",

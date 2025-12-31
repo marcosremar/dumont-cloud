@@ -122,10 +122,13 @@
   },
   "serverless": {
     "title": "Serverless",
+    "pageTitle": "Endpoints Serverless",
+    "pageSubtitle": "Endpoints GPU auto-escalables con precios Spot",
     "description": "Despliega funciones GPU sin servidor",
     "noEndpoints": "No hay endpoints serverless",
-    "noEndpointsDescription": "Crea tu primer endpoint serverless para comenzar a desplegar funciones GPU.",
+    "noEndpointsDescription": "Crea tu primer endpoint auto-escalable con precios spot",
     "createEndpoint": "Crear Endpoint",
+    "createFirstEndpoint": "Crear Primer Endpoint",
     "endpoint": {
       "title": "Detalles del Endpoint",
       "name": "Nombre",
@@ -133,14 +136,28 @@
       "requests": "Solicitudes",
       "latency": "Latencia",
       "cost": "Costo"
+    },
+    "stats": {
+      "totalRequests24h": "Solicitudes Totales (24h)",
+      "activeEndpoints": "{{count}} endpoints activos",
+      "avgLatency": "Latencia Promedio",
+      "coldStarts": "{{count}} cold starts",
+      "cost24h": "Costo (24h)",
+      "perMonth": "~${{amount}}/mes",
+      "activeInstances": "Instancias Activas",
+      "configuredEndpoints": "{{count}} endpoints configurados"
     }
   },
   "jobs": {
     "title": "Trabajos",
     "description": "Administra trabajos de procesamiento por lotes",
-    "noJobs": "No se encontraron trabajos",
-    "noJobsDescription": "Envía un nuevo trabajo para comenzar a procesar.",
+    "pageSubtitle": "Ejecuta tareas en GPU y destruye automáticamente al terminar",
+    "noJobs": "Ningún trabajo creado",
+    "noJobsDescription": "Los trabajos ejecutan tareas en GPU y se destruyen automáticamente al terminar",
     "submitJob": "Enviar Trabajo",
+    "newJob": "Nuevo Trabajo",
+    "createFirstJob": "Crear Primer Trabajo",
+    "loading": "Cargando trabajos...",
     "job": {
       "title": "Detalles del Trabajo",
       "status": "Estado",
@@ -149,25 +166,159 @@
       "cost": "Costo"
     },
     "status": {
-      "queued": "En cola",
-      "running": "En ejecución",
+      "pending": "Pendiente",
+      "provisioning": "Provisionando",
+      "starting": "Iniciando",
+      "running": "Ejecutando",
+      "completing": "Finalizando",
       "completed": "Completado",
       "failed": "Fallido",
-      "cancelled": "Cancelado"
+      "cancelled": "Cancelado",
+      "timeout": "Tiempo agotado",
+      "queued": "En cola"
+    },
+    "form": {
+      "title": "Nuevo Trabajo",
+      "subtitle": "Crea GPU, ejecuta tarea, destruye al terminar",
+      "jobName": "Nombre del Trabajo",
+      "jobNamePlaceholder": "Ej: Fine-tune LLaMA",
+      "sourceType": "Tipo de Fuente",
+      "huggingface": "Hugging Face",
+      "git": "Git",
+      "command": "Comando",
+      "hfRepo": "Repositorio Hugging Face",
+      "hfRepoPlaceholder": "Ej: unsloth/llama-3-8b-Instruct-bnb-4bit",
+      "hfRepoHint": "El repositorio se descargará en /workspace/model",
+      "revision": "Revisión (opcional)",
+      "revisionPlaceholder": "main, v1.0, commit-hash...",
+      "gitUrl": "URL del Repositorio Git",
+      "branch": "Rama (opcional)",
+      "commandLabel": "Comando a Ejecutar",
+      "commandOptional": "(opcional)",
+      "commandHint": "Se ejecutará en /workspace. Crea /workspace/.job_complete cuando termine.",
+      "gpu": "GPU",
+      "disk": "Disco (GB)",
+      "timeout": "Timeout (min)",
+      "pipPackages": "Paquetes Pip (opcional)",
+      "pipPackagesPlaceholder": "transformers, accelerate, bitsandbytes",
+      "pipPackagesHint": "Separados por coma. Se instalarán antes del comando.",
+      "cancel": "Cancelar",
+      "creating": "Creando...",
+      "createAndRun": "Crear y Ejecutar"
+    },
+    "details": {
+      "created": "Creado",
+      "started": "Iniciado",
+      "completed": "Completado",
+      "gpuHours": "Horas GPU",
+      "ssh": "SSH",
+      "error": "Error",
+      "viewLogs": "Ver Logs",
+      "cost": "Costo",
+      "cancelJob": "Cancelar trabajo"
+    },
+    "confirmCancel": "¿Estás seguro de que quieres cancelar este trabajo? La GPU será destruida.",
+    "errors": {
+      "createError": "Error al crear trabajo",
+      "unknownError": "Error desconocido"
+    },
+    "howItWorks": {
+      "title": "¿Cómo funciona el modo Trabajo?",
+      "step1": "Crea una GPU con la configuración especificada",
+      "step2": "Descarga el repositorio de Hugging Face o Git",
+      "step3": "Ejecuta el comando especificado",
+      "step4": "Destruye la GPU automáticamente al terminar (o timeout)",
+      "step5": "Crea el archivo /workspace/.job_complete para indicar finalización"
     }
   },
   "models": {
     "title": "Modelos",
     "description": "Despliega y administra modelos de IA",
+    "pageSubtitle": "Despliega modelos ML/IA con endpoint de API",
     "noModels": "No hay modelos desplegados",
-    "noModelsDescription": "Despliega tu primer modelo para comenzar.",
+    "noModelsDescription": "Despliega modelos LLM, Speech-to-Text, Generación de Imágenes o Embeddings con un clic",
     "deployModel": "Desplegar Modelo",
+    "deployFirstModel": "Desplegar Primer Modelo",
+    "loading": "Cargando modelos...",
     "model": {
       "title": "Detalles del Modelo",
       "name": "Nombre",
       "version": "Versión",
       "status": "Estado",
       "endpoint": "Endpoint"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "deploying": "Desplegando",
+      "downloading": "Descargando",
+      "starting": "Iniciando",
+      "running": "Ejecutando",
+      "stopped": "Detenido",
+      "error": "Error"
+    },
+    "types": {
+      "llm": "LLM",
+      "speech": "Voz",
+      "image": "Imagen",
+      "embeddings": "Embeddings"
+    },
+    "wizard": {
+      "title": "Desplegar Modelo",
+      "stepOf": "Paso {{current}} de {{total}}",
+      "chooseModelType": "Elige el tipo de modelo",
+      "chooseModel": "Elige el modelo",
+      "gpuConfig": "Configuración de GPU",
+      "accessConfig": "Configuración de Acceso",
+      "popularModels": "Modelos populares",
+      "customModelLabel": "O usa un modelo personalizado (ID de HuggingFace)",
+      "customModelPlaceholder": "Ej: meta-llama/Llama-3.2-3B-Instruct",
+      "gpuType": "Tipo de GPU",
+      "numGpus": "Cantidad de GPUs",
+      "maxPrice": "Precio máximo por hora ($/h)",
+      "name": "Nombre (opcional)",
+      "namePlaceholder": "Ej: Mi LLM de producción",
+      "accessType": "Tipo de Acceso",
+      "private": "Privado",
+      "privateDescription": "Acceso vía clave API generada automáticamente",
+      "public": "Público",
+      "publicDescription": "Cualquiera puede acceder al endpoint",
+      "port": "Puerto",
+      "deploySummary": "Resumen del Despliegue",
+      "type": "Tipo",
+      "modelLabel": "Modelo",
+      "notSelected": "No seleccionado",
+      "gpu": "GPU",
+      "access": "Acceso",
+      "privateApiKey": "Privado (Clave API)",
+      "cancel": "Cancelar",
+      "back": "Atrás",
+      "next": "Siguiente",
+      "deploying": "Desplegando...",
+      "deploy": "Desplegar",
+      "preparing": "Preparando...",
+      "downloadingModel": "Descargando modelo...",
+      "loadingIntoGpu": "Cargando en GPU...",
+      "startingDeploy": "Iniciando despliegue..."
+    },
+    "card": {
+      "stop": "Detener",
+      "logs": "Logs",
+      "delete": "Eliminar",
+      "copyUrl": "Copiar URL",
+      "copyApiKey": "Copiar Clave API"
+    },
+    "confirmStop": "¿Estás seguro de que quieres detener este modelo?",
+    "confirmDelete": "¿Estás seguro de que quieres eliminar este despliegue? Esta acción no se puede deshacer.",
+    "errors": {
+      "deployError": "Error al desplegar",
+      "unknownError": "Error desconocido"
+    },
+    "supportedTypes": {
+      "title": "Tipos de Modelo Soportados",
+      "llmDescription": "Chat y Completado (vLLM)",
+      "speechDescription": "Whisper (Transcripción)",
+      "imageDescription": "SD, FLUX (Diffusers)",
+      "embeddingsDescription": "BGE, E5 (Sentence-Transformers)"
     }
   },
   "finetuning": {
@@ -199,7 +350,12 @@
     "gettingStarted": "Primeros Pasos",
     "apiReference": "Referencia API",
     "tutorials": "Tutoriales",
-    "faq": "Preguntas Frecuentes"
+    "faq": "Preguntas Frecuentes",
+    "liveDocs": "Docs en Vivo",
+    "backToApp": "← Volver a la App",
+    "loading": "Cargando documentación...",
+    "copyLink": "Copiar Enlace",
+    "footer": "Sistema de Documentación en Vivo • Dumont Cloud © 2025"
   },
   "settings": {
     "title": "Configuración",
