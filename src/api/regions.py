@@ -3,11 +3,18 @@ API Routes para gerenciamento de regioes GPU
 
 Fornece endpoints para listar regioes disponiveis, precos e disponibilidade.
 Usa o RegionService para operacoes de regiao.
+
+Inclui tambem endpoints para preferencias de regiao do usuario em /api/users/.
 """
-from flask import Blueprint, jsonify, request, g
+from flask import Blueprint, jsonify, request, g, session
 from src.services.region_service import RegionService
+from src.models.user_region_preference import UserRegionPreference
+from src.config.database import get_db_session
 
 regions_bp = Blueprint('regions', __name__, url_prefix='/api/regions')
+
+# Blueprint separado para preferencias de usuario (diferente prefixo de URL)
+users_regions_bp = Blueprint('users_regions', __name__, url_prefix='/api/users')
 
 
 def get_region_service() -> RegionService:
@@ -374,5 +381,86 @@ def clear_cache():
     except Exception as e:
         return jsonify({
             'error': 'Erro ao limpar cache',
+            'details': str(e)
+        }), 500
+
+
+# ========================================
+# USER REGION PREFERENCES ENDPOINTS
+# ========================================
+
+def get_current_user_id():
+    """Obtem o ID do usuario logado a partir da sessao."""
+    return session.get('user')
+
+
+@users_regions_bp.route('/region-preferences', methods=['GET'])
+def get_user_region_preferences():
+    """
+    Retorna as preferencias de regiao do usuario logado.
+
+    Retorna:
+    {
+        "user_id": "user@example.com",
+        "preferred_region": "eu-de",
+        "fallback_regions": ["eu-nl", "na-us-ca"],
+        "data_residency_requirement": "EU_GDPR",
+        "created_at": "2025-01-01T12:00:00",
+        "updated_at": "2025-01-01T12:00:00"
+    }
+
+    Se o usuario nao tiver preferencias salvas, retorna defaults baseados
+    na localizacao detectada.
+    """
+    user_id = get_current_user_id()
+    if not user_id:
+        return jsonify({'error': 'Nao autenticado'}), 401
+
+    try:
+        db = get_db_session()
+        preference = db.query(UserRegionPreference).filter_by(user_id=user_id).first()
+
+        if preference:
+            return jsonify(preference.to_dict())
+
+        # Usuario nao tem preferencias salvas - retornar defaults
+        # Tentar sugerir regiao baseada na localizacao
+        region_service = get_region_service()
+        suggested_region = None
+        suggested_fallbacks = []
+
+        if region_service:
+            try:
+                # Obter IP do usuario para sugestao
+                user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+                if user_ip and ',' in user_ip:
+                    user_ip = user_ip.split(',')[0].strip()
+
+                suggested = region_service.suggest_regions_for_user(
+                    user_ip=user_ip,
+                    require_eu=False,
+                    max_price=10.0,
+                )
+
+                if suggested and len(suggested) > 0:
+                    suggested_region = suggested[0].get('region_id')
+                    if len(suggested) > 1:
+                        suggested_fallbacks = [r.get('region_id') for r in suggested[1:4]]
+            except Exception:
+                pass  # Ignorar erros de sugestao
+
+        return jsonify({
+            'user_id': user_id,
+            'preferred_region': suggested_region,
+            'fallback_regions': suggested_fallbacks,
+            'data_residency_requirement': None,
+            'created_at': None,
+            'updated_at': None,
+            'is_default': True,  # Indica que sao valores sugeridos, nao salvos
+        })
+
+    except Exception as e:
+        return jsonify({
+            'error': 'Erro ao buscar preferencias',
             'details': str(e)
         }), 500
