@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { AlertCircle, RefreshCw } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export function ErrorState({
   message,
   onRetry,
-  retryText = 'Tentar novamente',
+  retryText,
   autoRetry = false,
   autoRetryDelay = 5000
 }) {
+  const { t } = useTranslation()
   const [countdown, setCountdown] = useState(autoRetry ? Math.ceil(autoRetryDelay / 1000) : 0)
   const [isRetrying, setIsRetrying] = useState(false)
 
@@ -47,9 +49,9 @@ export function ErrorState({
         <AlertCircle className="w-7 h-7 text-red-400" />
       </div>
 
-      <h3 className="text-white font-medium text-sm mb-1">Algo deu errado</h3>
+      <h3 className="text-white font-medium text-sm mb-1">{t('components.errorState.somethingWentWrong')}</h3>
       <p className="text-gray-400 text-sm text-center mb-4 max-w-xs">
-        {message || 'Ocorreu um erro ao carregar os dados.'}
+        {message || t('components.errorState.errorLoadingData')}
       </p>
 
       <div className="flex items-center gap-3">
@@ -59,13 +61,13 @@ export function ErrorState({
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 text-sm font-medium transition-all disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${isRetrying ? 'animate-spin' : ''}`} />
-          {isRetrying ? 'Tentando...' : retryText}
+          {isRetrying ? t('components.errorState.retrying') : (retryText || t('components.errorState.tryAgain'))}
         </button>
       </div>
 
       {autoRetry && countdown > 0 && !isRetrying && (
         <p className="text-gray-500 text-xs mt-3">
-          Tentando novamente em {countdown}s...
+          {t('components.errorState.retryingIn', { seconds: countdown })}
         </p>
       )}
     </div>

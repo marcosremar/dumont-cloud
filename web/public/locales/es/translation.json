@@ -436,5 +436,127 @@
   "languages": {
     "en": "Inglés",
     "es": "Español"
+  },
+  "components": {
+    "emptyState": {
+      "noItemFound": "Ningún elemento encontrado",
+      "createNew": "Crear nuevo"
+    },
+    "errorState": {
+      "somethingWentWrong": "Algo salió mal",
+      "errorLoadingData": "Ocurrió un error al cargar los datos.",
+      "tryAgain": "Intentar de nuevo",
+      "retrying": "Reintentando...",
+      "retryingIn": "Reintentando en {{seconds}}s..."
+    }
+  },
+  "deployWizard": {
+    "title": "Desplegar",
+    "tabs": {
+      "newMachine": "Nueva Máquina",
+      "existingMachine": "Máquina Existente"
+    },
+    "simpleMode": "Modo simple",
+    "showAdvancedFilters": "Mostrar filtros avanzados",
+    "region": "Región",
+    "measuringLatency": "midiendo latencia...",
+    "regions": {
+      "global": "Global",
+      "us": "EE.UU.",
+      "europe": "Europa",
+      "asia": "Asia"
+    },
+    "speedLabel": "Velocidad (más rápido = más caro)",
+    "speedTiers": {
+      "slow": "Lenta",
+      "medium": "Media",
+      "fast": "Rápida",
+      "ultra": "Ultra"
+    },
+    "noOffers": "Sin ofertas",
+    "machines": "máquinas",
+    "gpu": "GPU",
+    "anyGpu": "Cualquier GPU",
+    "minimumDisk": "Disco Mínimo",
+    "selectGpuToSeeOffers": "Selecciona una GPU para ver ofertas",
+    "advanced": {
+      "numGpus": "Núm GPUs",
+      "gpuRam": "RAM GPU (GB)",
+      "cpuCores": "Núcleos CPU",
+      "cpuRam": "RAM CPU (GB)",
+      "disk": "Disco (GB)",
+      "download": "Descarga (Mbps)",
+      "upload": "Subida (Mbps)",
+      "maxPricePerHour": "Máx $/hora",
+      "cudaMin": "CUDA Mín",
+      "reliabilityMin": "Fiabilidad Mín",
+      "directPorts": "Puertos Directos",
+      "verifiedOnly": "Solo verificados",
+      "staticIp": "IP Estática"
+    },
+    "searching": "Buscando...",
+    "searchOffers": "Buscar ofertas",
+    "table": {
+      "gpu": "GPU",
+      "vram": "VRAM",
+      "cpu": "CPU",
+      "ram": "RAM",
+      "disk": "Disco",
+      "dl": "DL",
+      "ul": "UL",
+      "pricePerHour": "$/h",
+      "region": "Región"
+    },
+    "use": "Usar",
+    "hotStart": {
+      "title": "Hot Start + Migrar",
+      "description": "Inicia rápido, ahorra después"
+    },
+    "creating": "Creando...",
+    "createMachineRestore": "Crear Máquina + Restaurar",
+    "selectMachine": "Selecciona una máquina",
+    "noActiveMachines": "Ninguna máquina activa",
+    "restoring": "Restaurando...",
+    "restoreSnapshot": "Restaurar Snapshot",
+    "errors": {
+      "noOffersForTier": "No hay ofertas disponibles para este nivel",
+      "createFailed": "Error al crear instancia",
+      "connectionError": "Error de conexión",
+      "selectMachine": "Selecciona una máquina",
+      "restoreFailed": "Error al restaurar"
+    }
+  },
+  "migrationModal": {
+    "title": "Migrar Instancia",
+    "targetType": "Tipo de Destino",
+    "gpuModel": "Modelo de GPU",
+    "costComparison": "Comparación de Costos",
+    "current": "Actual",
+    "new": "Nuevo",
+    "savings": "Ahorro de ${{amount}}/h ({{percent}}%)",
+    "searchingOffers": "Buscando ofertas...",
+    "noOffersAvailable": "No hay ofertas disponibles",
+    "process": "Proceso",
+    "processDescription": "Crear snapshot -> Nueva instancia -> Restaurar -> Destruir antigua",
+    "estimatedTime": "Tiempo estimado: ~5 minutos. Tu workspace será preservado.",
+    "migrating": "Migrando...",
+    "migrateTo": "Migrar a {{target}}",
+    "progress": {
+      "starting": "Iniciando migración...",
+      "creatingSnapshot": "Creando snapshot...",
+      "completed": "¡Migración completada!"
+    },
+    "steps": {
+      "creatingSnapshot": "Creando snapshot del workspace...",
+      "provisioningInstance": "Provisionando nueva instancia...",
+      "waitingSSH": "Esperando que SSH esté listo...",
+      "restoringSnapshot": "Restaurando snapshot...",
+      "destroyingOld": "Destruyendo instancia antigua..."
+    },
+    "errors": {
+      "fetchEstimate": "Error al obtener estimación",
+      "migrationError": "Error en la migración",
+      "migrationFailed": "La migración falló"
+    }
   }
 }

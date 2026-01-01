@@ -859,5 +859,127 @@
   "languages": {
     "en": "English",
     "es": "Spanish"
+  },
+  "components": {
+    "emptyState": {
+      "noItemFound": "No item found",
+      "createNew": "Create new"
+    },
+    "errorState": {
+      "somethingWentWrong": "Something went wrong",
+      "errorLoadingData": "An error occurred while loading the data.",
+      "tryAgain": "Try again",
+      "retrying": "Retrying...",
+      "retryingIn": "Retrying in {{seconds}}s..."
+    }
+  },
+  "deployWizard": {
+    "title": "Deploy",
+    "tabs": {
+      "newMachine": "New Machine",
+      "existingMachine": "Existing Machine"
+    },
+    "simpleMode": "Simple mode",
+    "showAdvancedFilters": "Show advanced filters",
+    "region": "Region",
+    "measuringLatency": "measuring latency...",
+    "regions": {
+      "global": "Global",
+      "us": "US",
+      "europe": "Europe",
+      "asia": "Asia"
+    },
+    "speedLabel": "Speed (faster = more expensive)",
+    "speedTiers": {
+      "slow": "Slow",
+      "medium": "Medium",
+      "fast": "Fast",
+      "ultra": "Ultra"
+    },
+    "noOffers": "No offers",
+    "machines": "machines",
+    "gpu": "GPU",
+    "anyGpu": "Any GPU",
+    "minimumDisk": "Minimum Disk",
+    "selectGpuToSeeOffers": "Select a GPU to see offers",
+    "advanced": {
+      "numGpus": "Num GPUs",
+      "gpuRam": "GPU RAM (GB)",
+      "cpuCores": "CPU Cores",
+      "cpuRam": "CPU RAM (GB)",
+      "disk": "Disk (GB)",
+      "download": "Download (Mbps)",
+      "upload": "Upload (Mbps)",
+      "maxPricePerHour": "Max $/hour",
+      "cudaMin": "CUDA Min",
+      "reliabilityMin": "Reliability Min",
+      "directPorts": "Direct Ports",
+      "verifiedOnly": "Verified only",
+      "staticIp": "Static IP"
+    },
+    "searching": "Searching...",
+    "searchOffers": "Search offers",
+    "table": {
+      "gpu": "GPU",
+      "vram": "VRAM",
+      "cpu": "CPU",
+      "ram": "RAM",
+      "disk": "Disk",
+      "dl": "DL",
+      "ul": "UL",
+      "pricePerHour": "$/h",
+      "region": "Region"
+    },
+    "use": "Use",
+    "hotStart": {
+      "title": "Hot Start + Migrate",
+      "description": "Start fast, save later"
+    },
+    "creating": "Creating...",
+    "createMachineRestore": "Create Machine + Restore",
+    "selectMachine": "Select a machine",
+    "noActiveMachines": "No active machines",
+    "restoring": "Restoring...",
+    "restoreSnapshot": "Restore Snapshot",
+    "errors": {
+      "noOffersForTier": "No offers available for this tier",
+      "createFailed": "Failed to create instance",
+      "connectionError": "Connection error",
+      "selectMachine": "Select a machine",
+      "restoreFailed": "Failed to restore"
+    }
+  },
+  "migrationModal": {
+    "title": "Migrate Instance",
+    "targetType": "Target Type",
+    "gpuModel": "GPU Model",
+    "costComparison": "Cost Comparison",
+    "current": "Current",
+    "new": "New",
+    "savings": "Savings of ${{amount}}/h ({{percent}}%)",
+    "searchingOffers": "Searching offers...",
+    "noOffersAvailable": "No offers available",
+    "process": "Process",
+    "processDescription": "Create snapshot -> New instance -> Restore -> Destroy old",
+    "estimatedTime": "Estimated time: ~5 minutes. Your workspace will be preserved.",
+    "migrating": "Migrating...",
+    "migrateTo": "Migrate to {{target}}",
+    "progress": {
+      "starting": "Starting migration...",
+      "creatingSnapshot": "Creating snapshot...",
+      "completed": "Migration completed!"
+    },
+    "steps": {
+      "creatingSnapshot": "Creating workspace snapshot...",
+      "provisioningInstance": "Provisioning new instance...",
+      "waitingSSH": "Waiting for SSH to be ready...",
+      "restoringSnapshot": "Restoring snapshot...",
+      "destroyingOld": "Destroying old instance..."
+    },
+    "errors": {
+      "fetchEstimate": "Error fetching estimate",
+      "migrationError": "Migration error",
+      "migrationFailed": "Migration failed"
+    }
   }
 }
