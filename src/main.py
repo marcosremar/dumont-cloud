@@ -323,7 +323,7 @@ def create_app() -> FastAPI:
 
         raise HTTPException(status_code=404, detail="Document not found")
 
-    # Include API v1 router
+    # Include API v1 router (includes all endpoint routers: auth, instances, reservations, etc.)
     app.include_router(api_router, prefix=API_V1_PREFIX)
 
     # Compatibility: also mount at /api (without v1) for frontend
