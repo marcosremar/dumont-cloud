@@ -200,8 +200,11 @@ class EmailReportScheduler:
             )
 
             # Add the job (replace if exists)
+            # Use module-level function reference for SQLAlchemy job store compatibility
+            # APScheduler stores jobs as pickled objects - module-level functions can be
+            # serialized as 'module:function_name' strings, but instance methods cannot
             self.scheduler.add_job(
-                func=self._send_weekly_reports,
+                func='src.services.email_report_scheduler:_execute_weekly_reports_job',
                 trigger=trigger,
                 id='weekly_email_reports',
                 name='Weekly GPU Usage Email Reports',
@@ -700,6 +703,27 @@ class EmailReportScheduler:
 
 # Singleton instance for convenience
 _scheduler: Optional[EmailReportScheduler] = None
+
+
+def _execute_weekly_reports_job():
+    """
+    Module-level function to execute weekly reports.
+
+    This is a module-level function (not an instance method) so that
+    APScheduler's SQLAlchemy job store can serialize/pickle it correctly.
+    APScheduler stores jobs by storing a reference to the function as a string
+    (module:function_name), which requires the function to be importable.
+
+    Instance methods can't be serialized because they contain references to
+    the instance (which may contain the scheduler itself, causing circular refs).
+    """
+    global _scheduler
+
+    if _scheduler is None:
+        logger.warning("Scheduler not initialized - skipping weekly reports")
+        return {'error': 'Scheduler not initialized', 'sent': 0, 'failed': 0}
+
+    return _scheduler._send_weekly_reports()
 
 
 def get_email_scheduler() -> EmailReportScheduler:
