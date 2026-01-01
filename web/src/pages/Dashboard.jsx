@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import OnboardingWizard from '../components/onboarding/OnboardingWizard';
+import SnapshotStatus from '../components/SnapshotStatus';
 import {
   Cpu, Server, Wifi, DollarSign, Shield, HardDrive,
   Activity, Search, RotateCcw, Sliders, Wand2,
@@ -1580,6 +1581,11 @@ export default function Dashboard({ onStatsUpdate }) {
             </CardContent>
           )}
         </Card>
+
+        {/* Snapshot Status Section */}
+        <div className="mt-6">
+          <SnapshotStatus refreshInterval={30000} />
+        </div>
       </div>
     </div >
   );

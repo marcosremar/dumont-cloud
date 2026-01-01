@@ -55,6 +55,23 @@ class DumontAgentConfig:
 
 
 @dataclass
+class SnapshotConfig:
+    """Configuracoes do agendador de snapshots periodicos"""
+    default_interval_minutes: int = field(
+        default_factory=lambda: int(os.getenv("SNAPSHOT_DEFAULT_INTERVAL_MINUTES", "15"))
+    )
+    enabled: bool = field(
+        default_factory=lambda: os.getenv("SNAPSHOT_ENABLED", "true").lower() == "true"
+    )
+    max_concurrent: int = field(
+        default_factory=lambda: int(os.getenv("SNAPSHOT_MAX_CONCURRENT", "1"))
+    )
+    slack_webhook: str = field(
+        default_factory=lambda: os.getenv("SLACK_WEBHOOK_URL", "")
+    )
+
+
+@dataclass
 class AppConfig:
     """Configuracoes gerais da aplicacao"""
     secret_key: str = field(default_factory=lambda: os.getenv("SECRET_KEY", "dumont-cloud-secret-key-2024"))
@@ -74,6 +91,7 @@ class Settings:
     restic: ResticConfig = field(default_factory=ResticConfig)
     vast: VastConfig = field(default_factory=VastConfig)
     agent: DumontAgentConfig = field(default_factory=DumontAgentConfig)
+    snapshot: SnapshotConfig = field(default_factory=SnapshotConfig)
 
 
 # Singleton das configuracoes
