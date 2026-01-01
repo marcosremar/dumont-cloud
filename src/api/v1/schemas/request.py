@@ -151,3 +151,33 @@ class CreateFineTuneJobRequest(BaseModel):
     config: Optional[FineTuneConfigRequest] = Field(None, description="Fine-tuning configuration")
     gpu_type: str = Field("A100", description="GPU type")
     num_gpus: int = Field(1, ge=1, le=8, description="Number of GPUs")
+
+
+# Reservation Requests
+
+class ReservationCreateRequest(BaseModel):
+    """Create GPU reservation request"""
+    gpu_type: str = Field(..., min_length=1, max_length=100, description="GPU type (e.g., 'A100', 'H100')")
+    gpu_count: int = Field(1, ge=1, le=8, description="Number of GPUs")
+    start_time: str = Field(..., description="Reservation start time (ISO 8601 format, UTC)")
+    end_time: str = Field(..., description="Reservation end time (ISO 8601 format, UTC)")
+    provider: Optional[str] = Field(None, description="Preferred provider (vast, tensordock, etc)")
+
+
+class CheckAvailabilityRequest(BaseModel):
+    """Check GPU availability request"""
+    gpu_type: str = Field(..., min_length=1, max_length=100, description="GPU type (e.g., 'A100', 'H100')")
+    gpu_count: int = Field(1, ge=1, le=8, description="Number of GPUs")
+    start_time: str = Field(..., description="Start time (ISO 8601 format, UTC)")
+    end_time: str = Field(..., description="End time (ISO 8601 format, UTC)")
+
+
+class CancelReservationRequest(BaseModel):
+    """Cancel reservation request"""
+    reason: Optional[str] = Field(None, max_length=500, description="Cancellation reason")
+
+
+class PurchaseCreditsRequest(BaseModel):
+    """Purchase reservation credits request"""
+    amount: float = Field(..., gt=0, description="Amount of credits to purchase")
+    description: Optional[str] = Field(None, max_length=500, description="Purchase description")

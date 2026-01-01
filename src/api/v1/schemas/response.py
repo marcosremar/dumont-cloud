@@ -323,3 +323,158 @@ class FineTuneJobLogsResponse(BaseModel):
 class FineTuneModelsResponse(BaseModel):
     """Supported models response"""
     models: List[Dict[str, Any]] = Field(..., description="List of supported models")
+
+
+# Reservation Responses
+
+class ReservationResponse(BaseModel):
+    """GPU reservation response"""
+    id: int = Field(..., description="Reservation ID")
+    user_id: str = Field(..., description="User ID")
+    gpu_type: str = Field(..., description="GPU type (e.g., 'A100', 'H100')")
+    gpu_count: int = Field(1, description="Number of GPUs")
+    start_time: str = Field(..., description="Reservation start time (ISO 8601)")
+    end_time: str = Field(..., description="Reservation end time (ISO 8601)")
+    status: str = Field(..., description="Reservation status (pending, active, completed, cancelled, failed)")
+    credits_used: float = Field(0.0, description="Credits used for this reservation")
+    credits_refunded: float = Field(0.0, description="Credits refunded (if cancelled)")
+    discount_rate: int = Field(15, description="Discount rate applied (10-20%)")
+    spot_price_per_hour: Optional[float] = Field(None, description="Spot price at time of reservation")
+    reserved_price_per_hour: Optional[float] = Field(None, description="Discounted reserved price")
+    instance_id: Optional[str] = Field(None, description="Allocated instance ID (when active)")
+    provider: Optional[str] = Field(None, description="GPU provider")
+    duration_hours: float = Field(0.0, description="Reservation duration in hours")
+    is_active: bool = Field(False, description="Whether reservation is currently active")
+    is_upcoming: bool = Field(False, description="Whether reservation is scheduled for future")
+    is_cancellable: bool = Field(False, description="Whether reservation can be cancelled")
+    created_at: str = Field(..., description="Creation timestamp")
+    updated_at: Optional[str] = Field(None, description="Last update timestamp")
+    started_at: Optional[str] = Field(None, description="When reservation started")
+    completed_at: Optional[str] = Field(None, description="When reservation completed")
+    cancelled_at: Optional[str] = Field(None, description="When reservation was cancelled")
+    cancellation_reason: Optional[str] = Field(None, description="Reason for cancellation")
+    failure_reason: Optional[str] = Field(None, description="Reason for failure")
+
+    @classmethod
+    def from_model(cls, reservation) -> "ReservationResponse":
+        """Create from SQLAlchemy model"""
+        return cls(
+            id=reservation.id,
+            user_id=reservation.user_id,
+            gpu_type=reservation.gpu_type,
+            gpu_count=reservation.gpu_count,
+            start_time=reservation.start_time.isoformat() if reservation.start_time else None,
+            end_time=reservation.end_time.isoformat() if reservation.end_time else None,
+            status=reservation.status.value if reservation.status else None,
+            credits_used=reservation.credits_used or 0.0,
+            credits_refunded=reservation.credits_refunded or 0.0,
+            discount_rate=reservation.discount_rate or 15,
+            spot_price_per_hour=reservation.spot_price_per_hour,
+            reserved_price_per_hour=reservation.reserved_price_per_hour,
+            instance_id=reservation.instance_id,
+            provider=reservation.provider,
+            duration_hours=reservation.duration_hours,
+            is_active=reservation.is_active,
+            is_upcoming=reservation.is_upcoming,
+            is_cancellable=reservation.is_cancellable,
+            created_at=reservation.created_at.isoformat() if reservation.created_at else None,
+            updated_at=reservation.updated_at.isoformat() if reservation.updated_at else None,
+            started_at=reservation.started_at.isoformat() if reservation.started_at else None,
+            completed_at=reservation.completed_at.isoformat() if reservation.completed_at else None,
+            cancelled_at=reservation.cancelled_at.isoformat() if reservation.cancelled_at else None,
+            cancellation_reason=reservation.cancellation_reason,
+            failure_reason=reservation.failure_reason,
+        )
+
+
+class ListReservationsResponse(BaseModel):
+    """List reservations response"""
+    reservations: List[ReservationResponse] = Field(..., description="List of reservations")
+    count: int = Field(..., description="Number of reservations")
+
+
+class AvailabilityResponse(BaseModel):
+    """GPU availability check response"""
+    available: bool = Field(..., description="Whether GPU is available for the requested time")
+    gpu_type: str = Field(..., description="GPU type checked")
+    gpu_count: int = Field(1, description="Number of GPUs requested")
+    start_time: str = Field(..., description="Requested start time")
+    end_time: str = Field(..., description="Requested end time")
+    capacity: Optional[int] = Field(None, description="Available capacity (number of GPUs)")
+    conflicting_reservations: int = Field(0, description="Number of conflicting reservations")
+    message: Optional[str] = Field(None, description="Additional information")
+
+
+class PricingEstimateResponse(BaseModel):
+    """Reservation pricing estimate response"""
+    gpu_type: str = Field(..., description="GPU type")
+    gpu_count: int = Field(1, description="Number of GPUs")
+    duration_hours: float = Field(..., description="Reservation duration in hours")
+    spot_price_per_hour: float = Field(..., description="Current spot price per hour")
+    discount_rate: int = Field(..., description="Discount rate (10-20%)")
+    reserved_price_per_hour: float = Field(..., description="Discounted reserved price per hour")
+    total_spot_cost: float = Field(..., description="Total cost at spot price")
+    total_reserved_cost: float = Field(..., description="Total cost with reservation discount")
+    savings: float = Field(..., description="Total savings with reservation")
+    credits_required: float = Field(..., description="Credits required for reservation")
+
+
+class CancelReservationResponse(BaseModel):
+    """Cancel reservation response"""
+    success: bool = Field(True, description="Cancellation success status")
+    reservation_id: int = Field(..., description="Cancelled reservation ID")
+    message: str = Field(..., description="Cancellation message")
+    credits_refunded: float = Field(0.0, description="Credits refunded")
+    refund_percentage: float = Field(0.0, description="Percentage of credits refunded")
+
+
+class ReservationCreditResponse(BaseModel):
+    """Reservation credit response"""
+    id: int = Field(..., description="Credit ID")
+    user_id: str = Field(..., description="User ID")
+    amount: float = Field(..., description="Available credit amount")
+    original_amount: float = Field(..., description="Original credit amount")
+    status: str = Field(..., description="Credit status (available, locked, used, expired, refunded)")
+    transaction_type: str = Field(..., description="Transaction type (purchase, deduction, refund, etc)")
+    reservation_id: Optional[int] = Field(None, description="Associated reservation ID")
+    expires_at: str = Field(..., description="Expiration timestamp")
+    days_until_expiration: int = Field(..., description="Days until expiration (-1 if locked)")
+    is_available: bool = Field(False, description="Whether credit is available for use")
+    is_expired: bool = Field(False, description="Whether credit is expired")
+    description: Optional[str] = Field(None, description="Credit description")
+    created_at: str = Field(..., description="Creation timestamp")
+
+    @classmethod
+    def from_model(cls, credit) -> "ReservationCreditResponse":
+        """Create from SQLAlchemy model"""
+        return cls(
+            id=credit.id,
+            user_id=credit.user_id,
+            amount=credit.amount,
+            original_amount=credit.original_amount,
+            status=credit.status.value if credit.status else None,
+            transaction_type=credit.transaction_type.value if credit.transaction_type else None,
+            reservation_id=credit.reservation_id,
+            expires_at=credit.expires_at.isoformat() if credit.expires_at else None,
+            days_until_expiration=credit.days_until_expiration,
+            is_available=credit.is_available,
+            is_expired=credit.is_expired,
+            description=credit.description,
+            created_at=credit.created_at.isoformat() if credit.created_at else None,
+        )
+
+
+class CreditBalanceResponse(BaseModel):
+    """User credit balance response"""
+    user_id: str = Field(..., description="User ID")
+    available_credits: float = Field(0.0, description="Total available credits")
+    locked_credits: float = Field(0.0, description="Credits locked in active reservations")
+    total_credits: float = Field(0.0, description="Total credits (available + locked)")
+    expiring_soon: float = Field(0.0, description="Credits expiring within 7 days")
+    credits: List[ReservationCreditResponse] = Field(default_factory=list, description="Credit details")
+
+
+class ListCreditsResponse(BaseModel):
+    """List credits response"""
+    credits: List[ReservationCreditResponse] = Field(..., description="List of credits")
+    count: int = Field(..., description="Number of credits")
