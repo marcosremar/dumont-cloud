@@ -1,5 +1,5 @@
 """
-File-based User Storage Implementation
+User Storage Implementations
 Implements IUserRepository interface (Dependency Inversion Principle)
 """
 import json
@@ -7,6 +7,8 @@ import os
 import hashlib
 import logging
 from typing import Optional, Dict, Any
+
+from sqlalchemy.orm import Session
 
 from ...core.exceptions import NotFoundException, ValidationException
 from ...domain.repositories import IUserRepository
@@ -157,6 +159,109 @@ class FileUserRepository(IUserRepository):
         """Save config to file"""
         with open(self.config_file, "w") as f:
             json.dump(config, f, indent=2)
+
+    def _hash_password(self, password: str) -> str:
+        """Hash a password (simple SHA-256 for now)"""
+        # NOTE: In production, use bcrypt or argon2
+        return hashlib.sha256(password.encode()).hexdigest()
+
+
+class SQLAlchemyUserRepository(IUserRepository):
+    """
+    SQLAlchemy implementation of IUserRepository.
+    Stores users in PostgreSQL.
+    """
+
+    def __init__(self, session: Session):
+        """
+        Initialize SQLAlchemy user repository
+
+        Args:
+            session: SQLAlchemy database session
+        """
+        self.session = session
+
+    def get_user(self, email: str) -> Optional[User]:
+        """Get user by email"""
+        return self.session.query(User).filter(User.email == email).first()
+
+    def create_user(self, email: str, password: str) -> User:
+        """Create a new user"""
+        if not email or not password:
+            raise ValidationException("Email and password are required")
+
+        # Check if user already exists
+        existing = self.session.query(User).filter(User.email == email).first()
+        if existing:
+            raise ValidationException(f"User {email} already exists")
+
+        password_hash = self._hash_password(password)
+
+        user = User(
+            email=email,
+            password_hash=password_hash,
+            vast_api_key=None,
+        )
+        user.settings = {}
+
+        self.session.add(user)
+        self.session.flush()
+        logger.info(f"User {email} created with ID {user.id}")
+
+        return user
+
+    def update_user(self, email: str, updates: Dict[str, Any]) -> User:
+        """Update user information"""
+        user = self.get_user(email)
+        if not user:
+            raise NotFoundException(f"User {email} not found")
+
+        # Update allowed fields
+        if "vast_api_key" in updates:
+            user.vast_api_key = updates["vast_api_key"]
+
+        if "settings" in updates:
+            user.settings = updates["settings"]
+
+        if "password" in updates:
+            user.password_hash = self._hash_password(updates["password"])
+
+        self.session.flush()
+        logger.info(f"User {email} updated")
+
+        return user
+
+    def delete_user(self, email: str) -> bool:
+        """Delete a user"""
+        user = self.get_user(email)
+        if not user:
+            return False
+
+        self.session.delete(user)
+        self.session.flush()
+        logger.info(f"User {email} deleted")
+
+        return True
+
+    def verify_password(self, email: str, password: str) -> bool:
+        """Verify user password"""
+        user = self.get_user(email)
+        if not user:
+            return False
+
+        password_hash = self._hash_password(password)
+        return user.password_hash == password_hash
+
+    def update_settings(self, email: str, settings: Dict[str, Any]) -> User:
+        """Update user settings"""
+        return self.update_user(email, {"settings": settings})
+
+    def get_settings(self, email: str) -> Dict[str, Any]:
+        """Get user settings"""
+        user = self.get_user(email)
+        if not user:
+            raise NotFoundException(f"User {email} not found")
+        return user.settings
 
     def _hash_password(self, password: str) -> str:
         """Hash a password (simple SHA-256 for now)"""

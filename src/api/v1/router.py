@@ -12,6 +12,8 @@ from .endpoints import email_preferences, unsubscribe
 from .endpoints import market, hosts, nps
 from .endpoints import market, hosts, webhooks
 from .endpoints import market, hosts, currency
+from .endpoints import market, hosts, teams, roles, users
+from . import audit
 from .endpoints.settings import balance_router
 from .endpoints.spot import router as spot_router
 from .endpoints.metrics import reliability_router
@@ -91,3 +93,14 @@ api_router.include_router(nps.router, tags=["NPS"])
 api_router.include_router(webhooks.router, tags=["Webhooks"])
 # Currency - Multi-currency pricing support
 api_router.include_router(currency.router, tags=["Currency"])
+# Teams - Team management and RBAC
+api_router.include_router(teams.router, tags=["Teams"])
+
+# Roles & Permissions - RBAC role and permission management
+api_router.include_router(roles.router, tags=["Roles & Permissions"])
+
+# Audit Logs - Team audit logging for compliance and security
+api_router.include_router(audit.router, tags=["Audit Logs"])
+
+# Users - User profile and team context switching
+api_router.include_router(users.router, tags=["Users"])

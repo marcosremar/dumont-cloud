@@ -31,6 +31,9 @@ import TemplateDetailPage from './pages/TemplateDetailPage'
 import ShareableReportView from './components/tailadmin/reports/ShareableReportView'
 import NPSTrends from './pages/Admin/NPSTrends'
 import AffiliateDashboard from './components/affiliate/AffiliateDashboard'
+import TeamsPage from './pages/TeamsPage'
+import TeamDetailsPage from './pages/TeamDetailsPage'
+import CreateRolePage from './pages/CreateRolePage'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import NPSSurvey from './components/NPSSurvey'
@@ -420,6 +423,24 @@ export default function App() {
               <ProtectedRoute user={user}>
                 <AppLayout user={user} onLogout={handleLogout}>
                   <EmailPreferences />
+            <Route path="/app/teams" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <TeamsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/app/teams/:teamId" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <TeamDetailsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/app/teams/:teamId/roles/new" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <CreateRolePage />
                 </AppLayout>
               </ProtectedRoute>
             } />
@@ -566,6 +587,24 @@ export default function App() {
               <DemoRoute>
                 <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
                   <EmailPreferences />
+            <Route path="/demo-app/teams" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <TeamsPage />
+                </AppLayout>
+              </DemoRoute>
+            } />
+            <Route path="/demo-app/teams/:teamId" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <TeamDetailsPage />
+                </AppLayout>
+              </DemoRoute>
+            } />
+            <Route path="/demo-app/teams/:teamId/roles/new" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <CreateRolePage />
                 </AppLayout>
               </DemoRoute>
             } />
