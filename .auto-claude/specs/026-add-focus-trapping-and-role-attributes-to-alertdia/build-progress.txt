@@ -93,3 +93,59 @@ Implementing proper focus management for modal components to comply with WCAG 2.
 - useFocusTrap only handles `Tab` key
 - Each effect manages its own event listener with proper cleanup
 - No duplicate event handlers
+
+## Subtask 4.1 - Unit Tests for useFocusTrap Hook
+
+### Files Created
+- `web/vitest.config.ts` - Vitest configuration with jsdom environment
+- `web/src/test/setup.ts` - Test setup file with jest-dom matchers
+- `web/src/hooks/useFocusTrap.test.tsx` - Comprehensive unit tests
+
+### Test Coverage
+The test suite covers all acceptance criteria:
+
+1. **Focus on Activation**
+   - Moves focus to first focusable element when activated
+   - Focuses container when no focusable elements exist
+   - Does not move focus when isActive is false
+
+2. **Tab Key Cycling**
+   - Cycles forward through focusable elements with Tab
+   - Wraps focus from last to first element with Tab
+
+3. **Shift+Tab Cycling**
+   - Cycles backward through focusable elements with Shift+Tab
+   - Wraps focus from first to last element with Shift+Tab
+
+4. **Focus Restoration**
+   - Returns focus to previously focused element when deactivated
+
+5. **Edge Cases**
+   - Skips disabled buttons and inputs
+   - Handles all types of focusable elements (button, input, select, textarea, a[href], [tabindex])
+   - Excludes elements with tabindex=-1
+   - Prevents focus from leaving container when focus is outside
+   - Handles single focusable element correctly
+
+6. **FOCUSABLE_SELECTOR Constant**
+   - Tests all selector components
+
+### Dependencies Added to package.json
+- vitest: ^2.1.8
+- jsdom: ^25.0.1
+- @testing-library/react: ^16.1.0
+- @testing-library/dom: ^10.4.0
+- @testing-library/user-event: ^14.5.2
+- @testing-library/jest-dom: ^6.6.3
+
+### New npm Scripts
+- `npm test` - Run vitest in watch mode
+- `npm run test:run` - Run tests once
+- `npm run test:coverage` - Run tests with coverage
+
+### Running Tests
+After installing dependencies (`npm install`), run:
+```bash
+cd web
+npm run test:run
+```
