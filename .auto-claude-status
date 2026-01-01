@@ -20,6 +20,11 @@
   "subtasks": {
     "completed": 30,
     "total": 35,
+  "spec": "016-multi-currency-pricing",
+  "state": "building",
+  "subtasks": {
+    "completed": 8,
+    "total": 16,
     "in_progress": 1,
     "failed": 0
   },
@@ -36,6 +41,9 @@
     "current": "Integration & Testing",
     "id": null,
     "total": 5
+    "current": "Frontend Redux State",
+    "id": null,
+    "total": 2
   },
   "workers": {
     "active": 0,
@@ -58,4 +66,8 @@
     "started_at": "2025-12-31T22:40:03.926942"
   },
   "last_update": "2026-01-01T04:02:17.811025"
+    "number": 9,
+    "started_at": "2025-12-31T22:39:36.041103"
+  },
+  "last_update": "2025-12-31T23:26:27.154964"
 }

@@ -14,6 +14,7 @@ from .email_delivery_log import EmailDeliveryLog
 from .shareable_report import ShareableReport
 from .webhook_config import WebhookConfig, WebhookLog
 from .cost_optimization import UsageMetrics
+from .currency import ExchangeRate, UserCurrencyPreference, SUPPORTED_CURRENCIES
 
 __all__ = [
     'PriceHistory',
@@ -52,4 +53,8 @@ __all__ = [
     'WebhookLog',
     # Cost optimization models
     'UsageMetrics',
+    # Currency models for multi-currency pricing
+    'ExchangeRate',
+    'UserCurrencyPreference',
+    'SUPPORTED_CURRENCIES',
 ]

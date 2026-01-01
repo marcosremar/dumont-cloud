@@ -10,6 +10,7 @@ from .endpoints import market, hosts
 from .endpoints import email_preferences, unsubscribe
 from .endpoints import market, hosts, nps
 from .endpoints import market, hosts, webhooks
+from .endpoints import market, hosts, currency
 from .endpoints.settings import balance_router
 from .endpoints.spot import router as spot_router
 from .endpoints.metrics import reliability_router
@@ -84,3 +85,5 @@ api_router.include_router(unsubscribe.router, tags=["Unsubscribe"])
 api_router.include_router(nps.router, tags=["NPS"])
 # Webhooks - Webhook configuration and delivery
 api_router.include_router(webhooks.router, tags=["Webhooks"])
+# Currency - Multi-currency pricing support
+api_router.include_router(currency.router, tags=["Currency"])

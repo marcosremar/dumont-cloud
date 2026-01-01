@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, BarChart3, PiggyBank, Bot } from 'lucide-react'
 import MobileMenu from './MobileMenu'
+import CurrencySelector from './CurrencySelector'
 
 // Helper to get base path based on demo mode
 function useBasePath() {
@@ -139,6 +140,7 @@ export default function Layout({ user, onLogout, children, isDemo = false }) {
           </nav>
         </div>
         <div className="header-right">
+          <CurrencySelector compact />
           <span className="user-name">{user?.username}</span>
           <button className="btn btn-sm" onClick={onLogout}>{isDemoMode ? t('navigation.exitDemo') : t('navigation.logout')}</button>
         </div>

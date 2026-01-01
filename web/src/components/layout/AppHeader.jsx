@@ -18,6 +18,7 @@ import {
   Shield
 } from "lucide-react";
 import DumontLogo from "../DumontLogo";
+import CurrencySelector from "../CurrencySelector";
 
 // Helper to get base path based on demo mode
 function useBasePath() {
@@ -120,6 +121,9 @@ const AppHeader = ({ user, onLogout, isDemo = false, dashboardStats = null }) =>
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </button>
           */}
+
+          {/* Currency Selector */}
+          <CurrencySelector compact />
 
           {/* Notifications */}
           <div className="relative" ref={notificationRef}>
