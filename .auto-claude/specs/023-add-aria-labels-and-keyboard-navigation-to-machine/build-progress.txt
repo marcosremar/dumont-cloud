@@ -54,3 +54,15 @@ This task adds proper accessibility attributes (aria-label, aria-expanded, aria-
   - Tab closes dropdown and lets focus move naturally
   - Focus ring styles for keyboard visibility
   - Focus management with proper ref tracking
+- [2026-01-01] Completed 7.1: Created comprehensive accessibility tests
+  - Created tests/e2e-journeys/accessibility-machinecard.spec.js with 12 test suites
+  - Tests cover ARIA labels on action buttons, IDE buttons, main menu
+  - Tests verify failover dropdown ARIA (aria-expanded, aria-haspopup, role="menu")
+  - Tests verify backup badge ARIA (role="button", aria-expanded)
+  - Tests verify copy buttons have aria-labels and aria-live announcements
+  - Keyboard navigation tests for failover dropdown (Escape, Arrow, Enter, Tab, Home/End)
+  - Keyboard navigation tests for backup popup (Escape, Enter/Space)
+  - Keyboard navigation tests for main options menu
+  - Status badge ARIA tests (aria-label, aria-busy)
+  - Failover progress ARIA live region tests
+  - Focus visibility tests

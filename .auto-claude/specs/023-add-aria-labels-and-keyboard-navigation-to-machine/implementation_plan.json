@@ -281,7 +281,7 @@
           "id": "6.2",
           "title": "Add aria-live to failover progress panel",
           "description": "Add aria-live region to the failover progress panel so screen readers announce progress updates.",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/machines/MachineCard.jsx"
           ],
@@ -289,7 +289,9 @@
             "Failover progress panel has aria-live='polite'",
             "Step changes are announced to screen readers",
             "Completion is announced"
-          ]
+          ],
+          "notes": "Added aria-live region to failover progress panel: (1) Added aria-live=\"polite\", role=\"region\", and aria-label=\"Progresso do failover\" to the panel container, (2) Added failoverAnnouncement state and useEffect to generate contextual Portuguese announcements for each phase (gpu_lost, failover_active, searching, provisioning, restoring, complete), (3) Added hidden aria-live region with role=\"status\" for screen reader announcements, (4) Added aria-hidden to decorative Zap icon. Screen readers now announce step changes and completion status.",
+          "updated_at": "2026-01-01T06:40:10.206979+00:00"
         }
       ]
     },
@@ -302,7 +304,7 @@
           "id": "7.1",
           "title": "Create accessibility tests",
           "description": "Add tests to verify ARIA attributes and keyboard navigation work correctly.",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/machines/MachineCard.test.jsx"
           ],
@@ -311,7 +313,9 @@
             "Test that dropdowns have proper ARIA attributes",
             "Test that keyboard navigation works",
             "Test that focus management is correct"
-          ]
+          ],
+          "notes": "Created comprehensive Playwright E2E tests for accessibility in tests/e2e-journeys/accessibility-machinecard.spec.js. The test file includes 12 test suites with 30+ test cases covering: (1) ARIA labels on action buttons (Start, Pause, CPU migration, Failover, Testar), (2) ARIA labels on IDE buttons (VS Code with aria-haspopup, Cursor, Windsurf), (3) ARIA attributes on main menu (aria-label, aria-haspopup, role=\"menu\", role=\"menuitem\"), (4) Failover dropdown ARIA (aria-expanded, aria-haspopup, role=\"menu\", role=\"menuitem\"), (5) Backup badge ARIA (role=\"button\", aria-expanded, aria-label), (6) Copy buttons ARIA (aria-labels, aria-live region), (7-9) Keyboard navigation for failover dropdown, backup popup, and main menu (Escape, Arrow keys, Enter/Space, Tab, Home/End), (10) Status badge ARIA (aria-label, aria-busy), (11) Failover progress ARIA live region, (12) Focus visibility tests.",
+          "updated_at": "2026-01-01T06:44:00.950183+00:00"
         },
         {
           "id": "7.2",
@@ -341,5 +345,5 @@
     "issues": "",
     "tests_passed": ""
   },
-  "last_updated": "2026-01-01T06:37:56.738890+00:00"
+  "last_updated": "2026-01-01T06:44:00.950194+00:00"
 }
