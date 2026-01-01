@@ -1,9 +1,15 @@
 """
 Snapshot management API endpoints
 """
+import json
+import os
+from pathlib import Path
+from datetime import datetime, timezone
+from typing import Dict, Any, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from ..schemas.request import CreateSnapshotRequest, RestoreSnapshotRequest, DeleteSnapshotRequest
+from ..schemas.request import CreateSnapshotRequest, RestoreSnapshotRequest, DeleteSnapshotRequest, SetKeepForeverRequest
 from ..schemas.response import (
     ListSnapshotsResponse,
     SnapshotResponse,
@@ -13,7 +19,117 @@ from ..schemas.response import (
 )
 from ....domain.services import SnapshotService, InstanceService
 from ....core.exceptions import SnapshotException, NotFoundException
-from ..dependencies import get_snapshot_service, get_instance_service, require_auth
+from ..dependencies import get_snapshot_service, get_instance_service, require_auth, get_current_user_email
+from ....models.snapshot_metadata import SnapshotMetadata, SnapshotStatus
+from ....services.snapshot_audit_logger import get_snapshot_audit_logger
+
+
+class SnapshotMetadataStore:
+    """
+    Simple file-based storage for snapshot metadata.
+
+    Stores metadata in ~/.dumont/snapshot_metadata.json
+    """
+
+    DEFAULT_METADATA_FILE = "snapshot_metadata.json"
+
+    def __init__(self, metadata_file_path: Optional[str] = None):
+        self._metadata_file_path = metadata_file_path
+        self._metadata: Dict[str, Dict[str, Any]] = {}
+        self._loaded = False
+
+    @property
+    def metadata_file_path(self) -> str:
+        """Returns the path to the metadata file."""
+        if self._metadata_file_path:
+            return self._metadata_file_path
+
+        home_dir = Path.home()
+        metadata_dir = home_dir / ".dumont"
+        metadata_dir.mkdir(parents=True, exist_ok=True)
+
+        return str(metadata_dir / self.DEFAULT_METADATA_FILE)
+
+    def _ensure_loaded(self) -> None:
+        """Load metadata from file if not already loaded."""
+        if self._loaded:
+            return
+
+        try:
+            if os.path.exists(self.metadata_file_path):
+                with open(self.metadata_file_path, 'r') as f:
+                    data = json.load(f)
+                    self._metadata = data.get('snapshots', {})
+        except (json.JSONDecodeError, IOError):
+            self._metadata = {}
+
+        self._loaded = True
+
+    def _save(self) -> None:
+        """Save metadata to file."""
+        try:
+            metadata_dir = Path(self.metadata_file_path).parent
+            metadata_dir.mkdir(parents=True, exist_ok=True)
+
+            data = {
+                'version': '1.0',
+                'last_updated': datetime.now(timezone.utc).isoformat(),
+                'snapshots': self._metadata,
+            }
+
+            with open(self.metadata_file_path, 'w') as f:
+                json.dump(data, f, indent=2)
+        except IOError:
+            pass
+
+    def get_metadata(self, snapshot_id: str) -> Optional[SnapshotMetadata]:
+        """Get metadata for a snapshot."""
+        self._ensure_loaded()
+
+        if snapshot_id in self._metadata:
+            return SnapshotMetadata.from_dict(self._metadata[snapshot_id])
+        return None
+
+    def set_metadata(self, snapshot_id: str, metadata: SnapshotMetadata) -> None:
+        """Set metadata for a snapshot."""
+        self._ensure_loaded()
+
+        metadata.updated_at = datetime.now(timezone.utc).isoformat()
+        self._metadata[snapshot_id] = metadata.to_dict()
+        self._save()
+
+    def update_keep_forever(self, snapshot_id: str, keep_forever: bool, user_id: str = "") -> SnapshotMetadata:
+        """Update the keep_forever flag for a snapshot."""
+        self._ensure_loaded()
+
+        if snapshot_id in self._metadata:
+            metadata = SnapshotMetadata.from_dict(self._metadata[snapshot_id])
+        else:
+            metadata = SnapshotMetadata(
+                snapshot_id=snapshot_id,
+                user_id=user_id,
+                status=SnapshotStatus.ACTIVE,
+            )
+
+        metadata.keep_forever = keep_forever
+        metadata.updated_at = datetime.now(timezone.utc).isoformat()
+
+        self._metadata[snapshot_id] = metadata.to_dict()
+        self._save()
+
+        return metadata
+
+
+# Global metadata store instance
+_metadata_store: Optional[SnapshotMetadataStore] = None
+
+
+def get_metadata_store() -> SnapshotMetadataStore:
+    """Get the global metadata store instance."""
+    global _metadata_store
+    if _metadata_store is None:
+        _metadata_store = SnapshotMetadataStore()
+    return _metadata_store
 
 router = APIRouter(prefix="/snapshots", tags=["Snapshots"], dependencies=[Depends(require_auth)])
 
@@ -181,3 +297,48 @@ async def delete_snapshot(
         success=True,
         message=f"Snapshot {snapshot_id} deleted successfully",
     )
+
+
+@router.post("/{snapshot_id}/keep-forever", response_model=SuccessResponse)
+async def set_keep_forever(
+    snapshot_id: str,
+    request: SetKeepForeverRequest,
+    user_email: str = Depends(get_current_user_email),
+):
+    """
+    Set keep-forever flag on a snapshot
+
+    Protects or unprotects a snapshot from automatic cleanup.
+    When keep_forever is True, the snapshot will never be deleted by the
+    automatic cleanup agent, regardless of retention policy.
+    """
+    try:
+        # Get the metadata store
+        metadata_store = get_metadata_store()
+
+        # Update the keep_forever flag
+        metadata = metadata_store.update_keep_forever(
+            snapshot_id=snapshot_id,
+            keep_forever=request.keep_forever,
+            user_id=user_email,
+        )
+
+        # Log to audit
+        audit_logger = get_snapshot_audit_logger()
+        audit_logger.log_keep_forever_changed(
+            snapshot_id=snapshot_id,
+            user_id=user_email,
+            keep_forever=request.keep_forever,
+        )
+
+        action = "protected" if request.keep_forever else "unprotected"
+        return SuccessResponse(
+            success=True,
+            message=f"Snapshot {snapshot_id} {action} from automatic cleanup",
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update snapshot {snapshot_id}: {str(e)}",
+        )

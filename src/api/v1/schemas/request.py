@@ -98,6 +98,11 @@ class PruneSnapshotsRequest(BaseModel):
     keep_last: int = Field(10, ge=1, description="Number of snapshots to keep")
 
 
+class SetKeepForeverRequest(BaseModel):
+    """Set keep-forever flag on snapshot request"""
+    keep_forever: bool = Field(..., description="Whether to keep this snapshot forever (protected from automatic cleanup)")
+
+
 # Migration Requests
 
 class MigrateInstanceRequest(BaseModel):
