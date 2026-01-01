@@ -15,6 +15,7 @@ from . import serverless
 from . import machine_history
 from . import teams
 from . import roles
+from . import users
 
 __all__ = [
     'auth',
@@ -31,5 +32,6 @@ __all__ = [
     'machine_history',
     'teams',
     'roles',
+    'users',
 ]
 
