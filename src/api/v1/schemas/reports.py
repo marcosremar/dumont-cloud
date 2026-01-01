@@ -50,5 +50,9 @@ class ReportDataResponse(BaseModel):
     shareable_id: str
     format: str
     savings_data: Optional[Dict[str, Any]] = None
+    image_url: Optional[str] = Field(
+        default=None,
+        description="URL da imagem gerada para og:image meta tag"
+    )
     created_at: datetime
     # Nota: Não inclui user_id, email ou outros dados sensíveis

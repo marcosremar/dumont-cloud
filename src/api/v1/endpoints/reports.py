@@ -365,9 +365,11 @@ async def get_report(
     filtered_savings_data = sanitize_savings_data(report.savings_data)
 
     # Retornar apenas dados públicos (privacy filtering applied)
+    # Include image_url for social media og:image meta tag
     return ReportDataResponse(
         shareable_id=report.shareable_id,
         format=report.format,
         savings_data=filtered_savings_data,
+        image_url=report.image_url,
         created_at=report.created_at,
     )

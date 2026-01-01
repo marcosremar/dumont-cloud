@@ -9,6 +9,7 @@ interface ReportData {
   shareable_id: string;
   format: string;
   savings_data: SavingsData;
+  image_url?: string; // Generated image for social media og:image
   created_at: string;
 }
 
@@ -272,6 +273,7 @@ const ShareableReportView: FC = () => {
         description={reportDescription}
         ogTitle={reportTitle}
         ogDescription={reportDescription}
+        ogImage={report.image_url}
         ogUrl={currentUrl}
         ogType="article"
         twitterCard="summary_large_image"
