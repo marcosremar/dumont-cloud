@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "Cargando...",
+    "machine": "Máquina",
     "save": "Guardar",
     "cancel": "Cancelar",
     "close": "Cerrar",
@@ -133,7 +134,27 @@
       "advancedModeSelected": "Modo Avanzado seleccionado. Configura filtros detallados.",
       "aiAssistantActivated": "Asistente IA activado. Describe lo que necesitas.",
       "noMachinesForTier": "No se encontraron máquinas para este nivel. Prueba otro.",
-      "filtersReset": "Filtros restablecidos"
+      "filtersReset": "Filtros restablecidos",
+      "startingRound": "Iniciando ronda {{round}}/{{total}}...",
+      "unknownError": "Error desconocido",
+      "networkError": "Error de red",
+      "authError": "Error de autenticación",
+      "diskError": "Error de disco",
+      "initError": "Error de inicialización",
+      "httpError": "Error HTTP {{status}}"
+    },
+    "errors": {
+      "fetchOffers": "Error al buscar ofertas",
+      "insufficientBalance": "Saldo insuficiente",
+      "connectionTimeout": "Timeout de conexión",
+      "machineUnavailable": "Máquina no disponible",
+      "instanceLimit": "Límite de instancias alcanzado",
+      "invalidApiKey": "API Key inválida",
+      "alreadyRented": "Ya está alquilada",
+      "serverUnavailable": "Servidor no disponible",
+      "invalidRequest": "Solicitud inválida",
+      "allAttemptsFailed": "Todos los intentos fallaron. Verifica tu API Key y saldo.",
+      "allMachinesFailed": "Las {{count}} máquinas fallaron. Intentando siguiente grupo..."
     }
   },
   "machines": {
@@ -217,7 +238,12 @@
       "paused": "¡{{name}} pausada!",
       "creatingSnapshot": "Creando snapshot de {{name}}...",
       "snapshotComplete": "¡Snapshot completado! {{size}} sincronizados",
-      "noCpuStandby": "Esta máquina no tiene CPU Standby configurado"
+      "noCpuStandby": "Esta máquina no tiene CPU Standby configurado",
+      "gpuInterrupted": "⚠️ ¡GPU {{name}} fue interrumpida!",
+      "failoverUsingCpu": "🔄 Failover automático: usando CPU Standby ({{ip}})",
+      "provisioningNewGpu": "🚀 Provisionando nueva GPU: {{name}}",
+      "restoringFiles": "📦 Restaurando {{count}} archivos a nueva GPU...",
+      "recoveryComplete": "✅ ¡Recuperación completa en {{time}}s! Nueva GPU: {{name}}"
     },
     "errors": {
       "fetchMachines": "Error al obtener máquinas",

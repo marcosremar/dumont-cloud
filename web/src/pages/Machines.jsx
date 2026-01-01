@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { apiGet, apiPost, apiDelete, isDemoMode } from '../utils/api'
 import { ConfirmModal } from '../components/ui/dumont-ui'
 import { Plus, Server, Shield, Cpu, Activity, Check, RefreshCw, DollarSign, TrendingDown, Wallet } from 'lucide-react'
@@ -22,6 +23,7 @@ import {
 
 // Main Machines Page
 export default function Machines() {
+  const { t } = useTranslation()
   const location = useLocation()
   const isDemo = isDemoMode()
 
@@ -156,16 +158,16 @@ export default function Machines() {
 
     if (isDemo) {
       // Demo mode: simulate destruction with animation
-      showDemoToast(`Destruindo ${machineName}...`, 'warning')
+      showDemoToast(t('machines.toast.destroying', { name: machineName }), 'warning')
       await new Promise(r => setTimeout(r, 1500))
       setMachines(prev => prev.filter(m => m.id !== machineId))
-      showDemoToast(`${machineName} destruída com sucesso!`, 'success')
+      showDemoToast(t('machines.toast.destroyedSuccess', { name: machineName }), 'success')
       return
     }
 
     try {
       const res = await apiDelete(`/api/v1/instances/${machineId}`)
-      if (!res.ok) throw new Error('Erro ao destruir máquina')
+      if (!res.ok) throw new Error(t('machines.errors.destroyMachine'))
       fetchMachines()
     } catch (err) {
       alert(err.message)
@@ -175,7 +177,7 @@ export default function Machines() {
   // Create instance from offer (called from Dashboard or Nova Máquina)
   const handleCreateInstance = async (offer) => {
     if (isDemo) {
-      showDemoToast('Criando máquina demo...', 'info')
+      showDemoToast(t('machines.toast.creatingDemo'), 'info')
       await new Promise(r => setTimeout(r, 2000))
       const newMachineId = Date.now()
       const newMachine = {
@@ -217,12 +219,12 @@ export default function Machines() {
         })
       }, 5000)
       setCreateModal({ open: false, offer: null, creating: false, error: null })
-      showDemoToast(`${offer.gpu_name} criada com CPU Standby!`, 'success')
+      showDemoToast(t('machines.toast.createdWithStandby', { name: offer.gpu_name }), 'success')
       return
     }
 
     // Show toast that we're creating
-    showDemoToast(`Criando ${offer.gpu_name}...`, 'info')
+    showDemoToast(t('machines.toast.creating', { name: offer.gpu_name }), 'info')
 
     try {
       const res = await apiPost('/api/v1/instances', {
@@ -233,7 +235,7 @@ export default function Machines() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data.detail || data.error || 'Erro ao criar instância')
+        throw new Error(data.detail || data.error || t('machines.errors.createInstance'))
       }
 
       const data = await res.json()
@@ -259,11 +261,11 @@ export default function Machines() {
       setTimeout(() => scrollToNewMachine(), 500)
 
       // Show success message
-      showDemoToast(`${offer.gpu_name} criada! CPU Standby sendo provisionado...`, 'success')
+      showDemoToast(t('machines.toast.createdProvisioningStandby', { name: offer.gpu_name }), 'success')
 
     } catch (err) {
       // Show error as toast instead of modal
-      showDemoToast(`Erro: ${err.message}`, 'error')
+      showDemoToast(err.message, 'error')
       setCreateModal({ open: false, offer: null, creating: false, error: null })
     }
   }
@@ -272,7 +274,8 @@ export default function Machines() {
     if (isDemo) {
       // Demo mode: simulate starting
       const machine = machines.find(m => m.id === machineId)
-      showDemoToast(`Iniciando ${machine?.gpu_name || 'máquina'}...`, 'info')
+      const machineName = machine?.gpu_name || t('common.machine')
+      showDemoToast(t('machines.toast.starting', { name: machineName }), 'info')
       await new Promise(r => setTimeout(r, 2000))
       setMachines(prev => prev.map(m =>
         m.id === machineId
@@ -287,13 +290,13 @@ export default function Machines() {
           }
           : m
       ))
-      showDemoToast(`${machine?.gpu_name || 'Máquina'} iniciada!`, 'success')
+      showDemoToast(t('machines.toast.started', { name: machineName }), 'success')
       return
     }
 
     try {
       const res = await apiPost(`/api/v1/instances/${machineId}/resume`)
-      if (!res.ok) throw new Error('Erro ao iniciar máquina')
+      if (!res.ok) throw new Error(t('machines.errors.startMachine'))
       fetchMachines()
     } catch (err) {
       alert(err.message)
@@ -304,7 +307,8 @@ export default function Machines() {
     if (isDemo) {
       // Demo mode: simulate pausing
       const machine = machines.find(m => m.id === machineId)
-      showDemoToast(`Pausando ${machine?.gpu_name || 'máquina'}...`, 'info')
+      const machineName = machine?.gpu_name || t('common.machine')
+      showDemoToast(t('machines.toast.pausing', { name: machineName }), 'info')
       await new Promise(r => setTimeout(r, 1500))
       setMachines(prev => prev.map(m =>
         m.id === machineId
@@ -318,13 +322,13 @@ export default function Machines() {
           }
           : m
       ))
-      showDemoToast(`${machine?.gpu_name || 'Máquina'} pausada!`, 'success')
+      showDemoToast(t('machines.toast.paused', { name: machineName }), 'success')
       return
     }
 
     try {
       const res = await apiPost(`/api/v1/instances/${machineId}/pause`)
-      if (!res.ok) throw new Error('Erro ao pausar máquina')
+      if (!res.ok) throw new Error(t('machines.errors.pauseMachine'))
       fetchMachines()
     } catch (err) {
       alert(err.message)
@@ -337,7 +341,7 @@ export default function Machines() {
       // Demo mode: simulate snapshot
       const machine = machines.find(m => m.id === machineId)
       setSyncStatus(prev => ({ ...prev, [machineId]: 'syncing' }))
-      showDemoToast(`Criando snapshot de ${machine?.gpu_name}...`, 'info')
+      showDemoToast(t('machines.toast.creatingSnapshot', { name: machine?.gpu_name }), 'info')
       await new Promise(r => setTimeout(r, 2500))
 
       const demoStats = {
@@ -352,7 +356,7 @@ export default function Machines() {
       setSyncStatus(prev => ({ ...prev, [machineId]: 'synced' }))
       setLastSyncTime(prev => ({ ...prev, [machineId]: Date.now() }))
       setSyncStats(prev => ({ ...prev, [machineId]: demoStats }))
-      showDemoToast(`Snapshot concluído! ${demoStats.data_added} sincronizados`, 'success')
+      showDemoToast(t('machines.toast.snapshotComplete', { size: demoStats.data_added }), 'success')
       return
     }
 
@@ -362,7 +366,7 @@ export default function Machines() {
       const res = await apiPost(`/api/v1/instances/${machineId}/sync?force=true`)
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
-        throw new Error(errorData.detail || errorData.error || 'Erro ao sincronizar')
+        throw new Error(errorData.detail || errorData.error || t('machines.errors.syncFailed'))
       }
       const data = await res.json()
       setSyncStatus(prev => ({ ...prev, [machineId]: 'synced' }))
@@ -434,7 +438,7 @@ export default function Machines() {
   // Simulate GPU failover (demo mode only) - with enriched metrics
   const handleSimulateFailover = async (machine) => {
     if (!machine.cpu_standby?.enabled) {
-      showDemoToast('Esta máquina não tem CPU Standby configurado', 'error')
+      showDemoToast(t('machines.toast.noCpuStandby'), 'error')
       return
     }
 
@@ -478,8 +482,8 @@ export default function Machines() {
     // Phase 1: GPU Lost - Detect the interruption
     const phaseStart = Date.now()
     const detectionTime = Math.floor(Math.random() * 500) + 500 // 500-1000ms
-    updateProgress('gpu_lost', `GPU ${machine.gpu_name} foi interrompida (Spot Preemption)`)
-    showDemoToast(`⚠️ GPU ${machine.gpu_name} foi interrompida!`, 'warning')
+    updateProgress('gpu_lost', t('machines.failover.gpuLost', { name: machine.gpu_name }))
+    showDemoToast(t('machines.toast.gpuInterrupted', { name: machine.gpu_name }), 'warning')
 
     // Update machine status
     setMachines(prev => prev.map(m =>
@@ -496,15 +500,15 @@ export default function Machines() {
 
     // Phase 2: Failover to CPU Standby
     const failoverTime = Math.floor(Math.random() * 300) + 800 // 800-1100ms
-    updateProgress('failover_active', `Redirecionando tráfego para CPU Standby (${machine.cpu_standby.ip})`, null, { detection_time_ms: detectionTime })
-    showDemoToast(`🔄 Failover automático: usando CPU Standby (${machine.cpu_standby.ip})`, 'info')
+    updateProgress('failover_active', t('machines.failover.failoverActive', { ip: machine.cpu_standby.ip }), null, { detection_time_ms: detectionTime })
+    showDemoToast(t('machines.toast.failoverUsingCpu', { ip: machine.cpu_standby.ip }), 'info')
     await new Promise(r => setTimeout(r, 2500))
     failoverMetrics.failover_time_ms = failoverTime
 
     // Phase 3: Searching for new GPU
     const searchTime = Math.floor(Math.random() * 2000) + 2000 // 2-4 seconds
-    updateProgress('searching', 'Pesquisando GPUs disponíveis em Vast.ai...', null, { failover_time_ms: failoverTime })
-    showDemoToast('🔍 Buscando nova GPU disponível...', 'info')
+    updateProgress('searching', t('machines.failover.searching'), null, { failover_time_ms: failoverTime })
+    showDemoToast(t('machines.failover.searching'), 'info')
     await new Promise(r => setTimeout(r, 3000))
     failoverMetrics.search_time_ms = searchTime
 
@@ -513,8 +517,8 @@ export default function Machines() {
     const newGpu = gpuOptions[Math.floor(Math.random() * gpuOptions.length)]
     const provisioningTime = Math.floor(Math.random() * 20000) + 30000 // 30-50 seconds
     failoverMetrics.new_gpu_name = newGpu
-    updateProgress('provisioning', `Provisionando ${newGpu}...`, newGpu, { search_time_ms: searchTime })
-    showDemoToast(`🚀 Provisionando nova GPU: ${newGpu}`, 'info')
+    updateProgress('provisioning', t('machines.failover.provisioning', { name: newGpu }), newGpu, { search_time_ms: searchTime })
+    showDemoToast(t('machines.toast.provisioningNewGpu', { name: newGpu }), 'info')
     await new Promise(r => setTimeout(r, 3500))
     failoverMetrics.provisioning_time_ms = provisioningTime
 
@@ -525,8 +529,8 @@ export default function Machines() {
     failoverMetrics.files_synced = filesCount
     failoverMetrics.data_restored_mb = dataSize
     failoverMetrics.restore_time_ms = restoreTime
-    updateProgress('restoring', `Restaurando ${filesCount.toLocaleString()} arquivos (${dataSize} MB) do CPU Standby...`, newGpu, { provisioning_time_ms: provisioningTime })
-    showDemoToast(`📦 Restaurando ${filesCount.toLocaleString()} arquivos para nova GPU...`, 'info')
+    updateProgress('restoring', t('machines.failover.restoring', { count: filesCount.toLocaleString(), size: dataSize }), newGpu, { provisioning_time_ms: provisioningTime })
+    showDemoToast(t('machines.toast.restoringFiles', { count: filesCount.toLocaleString() }), 'info')
     await new Promise(r => setTimeout(r, 4000))
 
     // Phase 6: Complete
@@ -535,7 +539,7 @@ export default function Machines() {
     failoverMetrics.status = 'success'
     failoverMetrics.completed_at = new Date().toISOString()
 
-    updateProgress('complete', `Recuperação completa! Nova GPU ${newGpu} operacional.`, newGpu, {
+    updateProgress('complete', t('machines.failover.complete', { name: newGpu }), newGpu, {
       restore_time_ms: restoreTime,
       total_time_ms: totalTime,
       files_synced: filesCount,
@@ -554,7 +558,7 @@ export default function Machines() {
       } : m
     ))
 
-    showDemoToast(`✅ Recuperação completa em ${(totalTime / 1000).toFixed(1)}s! Nova GPU: ${newGpu}`, 'success')
+    showDemoToast(t('machines.toast.recoveryComplete', { time: (totalTime / 1000).toFixed(1), name: newGpu }), 'success')
 
     // Save to failover history
     setFailoverHistory(prev => [...prev, failoverMetrics])

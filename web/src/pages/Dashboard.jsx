@@ -486,7 +486,7 @@ export default function Dashboard({ onStatsUpdate }) {
       const response = await fetch(`${API_BASE}/api/v1/instances/offers?${params}`, {
         headers: { 'Authorization': `Bearer ${getToken()}` }
       });
-      if (!response.ok) throw new Error('Falha ao buscar ofertas');
+      if (!response.ok) throw new Error(t('dashboard.errors.fetchOffers'));
       const data = await response.json();
       const realOffers = data.offers || [];
 
@@ -654,22 +654,22 @@ export default function Dashboard({ onStatsUpdate }) {
       } catch (error) {
         failedCount++;
         // Mark as failed with descriptive error message
-        let errorMessage = 'Erro desconhecido';
+        let errorMessage = t('dashboard.toasts.unknownError');
         const errMsg = error.message?.toLowerCase() || '';
         if (errMsg.includes('balance') || errMsg.includes('insufficient') || errMsg.includes('funds')) {
-          errorMessage = 'Saldo insuficiente';
+          errorMessage = t('dashboard.errors.insufficientBalance');
         } else if (errMsg.includes('timeout')) {
-          errorMessage = 'Timeout de conexão';
+          errorMessage = t('dashboard.errors.connectionTimeout');
         } else if (errMsg.includes('unavailable') || errMsg.includes('not available') || errMsg.includes('already rented')) {
-          errorMessage = 'Máquina indisponível';
+          errorMessage = t('dashboard.errors.machineUnavailable');
         } else if (errMsg.includes('network')) {
-          errorMessage = 'Erro de rede';
+          errorMessage = t('dashboard.toasts.networkError');
         } else if (errMsg.includes('auth') || errMsg.includes('401') || errMsg.includes('403') || errMsg.includes('unauthorized')) {
-          errorMessage = 'Erro de autenticação';
+          errorMessage = t('dashboard.toasts.authError');
         } else if (errMsg.includes('limit') || errMsg.includes('quota') || errMsg.includes('maximum')) {
-          errorMessage = 'Limite de instâncias';
+          errorMessage = t('dashboard.errors.instanceLimit');
         } else if (errMsg.includes('api_key') || errMsg.includes('api key')) {
-          errorMessage = 'API Key inválida';
+          errorMessage = t('dashboard.errors.invalidApiKey');
         } else if (error.message && error.message.length < 40) {
           errorMessage = error.message;
         }
@@ -694,16 +694,16 @@ export default function Dashboard({ onStatsUpdate }) {
     // If all failed, try next round after a short delay
     if (totalFailed === candidates.length) {
       console.log(`All machines failed in round ${round}, checking for next round...`);
-      toast.warning(`Todas as ${candidates.length} máquinas falharam. Tentando próximo grupo...`);
+      toast.warning(t('dashboard.errors.allMachinesFailed', { count: candidates.length }));
 
       setTimeout(() => {
         const hasMoreOffers = allOffers.length > round * 5;
         if (round < MAX_ROUNDS && hasMoreOffers) {
           const nextRound = round + 1;
-          toast.info(`Iniciando round ${nextRound}/${MAX_ROUNDS}...`);
+          toast.info(t('dashboard.toasts.startingRound', { round: nextRound, total: MAX_ROUNDS }));
           startProvisioningRaceIntegrated(allOffers, nextRound);
         } else {
-          toast.error('Todas as tentativas falharam. Verifique sua API Key e saldo.');
+          toast.error(t('dashboard.errors.allAttemptsFailed'));
         }
       }, 1500);
       return;
@@ -875,7 +875,7 @@ export default function Dashboard({ onStatsUpdate }) {
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}));
           const apiError = errorData.detail || errorData.message || errorData.error || '';
-          throw new Error(apiError || `Erro HTTP ${res.status}`);
+          throw new Error(apiError || t('dashboard.toasts.httpError', { status: res.status }));
         }
 
         const data = await res.json();
@@ -898,38 +898,38 @@ export default function Dashboard({ onStatsUpdate }) {
       } catch (error) {
         // Mark as failed with descriptive error message
         const msg = (error.message || '').toLowerCase();
-        let errorMessage = 'Erro desconhecido';
+        let errorMessage = t('dashboard.toasts.unknownError');
 
         // Balance/Credit errors
         if (msg.includes('balance') || msg.includes('insufficient') || msg.includes('credit') || msg.includes('saldo')) {
-          errorMessage = 'Saldo insuficiente';
+          errorMessage = t('dashboard.errors.insufficientBalance');
         // Machine availability errors
         } else if (msg.includes('unavailable') || msg.includes('not available') || msg.includes('offer not found') || msg.includes('not found')) {
-          errorMessage = 'Máquina indisponível';
+          errorMessage = t('dashboard.errors.machineUnavailable');
         } else if (msg.includes('already rented') || msg.includes('busy') || msg.includes('in use')) {
-          errorMessage = 'Já está alugada';
+          errorMessage = t('dashboard.errors.alreadyRented');
         // Connection/Network errors
         } else if (msg.includes('timeout') || msg.includes('timed out')) {
-          errorMessage = 'Timeout de conexão';
+          errorMessage = t('dashboard.errors.connectionTimeout');
         } else if (msg.includes('network') || msg.includes('connection') || msg.includes('connect')) {
-          errorMessage = 'Erro de rede';
+          errorMessage = t('dashboard.toasts.networkError');
         // Authentication errors
         } else if (msg.includes('auth') || msg.includes('401') || msg.includes('403') || msg.includes('api key') || msg.includes('unauthorized') || msg.includes('forbidden')) {
-          errorMessage = 'Erro de autenticação';
+          errorMessage = t('dashboard.toasts.authError');
         // Limit errors
         } else if (msg.includes('limit') || msg.includes('quota') || msg.includes('exceeded')) {
-          errorMessage = 'Limite de instâncias';
+          errorMessage = t('dashboard.errors.instanceLimit');
         // Disk/Storage errors
         } else if (msg.includes('disk') || msg.includes('storage') || msg.includes('space')) {
-          errorMessage = 'Erro de disco';
+          errorMessage = t('dashboard.toasts.diskError');
         // SSH/Docker errors
         } else if (msg.includes('ssh') || msg.includes('docker') || msg.includes('container')) {
-          errorMessage = 'Erro de inicialização';
+          errorMessage = t('dashboard.toasts.initError');
         // HTTP status codes
         } else if (msg.includes('erro http') || msg.includes('500') || msg.includes('502') || msg.includes('503')) {
-          errorMessage = 'Servidor indisponível';
+          errorMessage = t('dashboard.errors.serverUnavailable');
         } else if (msg.includes('400') || msg.includes('bad request')) {
-          errorMessage = 'Requisição inválida';
+          errorMessage = t('dashboard.errors.invalidRequest');
         } else if (error.message && error.message.length > 0) {
           // Use the actual message if it's short enough, otherwise truncate
           errorMessage = error.message.length <= 25 ? error.message : error.message.slice(0, 22) + '...';

@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "Loading...",
+    "machine": "Machine",
     "save": "Save",
     "cancel": "Cancel",
     "close": "Close",
@@ -133,7 +134,27 @@
       "advancedModeSelected": "Advanced Mode selected. Configure detailed filters.",
       "aiAssistantActivated": "AI Assistant activated. Describe what you need.",
       "noMachinesForTier": "No machines found for this tier. Try another.",
-      "filtersReset": "Filters reset"
+      "filtersReset": "Filters reset",
+      "startingRound": "Starting round {{round}}/{{total}}...",
+      "unknownError": "Unknown error",
+      "networkError": "Network error",
+      "authError": "Authentication error",
+      "diskError": "Disk error",
+      "initError": "Initialization error",
+      "httpError": "HTTP error {{status}}"
+    },
+    "errors": {
+      "fetchOffers": "Failed to fetch offers",
+      "insufficientBalance": "Insufficient balance",
+      "connectionTimeout": "Connection timeout",
+      "machineUnavailable": "Machine unavailable",
+      "instanceLimit": "Instance limit reached",
+      "invalidApiKey": "Invalid API Key",
+      "alreadyRented": "Already rented",
+      "serverUnavailable": "Server unavailable",
+      "invalidRequest": "Invalid request",
+      "allAttemptsFailed": "All attempts failed. Check your API Key and balance.",
+      "allMachinesFailed": "All {{count}} machines failed. Trying next batch..."
     }
   },
   "machines": {
@@ -217,7 +238,12 @@
       "paused": "{{name}} paused!",
       "creatingSnapshot": "Creating snapshot of {{name}}...",
       "snapshotComplete": "Snapshot completed! {{size}} synchronized",
-      "noCpuStandby": "This machine doesn't have CPU Standby configured"
+      "noCpuStandby": "This machine doesn't have CPU Standby configured",
+      "gpuInterrupted": "⚠️ GPU {{name}} was interrupted!",
+      "failoverUsingCpu": "🔄 Automatic failover: using CPU Standby ({{ip}})",
+      "provisioningNewGpu": "🚀 Provisioning new GPU: {{name}}",
+      "restoringFiles": "📦 Restoring {{count}} files to new GPU...",
+      "recoveryComplete": "✅ Recovery complete in {{time}}s! New GPU: {{name}}"
     },
     "errors": {
       "fetchMachines": "Error fetching machines",
