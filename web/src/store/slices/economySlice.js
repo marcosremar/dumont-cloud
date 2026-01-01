@@ -7,6 +7,13 @@ const API_BASE = import.meta.env.VITE_API_URL || ''
 
 const getToken = () => localStorage.getItem('auth_token')
 
+// Polling configuration
+const POLL_INTERVAL_ACTIVE = 30000 // 30 seconds when instances are active
+const POLL_INTERVAL_IDLE = 60000 // 60 seconds when idle
+
+// Polling interval reference (managed outside Redux for cleanup)
+let pollingIntervalId = null
+
 // Async thunks
 export const fetchSavings = createAsyncThunk(
   'economy/fetchSavings',
@@ -95,6 +102,76 @@ export const fetchProviderPricing = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.message)
     }
+  }
+)
+
+/**
+ * Start polling for economy data updates
+ * Uses adaptive intervals: 30s when instances are active, 60s when idle
+ */
+export const startEconomyPolling = createAsyncThunk(
+  'economy/startPolling',
+  async (_, { dispatch, getState }) => {
+    // Clear any existing polling interval
+    if (pollingIntervalId) {
+      clearInterval(pollingIntervalId)
+      pollingIntervalId = null
+    }
+
+    const poll = async () => {
+      const state = getState()
+      const provider = state.economy.selectedProvider
+      const hasActiveInstances = state.economy.activeSession.activeInstances > 0
+
+      // Fetch active session data first to check for active instances
+      await dispatch(fetchActiveSession(provider))
+
+      // If there are active instances, also fetch realtime savings
+      if (hasActiveInstances) {
+        await dispatch(fetchRealtimeSavings(provider))
+      }
+    }
+
+    // Do initial poll
+    await poll()
+
+    // Set up polling interval based on active instance state
+    const getPollingInterval = () => {
+      const state = getState()
+      const hasActiveInstances = state.economy.activeSession.activeInstances > 0
+      return hasActiveInstances ? POLL_INTERVAL_ACTIVE : POLL_INTERVAL_IDLE
+    }
+
+    // Create adaptive polling that adjusts interval based on active instances
+    const scheduleNextPoll = () => {
+      const interval = getPollingInterval()
+      pollingIntervalId = setTimeout(async () => {
+        const state = getState()
+        // Only continue polling if we're still in polling mode
+        if (state.economy.isPolling) {
+          await poll()
+          scheduleNextPoll()
+        }
+      }, interval)
+    }
+
+    scheduleNextPoll()
+    return { started: true }
+  }
+)
+
+/**
+ * Stop polling for economy data updates
+ */
+export const stopEconomyPolling = createAsyncThunk(
+  'economy/stopPolling',
+  async () => {
+    if (pollingIntervalId) {
+      clearInterval(pollingIntervalId)
+      clearTimeout(pollingIntervalId)
+      pollingIntervalId = null
+    }
+    return { stopped: true }
   }
 )
 
@@ -268,6 +345,20 @@ const economySlice = createSlice({
       .addCase(fetchProviderPricing.rejected, (state, action) => {
         state.pricingLoading = false
         state.error = action.payload
+      })
+      // Start Economy Polling
+      .addCase(startEconomyPolling.pending, (state) => {
+        state.isPolling = true
+      })
+      .addCase(startEconomyPolling.fulfilled, (state) => {
+        state.isPolling = true
+      })
+      .addCase(startEconomyPolling.rejected, (state) => {
+        state.isPolling = false
+      })
+      // Stop Economy Polling
+      .addCase(stopEconomyPolling.fulfilled, (state) => {
+        state.isPolling = false
       })
   },
 })
