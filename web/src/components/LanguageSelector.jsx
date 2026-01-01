@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
-import { Globe } from 'lucide-react'
+import { useDispatch, useSelector } from 'react-redux'
+import { setLanguage, selectLanguage } from '../store/slices/uiSlice'
 
 const AVAILABLE_LANGUAGES = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -7,14 +8,13 @@ const AVAILABLE_LANGUAGES = [
 ]
 
 export function LanguageSelector({ className = '' }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const dispatch = useDispatch()
+  const currentLanguage = useSelector(selectLanguage)
 
   const handleLanguageChange = (languageCode) => {
-    i18n.changeLanguage(languageCode)
-    localStorage.setItem('language', languageCode)
+    dispatch(setLanguage(languageCode))
   }
-
-  const currentLanguage = i18n.language || 'en'
 
   return (
     <div className={`space-y-3 ${className}`}>

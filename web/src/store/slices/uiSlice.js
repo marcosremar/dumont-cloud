@@ -1,7 +1,8 @@
 /**
- * UI Slice - Manages UI state (toasts, modals, sidebar, etc.)
+ * UI Slice - Manages UI state (toasts, modals, sidebar, language, etc.)
  */
 import { createSlice } from '@reduxjs/toolkit'
+import i18n from '../../i18n'
 
 let toastIdCounter = 0
 
@@ -26,6 +27,9 @@ const initialState = {
 
   // Theme
   theme: localStorage.getItem('theme') || 'dark',
+
+  // Language preference
+  language: localStorage.getItem('language') || 'en',
 
   // Loading overlays
   globalLoading: false,
@@ -114,6 +118,13 @@ const uiSlice = createSlice({
       document.documentElement.classList.toggle('dark', state.theme === 'dark')
     },
 
+    // Language
+    setLanguage: (state, action) => {
+      state.language = action.payload
+      localStorage.setItem('language', action.payload)
+      i18n.changeLanguage(action.payload)
+    },
+
     // Global loading
     setGlobalLoading: (state, action) => {
       if (typeof action.payload === 'boolean') {
@@ -174,6 +185,7 @@ export const {
   setShowOnboarding,
   setTheme,
   toggleTheme,
+  setLanguage,
   setGlobalLoading,
   startProvisioning,
   updateProvisioningCandidate,
@@ -188,6 +200,7 @@ export const selectToasts = (state) => state.ui.toasts
 export const selectModal = (modal) => (state) => state.ui.modals[modal]
 export const selectShowOnboarding = (state) => state.ui.showOnboarding
 export const selectTheme = (state) => state.ui.theme
+export const selectLanguage = (state) => state.ui.language
 export const selectGlobalLoading = (state) => state.ui.globalLoading
 export const selectLoadingMessage = (state) => state.ui.loadingMessage
 export const selectProvisioning = (state) => state.ui.provisioning
