@@ -143,14 +143,16 @@
           "id": "2.3",
           "title": "Update AlertDialogTitle with id",
           "description": "Add unique id to AlertDialogTitle for aria-labelledby reference",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "AlertDialogTitle has unique id attribute",
             "id is accessible via context or passed to parent"
           ],
           "files": [
             "web/src/components/tailadmin-ui/index.jsx"
-          ]
+          ],
+          "notes": "Added unique id to AlertDialogTitle component by consuming titleId from AlertDialogContext and setting it as the id attribute on the h2 element. This connects the title to the aria-labelledby attribute on AlertDialogContent for proper accessibility compliance.",
+          "updated_at": "2026-01-01T06:22:15.094792+00:00"
         },
         {
           "id": "2.4",
@@ -248,5 +250,5 @@
     "Consider using inert attribute on background content for better isolation",
     "Focus trap must handle dynamic content (elements added/removed after dialog opens)"
   ],
-  "last_updated": "2026-01-01T06:20:33.228540+00:00"
+  "last_updated": "2026-01-01T06:22:15.094808+00:00"
 }

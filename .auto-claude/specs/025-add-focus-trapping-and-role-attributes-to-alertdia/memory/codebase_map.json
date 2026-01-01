@@ -1,9 +1,9 @@
 {
   "discovered_files": {
     "web/src/components/tailadmin-ui/index.jsx": {
-      "description": "AlertDialogContext created at line 8-11 to share titleId and descriptionId between AlertDialog (provider) and AlertDialogContent (consumer). IDs are generated using React.useId() for uniqueness. AlertDialogContent now has role=\"alertdialog\", aria-modal=\"true\", aria-labelledby, and aria-describedby attributes.",
+      "description": "AlertDialogTitle now consumes titleId from AlertDialogContext and applies it as the id attribute on the h2 element, completing the aria-labelledby connection with AlertDialogContent.",
       "category": "accessibility",
-      "discovered_at": "2026-01-01T06:20:11.581250+00:00"
+      "discovered_at": "2026-01-01T06:22:15.193554+00:00"
     },
     "web/src/hooks/useFocusTrap.ts": {
       "description": "Auto-focus implementation uses double requestAnimationFrame technique for smooth animation timing - the first RAF waits for the browser's paint, and the second ensures CSS transitions/animations have started. Focus priority is: initialFocusRef > first focusable element > container. Animation frame IDs are tracked in a ref for proper cleanup.",
@@ -11,5 +11,5 @@
       "discovered_at": "2026-01-01T06:08:14.677726+00:00"
     }
   },
-  "last_updated": "2026-01-01T06:20:11.581271+00:00"
+  "last_updated": "2026-01-01T06:22:15.193572+00:00"
 }
