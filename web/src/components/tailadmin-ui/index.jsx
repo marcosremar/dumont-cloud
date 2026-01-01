@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 // Page Header with Breadcrumb
 export function PageHeader({ title, subtitle, breadcrumbs = [], actions }) {
@@ -665,13 +666,26 @@ export function DropdownMenuLabel({ children, className = '' }) {
 
 // Alert Dialog Components (usando Portal)
 export function AlertDialog({ children, open, onOpenChange }) {
+  const dialogRef = useRef(null);
+
+  // Set up focus trap - called unconditionally per React hooks rules
+  useFocusTrap(dialogRef, {
+    isOpen: open,
+    onClose: () => onOpenChange?.(false),
+  });
+
   if (!open) return null;
 
   const modalContent = (
     <>
       <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm" onClick={() => onOpenChange?.(false)} />
       <div className="fixed inset-0 z-[1000] flex items-center justify-center pointer-events-none p-4">
-        <div className="pointer-events-auto relative" data-open={open} data-onOpenChange={onOpenChange}>
+        <div
+          ref={dialogRef}
+          className="pointer-events-auto relative"
+          data-open={open}
+          data-onOpenChange={onOpenChange}
+        >
           {children}
         </div>
       </div>
