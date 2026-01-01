@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Card,
   Badge,
@@ -111,6 +111,111 @@ export default function MachineCard({
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [showStrategyMenu, setShowStrategyMenu] = useState(false)
+  const [focusedStrategyIndex, setFocusedStrategyIndex] = useState(0)
+  const strategyMenuRef = useRef(null)
+  const strategyButtonRefs = useRef([])
+  const strategyTriggerRef = useRef(null)
+
+  // Strategy keys for keyboard navigation
+  const strategyKeys = Object.keys(FAILOVER_STRATEGIES_BASE)
+
+  // Handle keyboard navigation for failover strategy dropdown
+  const handleStrategyKeyDown = useCallback((e) => {
+    if (!showStrategyMenu) return
+
+    switch (e.key) {
+      case 'Escape':
+        e.preventDefault()
+        setShowStrategyMenu(false)
+        setFocusedStrategyIndex(0)
+        // Return focus to trigger button
+        strategyTriggerRef.current?.focus()
+        break
+      case 'ArrowDown':
+        e.preventDefault()
+        setFocusedStrategyIndex((prev) => {
+          const next = prev < strategyKeys.length - 1 ? prev + 1 : 0
+          strategyButtonRefs.current[next]?.focus()
+          return next
+        })
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setFocusedStrategyIndex((prev) => {
+          const next = prev > 0 ? prev - 1 : strategyKeys.length - 1
+          strategyButtonRefs.current[next]?.focus()
+          return next
+        })
+        break
+      case 'Tab':
+        e.preventDefault()
+        // Trap focus within dropdown
+        if (e.shiftKey) {
+          setFocusedStrategyIndex((prev) => {
+            const next = prev > 0 ? prev - 1 : strategyKeys.length - 1
+            strategyButtonRefs.current[next]?.focus()
+            return next
+          })
+        } else {
+          setFocusedStrategyIndex((prev) => {
+            const next = prev < strategyKeys.length - 1 ? prev + 1 : 0
+            strategyButtonRefs.current[next]?.focus()
+            return next
+          })
+        }
+        break
+      case 'Enter':
+      case ' ':
+        // Enter/Space selects the focused option (handled by button's onClick)
+        // No need to prevent default here as the button will handle it
+        break
+      case 'Home':
+        e.preventDefault()
+        setFocusedStrategyIndex(0)
+        strategyButtonRefs.current[0]?.focus()
+        break
+      case 'End':
+        e.preventDefault()
+        const lastIndex = strategyKeys.length - 1
+        setFocusedStrategyIndex(lastIndex)
+        strategyButtonRefs.current[lastIndex]?.focus()
+        break
+      default:
+        break
+    }
+  }, [showStrategyMenu, strategyKeys.length])
+
+  // Focus first option when dropdown opens
+  useEffect(() => {
+    if (showStrategyMenu) {
+      // Reset to first option and focus it
+      setFocusedStrategyIndex(0)
+      // Use setTimeout to ensure the dropdown is rendered before focusing
+      setTimeout(() => {
+        strategyButtonRefs.current[0]?.focus()
+      }, 0)
+    }
+  }, [showStrategyMenu])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!showStrategyMenu) return
+
+    const handleClickOutside = (event) => {
+      if (
+        strategyMenuRef.current &&
+        !strategyMenuRef.current.contains(event.target) &&
+        strategyTriggerRef.current &&
+        !strategyTriggerRef.current.contains(event.target)
+      ) {
+        setShowStrategyMenu(false)
+        setFocusedStrategyIndex(0)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showStrategyMenu])
 
   // Get current failover strategy and calculate real costs
   const currentStrategy = machine.failover_strategy || (machine.cpu_standby?.enabled ? 'cpu_standby' : 'disabled')
@@ -448,14 +553,25 @@ export default function MachineCard({
             {/* Failover Strategy Badge with Dropdown */}
             <div className="relative" data-testid="failover-strategy-container">
               <button
+                ref={strategyTriggerRef}
                 type="button"
                 data-testid="failover-selector"
-                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 ${
+                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-brand-500 ${
                   currentStrategy === 'disabled' ? 'bg-gray-500/20 text-gray-400' :
                   currentStrategy === 'warm_pool' ? 'bg-green-500/20 text-green-400' :
                   'bg-brand-500/20 text-brand-400'
                 }`}
                 onClick={() => setShowStrategyMenu(!showStrategyMenu)}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowDown' && !showStrategyMenu) {
+                    e.preventDefault()
+                    setShowStrategyMenu(true)
+                  } else if (e.key === 'Escape' && showStrategyMenu) {
+                    e.preventDefault()
+                    setShowStrategyMenu(false)
+                    setFocusedStrategyIndex(0)
+                  }
+                }}
                 aria-haspopup="menu"
                 aria-expanded={showStrategyMenu}
                 aria-label={`Estratégia de failover: ${strategyInfo.label}`}
@@ -469,39 +585,59 @@ export default function MachineCard({
 
               {showStrategyMenu && (
                 <div
+                  ref={strategyMenuRef}
                   className="absolute top-full left-0 mt-1 z-50 w-64 p-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl"
                   data-testid="failover-dropdown-menu"
                   role="menu"
                   aria-label="Opções de estratégia de failover"
+                  onKeyDown={handleStrategyKeyDown}
                 >
                   <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-700">
                     <span className="text-[10px] font-semibold text-gray-300">Estratégia de Failover</span>
                     <button
-                      onClick={() => setShowStrategyMenu(false)}
-                      className="p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300"
+                      onClick={() => {
+                        setShowStrategyMenu(false)
+                        setFocusedStrategyIndex(0)
+                        strategyTriggerRef.current?.focus()
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          e.preventDefault()
+                          setShowStrategyMenu(false)
+                          setFocusedStrategyIndex(0)
+                          strategyTriggerRef.current?.focus()
+                        }
+                      }}
+                      className="p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
                       data-testid="failover-dropdown-close"
                       aria-label="Fechar menu de failover"
+                      tabIndex={-1}
                     >
                       <X className="w-3 h-3" />
                     </button>
                   </div>
                   <div className="space-y-1" data-testid="failover-options-list">
-                    {Object.entries(FAILOVER_STRATEGIES_BASE).map(([key, strategy]) => {
+                    {Object.entries(FAILOVER_STRATEGIES_BASE).map(([key, strategy], index) => {
                       const cost = strategyCosts[key] || 0
                       return (
                         <button
                           key={key}
+                          ref={(el) => (strategyButtonRefs.current[index] = el)}
                           data-testid={`failover-option-${key}`}
                           onClick={() => {
                             // TODO: Call API to change strategy
                             setShowStrategyMenu(false)
+                            setFocusedStrategyIndex(0)
+                            strategyTriggerRef.current?.focus()
                           }}
-                          className={`w-full flex items-center justify-between p-1.5 rounded text-left transition-colors ${
+                          className={`w-full flex items-center justify-between p-1.5 rounded text-left transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 focus:ring-offset-gray-900 ${
                             currentStrategy === key
                               ? 'bg-brand-500/20 border border-brand-500/30'
                               : 'hover:bg-gray-800 border border-transparent'
                           }`}
                           role="menuitem"
+                          tabIndex={focusedStrategyIndex === index ? 0 : -1}
+                          aria-selected={currentStrategy === key}
                         >
                           <div className="flex items-center gap-1.5">
                             <Shield className={`w-3 h-3 ${
