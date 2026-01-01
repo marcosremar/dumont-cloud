@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Your Weekly GPU Report - DumontCloud</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+
+    <!-- Preheader text (hidden, shows in email preview) -->
+    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
+        {% if current_week.has_usage %}
+        You used {{ current_week.total_hours }} GPU hours and saved ${{ current_week.savings_vs_aws }} vs AWS this week.
+        {% else %}
+        Get started with GPU computing this week!
+        {% endif %}
+    </div>
+
+    <!-- Main container -->
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f5;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+
+                <!-- Email wrapper -->
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); background-color: #6366f1; padding: 32px 40px; border-radius: 12px 12px 0 0;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <!-- Logo -->
+                                        <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">
+                                            DumontCloud
+                                        </h1>
+                                        <p style="margin: 8px 0 0 0; font-size: 14px; color: rgba(255, 255, 255, 0.9);">
+                                            Your Weekly GPU Report
+                                        </p>
+                                    </td>
+                                    <td align="right" style="vertical-align: top;">
+                                        <span style="display: inline-block; background-color: rgba(255, 255, 255, 0.2); color: #ffffff; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px;">
+                                            {{ current_week.week_start_formatted }} - {{ current_week.week_end_formatted }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Greeting -->
+                    <tr>
+                        <td style="padding: 32px 40px 0 40px;">
+                            <h2 style="margin: 0; font-size: 20px; font-weight: 600; color: #18181b;">
+                                {% if current_week.is_first_week %}
+                                Welcome to DumontCloud! Here's your first weekly report.
+                                {% elif not current_week.has_usage %}
+                                We missed you this week!
+                                {% else %}
+                                Hi {{ user_name|default('there', true) }}, here's your weekly GPU summary.
+                                {% endif %}
+                            </h2>
+                        </td>
+                    </tr>
+
+                    {% if current_week.has_usage %}
+
+                    <!-- Usage Summary Cards -->
+                    <tr>
+                        <td style="padding: 24px 40px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <!-- GPU Hours Card -->
+                                    <td width="48%" style="background-color: #f8fafc; border-radius: 8px; padding: 20px; vertical-align: top;">
+                                        <p style="margin: 0 0 4px 0; font-size: 12px; font-weight: 600; color: #71717a; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            GPU Hours
+                                        </p>
+                                        <p style="margin: 0; font-size: 28px; font-weight: 700; color: #18181b;">
+                                            {{ current_week.total_hours }}
+                                        </p>
+                                        {% if week_over_week.has_previous_week %}
+                                        <p style="margin: 8px 0 0 0; font-size: 13px; color: {% if week_over_week.hours_trend == 'up' %}#22c55e{% elif week_over_week.hours_trend == 'down' %}#ef4444{% else %}#71717a{% endif %};">
+                                            {% if week_over_week.hours_trend == 'up' %}&#8593;{% elif week_over_week.hours_trend == 'down' %}&#8595;{% else %}&#8594;{% endif %}
+                                            {{ week_over_week.hours_change_percent|abs }}% vs last week
+                                        </p>
+                                        {% endif %}
+                                    </td>
+
+                                    <td width="4%"></td>
+
+                                    <!-- Sessions Card -->
+                                    <td width="48%" style="background-color: #f8fafc; border-radius: 8px; padding: 20px; vertical-align: top;">
+                                        <p style="margin: 0 0 4px 0; font-size: 12px; font-weight: 600; color: #71717a; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Sessions
+                                        </p>
+                                        <p style="margin: 0; font-size: 28px; font-weight: 700; color: #18181b;">
+                                            {{ current_week.total_sessions }}
+                                        </p>
+                                        <p style="margin: 8px 0 0 0; font-size: 13px; color: #71717a;">
+                                            {{ current_week.unique_gpus_used }} GPU type{% if current_week.unique_gpus_used != 1 %}s{% endif %} used
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Cost & Savings Section -->
+                    <tr>
+                        <td style="padding: 0 40px 24px 40px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); background-color: #ecfdf5; border-radius: 8px; border: 1px solid #a7f3d0;">
+                                <tr>
+                                    <td style="padding: 24px;">
+                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                            <tr>
+                                                <td>
+                                                    <p style="margin: 0 0 4px 0; font-size: 12px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                        Your DumontCloud Cost
+                                                    </p>
+                                                    <p style="margin: 0; font-size: 36px; font-weight: 700; color: #166534;">
+                                                        ${{ current_week.total_cost_dumont }}
+                                                    </p>
+                                                </td>
+                                                <td align="right" style="vertical-align: top;">
+                                                    <div style="display: inline-block; background-color: #166534; color: #ffffff; font-size: 14px; font-weight: 700; padding: 8px 16px; border-radius: 20px;">
+                                                        Save {{ current_week.savings_percentage_aws }}%
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- Savings comparison -->
+                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 20px; border-top: 1px solid #a7f3d0; padding-top: 16px;">
+                                            <tr>
+                                                <td width="33%" style="padding-top: 16px;">
+                                                    <p style="margin: 0 0 2px 0; font-size: 11px; font-weight: 600; color: #166534; text-transform: uppercase;">vs AWS</p>
+                                                    <p style="margin: 0; font-size: 16px; font-weight: 600; color: #166534;">-${{ current_week.savings_vs_aws }}</p>
+                                                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #166534; opacity: 0.8;">Would be ${{ current_week.total_cost_aws }}</p>
+                                                </td>
+                                                <td width="33%" style="padding-top: 16px;">
+                                                    <p style="margin: 0 0 2px 0; font-size: 11px; font-weight: 600; color: #166534; text-transform: uppercase;">vs GCP</p>
+                                                    <p style="margin: 0; font-size: 16px; font-weight: 600; color: #166534;">-${{ current_week.savings_vs_gcp }}</p>
+                                                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #166534; opacity: 0.8;">Would be ${{ current_week.total_cost_gcp }}</p>
+                                                </td>
+                                                <td width="33%" style="padding-top: 16px;">
+                                                    <p style="margin: 0 0 2px 0; font-size: 11px; font-weight: 600; color: #166534; text-transform: uppercase;">vs Azure</p>
+                                                    <p style="margin: 0; font-size: 16px; font-weight: 600; color: #166534;">-${{ current_week.savings_vs_azure }}</p>
+                                                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #166534; opacity: 0.8;">Would be ${{ current_week.total_cost_azure }}</p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Auto-Hibernation Savings (if applicable) -->
+                    {% if current_week.auto_hibernate_savings > 0 %}
+                    <tr>
+                        <td style="padding: 0 40px 24px 40px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe;">
+                                <tr>
+                                    <td style="padding: 16px 20px;">
+                                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                            <tr>
+                                                <td width="40" style="vertical-align: top;">
+                                                    <span style="font-size: 24px;">&#128164;</span>
+                                                </td>
+                                                <td>
+                                                    <p style="margin: 0; font-size: 14px; font-weight: 600; color: #1e40af;">
+                                                        Auto-Hibernation saved you ${{ current_week.auto_hibernate_savings }}
+                                                    </p>
+                                                    <p style="margin: 4px 0 0 0; font-size: 13px; color: #3b82f6;">
+                                                        By automatically pausing idle instances
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- Week-over-Week Comparison -->
+                    {% if week_over_week.has_previous_week %}
+                    <tr>
+                        <td style="padding: 0 40px 24px 40px;">
+                            <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: #18181b;">
+                                Week-over-Week
+                            </h3>
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <!-- Hours Change -->
+                                    <td width="32%" style="background-color: #f8fafc; border-radius: 8px; padding: 16px; text-align: center;">
+                                        <p style="margin: 0; font-size: 24px; font-weight: 700; color: {% if week_over_week.hours_trend == 'up' %}#22c55e{% elif week_over_week.hours_trend == 'down' %}#ef4444{% else %}#71717a{% endif %};">
+                                            {% if week_over_week.hours_trend == 'up' %}&#8593;{% elif week_over_week.hours_trend == 'down' %}&#8595;{% else %}&#8596;{% endif %}
+                                            {{ week_over_week.hours_change_percent|abs }}%
+                                        </p>
+                                        <p style="margin: 4px 0 0 0; font-size: 12px; color: #71717a;">Hours</p>
+                                    </td>
+                                    <td width="2%"></td>
+                                    <!-- Cost Change -->
+                                    <td width="32%" style="background-color: #f8fafc; border-radius: 8px; padding: 16px; text-align: center;">
+                                        <p style="margin: 0; font-size: 24px; font-weight: 700; color: {% if week_over_week.cost_trend == 'down' %}#22c55e{% elif week_over_week.cost_trend == 'up' %}#ef4444{% else %}#71717a{% endif %};">
+                                            {% if week_over_week.cost_trend == 'up' %}&#8593;{% elif week_over_week.cost_trend == 'down' %}&#8595;{% else %}&#8596;{% endif %}
+                                            {{ week_over_week.cost_change_percent|abs }}%
+                                        </p>
+                                        <p style="margin: 4px 0 0 0; font-size: 12px; color: #71717a;">Cost</p>
+                                    </td>
+                                    <td width="2%"></td>
+                                    <!-- Savings Change -->
+                                    <td width="32%" style="background-color: #f8fafc; border-radius: 8px; padding: 16px; text-align: center;">
+                                        <p style="margin: 0; font-size: 24px; font-weight: 700; color: {% if week_over_week.savings_trend == 'up' %}#22c55e{% elif week_over_week.savings_trend == 'down' %}#ef4444{% else %}#71717a{% endif %};">
+                                            {% if week_over_week.savings_trend == 'up' %}&#8593;{% elif week_over_week.savings_trend == 'down' %}&#8595;{% else %}&#8596;{% endif %}
+                                            {{ week_over_week.savings_change_percent|abs }}%
+                                        </p>
+                                        <p style="margin: 4px 0 0 0; font-size: 12px; color: #71717a;">Savings</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    {% elif current_week.is_first_week %}
+                    <tr>
+                        <td style="padding: 0 40px 24px 40px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #fef3c7; border-radius: 8px; border: 1px solid #fbbf24;">
+                                <tr>
+                                    <td style="padding: 16px 20px;">
+                                        <p style="margin: 0; font-size: 14px; color: #92400e;">
+                                            <strong>First week - no comparison available.</strong> Next week you'll see how your usage trends compare!
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- GPU Breakdown -->
+                    {% if gpu_breakdown and gpu_breakdown|length > 0 %}
+                    <tr>
+                        <td style="padding: 0 40px 24px 40px;">
+                            <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: #18181b;">
+                                GPU Usage Breakdown
+                            </h3>
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #e4e4e7; border-radius: 8px; overflow: hidden;">
+                                <!-- Table Header -->
+                                <tr style="background-color: #f8fafc;">
+                                    <td style="padding: 12px 16px; font-size: 12px; font-weight: 600; color: #71717a; text-transform: uppercase; border-bottom: 1px solid #e4e4e7;">GPU Type</td>
+                                    <td style="padding: 12px 16px; font-size: 12px; font-weight: 600; color: #71717a; text-transform: uppercase; border-bottom: 1px solid #e4e4e7; text-align: right;">Hours</td>
+                                    <td style="padding: 12px 16px; font-size: 12px; font-weight: 600; color: #71717a; text-transform: uppercase; border-bottom: 1px solid #e4e4e7; text-align: right;">Cost</td>
+                                    <td style="padding: 12px 16px; font-size: 12px; font-weight: 600; color: #71717a; text-transform: uppercase; border-bottom: 1px solid #e4e4e7; text-align: right;">Savings</td>
+                                </tr>
+                                {% for gpu in gpu_breakdown %}
+                                <tr{% if not loop.last %} style="border-bottom: 1px solid #e4e4e7;"{% endif %}>
+                                    <td style="padding: 12px 16px; font-size: 14px; font-weight: 500; color: #18181b;">{{ gpu.gpu_type }}</td>
+                                    <td style="padding: 12px 16px; font-size: 14px; color: #52525b; text-align: right;">{{ gpu.hours }}h</td>
+                                    <td style="padding: 12px 16px; font-size: 14px; color: #52525b; text-align: right;">${{ gpu.cost_dumont }}</td>
+                                    <td style="padding: 12px 16px; font-size: 14px; font-weight: 500; color: #166534; text-align: right;">-${{ gpu.savings }}</td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    {% else %}
+                    <!-- No Usage State -->
+                    <tr>
+                        <td style="padding: 24px 40px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border-radius: 8px; text-align: center;">
+                                <tr>
+                                    <td style="padding: 40px;">
+                                        <p style="margin: 0; font-size: 48px;">&#128187;</p>
+                                        <p style="margin: 16px 0 8px 0; font-size: 18px; font-weight: 600; color: #18181b;">
+                                            No GPU usage this week
+                                        </p>
+                                        <p style="margin: 0 0 20px 0; font-size: 14px; color: #71717a;">
+                                            Your GPUs are patiently waiting! Fire up an instance to get back to training.
+                                        </p>
+                                        <a href="{{ base_url }}/marketplace" style="display: inline-block; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 8px;">
+                                            Launch an Instance
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- AI Recommendations -->
+                    {% if recommendations and recommendations|length > 0 %}
+                    <tr>
+                        <td style="padding: 0 40px 24px 40px;">
+                            <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: #18181b;">
+                                &#128161; AI Recommendations
+                            </h3>
+                            {% for rec in recommendations %}
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #faf5ff; border-radius: 8px; border: 1px solid #e9d5ff; margin-bottom: {% if not loop.last %}12px{% else %}0{% endif %};">
+                                <tr>
+                                    <td style="padding: 16px 20px;">
+                                        <p style="margin: 0 0 6px 0; font-size: 14px; font-weight: 600; color: #7c3aed;">
+                                            {{ rec.title }}
+                                        </p>
+                                        <p style="margin: 0; font-size: 13px; color: #6b7280; line-height: 1.5;">
+                                            {{ rec.description }}
+                                        </p>
+                                        {% if rec.potential_savings %}
+                                        <p style="margin: 8px 0 0 0; font-size: 12px; font-weight: 600; color: #166534;">
+                                            Potential savings: ~${{ rec.potential_savings|round(0)|int }}
+                                        </p>
+                                        {% endif %}
+                                        {% if rec.action_url %}
+                                        <a href="{{ base_url }}{{ rec.action_url }}" style="display: inline-block; margin-top: 12px; font-size: 13px; font-weight: 600; color: #7c3aed; text-decoration: none;">
+                                            Take Action &#8594;
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- CTA Button -->
+                    <tr>
+                        <td style="padding: 8px 40px 32px 40px; text-align: center;">
+                            <a href="{{ base_url }}/dashboard" style="display: inline-block; background-color: #6366f1; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                                View Full Dashboard
+                            </a>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8fafc; padding: 24px 40px; border-radius: 0 0 12px 12px; border-top: 1px solid #e4e4e7;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #18181b;">
+                                            DumontCloud
+                                        </p>
+                                        <p style="margin: 0; font-size: 13px; color: #71717a;">
+                                            GPU computing made simple
+                                        </p>
+                                    </td>
+                                    <td align="right" style="vertical-align: top;">
+                                        <a href="{{ base_url }}/settings/email-preferences" style="font-size: 13px; color: #71717a; text-decoration: underline;">
+                                            Email Preferences
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 20px; border-top: 1px solid #e4e4e7; padding-top: 20px;">
+                                <tr>
+                                    <td style="text-align: center;">
+                                        <p style="margin: 0 0 8px 0; font-size: 12px; color: #a1a1aa;">
+                                            You're receiving this email because you have a DumontCloud account.
+                                        </p>
+                                        <p style="margin: 0; font-size: 12px; color: #a1a1aa;">
+                                            <a href="{{ unsubscribe_url }}" style="color: #71717a; text-decoration: underline;">Unsubscribe</a>
+                                            &nbsp;|&nbsp;
+                                            <a href="{{ base_url }}/privacy" style="color: #71717a; text-decoration: underline;">Privacy Policy</a>
+                                            &nbsp;|&nbsp;
+                                            <a href="{{ base_url }}/help" style="color: #71717a; text-decoration: underline;">Help Center</a>
+                                        </p>
+                                        <p style="margin: 16px 0 0 0; font-size: 11px; color: #d4d4d8;">
+                                            &copy; {{ current_year }} DumontCloud Inc. All rights reserved.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                </table>
+
+                <!-- View in browser link -->
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; width: 100%; margin-top: 16px;">
+                    <tr>
+                        <td align="center">
+                            <p style="margin: 0; font-size: 12px; color: #a1a1aa;">
+                                Having trouble viewing this email?
+                                <a href="{{ view_in_browser_url }}" style="color: #6366f1; text-decoration: underline;">View in browser</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>
