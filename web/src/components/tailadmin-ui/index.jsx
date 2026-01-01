@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useId, createContext, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -664,6 +664,9 @@ export function DropdownMenuLabel({ children, className = '' }) {
 }
 
 // Alert Dialog Components (usando Portal)
+// AlertDialog Context for sharing IDs between components
+const AlertDialogContext = createContext(null);
+
 export function AlertDialog({ children, open, onOpenChange }) {
   if (!open) return null;
 
@@ -689,11 +692,28 @@ export function AlertDialogTrigger({ children, asChild, ...props }) {
 }
 
 export function AlertDialogContent({ children, className = '' }) {
+  const baseId = useId();
+  const titleId = `${baseId}-title`;
+  const descriptionId = `${baseId}-description`;
+
   return (
-    <div className={`bg-dark-surface-card rounded-xl border border-white/10 shadow-xl max-w-md w-full mx-4 ${className}`}>
-      {children}
-    </div>
+    <AlertDialogContext.Provider value={{ titleId, descriptionId }}>
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        className={`bg-dark-surface-card rounded-xl border border-white/10 shadow-xl max-w-md w-full mx-4 ${className}`}
+      >
+        {children}
+      </div>
+    </AlertDialogContext.Provider>
   );
+}
+
+// Custom hook to access AlertDialog context
+export function useAlertDialogContext() {
+  return useContext(AlertDialogContext);
 }
 
 export function AlertDialogHeader({ children, className = '' }) {
