@@ -2,6 +2,7 @@
 API endpoints
 """
 from . import auth
+from . import oidc
 from . import instances
 from . import snapshots
 from . import settings
@@ -16,6 +17,7 @@ from . import machine_history
 
 __all__ = [
     'auth',
+    'oidc',
     'instances',
     'snapshots',
     'settings',

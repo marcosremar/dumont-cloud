@@ -15,6 +15,7 @@ from .shareable_report import ShareableReport
 from .webhook_config import WebhookConfig, WebhookLog
 from .cost_optimization import UsageMetrics
 from .currency import ExchangeRate, UserCurrencyPreference, SUPPORTED_CURRENCIES
+from .sso_config import SSOConfig, SSOUserMapping
 
 __all__ = [
     'PriceHistory',
@@ -57,4 +58,7 @@ __all__ = [
     'ExchangeRate',
     'UserCurrencyPreference',
     'SUPPORTED_CURRENCIES',
+    # SSO Configuration
+    'SSOConfig',
+    'SSOUserMapping',
 ]

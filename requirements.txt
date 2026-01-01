@@ -45,6 +45,9 @@ apscheduler>=3.10.0
 
 # Internationalization
 babel>=2.12.0
+# SSO/Authentication
+authlib>=1.3.0
+pysaml2>=7.0.0
 
 # Utilities
 python-dateutil==2.9.0.post0

@@ -4,6 +4,7 @@ Main API v1 router
 from fastapi import APIRouter
 
 from .endpoints import auth, instances, snapshots, settings, metrics, ai_wizard, standby, agent, savings, advisor, hibernation, finetune, chat, reports
+from .endpoints import auth, oidc, instances, snapshots, settings, metrics, ai_wizard, standby, agent, savings, advisor, hibernation, finetune, chat
 from .endpoints import warmpool, failover_settings, failover, serverless, spot_deploy, machine_history, jobs, models
 from .endpoints import market, hosts, templates
 from .endpoints import market, hosts
@@ -20,6 +21,9 @@ api_router = APIRouter()
 
 # Include all endpoint routers
 api_router.include_router(auth.router)
+
+# OIDC SSO - Enterprise Single Sign-On via OpenID Connect
+api_router.include_router(oidc.router)
 api_router.include_router(instances.router)
 api_router.include_router(snapshots.router)
 api_router.include_router(settings.router)
