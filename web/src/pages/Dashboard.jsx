@@ -26,6 +26,7 @@ import {
   AIWizardChat,
   AdvancedSearchForm,
   WizardForm,
+  EconomyWidget,
   GPU_OPTIONS,
   GPU_CATEGORIES,
   REGION_OPTIONS,
@@ -1296,6 +1297,11 @@ export default function Dashboard({ onStatsUpdate }) {
       )}
 
       {/* NOTE: Provisioning Race Screen removed - now integrated into WizardForm step 4 */}
+
+      {/* Economy Widget */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 mb-6">
+        <EconomyWidget getAuthHeaders={() => ({ 'Authorization': `Bearer ${getToken()}` })} />
+      </div>
 
       {/* Deploy Wizard */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
