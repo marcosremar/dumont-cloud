@@ -1,0 +1,709 @@
+{
+  "feature": "Cost Prediction Dashboard - 7-Day GPU Spot Pricing Forecasts",
+  "workflow_type": "feature",
+  "workflow_rationale": "This is a new capability adding ML-powered 7-day cost forecasting, optimal timing recommendations, budget alerts, and calendar integration. Not a refactor, bugfix, or investigation - it's net-new functionality built on top of existing PricePredictionService infrastructure.",
+  "phases": [
+    {
+      "id": "phase-1-ml-extension",
+      "name": "ML Service Extension",
+      "type": "implementation",
+      "description": "Extend PricePredictionService to support 7-day cost forecasting with confidence intervals",
+      "depends_on": [],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-1-1",
+          "description": "Add forecast_costs_7day() method to PricePredictionService",
+          "service": "backend",
+          "files_to_modify": [
+            "src/services/price_prediction_service.py"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/services/price_prediction_service.py"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"from src.services.price_prediction_service import PricePredictionService; svc = PricePredictionService(); print('forecast_costs_7day' in dir(svc))\"",
+            "expected": "True"
+          },
+          "notes": "Added forecast_costs_7day() method with ML-based and simple fallback implementations. Includes 7-day forecasting with hourly predictions, daily cost aggregation, and confidence intervals using RandomForest tree estimators. Verification passed.",
+          "status": "completed",
+          "updated_at": "2025-12-31T22:23:16.381596+00:00"
+        },
+        {
+          "id": "subtask-1-2",
+          "description": "Add database model for storing 7-day forecasts",
+          "service": "backend",
+          "files_to_modify": [
+            "src/models/metrics.py"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/models/metrics.py"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"from src.models.metrics import CostForecast; print('CostForecast' in dir())\"",
+            "expected": "True"
+          },
+          "notes": "Added CostForecast model to src/models/metrics.py with: hourly_prices (JSONB for 168 hours), daily_costs, confidence_intervals, total_forecasted_cost, model metadata, usage patterns, best window fields, and appropriate indexes. Verification passed.",
+          "status": "completed",
+          "updated_at": "2025-12-31T22:27:33.349278+00:00"
+        },
+        {
+          "id": "subtask-1-3",
+          "description": "Add accuracy tracking model and MAPE calculation",
+          "service": "backend",
+          "files_to_modify": [
+            "src/services/price_prediction_service.py",
+            "src/models/metrics.py"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/services/price_prediction_service.py"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"from src.services.price_prediction_service import PricePredictionService; svc = PricePredictionService(); print('calculate_mape' in dir(svc))\"",
+            "expected": "True"
+          },
+          "notes": "Added PredictionAccuracy model to metrics.py with MAPE, MAE, RMSE, R\u00b2 metrics and JSONB fields for hourly/daily accuracy. Added calculate_mape method to PricePredictionService that compares predictions with actuals and calculates accuracy metrics. Also added helper methods _calculate_r_squared, _save_accuracy_result, and get_accuracy_history. Verification passed: calculate_mape is in dir(svc).",
+          "status": "completed",
+          "updated_at": "2025-12-31T22:32:12.106516+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-2-api-endpoints",
+      "name": "Cost Forecast API Endpoints",
+      "type": "implementation",
+      "description": "Create FastAPI endpoints for cost forecasting, optimal timing, and budget alerts",
+      "depends_on": [
+        "phase-1-ml-extension"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-2-1",
+          "description": "Create cost_forecast.py endpoint file",
+          "service": "backend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "src/api/v1/endpoints/spot/cost_forecast.py"
+          ],
+          "patterns_from": [
+            "src/api/v1/endpoints/spot/prediction.py"
+          ],
+          "verification": {
+            "type": "api",
+            "method": "GET",
+            "url": "http://localhost:8000/api/v1/metrics/spot/cost-forecast/RTX%204090",
+            "expected_status": 200
+          },
+          "notes": "Created cost_forecast.py endpoint file with GET /cost-forecast/{gpu_name} route. Also created supporting schema file cost_forecast.py with CostForecastResponse, DailyCostForecastItem, and HourlyPredictionItem models. Endpoint uses PricePredictionService.forecast_costs_7day() for ML-based 7-day forecasting with confidence intervals. Verified imports work correctly.",
+          "status": "completed",
+          "updated_at": "2025-12-31T22:36:11.392389+00:00"
+        },
+        {
+          "id": "subtask-2-2",
+          "description": "Create optimal timing recommendation endpoint",
+          "service": "backend",
+          "files_to_modify": [
+            "src/api/v1/endpoints/spot/cost_forecast.py"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/api/v1/endpoints/spot/prediction.py"
+          ],
+          "verification": {
+            "type": "api",
+            "method": "POST",
+            "url": "http://localhost:8000/api/v1/metrics/spot/optimal-timing",
+            "body": {
+              "gpu_name": "RTX 4090",
+              "job_duration_hours": 8
+            },
+            "expected_status": 200
+          },
+          "notes": "Created POST /optimal-timing endpoint in cost_forecast.py. The endpoint:\n- Accepts gpu_name, job_duration_hours, and machine_type via OptimalTimingRequest\n- Uses PricePredictionService.forecast_costs_7day() to get 7-day hourly price forecasts\n- Calculates all possible sliding time windows for the specified job duration\n- Returns top 3 time windows sorted by lowest cost via OptimalTimingResponse\n- Includes cost savings vs worst time, savings percentage, confidence, and recommendations\n- Added Pydantic schemas: OptimalTimingRequest, TimeWindowItem, OptimalTimingResponse\n\nNote: API endpoint verification requires subtask-2-4 (router registration) to be completed first. Import verification passed: routes include '/cost-forecast/{gpu_name}' and '/optimal-timing'.",
+          "status": "completed",
+          "updated_at": "2025-12-31T22:40:23.428526+00:00"
+        },
+        {
+          "id": "subtask-2-3",
+          "description": "Create accuracy tracker endpoint",
+          "service": "backend",
+          "files_to_modify": [
+            "src/api/v1/endpoints/spot/cost_forecast.py"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/api/v1/endpoints/spot/prediction.py"
+          ],
+          "verification": {
+            "type": "api",
+            "method": "GET",
+            "url": "http://localhost:8000/api/v1/metrics/spot/forecast-accuracy/RTX%204090",
+            "expected_status": 200
+          },
+          "notes": "Created GET /forecast-accuracy/{gpu_name} endpoint in cost_forecast.py. The endpoint:\n- Uses PricePredictionService.calculate_mape() to compute accuracy metrics\n- Returns MAPE, MAE, RMSE, R\u00b2 and detailed hourly/daily accuracy breakdowns\n- Accepts machine_type (default: interruptible) and days (1-90, default: 30) query params\n- Added ForecastAccuracyResponse, HourlyAccuracyItem, DailyAccuracyItem schemas\n\nImport verification passed: '/forecast-accuracy/{gpu_name}' route is registered in cost_forecast router.\nNote: Full API verification requires subtask-2-4 (router registration in spot endpoints).",
+          "status": "completed",
+          "updated_at": "2025-12-31T22:43:26.776718+00:00"
+        },
+        {
+          "id": "subtask-2-4",
+          "description": "Register cost_forecast router in spot endpoints",
+          "service": "backend",
+          "files_to_modify": [
+            "src/api/v1/endpoints/spot/__init__.py"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/api/v1/endpoints/spot/__init__.py"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"from src.api.v1.endpoints.spot import router; routes = [r.path for r in router.routes]; print('/cost-forecast/{gpu_name}' in routes)\"",
+            "expected": "True"
+          },
+          "notes": "Registered cost_forecast router in spot endpoints. Added import and include_router call. Routes available: /spot/cost-forecast/{gpu_name}, /spot/optimal-timing, /spot/forecast-accuracy/{gpu_name}",
+          "status": "completed",
+          "updated_at": "2025-12-31T22:46:54.322791+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-3-budget-alerts",
+      "name": "Budget Alert System",
+      "type": "implementation",
+      "description": "Implement budget threshold tracking and email alerts using FastAPI BackgroundTasks + SMTP",
+      "depends_on": [
+        "phase-2-api-endpoints"
+      ],
+      "parallel_safe": false,
+      "subtasks": [
+        {
+          "id": "subtask-3-1",
+          "description": "Create BudgetAlertService with SMTP email sending",
+          "service": "backend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "src/services/budget_alert_service.py"
+          ],
+          "patterns_from": [
+            "src/services/alert_manager.py"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"from src.services.budget_alert_service import BudgetAlertService; print('send_alert' in dir(BudgetAlertService))\"",
+            "expected": "True"
+          },
+          "notes": "Created BudgetAlertService with SMTP email sending. Features:\n- BudgetAlertData and SMTPConfig dataclasses following alert_manager.py patterns\n- SMTP configuration from environment variables (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, ALERT_EMAIL_FROM)\n- send_alert() method for sending budget threshold alerts via email\n- send_alert_async() method designed for FastAPI BackgroundTasks integration\n- check_budget_threshold() method to compare forecasts vs thresholds\n- HTML and text email templates with cost breakdown, recommendations, and optimal time windows\n- Cooldown mechanism to prevent alert spam (1 hour default)\n- Alert history tracking\n- Singleton pattern with get_budget_alert_service() helper\n- Helper function send_budget_alert_background() for easy FastAPI integration\n\nVerification passed: 'send_alert' in dir(BudgetAlertService) returns True",
+          "status": "completed",
+          "updated_at": "2025-12-31T22:50:48.870623+00:00"
+        },
+        {
+          "id": "subtask-3-2",
+          "description": "Add budget alerts database model",
+          "service": "backend",
+          "files_to_modify": [
+            "src/models/metrics.py"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/models/metrics.py"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"from src.models.metrics import BudgetAlert; print('BudgetAlert' in dir())\"",
+            "expected": "True"
+          },
+          "notes": "BudgetAlert model added to src/models/metrics.py with user_id, gpu_name, machine_type, threshold_amount, email, enabled flag, trigger history, and notification_settings. Verification passed. Committed as 436d2bb.",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:01:13.298602+00:00"
+        },
+        {
+          "id": "subtask-3-3",
+          "description": "Create budget alert management endpoints",
+          "service": "backend",
+          "files_to_modify": [
+            "src/api/v1/endpoints/spot/cost_forecast.py"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/api/v1/endpoints/spot/prediction.py"
+          ],
+          "verification": {
+            "type": "api",
+            "method": "POST",
+            "url": "http://localhost:8000/api/v1/metrics/spot/budget-alerts",
+            "body": {
+              "gpu_name": "RTX 4090",
+              "threshold": 100.0,
+              "email": "user@example.com"
+            },
+            "expected_status": 201
+          },
+          "notes": "Created budget alert management endpoints in cost_forecast.py:\n\nEndpoints added:\n- POST /budget-alerts (create): Returns 201 on success\n- GET /budget-alerts (list): With user_id, gpu_name, enabled_only filters\n- GET /budget-alerts/{id} (get): Returns single alert details\n- PUT /budget-alerts/{id} (update): Partial update support\n- DELETE /budget-alerts/{id} (remove): Returns success confirmation\n\nSchemas added to cost_forecast.py schema file:\n- BudgetAlertCreate: Request validation with threshold > 0, email required\n- BudgetAlertUpdate: Optional fields for partial updates\n- BudgetAlertResponse: Full alert data with timestamps\n- BudgetAlertListResponse: List with total count\n- BudgetAlertDeleteResponse: Success confirmation\n\nVerification: Import verification passed - routes registered correctly, schemas validate. Commit 7e23748.",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:04:32.867579+00:00"
+        },
+        {
+          "id": "subtask-3-4",
+          "description": "Add SMTP environment variables to .env",
+          "service": "backend",
+          "files_to_modify": [
+            ".env"
+          ],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "manual",
+            "instructions": "Verify .env contains: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, ALERT_EMAIL_FROM"
+          },
+          "notes": "Added SMTP environment variables to .env.example: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, ALERT_EMAIL_FROM. Used standard SMTP port 587 with placeholder values matching existing patterns.",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:05:57.991023+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-4-calendar-integration",
+      "name": "Google Calendar Integration",
+      "type": "implementation",
+      "description": "Integrate Google Calendar API to fetch scheduled events and suggest optimal timing adjustments",
+      "depends_on": [
+        "phase-2-api-endpoints"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-4-1",
+          "description": "Create CalendarIntegrationService with OAuth flow",
+          "service": "backend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "src/services/calendar_integration_service.py"
+          ],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"from src.services.calendar_integration_service import CalendarIntegrationService; print('fetch_events' in dir(CalendarIntegrationService))\"",
+            "expected": "True"
+          },
+          "notes": "Created CalendarIntegrationService with full OAuth flow implementation:\n\nKey Features:\n- fetch_events(): Fetches calendar events for time range using Google Calendar API\n- create_suggestion(): Creates scheduling suggestions based on optimal cost windows\n- get_suggestions_for_events(): Batch generates suggestions for compute-intensive events\n- _is_compute_intensive(): Identifies compute tasks via keyword analysis (gpu, training, ml, etc.)\n- OAuth token refresh handling with CalendarOAuthError for graceful degradation\n- is_connected and needs_reauthorization properties for status checks\n- get_oauth_authorization_url(): Generates auth URL for OAuth flow\n- disconnect(): Clears credentials and removes token file\n\nData Classes:\n- CalendarEvent: Event with metadata, is_compute_intensive flag, and duration calculation\n- CalendarSuggestion: Rescheduling suggestion with savings percentage and reason\n- OAuthCredentials: Token wrapper with expiry tracking\n\nScopes: calendar.readonly + calendar.events\nSingleton pattern: get_calendar_integration_service()\nAll timestamps stored in UTC\n\nVerification passed: fetch_events in dir(CalendarIntegrationService) = True\nCommit: efe8441",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:09:50.340949+00:00"
+        },
+        {
+          "id": "subtask-4-2",
+          "description": "Create calendar sync endpoints",
+          "service": "backend",
+          "files_to_modify": [
+            "src/api/v1/endpoints/spot/cost_forecast.py"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/api/v1/endpoints/spot/prediction.py"
+          ],
+          "verification": {
+            "type": "api",
+            "method": "GET",
+            "url": "http://localhost:8000/api/v1/metrics/spot/calendar-events",
+            "expected_status": 200
+          },
+          "notes": "Created 3 calendar sync endpoints in cost_forecast.py:\n- GET /calendar-events: Fetches events for next 7-14 days with compute-intensive identification\n- GET /calendar-status: Returns connection status and OAuth authorization URL if needed\n- POST /calendar-suggestions: Generates scheduling suggestions based on cost forecasts\n\nAdded 6 schema classes: CalendarEventItem, CalendarEventListResponse, CalendarStatusResponse, CalendarSuggestionItem, CalendarSuggestionsRequest, CalendarSuggestionsResponse.\n\nAll endpoints implement graceful degradation when OAuth fails.",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:13:48.284573+00:00"
+        },
+        {
+          "id": "subtask-4-3",
+          "description": "Add Google Calendar OAuth env vars to .env",
+          "service": "backend",
+          "files_to_modify": [
+            ".env"
+          ],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "manual",
+            "instructions": "Verify .env contains: GOOGLE_CALENDAR_CREDENTIALS_JSON, GOOGLE_CALENDAR_TOKEN_JSON"
+          },
+          "notes": "Added Google Calendar OAuth environment variables to .env.example: GOOGLE_CALENDAR_CREDENTIALS_JSON and GOOGLE_CALENDAR_TOKEN_JSON. Also created local .env file with these variables. Commit d059ad3.",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:15:37.761836+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-5-frontend-dashboard",
+      "name": "Frontend Cost Forecast Dashboard",
+      "type": "implementation",
+      "description": "Build React dashboard with Chart.js visualization for 7-day cost forecasts",
+      "depends_on": [
+        "phase-2-api-endpoints"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-5-1",
+          "description": "Create CostForecastDashboard component with Chart.js",
+          "service": "web",
+          "files_to_modify": [],
+          "files_to_create": [
+            "web/src/components/cost-forecast/CostForecastDashboard.jsx"
+          ],
+          "patterns_from": [
+            "web/src/components/spot/SpotPrediction.jsx",
+            "web/src/components/savings/SavingsHistoryGraph.jsx"
+          ],
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:8000/dashboard/cost-forecast",
+            "checks": [
+              "Chart renders with 7-day data",
+              "Confidence intervals visible",
+              "No console errors"
+            ]
+          },
+          "notes": "Created CostForecastDashboard component with Chart.js following SpotPrediction.jsx and SavingsHistoryGraph.jsx patterns:\n\n- Chart.js components registered (CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)\n- 7-day cost forecast chart with confidence interval bands (shaded area)\n- Summary stats: Total 7 Days, Lowest Day, Highest Day, Best Day\n- Dark theme styling matching existing patterns (#22c55e green, #9ca3af gray, #1f2937 grid)\n- Loading state with ta-spinner\n- Error handling for insufficient data with retry button\n- Best time window recommendation display\n- Model confidence and usage hours footer\n\nFiles created:\n- web/src/components/cost-forecast/CostForecastDashboard.jsx\n- web/src/components/cost-forecast/index.js\n\nCommit: ec89dc2\n\nNote: Browser verification requires routing (subtask-5-6) to be completed first.",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:19:19.957562+00:00"
+        },
+        {
+          "id": "subtask-5-2",
+          "description": "Create OptimalTimingCard component",
+          "service": "web",
+          "files_to_modify": [],
+          "files_to_create": [
+            "web/src/components/cost-forecast/OptimalTimingCard.jsx"
+          ],
+          "patterns_from": [
+            "web/src/components/spot/SpotPrediction.jsx"
+          ],
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:8000/dashboard/cost-forecast",
+            "checks": [
+              "Input for job duration hours",
+              "Top 3 time windows displayed",
+              "Cost savings shown"
+            ]
+          },
+          "notes": "Created OptimalTimingCard component with:\n\nFeatures:\n- Job duration input field (0.5-168 hours with step 0.5)\n- \"Find Best Time\" button to trigger optimal timing search via POST /api/v1/metrics/spot/optimal-timing\n- Summary stats: Best Cost, Worst Cost, Max Savings\n- Top 3 time windows displayed with:\n  - Rank badge (1st=brand-500, 2nd=blue-500, 3rd=gray-500)\n  - Start/end datetime formatting (weekday, month, day, hour:minute)\n  - Recommendation badge (excellent/good/fair) with styled icons\n  - Estimated cost and savings percentage\n  - Visual savings progress bar\n- Loading and error states with retry button\n- Model confidence and current price footer\n\nFollows SpotPrediction.jsx patterns:\n- Same dark theme colors (#22c55e, bg-white/5, etc.)\n- Same card structure (ta-card, ta-card-header, ta-card-body)\n- Same stat-card patterns with icons\n- Same animation delays (animate-fade-in)\n- Uses lucide-react icons (Clock, Target, TrendingDown, Zap, DollarSign, AlertCircle)\n\nExport added to cost-forecast/index.js\n\nCommit: 2b4429e",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:22:45.421321+00:00"
+        },
+        {
+          "id": "subtask-5-3",
+          "description": "Create BudgetAlertSettings component with Radix UI",
+          "service": "web",
+          "files_to_modify": [],
+          "files_to_create": [
+            "web/src/components/cost-forecast/BudgetAlertSettings.jsx"
+          ],
+          "patterns_from": [
+            "web/src/components/spot/SpotPrediction.jsx"
+          ],
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:8000/dashboard/cost-forecast",
+            "checks": [
+              "Radix Slider sets threshold",
+              "Switch enables/disables alerts",
+              "Email input visible"
+            ]
+          },
+          "notes": "Created BudgetAlertSettings.jsx component with Radix UI Slider for threshold setting, Switch for enabling/disabling alerts, and email input for notifications. Features include: daily budget threshold ($10-$500), alerts toggle, email validation, daily digest option, save/load settings API integration, error/success feedback. Follows SpotPrediction.jsx patterns. Exported via index.js. Commit: e56e679",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:25:52.139108+00:00"
+        },
+        {
+          "id": "subtask-5-4",
+          "description": "Create AccuracyTracker widget",
+          "service": "web",
+          "files_to_modify": [],
+          "files_to_create": [
+            "web/src/components/cost-forecast/AccuracyTracker.jsx"
+          ],
+          "patterns_from": [
+            "web/src/components/spot/SpotPrediction.jsx"
+          ],
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:8000/dashboard/cost-forecast",
+            "checks": [
+              "MAPE percentage displays",
+              "Last 30 days label visible"
+            ]
+          },
+          "notes": "Created AccuracyTracker.jsx component for displaying ML model prediction accuracy metrics:\n\nFeatures:\n- Displays accuracy percentage (100% - MAPE) with prominent \"X% accurate over last 30 days\" text\n- Grid of metrics: MAPE, R-Squared, MAE, RMSE with styled stat-cards\n- Accuracy level indicator (Excellent/Good/Fair/Needs Improvement) with color coding\n- Loading state with ta-spinner\n- Error state with retry button\n- Footer with sample count and model version\n\nAPI Integration:\n- GET /api/v1/metrics/spot/forecast-accuracy/{gpu_name}?days=30\n- Uses same auth pattern as SpotPrediction.jsx\n\nStyling follows SpotPrediction.jsx patterns: dark theme, stat-card classes, lucide-react icons.\n\nExported via cost-forecast/index.js.\n\nCommit: 3614ec5",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:28:51.996891+00:00"
+        },
+        {
+          "id": "subtask-5-5",
+          "description": "Create calendar event overlay component",
+          "service": "web",
+          "files_to_modify": [
+            "web/src/components/cost-forecast/CostForecastDashboard.jsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "web/src/components/savings/SavingsHistoryGraph.jsx"
+          ],
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:8000/dashboard/cost-forecast",
+            "checks": [
+              "Calendar events overlay on chart",
+              "Reconnect button if OAuth expired"
+            ]
+          },
+          "notes": "Created calendar event overlay component in CostForecastDashboard.jsx:\n\nFeatures implemented:\n- Calendar status and events state management\n- loadCalendarData() to fetch from /calendar-status and /calendar-events APIs\n- Custom Chart.js plugin (calendarEventPlugin) draws vertical dashed lines on chart\n- Color-coded events: amber (#f59e0b) for compute-intensive, blue (#3b82f6) for regular\n- Tooltip integration shows event details on hover (afterTitle callback)\n- Calendar Integration Section UI with:\n  - Connected/disconnected status with icons\n  - Show/Hide toggle button\n  - \"Reconnect Calendar\" button (amber) when OAuth needs reauthorization\n  - \"Connect Calendar\" button (blue) when not connected\n  - Event list with title, date, GPU badge for compute-intensive\n- Graceful degradation when calendar API fails\n- Follows SavingsHistoryGraph.jsx dark theme patterns\n\nCommit: cf81e67\n\nVerification: Browser verification requires routing (subtask-5-6) to be completed.",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:32:11.634999+00:00"
+        },
+        {
+          "id": "subtask-5-6",
+          "description": "Register cost forecast components in routing",
+          "service": "web",
+          "files_to_modify": [
+            "web/src/components/spot/index.js"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "web/src/components/spot/index.js"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "grep -r 'CostForecastDashboard' web/src/components/spot/index.js",
+            "expected": "CostForecastDashboard"
+          },
+          "notes": "Export CostForecastDashboard, OptimalTimingCard, BudgetAlertSettings, AccuracyTracker from index.js.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "phase-6-integration",
+      "name": "Integration Testing & Verification",
+      "type": "integration",
+      "description": "Wire all services together, verify end-to-end flows, and ensure edge cases are handled",
+      "depends_on": [
+        "phase-3-budget-alerts",
+        "phase-4-calendar-integration",
+        "phase-5-frontend-dashboard"
+      ],
+      "parallel_safe": false,
+      "subtasks": [
+        {
+          "id": "subtask-6-1",
+          "description": "End-to-end verification of cost forecast flow",
+          "all_services": true,
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "e2e",
+            "steps": [
+              "Navigate to cost forecast dashboard",
+              "Verify 7-day chart renders with confidence bands",
+              "Input 8-hour job duration, verify optimal timing recommendations",
+              "Set budget threshold, verify alert creation",
+              "Connect calendar, verify events overlay on chart"
+            ]
+          },
+          "notes": "Full flow: dashboard load \u2192 forecast display \u2192 optimal timing \u2192 budget alert \u2192 calendar integration.",
+          "status": "pending"
+        },
+        {
+          "id": "subtask-6-2",
+          "description": "Edge case testing and error handling",
+          "all_services": true,
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "manual",
+            "instructions": "Test: insufficient data (<50 points), Calendar OAuth expiry, SMTP failure, extreme price spikes, timezone mismatches"
+          },
+          "notes": "Verify error messages: 'Need at least 50 hours of price history', 'Reconnect Calendar', SMTP logs but doesn't block, confidence intervals capped at 3\u03c3, UTC storage with frontend TZ conversion.",
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_phases": 6,
+    "total_subtasks": 24,
+    "services_involved": [
+      "backend",
+      "web"
+    ],
+    "parallelism": {
+      "max_parallel_phases": 3,
+      "parallel_groups": [
+        {
+          "phases": [
+            "phase-2-api-endpoints",
+            "phase-4-calendar-integration",
+            "phase-5-frontend-dashboard"
+          ],
+          "reason": "phase-2, phase-4, phase-5 all depend on phase-1 only. Can run in parallel after phase-1 completes. phase-3 depends on phase-2 so cannot start until phase-2 completes."
+        }
+      ],
+      "recommended_workers": 2,
+      "speedup_estimate": "1.8x faster than sequential"
+    },
+    "startup_command": "source auto-claude/.venv/bin/activate && python auto-claude/run.py --spec 018 --parallel 2"
+  },
+  "verification_strategy": {
+    "risk_level": "high",
+    "skip_validation": false,
+    "test_creation_phase": "post_implementation",
+    "test_types_required": [
+      "unit",
+      "integration",
+      "e2e"
+    ],
+    "security_scanning_required": true,
+    "staging_deployment_required": false,
+    "acceptance_criteria": [
+      "All existing tests pass",
+      "New unit tests for forecast_costs_7day() and calculate_mape()",
+      "Integration tests for API endpoints return valid forecast data",
+      "E2E tests verify full dashboard flows",
+      "SMTP alert emails sent successfully",
+      "Calendar OAuth handles expiry gracefully",
+      "No security vulnerabilities (secrets scan + SAST)",
+      "Chart renders without console errors",
+      "MAPE accuracy tracking displays correctly"
+    ],
+    "verification_steps": [
+      {
+        "name": "Unit Tests - ML Service",
+        "command": "pytest tests/test_price_prediction_service.py -v",
+        "expected_outcome": "All tests pass, including new forecast_costs_7day and MAPE tests",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Unit Tests - Budget Alerts",
+        "command": "pytest tests/test_budget_alert_service.py -v",
+        "expected_outcome": "All tests pass for SMTP email sending and threshold checks",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Integration Tests - API Endpoints",
+        "command": "pytest tests/integration/test_cost_forecast_api.py -v",
+        "expected_outcome": "All API endpoints return valid JSON with correct schemas",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "E2E Tests - Frontend Dashboard",
+        "command": "npx playwright test tests/e2e/cost-forecast-dashboard.spec.js",
+        "expected_outcome": "Dashboard loads, chart renders, interactions work correctly",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Secrets Scan",
+        "command": "python auto-claude/scan_secrets.py --all-files --json",
+        "expected_outcome": "No secrets detected in code",
+        "type": "security",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "SAST Scan - Python",
+        "command": "bandit -r src/ -f json",
+        "expected_outcome": "No high severity security issues",
+        "type": "security",
+        "required": true,
+        "blocking": true
+      }
+    ],
+    "reasoning": "High risk feature with financial predictions and budget alerts. Users make spending decisions based on forecasts. Comprehensive testing required: unit tests for ML accuracy, integration tests for API correctness, E2E tests for user flows, security scans for calendar OAuth and SMTP credentials."
+  },
+  "qa_acceptance": {
+    "unit_tests": {
+      "required": true,
+      "commands": [
+        "pytest tests/test_price_prediction_service.py::test_forecast_costs_7day",
+        "pytest tests/test_price_prediction_service.py::test_forecast_insufficient_data",
+        "pytest tests/test_price_prediction_service.py::test_optimal_timing_calculation",
+        "pytest tests/test_budget_alert_service.py::test_budget_alert_threshold",
+        "pytest tests/test_calendar_service.py::test_calendar_oauth_failure_handling"
+      ],
+      "minimum_coverage": 80
+    },
+    "integration_tests": {
+      "required": true,
+      "commands": [
+        "pytest tests/integration/test_cost_forecast_api.py::test_cost_forecast_api_e2e",
+        "pytest tests/integration/test_budget_alert_smtp_integration.py",
+        "pytest tests/integration/test_calendar_fetch_events.py"
+      ],
+      "services_to_test": [
+        "backend",
+        "PostgreSQL",
+        "SMTP",
+        "Google Calendar API"
+      ]
+    },
+    "e2e_tests": {
+      "required": true,
+      "commands": [
+        "npx playwright test tests/e2e/cost-forecast-dashboard.spec.js"
+      ],
+      "flows": [
+        "view-cost-forecast-dashboard",
+        "configure-budget-alert",
+        "calendar-integration-flow",
+        "optimal-timing-recommendation"
+      ]
+    },
+    "browser_verification": {
+      "required": true,
+      "pages": [
+        {
+          "url": "http://localhost:8000/dashboard/cost-forecast",
+          "checks": [
+            "Chart.js renders with 7-day data",
+            "Dark theme colors match design",
+            "Confidence intervals visible as area fill",
+            "No console errors",
+            "Radix UI components responsive"
+          ]
+        },
+        {
+          "url": "http://localhost:8000/settings/budget",
+          "checks": [
+            "Radix Slider sets threshold",
+            "Switch enables/disables alerts",
+            "Email input validates format"
+          ]
+        }
+      ]
+    },
+    "database_verification": {
+      "required": true,
+      "checks": [
+        "CostForecast table exists with JSONB columns",
+        "BudgetAlert table exists with user_id index",
+        "PredictionAccuracy table exists for MAPE tracking",
+        "Migrations applied successfully"
+      ]
+    }
+  },
+  "qa_signoff": null,
+  "last_updated": "2026-01-01T02:32:11.635007+00:00"
+}

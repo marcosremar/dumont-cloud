@@ -25,6 +25,11 @@
   "subtasks": {
     "completed": 8,
     "total": 16,
+  "spec": "018-cost-prediction-dashboard",
+  "state": "building",
+  "subtasks": {
+    "completed": 19,
+    "total": 22,
     "in_progress": 1,
     "failed": 0
   },
@@ -44,6 +49,9 @@
     "current": "Frontend Redux State",
     "id": null,
     "total": 2
+    "current": "Frontend Cost Forecast Dashboard",
+    "id": null,
+    "total": 6
   },
   "workers": {
     "active": 0,
@@ -70,4 +78,8 @@
     "started_at": "2025-12-31T22:39:36.041103"
   },
   "last_update": "2025-12-31T23:26:27.154964"
+    "number": 834,
+    "started_at": "2025-12-31T23:15:09.248371"
+  },
+  "last_update": "2026-01-01T03:32:37.420346"
 }
