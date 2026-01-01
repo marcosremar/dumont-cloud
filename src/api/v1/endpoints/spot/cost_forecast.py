@@ -13,6 +13,12 @@ from ...schemas.spot.cost_forecast import (
     BudgetAlertListResponse,
     BudgetAlertResponse,
     BudgetAlertUpdate,
+    CalendarEventItem,
+    CalendarEventListResponse,
+    CalendarStatusResponse,
+    CalendarSuggestionItem,
+    CalendarSuggestionsRequest,
+    CalendarSuggestionsResponse,
     CostForecastResponse,
     DailyCostForecastItem,
     ForecastAccuracyResponse,
@@ -22,6 +28,11 @@ from ...schemas.spot.cost_forecast import (
     TimeWindowItem,
 )
 from .....services.price_prediction_service import PricePredictionService
+from .....services.calendar_integration_service import (
+    CalendarIntegrationService,
+    CalendarOAuthError,
+    get_calendar_integration_service,
+)
 from .....config.database import SessionLocal
 from .....models.metrics import BudgetAlert, MarketSnapshot
 
@@ -598,3 +609,286 @@ async def delete_budget_alert(alert_id: int):
         )
     finally:
         db.close()
+
+
+# ============================================================================
+# Calendar Integration Endpoints
+# ============================================================================
+
+
+@router.get("/calendar-events", response_model=CalendarEventListResponse)
+async def get_calendar_events(
+    days_ahead: int = Query(
+        default=7,
+        ge=1,
+        le=14,
+        description="Numero de dias a frente para buscar eventos"
+    ),
+    max_events: int = Query(
+        default=50,
+        ge=1,
+        le=100,
+        description="Numero maximo de eventos a retornar"
+    ),
+):
+    """
+    Buscar eventos do Google Calendar.
+
+    Retorna eventos do calendario do usuario para os proximos dias,
+    identificando aqueles que sao intensivos em computacao
+    (baseado em palavras-chave como 'training', 'gpu', 'render', etc).
+
+    - **days_ahead**: Dias a frente para buscar eventos (padrao: 7, max: 14)
+    - **max_events**: Numero maximo de eventos (padrao: 50, max: 100)
+
+    Requer integracao com Google Calendar configurada.
+    Retorna graceful degradation se OAuth expirado.
+    """
+    calendar_service = get_calendar_integration_service()
+
+    time_min = datetime.utcnow()
+    time_max = time_min + timedelta(days=days_ahead)
+
+    try:
+        events = calendar_service.fetch_events(
+            time_min=time_min,
+            time_max=time_max,
+            max_results=max_events,
+            identify_compute_intensive=True,
+        )
+
+        # Converter para schema de resposta
+        event_items = []
+        compute_intensive_count = 0
+
+        for event in events:
+            if event.is_compute_intensive:
+                compute_intensive_count += 1
+
+            event_items.append(CalendarEventItem(
+                event_id=event.event_id,
+                summary=event.summary,
+                start=event.start.isoformat() if event.start else "",
+                end=event.end.isoformat() if event.end else "",
+                description=event.description,
+                location=event.location,
+                all_day=event.all_day,
+                is_compute_intensive=event.is_compute_intensive,
+                duration_hours=round(event._calculate_duration_hours(), 2),
+                suggested_start=event.suggested_start.isoformat() if event.suggested_start else None,
+                potential_savings=round(event.potential_savings, 2),
+            ))
+
+        return CalendarEventListResponse(
+            events=event_items,
+            total=len(event_items),
+            compute_intensive_count=compute_intensive_count,
+            time_range_start=time_min.isoformat(),
+            time_range_end=time_max.isoformat(),
+            calendar_connected=True,
+            generated_at=datetime.utcnow().isoformat(),
+        )
+
+    except CalendarOAuthError as e:
+        # Graceful degradation - return empty list with connection status
+        return CalendarEventListResponse(
+            events=[],
+            total=0,
+            compute_intensive_count=0,
+            time_range_start=time_min.isoformat(),
+            time_range_end=time_max.isoformat(),
+            calendar_connected=False,
+            generated_at=datetime.utcnow().isoformat(),
+        )
+
+
+@router.get("/calendar-status", response_model=CalendarStatusResponse)
+async def get_calendar_status(
+    redirect_uri: str = Query(
+        default="http://localhost:8000/callback",
+        description="URI de callback para OAuth"
+    ),
+):
+    """
+    Verificar status da integracao com Google Calendar.
+
+    Retorna se o calendario esta conectado e se precisa reautorizacao.
+    Se nao conectado, retorna URL para autorizar acesso.
+
+    - **redirect_uri**: URI de callback para fluxo OAuth
+    """
+    calendar_service = get_calendar_integration_service()
+
+    connected = calendar_service.is_connected
+    needs_reauth = calendar_service.needs_reauthorization
+
+    # Gerar URL de autorizacao se nao conectado
+    auth_url = None
+    if not connected or needs_reauth:
+        auth_url = calendar_service.get_oauth_authorization_url(
+            redirect_uri=redirect_uri,
+        )
+
+    # Mensagem de status
+    if connected and not needs_reauth:
+        message = "Google Calendar connected and ready"
+    elif needs_reauth:
+        message = "Calendar access expired. Please reconnect your calendar."
+    else:
+        message = "Calendar not connected. Please authorize access."
+
+    return CalendarStatusResponse(
+        connected=connected,
+        needs_reauthorization=needs_reauth,
+        authorization_url=auth_url,
+        message=message,
+    )
+
+
+@router.post("/calendar-suggestions", response_model=CalendarSuggestionsResponse)
+async def get_calendar_suggestions(request: CalendarSuggestionsRequest):
+    """
+    Obter sugestoes de reagendamento para eventos do calendario.
+
+    Analisa eventos intensivos em computacao e sugere horarios
+    otimos baseados na previsao de custos.
+
+    - **gpu_name**: Nome da GPU para previsao de custos
+    - **machine_type**: Tipo de maquina (interruptible ou on-demand)
+    - **days_ahead**: Dias a frente para buscar eventos
+    """
+    calendar_service = get_calendar_integration_service()
+    price_service = PricePredictionService()
+
+    time_min = datetime.utcnow()
+    time_max = time_min + timedelta(days=request.days_ahead)
+
+    try:
+        # Buscar eventos do calendario
+        events = calendar_service.fetch_events(
+            time_min=time_min,
+            time_max=time_max,
+            identify_compute_intensive=True,
+        )
+
+        if not events:
+            return CalendarSuggestionsResponse(
+                suggestions=[],
+                total_suggestions=0,
+                total_potential_savings=0.0,
+                events_analyzed=0,
+                compute_intensive_events=0,
+                calendar_connected=True,
+                generated_at=datetime.utcnow().isoformat(),
+            )
+
+        # Gerar forecast de custos para obter janelas otimas
+        forecast = price_service.forecast_costs_7day(
+            gpu_name=request.gpu_name,
+            machine_type=request.machine_type,
+            hours_per_day=1.0,  # Para obter precos horarios
+        )
+
+        if forecast is None:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "Need at least 50 hours of price history for suggestions",
+                    "required_data_points": 50,
+                }
+            )
+
+        # Coletar previsoes horarias e construir janelas otimas
+        all_hourly: List[dict] = []
+        for day_data in forecast:
+            for hp in day_data.get("hourly_predictions", []):
+                all_hourly.append({
+                    "timestamp": hp["timestamp"],
+                    "price": hp["price"],
+                })
+
+        # Criar mapa de precos por hora
+        hourly_prices = {}
+        for hp in all_hourly:
+            try:
+                ts = datetime.fromisoformat(hp["timestamp"])
+                hour_key = str(ts.hour)
+                if hour_key not in hourly_prices:
+                    hourly_prices[hour_key] = hp["price"]
+            except (ValueError, KeyError):
+                continue
+
+        # Calcular janelas otimas ordenadas por preco
+        if all_hourly:
+            sorted_hours = sorted(all_hourly, key=lambda x: x["price"])
+            optimal_windows = []
+
+            for hp in sorted_hours[:10]:  # Top 10 janelas mais baratas
+                try:
+                    start = datetime.fromisoformat(hp["timestamp"])
+                    optimal_windows.append({
+                        "start_time": hp["timestamp"],
+                        "end_time": (start + timedelta(hours=8)).isoformat(),
+                        "estimated_cost": hp["price"] * 8,
+                        "savings_amount": (all_hourly[0]["price"] - hp["price"]) * 8,
+                    })
+                except (ValueError, KeyError):
+                    continue
+        else:
+            optimal_windows = []
+
+        # Gerar sugestoes para eventos
+        suggestions_data = calendar_service.get_suggestions_for_events(
+            events=events,
+            optimal_windows=optimal_windows,
+            hourly_prices=hourly_prices,
+        )
+
+        # Converter para schema de resposta
+        suggestion_items = []
+        total_savings = 0.0
+
+        for suggestion in suggestions_data:
+            # Encontrar o titulo do evento
+            event_summary = ""
+            for event in events:
+                if event.event_id == suggestion.event_id:
+                    event_summary = event.summary
+                    break
+
+            suggestion_items.append(CalendarSuggestionItem(
+                event_id=suggestion.event_id,
+                event_summary=event_summary,
+                original_start=suggestion.original_start.isoformat(),
+                suggested_start=suggestion.suggested_start.isoformat(),
+                suggested_end=suggestion.suggested_end.isoformat(),
+                potential_savings=round(suggestion.potential_savings, 2),
+                savings_percentage=round(suggestion.savings_percentage, 1),
+                reason=suggestion.reason,
+                confidence=round(suggestion.confidence, 2),
+            ))
+            total_savings += suggestion.potential_savings
+
+        compute_intensive_count = sum(1 for e in events if e.is_compute_intensive)
+
+        return CalendarSuggestionsResponse(
+            suggestions=suggestion_items,
+            total_suggestions=len(suggestion_items),
+            total_potential_savings=round(total_savings, 2),
+            events_analyzed=len(events),
+            compute_intensive_events=compute_intensive_count,
+            calendar_connected=True,
+            generated_at=datetime.utcnow().isoformat(),
+        )
+
+    except CalendarOAuthError as e:
+        # Graceful degradation
+        return CalendarSuggestionsResponse(
+            suggestions=[],
+            total_suggestions=0,
+            total_potential_savings=0.0,
+            events_analyzed=0,
+            compute_intensive_events=0,
+            calendar_connected=False,
+            generated_at=datetime.utcnow().isoformat(),
+        )
