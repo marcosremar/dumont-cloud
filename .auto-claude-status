@@ -3,8 +3,8 @@
   "spec": "025-add-focus-trapping-and-role-attributes-to-alertdia",
   "state": "building",
   "subtasks": {
-    "completed": 0,
-    "total": 0,
+    "completed": 3,
+    "total": 13,
     "in_progress": 1,
     "failed": 0
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 2,
+    "number": 5,
     "started_at": "2026-01-01T07:00:13.744224"
   },
-  "last_update": "2026-01-01T07:02:32.554887"
+  "last_update": "2026-01-01T07:08:35.022305"
 }

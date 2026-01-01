@@ -6,7 +6,9 @@
   "status": "planned",
   "planStatus": "ready",
   "workflow_type": "development",
-  "services_involved": ["web"],
+  "services_involved": [
+    "web"
+  ],
   "spec_file": "spec.md",
   "phases": [
     {
@@ -19,38 +21,50 @@
           "id": "1.1",
           "title": "Create useFocusTrap hook file",
           "description": "Create web/src/hooks/useFocusTrap.ts with the base hook structure that accepts a ref and isOpen boolean parameter",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "Hook file created at web/src/hooks/useFocusTrap.ts",
             "Hook accepts containerRef and isOpen parameters",
             "Hook properly typed with TypeScript"
           ],
-          "files": ["web/src/hooks/useFocusTrap.ts"]
+          "files": [
+            "web/src/hooks/useFocusTrap.ts"
+          ],
+          "notes": "Created useFocusTrap hook at web/src/hooks/useFocusTrap.ts with base structure. Hook accepts containerRef (RefObject<HTMLElement>) and options object with isOpen, onClose, and initialFocusRef parameters. Properly typed with TypeScript interfaces and JSDoc documentation.",
+          "updated_at": "2026-01-01T06:03:46.450508+00:00"
         },
         {
           "id": "1.2",
           "title": "Implement focus trap logic",
           "description": "Implement the core focus trapping logic: find all focusable elements, trap Tab/Shift+Tab within dialog, prevent focus escape",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "Tab key cycles forward through focusable elements",
             "Shift+Tab cycles backward through focusable elements",
             "Focus cannot escape dialog boundaries",
             "Handles dynamic content (elements added/removed)"
           ],
-          "files": ["web/src/hooks/useFocusTrap.ts"]
+          "files": [
+            "web/src/hooks/useFocusTrap.ts"
+          ],
+          "notes": "Implemented core focus trapping logic in useFocusTrap hook:\n- Added FOCUSABLE_SELECTOR constant with comprehensive CSS selector for focusable elements (buttons, inputs, selects, textareas, links, elements with tabindex, contenteditable)\n- Created getFocusableElements() helper function that queries and filters elements by visibility\n- Implemented handleKeyDown() callback for Tab/Shift+Tab keyboard event handling with proper cycling between first and last elements\n- Implemented handleFocusIn() callback to redirect focus back to container if it escapes via click or programmatic focus\n- Added event listeners with proper cleanup on unmount\n- Sets tabindex=\"-1\" on container to ensure it can receive focus if needed",
+          "updated_at": "2026-01-01T06:05:45.322224+00:00"
         },
         {
           "id": "1.3",
           "title": "Implement auto-focus on open",
           "description": "Auto-focus first focusable element when dialog opens, with option to specify a custom initial focus element",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "First focusable element receives focus when dialog opens",
             "Optional initialFocusRef parameter to override default behavior",
             "Focus applied after animation completes (requestAnimationFrame)"
           ],
-          "files": ["web/src/hooks/useFocusTrap.ts"]
+          "files": [
+            "web/src/hooks/useFocusTrap.ts"
+          ],
+          "notes": "Implemented auto-focus functionality in useFocusTrap hook:\n- Added useRef to track animation frame IDs for cleanup\n- Created new useEffect for auto-focus that runs when isOpen becomes true\n- Uses double requestAnimationFrame for smooth animation timing (ensures styles are applied before focus)\n- Focus priority: 1) initialFocusRef if provided, 2) first focusable element, 3) container itself\n- Proper cleanup cancels pending animation frames on unmount or when isOpen changes",
+          "updated_at": "2026-01-01T06:08:07.735551+00:00"
         },
         {
           "id": "1.4",
@@ -62,7 +76,9 @@
             "Focus returned to trigger element when dialog closes",
             "Handles case where trigger element no longer exists"
           ],
-          "files": ["web/src/hooks/useFocusTrap.ts"]
+          "files": [
+            "web/src/hooks/useFocusTrap.ts"
+          ]
         },
         {
           "id": "1.5",
@@ -74,7 +90,9 @@
             "Event listener properly cleaned up on unmount",
             "Only responds when dialog is open"
           ],
-          "files": ["web/src/hooks/useFocusTrap.ts"]
+          "files": [
+            "web/src/hooks/useFocusTrap.ts"
+          ]
         }
       ]
     },
@@ -94,7 +112,9 @@
             "Focus trap activated when open=true",
             "onOpenChange called with false when Escape pressed"
           ],
-          "files": ["web/src/components/tailadmin-ui/index.jsx"]
+          "files": [
+            "web/src/components/tailadmin-ui/index.jsx"
+          ]
         },
         {
           "id": "2.2",
@@ -107,7 +127,9 @@
             "aria-labelledby points to title element id",
             "aria-describedby points to description element id"
           ],
-          "files": ["web/src/components/tailadmin-ui/index.jsx"]
+          "files": [
+            "web/src/components/tailadmin-ui/index.jsx"
+          ]
         },
         {
           "id": "2.3",
@@ -118,7 +140,9 @@
             "AlertDialogTitle has unique id attribute",
             "id is accessible via context or passed to parent"
           ],
-          "files": ["web/src/components/tailadmin-ui/index.jsx"]
+          "files": [
+            "web/src/components/tailadmin-ui/index.jsx"
+          ]
         },
         {
           "id": "2.4",
@@ -129,7 +153,9 @@
             "AlertDialogDescription has unique id attribute",
             "id is accessible via context or passed to parent"
           ],
-          "files": ["web/src/components/tailadmin-ui/index.jsx"]
+          "files": [
+            "web/src/components/tailadmin-ui/index.jsx"
+          ]
         },
         {
           "id": "2.5",
@@ -141,7 +167,9 @@
             "Context provides titleId and descriptionId",
             "All child components consume context properly"
           ],
-          "files": ["web/src/components/tailadmin-ui/index.jsx"]
+          "files": [
+            "web/src/components/tailadmin-ui/index.jsx"
+          ]
         }
       ]
     },
@@ -174,7 +202,9 @@
             "Tests verify focus behavior",
             "Tests verify Escape key functionality"
           ],
-          "files": ["tests/e2e-journeys/machine-details-actions.spec.js"]
+          "files": [
+            "tests/e2e-journeys/machine-details-actions.spec.js"
+          ]
         },
         {
           "id": "3.3",
@@ -209,5 +239,6 @@
     "Use useId() from React 18 for generating unique IDs",
     "Consider using inert attribute on background content for better isolation",
     "Focus trap must handle dynamic content (elements added/removed after dialog opens)"
-  ]
+  ],
+  "last_updated": "2026-01-01T06:08:07.735591+00:00"
 }

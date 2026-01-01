@@ -174,8 +174,12 @@ export const useFocusTrap = (
     null
   );
 
+  // Ref to store the previously focused element for focus restoration on close
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
+
   /**
    * Auto-focus initial element when dialog opens.
+   * Captures the previously focused element for restoration on close.
    * Uses requestAnimationFrame to wait for any opening animations to complete.
    * Priority: initialFocusRef > first focusable element > container
    */
@@ -184,6 +188,11 @@ export const useFocusTrap = (
 
     const container = containerRef.current;
     if (!container) return;
+
+    // Capture the currently focused element before moving focus to the dialog
+    // This allows us to restore focus when the dialog closes
+    previouslyFocusedElementRef.current =
+      document.activeElement as HTMLElement | null;
 
     // Use requestAnimationFrame to wait for animation frame after render
     // This ensures the dialog is fully visible before focusing
@@ -228,7 +237,49 @@ export const useFocusTrap = (
     };
   }, [isOpen, containerRef, initialFocusRef]);
 
-  // Focus return logic will be implemented in subtask 1.4
+  /**
+   * Restore focus to the previously focused element when dialog closes.
+   * Handles the case where the element no longer exists in the DOM.
+   */
+  useEffect(() => {
+    // This effect only handles focus restoration when dialog closes
+    // We need to track the previous isOpen state to detect close
+    if (isOpen) {
+      // Dialog is open, nothing to do here
+      return;
+    }
+
+    // Dialog is closed (or was never open) - restore focus if we have a stored element
+    const previousElement = previouslyFocusedElementRef.current;
+
+    if (previousElement) {
+      // Use requestAnimationFrame to ensure the dialog has fully closed
+      // and the element is ready to receive focus
+      requestAnimationFrame(() => {
+        // Verify the element still exists in the DOM and is focusable
+        if (
+          document.body.contains(previousElement) &&
+          typeof previousElement.focus === "function"
+        ) {
+          // Check if the element is not disabled and is visible
+          const isDisabled =
+            previousElement.hasAttribute("disabled") ||
+            previousElement.getAttribute("aria-disabled") === "true";
+          const style = window.getComputedStyle(previousElement);
+          const isVisible =
+            style.display !== "none" && style.visibility !== "hidden";
+
+          if (!isDisabled && isVisible) {
+            previousElement.focus();
+          }
+        }
+      });
+
+      // Clear the stored reference after restoration attempt
+      previouslyFocusedElementRef.current = null;
+    }
+  }, [isOpen]);
+
   // Escape key handler will be implemented in subtask 1.5
 };
 
