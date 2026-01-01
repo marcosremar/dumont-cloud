@@ -51,6 +51,7 @@ import HibernationConfigModal from '../HibernationConfigModal'
 import FailoverMigrationModal from '../FailoverMigrationModal'
 import SparklineChart from '../ui/SparklineChart'
 import InstanceDetailsModal from './InstanceDetailsModal'
+import ReliabilityDetailsModal from './ReliabilityDetailsModal'
 
 // Failover strategies base info (costs calculated dynamically)
 const FAILOVER_STRATEGIES_BASE = {
@@ -110,6 +111,7 @@ export default function MachineCard({
   const [showBackupInfo, setShowBackupInfo] = useState(false)
   const [showFailoverMigration, setShowFailoverMigration] = useState(false)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const [showReliabilityModal, setShowReliabilityModal] = useState(false)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [showStrategyMenu, setShowStrategyMenu] = useState(false)
 
@@ -457,16 +459,25 @@ export default function MachineCard({
             <Badge variant={statusDisplay.variant} dot className={`text-[9px] ${statusDisplay.animate ? 'animate-pulse' : ''}`}>
               {statusDisplay.label}
             </Badge>
-            {/* Reliability Score Badge */}
-            <Badge
-              variant={reliabilityBadge.variant}
-              className="text-[9px]"
-              title={`Reliability Score: ${reliabilityScore !== null && reliabilityScore !== undefined ? Math.round(reliabilityScore) : 'N/A'}/100`}
-              data-testid="reliability-badge"
+            {/* Reliability Score Badge - Clickable */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowReliabilityModal(true)
+              }}
+              className="focus:outline-none focus:ring-2 focus:ring-brand-500/50 rounded-full"
+              title={`Reliability Score: ${reliabilityScore !== null && reliabilityScore !== undefined ? Math.round(reliabilityScore) : 'N/A'}/100 - Clique para detalhes`}
             >
-              <Activity className="w-2.5 h-2.5 mr-0.5" />
-              {reliabilityBadge.label}
-            </Badge>
+              <Badge
+                variant={reliabilityBadge.variant}
+                className="text-[9px] cursor-pointer hover:opacity-80 transition-opacity"
+                data-testid="reliability-badge"
+              >
+                <Activity className="w-2.5 h-2.5 mr-0.5" />
+                {reliabilityBadge.label}
+              </Badge>
+            </button>
           </div>
           <div className="flex items-center gap-1 flex-wrap">
             <Badge variant="primary" className="text-[9px]">
@@ -984,6 +995,13 @@ export default function MachineCard({
         machine={machine}
         isOpen={showDetailsModal}
         onClose={() => setShowDetailsModal(false)}
+      />
+
+      <ReliabilityDetailsModal
+        machine={machine}
+        isOpen={showReliabilityModal}
+        onClose={() => setShowReliabilityModal(false)}
+        reliabilityData={machine.reliability_data || { reliability_score: reliabilityScore }}
       />
 
       <AlertDialog open={alertDialog.open} onOpenChange={(open) => setAlertDialog({ ...alertDialog, open })}>
