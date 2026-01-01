@@ -521,6 +521,128 @@ def get_realtime_savings():
         }), 500
 
 
+@economy_bp.route('/active-session', methods=['GET'])
+def get_active_session_metrics():
+    """
+    Retorna metricas da sessao ativa (instancias rodando + custos).
+
+    GET /api/v1/economy/active-session?provider=AWS
+
+    Query params:
+        provider: AWS, GCP ou Azure (default: AWS)
+
+    Returns:
+        {
+            "success": true,
+            "timestamp": "2024-01-15T10:30:00Z",
+            "active_instances": [
+                {
+                    "instance_id": "abc123",
+                    "gpu_type": "RTX 3090",
+                    "running_hours": 2.5,
+                    "dumont_cost": 1.25,
+                    "provider_cost": 7.65,
+                    "savings": 6.40
+                }
+            ],
+            "current_cost_dumont": 1.25,
+            "current_cost_provider": 7.65,
+            "session_savings": 6.40,
+            "session_hours": 2.5,
+            "instances_count": 1,
+            "provider": "AWS"
+        }
+    """
+    try:
+        provider = request.args.get('provider', 'AWS').upper()
+
+        if provider not in PROVIDER_GPU_PRICING:
+            return jsonify({
+                'success': False,
+                'error': f'Provedor invalido: {provider}. Use AWS, GCP ou Azure.'
+            }), 400
+
+        from src.config.database import SessionLocal
+        from src.models.instance_status import InstanceStatus, HibernationEvent
+
+        db = SessionLocal()
+        try:
+            # Buscar instancias ativas (running ou idle)
+            active_instances = db.query(InstanceStatus).filter(
+                InstanceStatus.status.in_(['running', 'idle'])
+            ).all()
+
+            now = datetime.utcnow()
+            instances_data = []
+
+            total_dumont_cost = 0.0
+            total_provider_cost = 0.0
+            total_session_hours = 0.0
+
+            for instance in active_instances:
+                gpu_type = instance.gpu_type or 'RTX 3090'
+
+                # Buscar taxa horaria do ultimo evento de hibernacao ou usar padrao
+                last_event = db.query(HibernationEvent).filter(
+                    HibernationEvent.instance_id == instance.instance_id,
+                    HibernationEvent.dph_total.isnot(None)
+                ).order_by(HibernationEvent.timestamp.desc()).first()
+
+                dumont_hourly = last_event.dph_total if last_event and last_event.dph_total else 0.50
+                provider_hourly = get_provider_price(provider, gpu_type)
+
+                # Calcular horas desde criacao/inicio da sessao
+                created_at = instance.created_at
+                if created_at:
+                    running_hours = (now - created_at).total_seconds() / 3600
+                else:
+                    running_hours = 0
+
+                dumont_cost = running_hours * dumont_hourly
+                provider_cost = running_hours * provider_hourly
+                savings = provider_cost - dumont_cost
+
+                instances_data.append({
+                    'instance_id': instance.instance_id,
+                    'gpu_type': gpu_type,
+                    'status': instance.status,
+                    'running_hours': round(running_hours, 4),
+                    'dumont_hourly_rate': dumont_hourly,
+                    'provider_hourly_rate': provider_hourly,
+                    'dumont_cost': round(dumont_cost, 4),
+                    'provider_cost': round(provider_cost, 4),
+                    'savings': round(savings, 4),
+                })
+
+                total_dumont_cost += dumont_cost
+                total_provider_cost += provider_cost
+                total_session_hours += running_hours
+
+            session_savings = total_provider_cost - total_dumont_cost
+
+            return jsonify({
+                'success': True,
+                'timestamp': now.isoformat() + 'Z',
+                'provider': provider,
+                'active_instances': instances_data,
+                'current_cost_dumont': round(total_dumont_cost, 4),
+                'current_cost_provider': round(total_provider_cost, 4),
+                'session_savings': round(session_savings, 4),
+                'session_hours': round(total_session_hours, 4),
+                'instances_count': len(active_instances),
+            })
+
+        finally:
+            db.close()
+
+    except Exception as e:
+        logger.error(f"Erro ao buscar metricas de sessao ativa: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @economy_bp.route('/pricing', methods=['GET'])
 def get_provider_pricing():
     """
