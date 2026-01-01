@@ -171,13 +171,15 @@
           "id": "4.1",
           "title": "Manual testing of all toast variants",
           "description": "Test success, error, warning, and info toasts with exit animation and progress bar.",
-          "status": "pending",
+          "status": "in_progress",
           "file_paths": [],
           "acceptance_criteria": [
             "All variants display correct progress bar color",
             "Exit animation works for all variants",
             "No visual glitches or layout issues"
-          ]
+          ],
+          "notes": "Starting manual verification of toast variants. Code review confirms: success (green-500), error (red-500), warning (yellow-500), info (blue-500) all correctly defined with matching icons and accent colors.",
+          "updated_at": "2026-01-01T06:22:50.145345+00:00"
         },
         {
           "id": "4.2",
@@ -206,5 +208,5 @@
     "issues": "",
     "tests_passed": ""
   },
-  "last_updated": "2026-01-01T06:20:43.723845+00:00"
+  "last_updated": "2026-01-01T06:22:50.145363+00:00"
 }
