@@ -16,6 +16,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.jobstores.base import JobLookupError
 
 from config.settings import settings
+from src.services.snapshot_metrics import get_snapshot_metrics, SnapshotMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -157,7 +158,22 @@ class SnapshotScheduler:
         self._snapshot_history: List[SnapshotResult] = []
         self._max_history = 100
 
+        # Initialize Prometheus metrics
+        self._metrics: SnapshotMetrics = get_snapshot_metrics()
+
         logger.info("SnapshotScheduler initialized")
+
+    def _update_scheduler_metrics(self) -> None:
+        """Update scheduler status metrics in Prometheus"""
+        with self._lock:
+            total_instances = len(self._jobs)
+            overdue_instances = sum(1 for j in self._jobs.values() if j.is_overdue())
+
+        self._metrics.update_scheduler_status(
+            running=self._running,
+            total_instances=total_instances,
+            overdue_instances=overdue_instances,
+        )
 
     def _default_executor(self, instance_id: str) -> SnapshotResult:
         """
@@ -194,6 +210,10 @@ class SnapshotScheduler:
 
         self._scheduler.start()
         self._running = True
+
+        # Update scheduler status metrics
+        self._update_scheduler_metrics()
+
         logger.info("SnapshotScheduler started")
 
     def stop(self, wait: bool = True):
@@ -203,6 +223,10 @@ class SnapshotScheduler:
 
         self._scheduler.shutdown(wait=wait)
         self._running = False
+
+        # Update scheduler status metrics
+        self._update_scheduler_metrics()
+
         logger.info("SnapshotScheduler stopped")
 
     def is_running(self) -> bool:
@@ -256,6 +280,9 @@ class SnapshotScheduler:
                 self._on_state_change(job_info)
 
             logger.info(f"Added instance {instance_id} with {interval}min interval")
+
+            # Update scheduler metrics
+            self._update_scheduler_metrics()
 
             return job_info
 
@@ -461,6 +488,9 @@ class SnapshotScheduler:
             if job_info:
                 job_info.last_status = SnapshotStatus.IN_PROGRESS
 
+        # Record in-progress metric
+        self._metrics.set_in_progress(instance_id, True)
+
         result = None
 
         try:
@@ -495,9 +525,15 @@ class SnapshotScheduler:
             if len(self._snapshot_history) > self._max_history:
                 self._snapshot_history = self._snapshot_history[-self._max_history:]
 
-            # Callbacks
+            # Callbacks and metrics
             if result.status == SnapshotStatus.SUCCESS:
                 logger.info(f"Snapshot completed for {instance_id} in {result.duration_seconds:.1f}s")
+                # Record success metrics
+                self._metrics.record_success(
+                    instance_id=instance_id,
+                    duration_seconds=result.duration_seconds,
+                    size_bytes=result.size_bytes,
+                )
                 if self._on_success:
                     try:
                         self._on_success(result)
@@ -505,6 +541,13 @@ class SnapshotScheduler:
                         logger.error(f"Error in on_success callback: {e}")
             else:
                 logger.error(f"Snapshot failed for {instance_id}: {result.error}")
+                # Record failure metrics
+                consecutive = job_info.consecutive_failures if job_info else 1
+                self._metrics.record_failure(
+                    instance_id=instance_id,
+                    duration_seconds=result.duration_seconds,
+                    consecutive_count=consecutive,
+                )
                 if self._on_failure:
                     try:
                         self._on_failure(result)
@@ -538,6 +581,14 @@ class SnapshotScheduler:
                     job_info.consecutive_failures += 1
                     job_info.updated_at = time.time()
 
+            # Record failure metrics for exception
+            consecutive = job_info.consecutive_failures if job_info else 1
+            self._metrics.record_failure(
+                instance_id=instance_id,
+                duration_seconds=0,
+                consecutive_count=consecutive,
+            )
+
             if self._on_failure:
                 try:
                     self._on_failure(error_result)
@@ -547,6 +598,8 @@ class SnapshotScheduler:
             return error_result
 
         finally:
+            # Clear in-progress metric
+            self._metrics.set_in_progress(instance_id, False)
             # Remover dos ativos
             with self._lock:
                 self._active_snapshots.pop(instance_id, None)
