@@ -10,9 +10,10 @@ Executa limpeza periodica de snapshots expirados:
 """
 
 import logging
+import time
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-from typing import List, Dict, Optional, Any, Callable
+from typing import List, Dict, Optional, Any, Callable, Protocol
 
 from src.services.agent_manager import Agent
 from src.config.snapshot_lifecycle_config import (
@@ -27,6 +28,109 @@ from src.models.snapshot_metadata import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class StorageProviderProtocol(Protocol):
+    """
+    Protocolo para provedores de storage.
+
+    Define a interface que provedores de storage (B2, R2, S3) devem implementar.
+    Usado para injecao de dependencia e testes.
+    """
+
+    def delete_file(self, remote_path: str) -> bool:
+        """
+        Deleta um arquivo do storage.
+
+        Args:
+            remote_path: Caminho remoto do arquivo
+
+        Returns:
+            True se deletado com sucesso, False caso contrario
+        """
+        ...
+
+
+def get_storage_provider_for_snapshot(
+    snapshot: SnapshotMetadata,
+) -> Optional[StorageProviderProtocol]:
+    """
+    Obtem o provider de storage apropriado para um snapshot.
+
+    Usa lazy import para evitar dependencias circulares.
+
+    Args:
+        snapshot: Metadados do snapshot
+
+    Returns:
+        StorageProvider apropriado ou None se nao configurado
+    """
+    try:
+        from src.storage.storage_provider import (
+            StorageConfig,
+            create_storage_provider,
+        )
+        from src.storage.b2_native_provider import B2NativeProvider
+        import os
+
+        provider_type = snapshot.storage_provider or "b2"
+
+        # B2 usa provider nativo (mais confiavel)
+        if provider_type == "b2":
+            config = StorageConfig(
+                provider="b2",
+                endpoint=os.getenv("B2_ENDPOINT", "https://s3.us-west-004.backblazeb2.com"),
+                bucket=os.getenv("B2_BUCKET", ""),
+                access_key=os.getenv("B2_KEY_ID", ""),
+                secret_key=os.getenv("B2_APPLICATION_KEY", ""),
+                region=os.getenv("B2_REGION", "us-west-004"),
+            )
+            return B2NativeProvider(config)
+
+        # R2, S3, Wasabi usam S5cmd provider
+        elif provider_type in ["r2", "s3", "wasabi"]:
+            if provider_type == "r2":
+                account_id = os.getenv("R2_ACCOUNT_ID", "")
+                config = StorageConfig(
+                    provider="r2",
+                    endpoint=f"https://{account_id}.r2.cloudflarestorage.com",
+                    bucket=os.getenv("R2_BUCKET", ""),
+                    access_key=os.getenv("R2_ACCESS_KEY", ""),
+                    secret_key=os.getenv("R2_SECRET_KEY", ""),
+                    region="auto",
+                )
+            elif provider_type == "wasabi":
+                region = os.getenv("WASABI_REGION", "us-east-1")
+                config = StorageConfig(
+                    provider="wasabi",
+                    endpoint=f"https://s3.{region}.wasabisys.com",
+                    bucket=os.getenv("WASABI_BUCKET", ""),
+                    access_key=os.getenv("WASABI_ACCESS_KEY", ""),
+                    secret_key=os.getenv("WASABI_SECRET_KEY", ""),
+                    region=region,
+                )
+            else:  # s3
+                region = os.getenv("AWS_REGION", "us-east-1")
+                config = StorageConfig(
+                    provider="s3",
+                    endpoint=f"https://s3.{region}.amazonaws.com",
+                    bucket=os.getenv("AWS_BUCKET", ""),
+                    access_key=os.getenv("AWS_ACCESS_KEY_ID", ""),
+                    secret_key=os.getenv("AWS_SECRET_ACCESS_KEY", ""),
+                    region=region,
+                )
+            return create_storage_provider(config)
+
+        else:
+            logger.warning(f"Provider de storage desconhecido: {provider_type}")
+            return None
+
+    except ImportError as e:
+        logger.warning(f"Nao foi possivel importar modulos de storage: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Erro ao criar provider de storage: {e}")
+        return None
 
 
 class SnapshotRepository(ABC):
@@ -129,6 +233,11 @@ class SnapshotCleanupAgent(Agent):
     excederam o periodo de retencao e deletando-os do storage.
     """
 
+    # Configuracoes de retry para delecao de storage
+    DEFAULT_MAX_RETRIES = 3
+    DEFAULT_RETRY_BASE_DELAY = 1.0  # segundos
+    DEFAULT_RETRY_MAX_DELAY = 30.0  # segundos
+
     def __init__(
         self,
         interval_hours: int = 24,
@@ -136,6 +245,10 @@ class SnapshotCleanupAgent(Agent):
         batch_size: int = 100,
         snapshot_repository: Optional[SnapshotRepository] = None,
         lifecycle_manager: Optional[SnapshotLifecycleManager] = None,
+        storage_provider_factory: Optional[Callable[[SnapshotMetadata], Optional[StorageProviderProtocol]]] = None,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        retry_base_delay: float = DEFAULT_RETRY_BASE_DELAY,
+        retry_max_delay: float = DEFAULT_RETRY_MAX_DELAY,
     ):
         """
         Inicializa o agente de limpeza de snapshots.
@@ -146,6 +259,10 @@ class SnapshotCleanupAgent(Agent):
             batch_size: Quantidade de snapshots a processar por lote (padrao: 100)
             snapshot_repository: Repositorio de snapshots (injecao de dependencia)
             lifecycle_manager: Manager de lifecycle (injecao de dependencia)
+            storage_provider_factory: Factory para criar providers de storage (injecao de dependencia)
+            max_retries: Numero maximo de tentativas de delecao (padrao: 3)
+            retry_base_delay: Delay base para retry exponencial em segundos (padrao: 1.0)
+            retry_max_delay: Delay maximo para retry exponencial em segundos (padrao: 30.0)
         """
         super().__init__(name="SnapshotCleanup")
         self.interval_seconds = interval_hours * 3600
@@ -157,6 +274,14 @@ class SnapshotCleanupAgent(Agent):
 
         # Lifecycle manager para configuracoes
         self._lifecycle_manager: Optional[SnapshotLifecycleManager] = lifecycle_manager
+
+        # Factory para criar providers de storage (permite injecao para testes)
+        self._storage_provider_factory = storage_provider_factory or get_storage_provider_for_snapshot
+
+        # Configuracoes de retry
+        self.max_retries = max_retries
+        self.retry_base_delay = retry_base_delay
+        self.retry_max_delay = retry_max_delay
 
         # Estatisticas do ciclo atual
         self.current_cycle_stats: Dict[str, Any] = {
@@ -400,6 +525,9 @@ class SnapshotCleanupAgent(Agent):
         """
         Deleta um snapshot do storage.
 
+        Implementa delecao com suporte a multiplos providers (B2, R2, S3)
+        e retry com backoff exponencial em caso de falha.
+
         Args:
             snapshot: Metadados do snapshot a deletar
 
@@ -419,9 +547,19 @@ class SnapshotCleanupAgent(Agent):
             if self._snapshot_repository:
                 self._snapshot_repository.update_snapshot(snapshot)
 
-            # TODO: Implementar delecao real do storage em subtask-2-3
-            # Por enquanto, apenas simula o sucesso
-            logger.info(f"Deletando snapshot {snapshot.snapshot_id} do storage {snapshot.storage_provider}")
+            # Deletar do storage com retry
+            storage_deleted = self._delete_from_storage_with_retry(snapshot)
+
+            if not storage_deleted:
+                # Falha na delecao do storage - nao marcar como deletado
+                error_msg = f"Falha ao deletar do storage apos {self.max_retries} tentativas"
+                snapshot.mark_deletion_failed(error_msg)
+
+                if self._snapshot_repository:
+                    self._snapshot_repository.update_snapshot(snapshot)
+
+                logger.error(f"Falha ao deletar snapshot {snapshot.snapshot_id}: {error_msg}")
+                return False
 
             # Marcar como deletado
             snapshot.mark_deleted()
@@ -445,6 +583,83 @@ class SnapshotCleanupAgent(Agent):
 
             logger.error(f"Falha ao deletar snapshot {snapshot.snapshot_id}: {error_msg}")
             return False
+
+    def _delete_from_storage_with_retry(self, snapshot: SnapshotMetadata) -> bool:
+        """
+        Deleta snapshot do storage com retry e backoff exponencial.
+
+        Args:
+            snapshot: Metadados do snapshot a deletar
+
+        Returns:
+            True se deletado com sucesso, False apos esgotar retries
+        """
+        # Obter provider de storage
+        provider = self._storage_provider_factory(snapshot)
+
+        if provider is None:
+            logger.warning(f"Nenhum provider de storage configurado para {snapshot.storage_provider}")
+            # Se nao ha provider, considera como sucesso (snapshot pode estar em storage local)
+            return True
+
+        # Construir path do snapshot no storage
+        storage_path = self._get_storage_path(snapshot)
+        if not storage_path:
+            logger.warning(f"Snapshot {snapshot.snapshot_id} nao tem storage_path definido")
+            return True
+
+        # Tentar deletar com retry exponencial
+        last_error = None
+        for attempt in range(self.max_retries):
+            try:
+                logger.debug(f"Tentativa {attempt + 1}/{self.max_retries} de deletar "
+                            f"{snapshot.snapshot_id} do storage")
+
+                success = provider.delete_file(storage_path)
+
+                if success:
+                    logger.info(f"Arquivo {storage_path} deletado do storage "
+                               f"{snapshot.storage_provider}")
+                    return True
+                else:
+                    logger.warning(f"Provider retornou False ao deletar {storage_path}")
+                    last_error = "Provider returned False"
+
+            except Exception as e:
+                last_error = str(e)
+                logger.warning(f"Erro ao deletar {storage_path} (tentativa {attempt + 1}): {e}")
+
+            # Calcular delay com backoff exponencial
+            if attempt < self.max_retries - 1:
+                delay = min(
+                    self.retry_base_delay * (2 ** attempt),
+                    self.retry_max_delay
+                )
+                logger.debug(f"Aguardando {delay:.1f}s antes da proxima tentativa")
+                time.sleep(delay)
+
+        logger.error(f"Falha ao deletar {storage_path} apos {self.max_retries} tentativas: {last_error}")
+        return False
+
+    def _get_storage_path(self, snapshot: SnapshotMetadata) -> Optional[str]:
+        """
+        Obtem o path do snapshot no storage.
+
+        Args:
+            snapshot: Metadados do snapshot
+
+        Returns:
+            Path no storage ou None se nao definido
+        """
+        # Usar storage_path se definido
+        if snapshot.storage_path:
+            return snapshot.storage_path
+
+        # Fallback: construir path padrao
+        if snapshot.instance_id and snapshot.snapshot_id:
+            return f"snapshots/{snapshot.instance_id}/{snapshot.snapshot_id}"
+
+        return None
 
     def _log_cycle_summary(self):
         """Loga resumo do ciclo de limpeza."""

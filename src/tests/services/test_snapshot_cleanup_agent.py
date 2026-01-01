@@ -18,6 +18,7 @@ from src.services.snapshot_cleanup_agent import (
     SnapshotCleanupAgent,
     SnapshotRepository,
     InMemorySnapshotRepository,
+    StorageProviderProtocol,
 )
 from src.models.snapshot_metadata import (
     SnapshotMetadata,
@@ -69,7 +70,23 @@ def snapshot_repository():
 
 
 @pytest.fixture
-def cleanup_agent(mock_lifecycle_manager, snapshot_repository):
+def mock_storage_provider():
+    """Cria um mock do storage provider que sempre sucede."""
+    provider = Mock()
+    provider.delete_file.return_value = True
+    return provider
+
+
+@pytest.fixture
+def mock_storage_factory(mock_storage_provider):
+    """Cria uma factory que retorna o mock storage provider."""
+    def factory(snapshot):
+        return mock_storage_provider
+    return factory
+
+
+@pytest.fixture
+def cleanup_agent(mock_lifecycle_manager, snapshot_repository, mock_storage_factory):
     """Cria um agente de cleanup com mocks."""
     agent = SnapshotCleanupAgent(
         interval_hours=24,
@@ -77,6 +94,7 @@ def cleanup_agent(mock_lifecycle_manager, snapshot_repository):
         batch_size=100,
         snapshot_repository=snapshot_repository,
         lifecycle_manager=mock_lifecycle_manager,
+        storage_provider_factory=mock_storage_factory,
     )
     return agent
 
@@ -89,6 +107,7 @@ def create_snapshot(
     instance_id: str = "instance-1",
     status: SnapshotStatus = SnapshotStatus.ACTIVE,
     size_bytes: int = 1024 * 1024,  # 1 MB
+    storage_provider: str = "b2",
 ) -> SnapshotMetadata:
     """Helper para criar snapshots de teste."""
     created_at = datetime.now(timezone.utc) - timedelta(days=age_days)
@@ -100,7 +119,7 @@ def create_snapshot(
         status=status,
         created_at=created_at.isoformat(),
         size_bytes=size_bytes,
-        storage_provider="b2",
+        storage_provider=storage_provider,
     )
 
 
@@ -628,3 +647,436 @@ class TestEdgeCases:
         assert "default-5d" not in expired_ids
 
         assert len(expired) == 3
+
+
+# ============================================================
+# Testes de Delecao de Storage
+# ============================================================
+
+class TestDeleteFromStorage:
+    """Testes de delecao de snapshots do storage com suporte multi-provider."""
+
+    def test_delete_from_storage_success(self, mock_lifecycle_manager, snapshot_repository):
+        """
+        Testa delecao bem-sucedida do storage.
+
+        Cenario:
+        - Mock do provider retorna True (sucesso)
+        - Snapshot deve ser marcado como DELETED
+        """
+        # Mock do provider de storage
+        mock_provider = Mock()
+        mock_provider.delete_file.return_value = True
+
+        def mock_factory(snapshot):
+            return mock_provider
+
+        agent = SnapshotCleanupAgent(
+            interval_hours=24,
+            dry_run=False,
+            snapshot_repository=snapshot_repository,
+            lifecycle_manager=mock_lifecycle_manager,
+            storage_provider_factory=mock_factory,
+        )
+        agent.running = True
+
+        # Criar snapshot com storage_path
+        snapshot = create_snapshot(
+            "snap-to-delete",
+            age_days=10,
+            storage_provider="b2",
+        )
+        snapshot.storage_path = "snapshots/instance-1/snap-to-delete"
+        snapshot_repository.add_snapshot(snapshot)
+
+        # Executar delecao
+        result = agent._delete_snapshot(snapshot)
+
+        # Verificar sucesso
+        assert result is True
+        mock_provider.delete_file.assert_called_once_with("snapshots/instance-1/snap-to-delete")
+
+        # Verificar status
+        updated = snapshot_repository.get_snapshot("snap-to-delete")
+        assert updated.status == SnapshotStatus.DELETED
+
+    def test_delete_from_storage_failure_marks_failed(self, mock_lifecycle_manager, snapshot_repository):
+        """
+        Testa que falha na delecao do storage marca snapshot como FAILED.
+
+        Cenario:
+        - Mock do provider retorna False (falha)
+        - Snapshot deve ser marcado como FAILED, nao DELETED
+        """
+        # Mock do provider que falha
+        mock_provider = Mock()
+        mock_provider.delete_file.return_value = False
+
+        def mock_factory(snapshot):
+            return mock_provider
+
+        agent = SnapshotCleanupAgent(
+            interval_hours=24,
+            dry_run=False,
+            snapshot_repository=snapshot_repository,
+            lifecycle_manager=mock_lifecycle_manager,
+            storage_provider_factory=mock_factory,
+            max_retries=2,
+            retry_base_delay=0.01,  # Delay minimo para testes
+        )
+        agent.running = True
+
+        # Criar snapshot
+        snapshot = create_snapshot("snap-fail", age_days=10, storage_provider="b2")
+        snapshot.storage_path = "snapshots/instance-1/snap-fail"
+        snapshot_repository.add_snapshot(snapshot)
+
+        # Executar delecao
+        result = agent._delete_snapshot(snapshot)
+
+        # Verificar falha
+        assert result is False
+
+        # Provider deve ter sido chamado max_retries vezes
+        assert mock_provider.delete_file.call_count == 2
+
+        # Verificar status FAILED
+        updated = snapshot_repository.get_snapshot("snap-fail")
+        assert updated.status == SnapshotStatus.FAILED
+
+    def test_delete_from_storage_retry_on_exception(self, mock_lifecycle_manager, snapshot_repository):
+        """
+        Testa retry quando provider lanca excecao.
+
+        Cenario:
+        - Provider lanca excecao na primeira tentativa
+        - Provider retorna True na segunda tentativa
+        - Delecao deve ter sucesso
+        """
+        # Mock do provider que falha e depois sucede
+        mock_provider = Mock()
+        mock_provider.delete_file.side_effect = [
+            Exception("Connection timeout"),
+            True,
+        ]
+
+        def mock_factory(snapshot):
+            return mock_provider
+
+        agent = SnapshotCleanupAgent(
+            interval_hours=24,
+            dry_run=False,
+            snapshot_repository=snapshot_repository,
+            lifecycle_manager=mock_lifecycle_manager,
+            storage_provider_factory=mock_factory,
+            max_retries=3,
+            retry_base_delay=0.01,
+        )
+        agent.running = True
+
+        # Criar snapshot
+        snapshot = create_snapshot("snap-retry", age_days=10, storage_provider="b2")
+        snapshot.storage_path = "snapshots/instance-1/snap-retry"
+        snapshot_repository.add_snapshot(snapshot)
+
+        # Executar delecao
+        result = agent._delete_snapshot(snapshot)
+
+        # Verificar sucesso apos retry
+        assert result is True
+        assert mock_provider.delete_file.call_count == 2
+
+        # Verificar status DELETED
+        updated = snapshot_repository.get_snapshot("snap-retry")
+        assert updated.status == SnapshotStatus.DELETED
+
+    def test_delete_from_storage_no_provider_succeeds(self, mock_lifecycle_manager, snapshot_repository):
+        """
+        Testa que snapshot sem provider configurado e tratado como sucesso.
+
+        Cenario:
+        - Factory retorna None (nenhum provider)
+        - Delecao deve ter sucesso (snapshot pode estar em storage local)
+        """
+        def mock_factory(snapshot):
+            return None  # Nenhum provider
+
+        agent = SnapshotCleanupAgent(
+            interval_hours=24,
+            dry_run=False,
+            snapshot_repository=snapshot_repository,
+            lifecycle_manager=mock_lifecycle_manager,
+            storage_provider_factory=mock_factory,
+        )
+        agent.running = True
+
+        # Criar snapshot
+        snapshot = create_snapshot("snap-local", age_days=10)
+        snapshot.storage_path = "local/path/snap-local"
+        snapshot_repository.add_snapshot(snapshot)
+
+        # Executar delecao
+        result = agent._delete_snapshot(snapshot)
+
+        # Verificar sucesso
+        assert result is True
+
+        # Verificar status DELETED
+        updated = snapshot_repository.get_snapshot("snap-local")
+        assert updated.status == SnapshotStatus.DELETED
+
+    def test_delete_from_storage_uses_fallback_path(self, mock_lifecycle_manager, snapshot_repository):
+        """
+        Testa que path padrao e usado quando storage_path nao esta definido.
+
+        Cenario:
+        - Snapshot sem storage_path definido
+        - Deve usar path padrao: snapshots/{instance_id}/{snapshot_id}
+        """
+        mock_provider = Mock()
+        mock_provider.delete_file.return_value = True
+
+        def mock_factory(snapshot):
+            return mock_provider
+
+        agent = SnapshotCleanupAgent(
+            interval_hours=24,
+            dry_run=False,
+            snapshot_repository=snapshot_repository,
+            lifecycle_manager=mock_lifecycle_manager,
+            storage_provider_factory=mock_factory,
+        )
+        agent.running = True
+
+        # Criar snapshot SEM storage_path
+        snapshot = create_snapshot("snap-no-path", age_days=10, instance_id="my-instance")
+        # Nao definir storage_path
+        snapshot_repository.add_snapshot(snapshot)
+
+        # Executar delecao
+        result = agent._delete_snapshot(snapshot)
+
+        # Verificar sucesso
+        assert result is True
+
+        # Verificar que path padrao foi usado
+        expected_path = "snapshots/my-instance/snap-no-path"
+        mock_provider.delete_file.assert_called_once_with(expected_path)
+
+    def test_delete_from_storage_multi_provider_b2(self, mock_lifecycle_manager, snapshot_repository):
+        """
+        Testa delecao com provider B2.
+        """
+        mock_provider = Mock()
+        mock_provider.delete_file.return_value = True
+
+        providers_used = []
+
+        def mock_factory(snapshot):
+            providers_used.append(snapshot.storage_provider)
+            return mock_provider
+
+        agent = SnapshotCleanupAgent(
+            interval_hours=24,
+            dry_run=False,
+            snapshot_repository=snapshot_repository,
+            lifecycle_manager=mock_lifecycle_manager,
+            storage_provider_factory=mock_factory,
+        )
+        agent.running = True
+
+        # Criar snapshot B2
+        snapshot = create_snapshot("snap-b2", age_days=10, storage_provider="b2")
+        snapshot.storage_path = "b2/path/snap-b2"
+        snapshot_repository.add_snapshot(snapshot)
+
+        result = agent._delete_snapshot(snapshot)
+
+        assert result is True
+        assert "b2" in providers_used
+
+    def test_delete_from_storage_multi_provider_r2(self, mock_lifecycle_manager, snapshot_repository):
+        """
+        Testa delecao com provider R2.
+        """
+        mock_provider = Mock()
+        mock_provider.delete_file.return_value = True
+
+        providers_used = []
+
+        def mock_factory(snapshot):
+            providers_used.append(snapshot.storage_provider)
+            return mock_provider
+
+        agent = SnapshotCleanupAgent(
+            interval_hours=24,
+            dry_run=False,
+            snapshot_repository=snapshot_repository,
+            lifecycle_manager=mock_lifecycle_manager,
+            storage_provider_factory=mock_factory,
+        )
+        agent.running = True
+
+        # Criar snapshot R2
+        snapshot = SnapshotMetadata(
+            snapshot_id="snap-r2",
+            instance_id="instance-1",
+            storage_provider="r2",
+            storage_path="r2/path/snap-r2",
+            size_bytes=1024,
+            created_at=(datetime.now(timezone.utc) - timedelta(days=10)).isoformat(),
+        )
+        snapshot_repository.add_snapshot(snapshot)
+
+        result = agent._delete_snapshot(snapshot)
+
+        assert result is True
+        assert "r2" in providers_used
+
+    def test_delete_from_storage_multi_provider_s3(self, mock_lifecycle_manager, snapshot_repository):
+        """
+        Testa delecao com provider S3.
+        """
+        mock_provider = Mock()
+        mock_provider.delete_file.return_value = True
+
+        providers_used = []
+
+        def mock_factory(snapshot):
+            providers_used.append(snapshot.storage_provider)
+            return mock_provider
+
+        agent = SnapshotCleanupAgent(
+            interval_hours=24,
+            dry_run=False,
+            snapshot_repository=snapshot_repository,
+            lifecycle_manager=mock_lifecycle_manager,
+            storage_provider_factory=mock_factory,
+        )
+        agent.running = True
+
+        # Criar snapshot S3
+        snapshot = SnapshotMetadata(
+            snapshot_id="snap-s3",
+            instance_id="instance-1",
+            storage_provider="s3",
+            storage_path="s3/path/snap-s3",
+            size_bytes=1024,
+            created_at=(datetime.now(timezone.utc) - timedelta(days=10)).isoformat(),
+        )
+        snapshot_repository.add_snapshot(snapshot)
+
+        result = agent._delete_snapshot(snapshot)
+
+        assert result is True
+        assert "s3" in providers_used
+
+    def test_delete_from_storage_exponential_backoff(self, mock_lifecycle_manager, snapshot_repository):
+        """
+        Testa que retry usa backoff exponencial.
+
+        Cenario:
+        - Provider falha todas as vezes
+        - Verificar que delays aumentam exponencialmente
+        """
+        mock_provider = Mock()
+        mock_provider.delete_file.return_value = False
+
+        def mock_factory(snapshot):
+            return mock_provider
+
+        agent = SnapshotCleanupAgent(
+            interval_hours=24,
+            dry_run=False,
+            snapshot_repository=snapshot_repository,
+            lifecycle_manager=mock_lifecycle_manager,
+            storage_provider_factory=mock_factory,
+            max_retries=3,
+            retry_base_delay=0.01,
+            retry_max_delay=0.1,
+        )
+        agent.running = True
+
+        # Criar snapshot
+        snapshot = create_snapshot("snap-backoff", age_days=10)
+        snapshot.storage_path = "path/snap-backoff"
+        snapshot_repository.add_snapshot(snapshot)
+
+        # Medir tempo de execucao
+        import time
+        start = time.time()
+        result = agent._delete_snapshot(snapshot)
+        elapsed = time.time() - start
+
+        # Verificar falha
+        assert result is False
+
+        # Verificar que houve retries (3 tentativas)
+        assert mock_provider.delete_file.call_count == 3
+
+        # Tempo minimo deve ser > 0 (houve delays)
+        # Com base_delay=0.01 e 3 retries: ~0.01 + 0.02 = 0.03s minimo
+        assert elapsed >= 0.02  # Margem para variacao
+
+    def test_delete_from_storage_in_cleanup_cycle(self, mock_lifecycle_manager, snapshot_repository):
+        """
+        Testa delecao durante ciclo de cleanup completo.
+
+        Cenario:
+        - Criar varios snapshots expirados
+        - Executar ciclo de cleanup
+        - Verificar que todos foram deletados do storage
+        """
+        call_count = {"count": 0}
+
+        mock_provider = Mock()
+
+        def track_delete(path):
+            call_count["count"] += 1
+            return True
+
+        mock_provider.delete_file.side_effect = track_delete
+
+        def mock_factory(snapshot):
+            return mock_provider
+
+        agent = SnapshotCleanupAgent(
+            interval_hours=24,
+            dry_run=False,
+            snapshot_repository=snapshot_repository,
+            lifecycle_manager=mock_lifecycle_manager,
+            storage_provider_factory=mock_factory,
+        )
+        agent.running = True
+
+        # Criar 3 snapshots expirados
+        for i in range(3):
+            snap = create_snapshot(f"snap-{i}", age_days=10)
+            snap.storage_path = f"path/snap-{i}"
+            snapshot_repository.add_snapshot(snap)
+
+        # Executar ciclo de cleanup
+        agent._cleanup_cycle()
+
+        # Verificar que todos foram deletados
+        assert call_count["count"] == 3
+
+        # Verificar estatisticas
+        stats = agent.get_cleanup_stats()
+        assert stats["snapshots_deleted"] == 3
+        assert stats["snapshots_failed"] == 0
+
+
+# Funcao auxiliar para criar snapshots com storage_path
+def create_snapshot_with_storage(
+    snapshot_id: str,
+    age_days: int = 0,
+    storage_provider: str = "b2",
+    storage_path: str = None,
+    **kwargs
+) -> SnapshotMetadata:
+    """Helper para criar snapshots com storage_path."""
+    snapshot = create_snapshot(snapshot_id, age_days=age_days, **kwargs)
+    snapshot.storage_provider = storage_provider
+    snapshot.storage_path = storage_path or f"snapshots/{kwargs.get('instance_id', 'instance-1')}/{snapshot_id}"
+    return snapshot
