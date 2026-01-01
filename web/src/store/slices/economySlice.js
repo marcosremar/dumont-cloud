@@ -262,7 +262,8 @@ const economySlice = createSlice({
       .addCase(fetchSavings.fulfilled, (state, action) => {
         state.loading = false
         state.lifetimeSavings = action.payload.lifetime_savings || 0
-        state.currentSessionSavings = action.payload.current_session || 0
+        // API returns current_session_savings (not current_session)
+        state.currentSessionSavings = action.payload.current_session_savings || 0
         state.hourlyComparison = {
           dumontRate: action.payload.hourly_comparison?.dumont_rate || 0,
           providerRate: action.payload.hourly_comparison?.provider_rate || 0,
@@ -271,6 +272,10 @@ const economySlice = createSlice({
         state.projections = {
           monthly: action.payload.projections?.monthly || 0,
           yearly: action.payload.projections?.yearly || 0,
+        }
+        // Update active instances count from savings response
+        if (action.payload.active_instances_count !== undefined) {
+          state.activeSession.activeInstances = action.payload.active_instances_count
         }
         state.lastFetch = Date.now()
       })
@@ -297,16 +302,19 @@ const economySlice = createSlice({
       })
       .addCase(fetchRealtimeSavings.fulfilled, (state, action) => {
         state.realtimeLoading = false
-        state.currentSessionSavings = action.payload.current_session || state.currentSessionSavings
-        if (action.payload.hourly_comparison) {
+        // API returns totals.total_savings for current session savings
+        const totals = action.payload.totals || {}
+        state.currentSessionSavings = totals.total_savings ?? state.currentSessionSavings
+        // Update hourly comparison from realtime data
+        if (totals.avg_savings_rate_per_hour !== undefined) {
           state.hourlyComparison = {
-            dumontRate: action.payload.hourly_comparison.dumont_rate || state.hourlyComparison.dumontRate,
-            providerRate: action.payload.hourly_comparison.provider_rate || state.hourlyComparison.providerRate,
-            savingsPerHour: action.payload.hourly_comparison.savings_per_hour || state.hourlyComparison.savingsPerHour,
+            ...state.hourlyComparison,
+            savingsPerHour: totals.avg_savings_rate_per_hour,
           }
         }
-        if (action.payload.active_instances !== undefined) {
-          state.activeSession.activeInstances = action.payload.active_instances
+        // API returns totals.instances_count (number), not active_instances (array)
+        if (totals.instances_count !== undefined) {
+          state.activeSession.activeInstances = totals.instances_count
         }
         state.lastRealtimeFetch = Date.now()
       })
@@ -321,11 +329,12 @@ const economySlice = createSlice({
       .addCase(fetchActiveSession.fulfilled, (state, action) => {
         state.realtimeLoading = false
         state.activeSession = {
-          activeInstances: action.payload.active_instances || 0,
+          // API returns instances_count (number) and active_instances (array)
+          activeInstances: action.payload.instances_count || 0,
           currentCostDumont: action.payload.current_cost_dumont || 0,
           currentCostProvider: action.payload.current_cost_provider || 0,
           sessionSavings: action.payload.session_savings || 0,
-          sessionDuration: action.payload.session_duration || 0,
+          sessionDuration: action.payload.session_hours ? action.payload.session_hours * 3600 : 0,
         }
         state.lastRealtimeFetch = Date.now()
       })
