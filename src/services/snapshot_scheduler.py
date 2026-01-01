@@ -17,6 +17,7 @@ from apscheduler.jobstores.base import JobLookupError
 
 from config.settings import settings
 from src.services.snapshot_metrics import get_snapshot_metrics, SnapshotMetrics
+from src.services.alert_manager import AlertManager, Alert, get_alert_manager
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +124,7 @@ class SnapshotScheduler:
         on_success: Optional[Callable[[SnapshotResult], None]] = None,
         on_failure: Optional[Callable[[SnapshotResult], None]] = None,
         on_state_change: Optional[Callable[[SnapshotJobInfo], None]] = None,
+        alert_manager: Optional[AlertManager] = None,
     ):
         """
         Inicializa o scheduler.
@@ -132,6 +134,7 @@ class SnapshotScheduler:
             on_success: Callback chamado apos snapshot bem sucedido
             on_failure: Callback chamado apos falha de snapshot
             on_state_change: Callback chamado quando estado de um job muda
+            alert_manager: Instancia do AlertManager para envio de alertas
         """
         self._scheduler = BackgroundScheduler(
             job_defaults={
@@ -160,6 +163,9 @@ class SnapshotScheduler:
 
         # Initialize Prometheus metrics
         self._metrics: SnapshotMetrics = get_snapshot_metrics()
+
+        # Initialize AlertManager for Slack/webhook notifications
+        self._alert_manager: Optional[AlertManager] = alert_manager
 
         logger.info("SnapshotScheduler initialized")
 
@@ -197,6 +203,47 @@ class SnapshotScheduler:
             duration_seconds=end_time - start_time,
             snapshot_id=f"snap-{instance_id}-{int(start_time)}",
         )
+
+    def _send_snapshot_alert(
+        self,
+        instance_id: str,
+        result: SnapshotResult,
+        consecutive_failures: int = 1,
+    ) -> None:
+        """
+        Envia alerta via AlertManager quando snapshot falha.
+
+        Args:
+            instance_id: ID da instancia
+            result: Resultado do snapshot
+            consecutive_failures: Numero de falhas consecutivas
+        """
+        if not self._alert_manager:
+            return
+
+        try:
+            # Determine severity based on consecutive failures
+            severity = 'critical' if consecutive_failures >= 3 else 'warning'
+
+            # Create alert for snapshot failure
+            alert = Alert(
+                severity=severity,
+                title='snapshot_failed',
+                message=f"Snapshot falhou para instancia {instance_id}: {result.error or 'erro desconhecido'}. "
+                        f"Falhas consecutivas: {consecutive_failures}",
+                machine_id=instance_id,
+                metric_name='dumont_snapshot_failure_total',
+                current_value=float(consecutive_failures),
+                threshold=0,
+            )
+
+            # Send alert via AlertManager's internal handler
+            self._alert_manager._handle_alert(alert)
+
+            logger.info(f"Snapshot failure alert sent for {instance_id}")
+
+        except Exception as e:
+            logger.error(f"Failed to send snapshot alert for {instance_id}: {e}")
 
     def start(self):
         """Inicia o scheduler"""
@@ -548,6 +595,10 @@ class SnapshotScheduler:
                     duration_seconds=result.duration_seconds,
                     consecutive_count=consecutive,
                 )
+
+                # Send alert via AlertManager
+                self._send_snapshot_alert(instance_id, result, consecutive)
+
                 if self._on_failure:
                     try:
                         self._on_failure(result)
@@ -588,6 +639,9 @@ class SnapshotScheduler:
                 duration_seconds=0,
                 consecutive_count=consecutive,
             )
+
+            # Send alert via AlertManager
+            self._send_snapshot_alert(instance_id, error_result, consecutive)
 
             if self._on_failure:
                 try:
@@ -652,6 +706,7 @@ def get_snapshot_scheduler(
     on_success: Optional[Callable[[SnapshotResult], None]] = None,
     on_failure: Optional[Callable[[SnapshotResult], None]] = None,
     on_state_change: Optional[Callable[[SnapshotJobInfo], None]] = None,
+    alert_manager: Optional[AlertManager] = None,
 ) -> SnapshotScheduler:
     """
     Retorna instancia singleton do SnapshotScheduler.
@@ -661,6 +716,7 @@ def get_snapshot_scheduler(
         on_success: Callback para snapshot bem sucedido
         on_failure: Callback para falha de snapshot
         on_state_change: Callback para mudancas de estado
+        alert_manager: Instancia do AlertManager para envio de alertas
     """
     global _snapshot_scheduler
 
@@ -670,6 +726,7 @@ def get_snapshot_scheduler(
             on_success=on_success,
             on_failure=on_failure,
             on_state_change=on_state_change,
+            alert_manager=alert_manager,
         )
 
     return _snapshot_scheduler
