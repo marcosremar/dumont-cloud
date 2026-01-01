@@ -35,11 +35,23 @@
         }
       ],
       "status": "completed"
+    },
+    "3.1": {
+      "attempts": [
+        {
+          "session": 5,
+          "timestamp": "2026-01-01T07:07:13.257112",
+          "approach": "Implemented: The Dialog close button uses ring-offset-background with focus:ring-offset-2 but needs explicit dark",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-01T06:59:58.083081",
-    "last_updated": "2026-01-01T07:06:22.877073"
+    "last_updated": "2026-01-01T07:07:13.257125"
   }
 }
