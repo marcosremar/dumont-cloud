@@ -197,7 +197,7 @@ export function Button({
 }
 
 // Badge Component
-export function Badge({ children, variant = 'gray', size = 'md', dot = false, className = '' }) {
+export const Badge = React.forwardRef(function Badge({ children, variant = 'gray', size = 'md', dot = false, className = '', onClick, ...props }, ref) {
   const variants = {
     primary: 'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-400',
     success: 'bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400',
@@ -220,13 +220,23 @@ export function Badge({ children, variant = 'gray', size = 'md', dot = false, cl
     gray: 'bg-gray-500',
   };
 
+  // If onClick is provided, render as a button for proper accessibility
+  const Component = onClick ? 'button' : 'span';
+  const interactiveClasses = onClick ? 'focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-1 focus:ring-offset-gray-900' : '';
+
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full font-medium ${variants[variant]} ${sizes[size]} ${className}`}>
+    <Component
+      ref={ref}
+      onClick={onClick}
+      type={onClick ? 'button' : undefined}
+      className={`inline-flex items-center gap-1.5 rounded-full font-medium ${variants[variant]} ${sizes[size]} ${interactiveClasses} ${className}`}
+      {...props}
+    >
       {dot && <span className={`w-1.5 h-1.5 rounded-full ${dotColors[variant]} ${className.includes('animate-pulse') ? 'animate-pulse' : ''}`} />}
       {children}
-    </span>
+    </Component>
   );
-}
+});
 
 // Table Component
 export function Table({ columns, data, onRowClick, emptyMessage = 'Nenhum dado encontrado' }) {

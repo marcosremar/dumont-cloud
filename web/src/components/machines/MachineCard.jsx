@@ -114,6 +114,8 @@ export default function MachineCard({
   const [focusedStrategyIndex, setFocusedStrategyIndex] = useState(-1)
   const strategyMenuRef = useRef(null)
   const strategyItemRefs = useRef([])
+  const backupInfoTriggerRef = useRef(null)
+  const backupInfoCloseRef = useRef(null)
 
   // Get current failover strategy and calculate real costs
   const currentStrategy = machine.failover_strategy || (machine.cpu_standby?.enabled ? 'cpu_standby' : 'disabled')
@@ -192,6 +194,38 @@ export default function MachineCard({
       setFocusedStrategyIndex(-1)
     }
   }, [showStrategyMenu, currentStrategy, strategyKeys])
+
+  // Close backup info popup and return focus to trigger
+  const closeBackupInfo = useCallback(() => {
+    setShowBackupInfo(false)
+    // Return focus to the trigger element
+    if (backupInfoTriggerRef.current) {
+      backupInfoTriggerRef.current.focus()
+    }
+  }, [])
+
+  // Focus close button when backup info popup opens
+  useEffect(() => {
+    if (showBackupInfo && backupInfoCloseRef.current) {
+      backupInfoCloseRef.current.focus()
+    }
+  }, [showBackupInfo])
+
+  // Handle Escape key to close backup info popup
+  useEffect(() => {
+    if (!showBackupInfo) return
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        closeBackupInfo()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [showBackupInfo, closeBackupInfo])
+
   const strategyCosts = calculateStrategyCosts(machine)
   const strategyInfo = FAILOVER_STRATEGIES_BASE[currentStrategy] || FAILOVER_STRATEGIES_BASE.disabled
   const currentStrategyCost = strategyCosts[currentStrategy] || 0
@@ -628,6 +662,7 @@ export default function MachineCard({
             {/* Backup Info Badge */}
             <div className="relative">
               <Badge
+                ref={backupInfoTriggerRef}
                 variant={hasCpuStandby ? 'primary' : 'gray'}
                 className="cursor-pointer hover:opacity-80 text-[9px]"
                 onClick={() => setShowBackupInfo(!showBackupInfo)}
@@ -653,8 +688,9 @@ export default function MachineCard({
                     CPU Backup (Espelho)
                   </span>
                   <button
-                    onClick={() => setShowBackupInfo(false)}
-                    className="p-1 rounded-lg hover:bg-white/10 text-gray-500 hover:text-gray-300"
+                    ref={backupInfoCloseRef}
+                    onClick={closeBackupInfo}
+                    className="p-1 rounded-lg hover:bg-white/10 text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-1 focus:ring-offset-gray-900"
                     aria-label="Close backup info popup"
                   >
                     <X className="w-4 h-4" />
