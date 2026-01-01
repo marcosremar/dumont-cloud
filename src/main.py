@@ -171,6 +171,27 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"⚠ PeriodicSnapshotService not started: {e}")
 
+        # Initialize GPU Reservation Scheduler (Credit Expiration & Reservation Jobs)
+        try:
+            from .services.scheduler_service import (
+                init_scheduler,
+                start_scheduler,
+                setup_reservation_jobs
+            )
+            from .config.database import SessionLocal
+
+            # Initialize and start the scheduler
+            init_scheduler(timezone="UTC")
+            start_scheduler()
+
+            # Set up reservation-related scheduled jobs (credit expiration at midnight UTC)
+            setup_reservation_jobs(SessionLocal)
+
+            agents_started.append("ReservationScheduler")
+            logger.info("✓ GPU Reservation Scheduler started (credit expiration at midnight UTC)")
+        except Exception as e:
+            logger.warning(f"⚠ GPU Reservation Scheduler not started: {e}")
+
         logger.info(f"   Started agents: {', '.join(agents_started) if agents_started else 'None'}")
         
     except Exception as e:
@@ -180,7 +201,7 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("🛑 Shutting down Dumont Cloud FastAPI application...")
-    
+
     # Stop background agents
     try:
         from .services.standby.hibernation import get_auto_hibernation_manager
@@ -189,7 +210,15 @@ async def lifespan(app: FastAPI):
             manager.stop()
             logger.info("✓ AutoHibernationManager stopped")
     except Exception as e:
-        logger.error(f"Error stopping agents: {e}")
+        logger.error(f"Error stopping AutoHibernationManager: {e}")
+
+    # Stop GPU Reservation Scheduler
+    try:
+        from .services.scheduler_service import stop_scheduler
+        stop_scheduler(wait=True)
+        logger.info("✓ GPU Reservation Scheduler stopped")
+    except Exception as e:
+        logger.error(f"Error stopping Reservation Scheduler: {e}")
 
 
 
