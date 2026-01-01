@@ -3,13 +3,13 @@
   "spec": "023-add-aria-labels-and-keyboard-navigation-to-machine",
   "state": "building",
   "subtasks": {
-    "completed": 2,
+    "completed": 3,
     "total": 17,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Add ARIA labels to action buttons",
+    "current": "Add ARIA attributes to failover strategy dropdown",
     "id": null,
     "total": 3
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 4,
+    "number": 5,
     "started_at": "2026-01-01T07:00:18.670154"
   },
-  "last_update": "2026-01-01T07:07:33.885506"
+  "last_update": "2026-01-01T07:08:50.633547"
 }

@@ -456,6 +456,9 @@ export default function MachineCard({
                   'bg-brand-500/20 text-brand-400'
                 }`}
                 onClick={() => setShowStrategyMenu(!showStrategyMenu)}
+                aria-haspopup="menu"
+                aria-expanded={showStrategyMenu}
+                aria-label={`Estratégia de failover: ${strategyInfo.label}`}
               >
                 <Shield className="w-2.5 h-2.5 mr-0.5" />
                 {strategyInfo.label}
