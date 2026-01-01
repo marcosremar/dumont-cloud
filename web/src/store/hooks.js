@@ -8,6 +8,11 @@ import { addToast, removeToast } from './slices/uiSlice'
 import { fetchInstances, fetchOffers } from './slices/instancesSlice'
 import { fetchUser, completeOnboarding } from './slices/userSlice'
 import { checkAuth, logout } from './slices/authSlice'
+import {
+  startEconomyPolling,
+  stopEconomyPolling,
+  fetchSavings,
+} from './slices/economySlice'
 
 // Re-export typed hooks
 export const useAppDispatch = useDispatch
@@ -173,5 +178,53 @@ export const useAppInit = () => {
     initialized,
     isAuthenticated,
     hasCompletedOnboarding,
+  }
+}
+
+/**
+ * Economy polling hook - automatically polls for economy/savings data
+ * Uses adaptive polling: 30s when instances are active, 60s when idle
+ */
+export const useEconomyPolling = () => {
+  const dispatch = useDispatch()
+  const { isAuthenticated } = useSelector(state => state.auth)
+  const {
+    lifetimeSavings,
+    currentSessionSavings,
+    hourlyComparison,
+    projections,
+    activeSession,
+    selectedProvider,
+    isPolling,
+    loading,
+    error,
+  } = useSelector(state => state.economy)
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    // Fetch initial savings data
+    dispatch(fetchSavings(selectedProvider))
+
+    // Start polling for real-time updates
+    dispatch(startEconomyPolling())
+
+    // Cleanup on unmount
+    return () => {
+      dispatch(stopEconomyPolling())
+    }
+  }, [dispatch, isAuthenticated, selectedProvider])
+
+  return {
+    lifetimeSavings,
+    currentSessionSavings,
+    hourlyComparison,
+    projections,
+    activeSession,
+    selectedProvider,
+    isPolling,
+    loading,
+    error,
+    hasActiveInstances: activeSession.activeInstances > 0,
   }
 }

@@ -1,10 +1,32 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { PageHeader, StatCard, Card, Button, Badge, Progress, EmptyState, StatsGrid } from '../tailadmin-ui/index'
-import { DollarSign, TrendingUp, TrendingDown, PiggyBank, Zap, Clock, Server, RefreshCw, BarChart3, ArrowUpRight, Calculator, CheckCircle, Sparkles } from 'lucide-react'
+import { DollarSign, TrendingUp, TrendingDown, PiggyBank, Zap, Clock, Server, RefreshCw, BarChart3, ArrowUpRight, Calculator, CheckCircle, Sparkles, Activity, Play, Pause } from 'lucide-react'
+import {
+    fetchSavings,
+    fetchRealtimeSavings,
+    fetchActiveSession,
+    setProvider,
+    startPolling,
+    stopPolling,
+    selectLifetimeSavings,
+    selectCurrentSessionSavings,
+    selectHourlyComparison,
+    selectProjections,
+    selectSelectedProvider,
+    selectAvailableProviders,
+    selectActiveSession,
+    selectEconomyLoading,
+    selectRealtimeLoading,
+    selectEconomyError,
+    selectIsPolling,
+    selectPollingInterval,
+    selectHasActiveInstances,
+} from '../../store/slices/economySlice'
 
 const API_BASE = ''
 
-// Dados demo para quando não há dados reais
+// Demo data fallback when API is unavailable
 const DEMO_DATA = {
     summary: {
         total_cost_dumont: 247.50,
@@ -33,12 +55,42 @@ const DEMO_DATA = {
     ]
 }
 
+// Provider pricing multipliers for demo mode
+const PROVIDER_MULTIPLIERS = {
+    AWS: 1.0,
+    GCP: 0.85,
+    Azure: 0.92,
+}
+
 export default function SavingsDashboard({ getAuthHeaders }) {
+    const dispatch = useDispatch()
+
+    // Redux selectors
+    const lifetimeSavings = useSelector(selectLifetimeSavings)
+    const currentSessionSavings = useSelector(selectCurrentSessionSavings)
+    const hourlyComparison = useSelector(selectHourlyComparison)
+    const projections = useSelector(selectProjections)
+    const selectedProvider = useSelector(selectSelectedProvider)
+    const availableProviders = useSelector(selectAvailableProviders)
+    const activeSession = useSelector(selectActiveSession)
+    const loading = useSelector(selectEconomyLoading)
+    const realtimeLoading = useSelector(selectRealtimeLoading)
+    const error = useSelector(selectEconomyError)
+    const isPolling = useSelector(selectIsPolling)
+    const pollingInterval = useSelector(selectPollingInterval)
+    const hasActiveInstances = useSelector(selectHasActiveInstances)
+
+    // Local state
     const [period, setPeriod] = useState('month')
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(null)
     const [data, setData] = useState(null)
     const [useDemo, setUseDemo] = useState(false)
+    const [localLoading, setLocalLoading] = useState(true)
+    const [liveCounter, setLiveCounter] = useState(0)
+    const [sessionStartTime, setSessionStartTime] = useState(null)
+
+    // Refs for polling cleanup
+    const pollIntervalRef = useRef(null)
+    const liveCounterRef = useRef(null)
 
     const periods = [
         { id: 'day', label: 'Hoje' },
@@ -47,13 +99,80 @@ export default function SavingsDashboard({ getAuthHeaders }) {
         { id: 'year', label: '1 ano' }
     ]
 
+    // Load initial data and setup polling
     useEffect(() => {
         loadAllData()
-    }, [period])
+        dispatch(fetchSavings(selectedProvider))
+        dispatch(fetchActiveSession(selectedProvider))
+
+        // Start polling for real-time updates
+        startRealtimePolling()
+
+        return () => {
+            stopRealtimePolling()
+        }
+    }, [period, selectedProvider])
+
+    // Live counter effect - updates every second when there are active instances
+    useEffect(() => {
+        if (hasActiveInstances && hourlyComparison.savingsPerHour > 0) {
+            if (!sessionStartTime) {
+                setSessionStartTime(Date.now())
+            }
+
+            liveCounterRef.current = setInterval(() => {
+                const elapsedSeconds = (Date.now() - (sessionStartTime || Date.now())) / 1000
+                const savingsPerSecond = hourlyComparison.savingsPerHour / 3600
+                setLiveCounter(currentSessionSavings + (savingsPerSecond * elapsedSeconds))
+            }, 100) // Update every 100ms for smooth animation
+
+            return () => {
+                if (liveCounterRef.current) {
+                    clearInterval(liveCounterRef.current)
+                }
+            }
+        } else {
+            setLiveCounter(currentSessionSavings)
+            setSessionStartTime(null)
+        }
+    }, [hasActiveInstances, hourlyComparison.savingsPerHour, currentSessionSavings, sessionStartTime])
+
+    const startRealtimePolling = useCallback(() => {
+        if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current)
+        }
+
+        dispatch(startPolling())
+
+        // Poll every 30 seconds for real-time updates
+        pollIntervalRef.current = setInterval(() => {
+            dispatch(fetchRealtimeSavings(selectedProvider))
+            dispatch(fetchActiveSession(selectedProvider))
+        }, pollingInterval)
+    }, [dispatch, selectedProvider, pollingInterval])
+
+    const stopRealtimePolling = useCallback(() => {
+        if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current)
+            pollIntervalRef.current = null
+        }
+        dispatch(stopPolling())
+    }, [dispatch])
+
+    const handleProviderChange = (provider) => {
+        dispatch(setProvider(provider))
+    }
+
+    const togglePolling = () => {
+        if (isPolling) {
+            stopRealtimePolling()
+        } else {
+            startRealtimePolling()
+        }
+    }
 
     const loadAllData = async () => {
-        setLoading(true)
-        setError(null)
+        setLocalLoading(true)
         try {
             const headers = getAuthHeaders ? getAuthHeaders() : {}
 
@@ -74,7 +193,6 @@ export default function SavingsDashboard({ getAuthHeaders }) {
             })
             setUseDemo(false)
         } catch (err) {
-            console.error('Error loading savings dashboard:', err)
             // Use demo data on error
             setData({
                 summary: DEMO_DATA.summary,
@@ -83,11 +201,34 @@ export default function SavingsDashboard({ getAuthHeaders }) {
             })
             setUseDemo(true)
         } finally {
-            setLoading(false)
+            setLocalLoading(false)
         }
     }
 
-    const summary = data?.summary || DEMO_DATA.summary
+    // Compute summary based on selected provider
+    const getSummaryForProvider = () => {
+        const baseSummary = data?.summary || DEMO_DATA.summary
+        const multiplier = PROVIDER_MULTIPLIERS[selectedProvider] || 1.0
+
+        return {
+            ...baseSummary,
+            total_cost_provider: baseSummary.total_cost_aws * multiplier,
+            savings_vs_provider: (baseSummary.total_cost_aws * multiplier) - baseSummary.total_cost_dumont,
+        }
+    }
+
+    const summary = getSummaryForProvider()
+
+    // Format duration from seconds
+    const formatDuration = (seconds) => {
+        if (!seconds) return '0m'
+        const hours = Math.floor(seconds / 3600)
+        const minutes = Math.floor((seconds % 3600) / 60)
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`
+        }
+        return `${minutes}m`
+    }
 
     return (
         <div className="p-4 md:p-6 lg:p-8">
@@ -110,6 +251,19 @@ export default function SavingsDashboard({ getAuthHeaders }) {
                             <p className="text-gray-400 mt-1">Compare seus custos reais com grandes cloud providers</p>
                         </div>
                         <div className="flex items-center gap-3">
+                            {/* Provider Toggle */}
+                            <div className="ta-tabs">
+                                {availableProviders.map(provider => (
+                                    <button
+                                        key={provider}
+                                        className={`ta-tab ${selectedProvider === provider ? 'ta-tab-active' : ''}`}
+                                        onClick={() => handleProviderChange(provider)}
+                                    >
+                                        {provider}
+                                    </button>
+                                ))}
+                            </div>
+
                             {/* Period Tabs */}
                             <div className="ta-tabs">
                                 {periods.map(p => (
@@ -122,13 +276,24 @@ export default function SavingsDashboard({ getAuthHeaders }) {
                                     </button>
                                 ))}
                             </div>
+
+                            {/* Polling Toggle */}
+                            <button
+                                onClick={togglePolling}
+                                className={`ta-btn ta-btn-sm ${isPolling ? 'ta-btn-success' : 'ta-btn-outline'}`}
+                                title={isPolling ? 'Atualização automática ativa' : 'Atualização automática pausada'}
+                            >
+                                {isPolling ? <Play size={14} /> : <Pause size={14} />}
+                                {isPolling ? 'Live' : 'Pausado'}
+                            </button>
+
                             <button
                                 onClick={loadAllData}
-                                disabled={loading}
+                                disabled={localLoading}
                                 className="ta-btn ta-btn-outline ta-btn-sm"
                             >
-                                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-                                {loading ? 'Atualizando...' : 'Atualizar'}
+                                <RefreshCw size={16} className={localLoading ? 'animate-spin' : ''} />
+                                {localLoading ? 'Atualizando...' : 'Atualizar'}
                             </button>
                         </div>
                     </div>
@@ -145,21 +310,90 @@ export default function SavingsDashboard({ getAuthHeaders }) {
                     </div>
                 )}
 
+                {/* Live Session Tracking Card */}
+                {hasActiveInstances && (
+                    <div className="mb-6 animate-fade-in">
+                        <div className="ta-card hover-glow border-brand-500/30 bg-gradient-to-r from-brand-500/5 to-transparent">
+                            <div className="ta-card-body">
+                                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative">
+                                            <div className="w-12 h-12 rounded-full bg-brand-500/20 flex items-center justify-center">
+                                                <Activity size={24} className="text-brand-400" />
+                                            </div>
+                                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-500 rounded-full animate-pulse" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-400">Sessão Ativa</p>
+                                            <p className="text-2xl font-bold text-white">
+                                                {activeSession.activeInstances} {activeSession.activeInstances === 1 ? 'instância' : 'instâncias'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Real-time Savings Counter */}
+                                    <div className="text-center md:text-right">
+                                        <p className="text-xs text-brand-300/70 uppercase tracking-wide mb-1">Economia em Tempo Real</p>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-3xl md:text-4xl font-extrabold text-brand-400 tabular-nums">
+                                                ${liveCounter.toFixed(4)}
+                                            </span>
+                                            <span className="text-sm text-brand-300/60">vs {selectedProvider}</span>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            +${hourlyComparison.savingsPerHour.toFixed(2)}/hora | Duração: {formatDuration(activeSession.sessionDuration)}
+                                        </p>
+                                    </div>
+
+                                    {/* Session Stats */}
+                                    <div className="flex gap-6">
+                                        <div className="text-center">
+                                            <p className="text-lg font-bold text-white">${activeSession.currentCostDumont.toFixed(2)}</p>
+                                            <p className="text-xs text-gray-500">Custo Dumont</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-lg font-bold text-orange-400">${activeSession.currentCostProvider.toFixed(2)}</p>
+                                            <p className="text-xs text-gray-500">Custo {selectedProvider}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* No Active Instances Message */}
+                {!hasActiveInstances && (
+                    <div className="mb-6 animate-fade-in">
+                        <div className="ta-card border-gray-700/50 bg-gray-800/30">
+                            <div className="ta-card-body">
+                                <div className="flex items-center gap-4 text-gray-400">
+                                    <Activity size={24} className="opacity-50" />
+                                    <div>
+                                        <p className="font-medium text-gray-300">Nenhuma instância ativa</p>
+                                        <p className="text-sm">Inicie uma instância GPU para ver economia em tempo real</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Big Savings Highlight */}
                 <div className="spot-highlight mb-8 animate-fade-in">
                     <div className="flex flex-col md:flex-row items-center justify-center gap-6 relative z-10">
                         <div className="flex items-center gap-4">
                             <Sparkles size={40} className="text-brand-400" />
                             <div className="text-center md:text-left">
-                                <span className="block text-xs text-brand-300/70 uppercase font-semibold tracking-wide">Economia Total Este Mês</span>
-                                <span className="block text-4xl md:text-5xl font-extrabold text-white">${summary.savings_vs_aws.toFixed(2)}</span>
+                                <span className="block text-xs text-brand-300/70 uppercase font-semibold tracking-wide">Economia Total vs {selectedProvider}</span>
+                                <span className="block text-4xl md:text-5xl font-extrabold text-white">${summary.savings_vs_provider?.toFixed(2) || summary.savings_vs_aws.toFixed(2)}</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 px-6 py-3 bg-white/10 rounded-xl">
                             <CheckCircle size={24} className="text-brand-400" />
                             <div>
                                 <span className="block text-2xl font-bold text-brand-300">{summary.savings_percentage_avg}%</span>
-                                <span className="block text-xs text-brand-200/60">mais barato que AWS</span>
+                                <span className="block text-xs text-brand-200/60">mais barato que {selectedProvider}</span>
                             </div>
                         </div>
                     </div>
@@ -181,7 +415,7 @@ export default function SavingsDashboard({ getAuthHeaders }) {
                         <div className="mt-3 pt-3 border-t border-white/5">
                             <span className="text-xs text-brand-400 font-medium flex items-center gap-1">
                                 <TrendingDown size={12} />
-                                -{summary.savings_percentage_avg}% vs AWS
+                                -{summary.savings_percentage_avg}% vs {selectedProvider}
                             </span>
                         </div>
                     </div>
@@ -189,9 +423,9 @@ export default function SavingsDashboard({ getAuthHeaders }) {
                     <div className="stat-card animate-fade-in" style={{ animationDelay: '50ms' }}>
                         <div className="flex items-start justify-between">
                             <div>
-                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">AWS Pagaria</p>
-                                <p className="text-2xl font-bold text-orange-400">${summary.total_cost_aws.toFixed(2)}</p>
-                                <p className="text-xs text-gray-500 mt-1">Mesmo workload na AWS</p>
+                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">{selectedProvider} Pagaria</p>
+                                <p className="text-2xl font-bold text-orange-400">${(summary.total_cost_provider || summary.total_cost_aws).toFixed(2)}</p>
+                                <p className="text-xs text-gray-500 mt-1">Mesmo workload na {selectedProvider}</p>
                             </div>
                             <div className="stat-card-icon bg-orange-500/10 text-orange-400">
                                 <Server size={20} />
@@ -202,12 +436,12 @@ export default function SavingsDashboard({ getAuthHeaders }) {
                     <div className="stat-card animate-fade-in" style={{ animationDelay: '100ms' }}>
                         <div className="flex items-start justify-between">
                             <div>
-                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">GCP Pagaria</p>
-                                <p className="text-2xl font-bold text-blue-400">${(summary.total_cost_gcp || 756.80).toFixed(2)}</p>
-                                <p className="text-xs text-gray-500 mt-1">Mesmo workload no GCP</p>
+                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Projeção Mensal</p>
+                                <p className="text-2xl font-bold text-blue-400">${(projections.monthly || (summary.savings_vs_provider * 1.2)).toFixed(2)}</p>
+                                <p className="text-xs text-gray-500 mt-1">Economia projetada</p>
                             </div>
                             <div className="stat-card-icon bg-blue-500/10 text-blue-400">
-                                <Server size={20} />
+                                <TrendingUp size={20} />
                             </div>
                         </div>
                     </div>
@@ -238,7 +472,7 @@ export default function SavingsDashboard({ getAuthHeaders }) {
                                     </div>
                                     <div>
                                         <h3 className="ta-card-title">Comparativo de Custos</h3>
-                                        <p className="text-sm text-gray-400">Dumont Cloud vs Big Cloud Providers</p>
+                                        <p className="text-sm text-gray-400">Dumont Cloud vs {selectedProvider}</p>
                                     </div>
                                 </div>
                                 <span className="ta-badge ta-badge-success">{summary.savings_percentage_avg}% mais barato</span>
@@ -260,21 +494,21 @@ export default function SavingsDashboard({ getAuthHeaders }) {
                                     <div className="h-10 bg-white/5 rounded-xl overflow-hidden border border-white/5">
                                         <div
                                             className="h-full bg-gradient-to-r from-brand-600 to-brand-400 rounded-xl flex items-center justify-end pr-4 transition-all duration-700"
-                                            style={{ width: `${(summary.total_cost_dumont / summary.total_cost_aws) * 100}%` }}
+                                            style={{ width: `${(summary.total_cost_dumont / (summary.total_cost_provider || summary.total_cost_aws)) * 100}%` }}
                                         >
-                                            <span className="text-xs font-bold text-white drop-shadow-md">{Math.round((summary.total_cost_dumont / summary.total_cost_aws) * 100)}%</span>
+                                            <span className="text-xs font-bold text-white drop-shadow-md">{Math.round((summary.total_cost_dumont / (summary.total_cost_provider || summary.total_cost_aws)) * 100)}%</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* AWS */}
+                                {/* Selected Provider */}
                                 <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
                                     <div className="flex justify-between items-center mb-2">
                                         <div className="flex items-center gap-2">
                                             <div className="w-3 h-3 rounded-full bg-orange-500 shadow-lg shadow-orange-500/30"></div>
-                                            <span className="text-sm font-medium text-white">Amazon AWS</span>
+                                            <span className="text-sm font-medium text-white">{selectedProvider}</span>
                                         </div>
-                                        <span className="text-sm font-bold text-orange-400">${summary.total_cost_aws.toFixed(2)}</span>
+                                        <span className="text-sm font-bold text-orange-400">${(summary.total_cost_provider || summary.total_cost_aws).toFixed(2)}</span>
                                     </div>
                                     <div className="h-10 bg-white/5 rounded-xl overflow-hidden border border-white/5">
                                         <div
@@ -282,44 +516,6 @@ export default function SavingsDashboard({ getAuthHeaders }) {
                                             style={{ width: '100%' }}
                                         >
                                             <span className="text-xs font-bold text-white drop-shadow-md">100%</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* GCP */}
-                                <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-3 h-3 rounded-full bg-blue-500 shadow-lg shadow-blue-500/30"></div>
-                                            <span className="text-sm font-medium text-white">Google Cloud</span>
-                                        </div>
-                                        <span className="text-sm font-bold text-blue-400">${(summary.total_cost_gcp || 756.80).toFixed(2)}</span>
-                                    </div>
-                                    <div className="h-10 bg-white/5 rounded-xl overflow-hidden border border-white/5">
-                                        <div
-                                            className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-xl flex items-center justify-end pr-4 transition-all duration-700"
-                                            style={{ width: `${((summary.total_cost_gcp || 756.80) / summary.total_cost_aws) * 100}%` }}
-                                        >
-                                            <span className="text-xs font-bold text-white drop-shadow-md">{Math.round(((summary.total_cost_gcp || 756.80) / summary.total_cost_aws) * 100)}%</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Azure */}
-                                <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-3 h-3 rounded-full bg-sky-500 shadow-lg shadow-sky-500/30"></div>
-                                            <span className="text-sm font-medium text-white">Microsoft Azure</span>
-                                        </div>
-                                        <span className="text-sm font-bold text-sky-400">${(summary.total_cost_azure || 823.40).toFixed(2)}</span>
-                                    </div>
-                                    <div className="h-10 bg-white/5 rounded-xl overflow-hidden border border-white/5">
-                                        <div
-                                            className="h-full bg-gradient-to-r from-sky-600 to-sky-400 rounded-xl flex items-center justify-end pr-4 transition-all duration-700"
-                                            style={{ width: `${((summary.total_cost_azure || 823.40) / summary.total_cost_aws) * 100}%` }}
-                                        >
-                                            <span className="text-xs font-bold text-white drop-shadow-md">{Math.round(((summary.total_cost_azure || 823.40) / summary.total_cost_aws) * 100)}%</span>
                                         </div>
                                     </div>
                                 </div>
@@ -346,7 +542,7 @@ export default function SavingsDashboard({ getAuthHeaders }) {
                             </div>
 
                             <div className="space-y-3 mb-4">
-                                <div className="flex justify-between items-center p-3 bg-white/[0.03] rounded-lg hover:bg-white/[0.05] transition-colors">
+                                <div className={`flex justify-between items-center p-3 rounded-lg transition-colors ${selectedProvider === 'AWS' ? 'bg-brand-500/10 border border-brand-500/20' : 'bg-white/[0.03] hover:bg-white/[0.05]'}`}>
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 rounded-full bg-orange-500"></div>
                                         <span className="text-sm text-gray-400">vs AWS</span>
@@ -355,7 +551,7 @@ export default function SavingsDashboard({ getAuthHeaders }) {
                                         +${summary.savings_vs_aws.toFixed(2)}
                                     </span>
                                 </div>
-                                <div className="flex justify-between items-center p-3 bg-white/[0.03] rounded-lg hover:bg-white/[0.05] transition-colors">
+                                <div className={`flex justify-between items-center p-3 rounded-lg transition-colors ${selectedProvider === 'GCP' ? 'bg-brand-500/10 border border-brand-500/20' : 'bg-white/[0.03] hover:bg-white/[0.05]'}`}>
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                                         <span className="text-sm text-gray-400">vs GCP</span>
@@ -364,7 +560,7 @@ export default function SavingsDashboard({ getAuthHeaders }) {
                                         +${(summary.savings_vs_gcp || 509.30).toFixed(2)}
                                     </span>
                                 </div>
-                                <div className="flex justify-between items-center p-3 bg-white/[0.03] rounded-lg hover:bg-white/[0.05] transition-colors">
+                                <div className={`flex justify-between items-center p-3 rounded-lg transition-colors ${selectedProvider === 'Azure' ? 'bg-brand-500/10 border border-brand-500/20' : 'bg-white/[0.03] hover:bg-white/[0.05]'}`}>
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 rounded-full bg-sky-500"></div>
                                         <span className="text-sm text-gray-400">vs Azure</span>
@@ -418,33 +614,37 @@ export default function SavingsDashboard({ getAuthHeaders }) {
                                         <th>Recurso</th>
                                         <th>Horas</th>
                                         <th>Custo Dumont</th>
-                                        <th>Custo AWS</th>
+                                        <th>Custo {selectedProvider}</th>
                                         <th>Economia</th>
                                         <th>%</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {(data?.breakdown || DEMO_DATA.breakdown).map((item, idx) => (
-                                        <tr key={idx} className="animate-fade-in hover:bg-white/[0.02] transition-colors" style={{ animationDelay: `${idx * 50}ms` }}>
-                                            <td>
-                                                <span className="gpu-badge">{item.name}</span>
-                                            </td>
-                                            <td>
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 text-xs text-gray-300">
-                                                    <Clock size={12} className="text-blue-400" />
-                                                    {item.hours}h
-                                                </span>
-                                            </td>
-                                            <td className="font-mono text-brand-400 font-semibold">${item.cost_dumont.toFixed(2)}</td>
-                                            <td className="font-mono text-gray-400">${item.cost_aws.toFixed(2)}</td>
-                                            <td className="font-mono text-brand-400 font-bold">${item.savings.toFixed(2)}</td>
-                                            <td>
-                                                <span className="ta-badge ta-badge-success">
-                                                    {Math.round((item.savings / item.cost_aws) * 100)}%
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {(data?.breakdown || DEMO_DATA.breakdown).map((item, idx) => {
+                                        const providerCost = item.cost_aws * (PROVIDER_MULTIPLIERS[selectedProvider] || 1.0)
+                                        const savings = providerCost - item.cost_dumont
+                                        return (
+                                            <tr key={idx} className="animate-fade-in hover:bg-white/[0.02] transition-colors" style={{ animationDelay: `${idx * 50}ms` }}>
+                                                <td>
+                                                    <span className="gpu-badge">{item.name}</span>
+                                                </td>
+                                                <td>
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 text-xs text-gray-300">
+                                                        <Clock size={12} className="text-blue-400" />
+                                                        {item.hours}h
+                                                    </span>
+                                                </td>
+                                                <td className="font-mono text-brand-400 font-semibold">${item.cost_dumont.toFixed(2)}</td>
+                                                <td className="font-mono text-gray-400">${providerCost.toFixed(2)}</td>
+                                                <td className="font-mono text-brand-400 font-bold">${savings.toFixed(2)}</td>
+                                                <td>
+                                                    <span className="ta-badge ta-badge-success">
+                                                        {Math.round((savings / providerCost) * 100)}%
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
                                 </tbody>
                             </table>
                         </div>
@@ -458,11 +658,17 @@ export default function SavingsDashboard({ getAuthHeaders }) {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                                    <span className="text-xs text-gray-400">AWS (Comparação)</span>
+                                    <span className="text-xs text-gray-400">{selectedProvider} (Comparação)</span>
                                 </div>
                             </div>
-                            <div className="text-xs text-gray-500">
-                                Total de {(data?.breakdown || DEMO_DATA.breakdown).reduce((sum, item) => sum + item.hours, 0)} horas de GPU utilizadas
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                                <span>Total de {(data?.breakdown || DEMO_DATA.breakdown).reduce((sum, item) => sum + item.hours, 0)} horas de GPU utilizadas</span>
+                                {isPolling && (
+                                    <span className="flex items-center gap-1 text-brand-400">
+                                        <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+                                        Atualizando a cada {pollingInterval / 1000}s
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>

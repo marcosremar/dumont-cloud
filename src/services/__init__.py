@@ -54,6 +54,9 @@ from .failover_orchestrator import (
     execute_orchestrated_failover,
 )
 
+# Pricing and Economy services
+from .pricing_service import PricingService, get_pricing_service
+
 # Other services
 from .deploy_wizard import DeployWizardService, DeployConfig, get_wizard_service
 
@@ -101,6 +104,9 @@ __all__ = [
     "OrchestratedFailoverResult",
     "get_failover_orchestrator",
     "execute_orchestrated_failover",
+    # Pricing and Economy
+    "PricingService",
+    "get_pricing_service",
     # Other
     "DeployWizardService",
     "DeployConfig",
