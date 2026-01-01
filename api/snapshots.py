@@ -109,6 +109,59 @@ def get_snapshot_config(instance_id: str):
         db.close()
 
 
+@snapshots_bp.route('/snapshots/status', methods=['GET'])
+def get_snapshots_status():
+    """
+    Get aggregate snapshot status across all instances.
+
+    Returns an overview of snapshot health including:
+    - total_instances: Total number of instances with snapshot configs
+    - enabled_count: Number of instances with snapshots enabled
+    - disabled_count: Number of instances with snapshots disabled
+    - status_counts: Count of instances by status (success, failure, overdue, pending, disabled)
+    - instances: List of all instance configurations with their status
+    """
+    db = SessionLocal()
+    try:
+        configs = db.query(SnapshotConfig).all()
+
+        # Initialize counters
+        status_counts = {
+            'success': 0,
+            'failure': 0,
+            'overdue': 0,
+            'pending': 0,
+            'disabled': 0,
+        }
+        enabled_count = 0
+        disabled_count = 0
+        instances = []
+
+        for config in configs:
+            status = config.status
+            status_counts[status] = status_counts.get(status, 0) + 1
+
+            if config.enabled:
+                enabled_count += 1
+            else:
+                disabled_count += 1
+
+            instance_data = config.to_dict()
+            instance_data['status'] = status
+            instances.append(instance_data)
+
+        return jsonify({
+            'total_instances': len(configs),
+            'enabled_count': enabled_count,
+            'disabled_count': disabled_count,
+            'status_counts': status_counts,
+            'healthy': status_counts['failure'] == 0 and status_counts['overdue'] == 0,
+            'instances': instances,
+        })
+    finally:
+        db.close()
+
+
 @snapshots_bp.route('/snapshots/config/<instance_id>', methods=['POST'])
 def update_snapshot_config(instance_id: str):
     """
