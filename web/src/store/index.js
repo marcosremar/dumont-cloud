@@ -17,6 +17,7 @@ import affiliateSlice from './slices/affiliateSlice'
 import currencySlice from './slices/currencySlice'
 import reservationSlice from './reservationSlice'
 import regionsSlice from './slices/regionsSlice'
+import templateReducer from './slices/templateSlice'
 
 export const store = configureStore({
   reducer: {
@@ -34,6 +35,7 @@ export const store = configureStore({
     currency: currencySlice,
     reservations: reservationSlice,
     regions: regionsSlice,
+    templates: templateReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -1552,6 +1552,9 @@ export function AlertDialog({ children, open, onOpenChange }) {
     <AlertDialogContext.Provider value={{ open, onOpenChange }}>
       <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm" onClick={() => onOpenChange?.(false)} />
       <div className="fixed inset-0 z-[1000] flex items-center justify-center pointer-events-none p-4">
+    <AlertDialogContext.Provider value={{ open, onOpenChange }}>
+      <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm" onClick={() => onOpenChange?.(false)} />
+      <div className="fixed inset-0 z-[1000] flex items-center justify-center pointer-events-none p-4">
         <div className="pointer-events-auto relative">
           {children}
         </div>
@@ -1582,6 +1585,32 @@ export function AlertDialogContent({ children, className = '' }) {
     >
       {children}
     </div>
+  const context = useContext(AlertDialogContext);
+  const { open, onOpenChange } = context || {};
+  const baseId = useId();
+  const titleId = `${baseId}-title`;
+  const descriptionId = `${baseId}-description`;
+  const contentRef = useRef(null);
+
+  // Trap focus within the dialog when it's open
+  useFocusTrap(contentRef, !!open);
+
+  // Handle Escape key to close the dialog
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onOpenChange?.(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onOpenChange]);
+
+  return (
   const context = useContext(AlertDialogContext);
   const { open, onOpenChange } = context || {};
   const baseId = useId();

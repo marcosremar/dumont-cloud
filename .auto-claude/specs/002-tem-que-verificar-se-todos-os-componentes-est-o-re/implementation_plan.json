@@ -532,5 +532,8 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2025-12-31T22:04:40.311280+00:00"
+  "last_updated": "2025-12-31T22:04:40.311280+00:00",
+  "status": "done",
+  "planStatus": "completed",
+  "updated_at": "2026-01-01T08:46:45.788Z"
 }

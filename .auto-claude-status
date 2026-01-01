@@ -104,6 +104,12 @@
     "completed": 13,
     "total": 13,
     "in_progress": 0,
+  "spec": "026-add-focus-trapping-and-role-attributes-to-alertdia",
+  "state": "building",
+  "subtasks": {
+    "completed": 14,
+    "total": 15,
+    "in_progress": 1,
     "failed": 0
   },
   "phase": {
@@ -193,4 +199,8 @@
     "started_at": "2025-12-31T22:20:01.875038"
   },
   "last_update": "2025-12-31T22:26:40.600906"
+    "number": 16,
+    "started_at": "2026-01-01T07:00:10.499713"
+  },
+  "last_update": "2026-01-01T07:38:07.271554"
 }

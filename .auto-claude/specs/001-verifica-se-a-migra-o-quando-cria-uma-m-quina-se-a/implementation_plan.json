@@ -1,7 +1,7 @@
 {
-  "feature": "Verificar e Corrigir Migra\u00e7\u00e3o GPU-para-CPU",
+  "feature": "Verificar e Corrigir Migração GPU-para-CPU",
   "workflow_type": "investigation",
-  "workflow_rationale": "Esta \u00e9 uma tarefa de verifica\u00e7\u00e3o de funcionalidade existente. O objetivo \u00e9 confirmar que a migra\u00e7\u00e3o GPU\u2192CPU funciona via testes Playwright, identificar problemas e corrigir se necess\u00e1rio. N\u00e3o \u00e9 desenvolvimento de nova feature.",
+  "workflow_rationale": "Esta é uma tarefa de verificação de funcionalidade existente. O objetivo é confirmar que a migração GPU→CPU funciona via testes Playwright, identificar problemas e corrigir se necessário. Não é desenvolvimento de nova feature.",
   "phases": [
     {
       "id": "phase-1-reproduce",
@@ -13,7 +13,7 @@
       "subtasks": [
         {
           "id": "subtask-1-1",
-          "description": "Instalar depend\u00eancias Playwright no diret\u00f3rio tests/",
+          "description": "Instalar dependências Playwright no diretório tests/",
           "service": "tests",
           "files_to_modify": [],
           "files_to_create": [],
@@ -31,7 +31,7 @@
         },
         {
           "id": "subtask-1-2",
-          "description": "Verificar instala\u00e7\u00e3o de browsers Playwright",
+          "description": "Verificar instalação de browsers Playwright",
           "service": "tests",
           "files_to_modify": [],
           "files_to_create": [],
@@ -47,7 +47,7 @@
         },
         {
           "id": "subtask-1-3",
-          "description": "Iniciar servi\u00e7o frontend web para testes",
+          "description": "Iniciar serviço frontend web para testes",
           "service": "web",
           "files_to_modify": [],
           "files_to_create": [],
@@ -77,14 +77,14 @@
       "subtasks": [
         {
           "id": "subtask-2-1",
-          "description": "Executar teste de autentica\u00e7\u00e3o (auth.setup.js) para verificar login",
+          "description": "Executar teste de autenticação (auth.setup.js) para verificar login",
           "service": "tests",
           "files_to_modify": [],
           "files_to_create": [],
           "patterns_from": [
             "tests/auth.setup.js"
           ],
-          "expected_output": "Documento com: (1) Status do auth setup, (2) Erros encontrados se houver, (3) Configura\u00e7\u00f5es necess\u00e1rias",
+          "expected_output": "Documento com: (1) Status do auth setup, (2) Erros encontrados se houver, (3) Configurações necessárias",
           "verification": {
             "type": "command",
             "command": "cd tests && USE_DEMO_MODE=true npx playwright test auth.setup.js --project=setup 2>&1 | head -50",
@@ -103,7 +103,7 @@
           "patterns_from": [
             "tests/e2e-journeys/cpu-standby-failover.spec.js"
           ],
-          "expected_output": "Relat\u00f3rio detalhado: (1) Quantos testes passaram/falharam, (2) Mensagens de erro, (3) Root cause de falhas",
+          "expected_output": "Relatório detalhado: (1) Quantos testes passaram/falharam, (2) Mensagens de erro, (3) Root cause de falhas",
           "verification": {
             "type": "command",
             "command": "cd tests && USE_DEMO_MODE=true npx playwright test e2e-journeys/cpu-standby-failover.spec.js --reporter=line 2>&1 | tail -100",
@@ -122,7 +122,7 @@
           "patterns_from": [
             "tests/e2e-journeys/failover-complete-journeys.spec.js"
           ],
-          "expected_output": "Relat\u00f3rio: (1) Status de cada jornada de teste, (2) Erros espec\u00edficos, (3) Componentes UI problem\u00e1ticos",
+          "expected_output": "Relatório: (1) Status de cada jornada de teste, (2) Erros específicos, (3) Componentes UI problemáticos",
           "verification": {
             "type": "command",
             "command": "cd tests && USE_DEMO_MODE=true npx playwright test e2e-journeys/failover-complete-journeys.spec.js --reporter=line 2>&1 | tail -100",
@@ -134,17 +134,17 @@
         },
         {
           "id": "subtask-2-4",
-          "description": "Gerar relat\u00f3rio HTML completo e documentar todos os problemas encontrados",
+          "description": "Gerar relatório HTML completo e documentar todos os problemas encontrados",
           "service": "tests",
           "files_to_modify": [],
           "files_to_create": [
             "tests/INVESTIGATION_REPORT.md"
           ],
           "patterns_from": [],
-          "expected_output": "Documento INVESTIGATION_REPORT.md com: (1) Resumo de todos os testes, (2) Root cause de cada falha, (3) Proposta de corre\u00e7\u00e3o",
+          "expected_output": "Documento INVESTIGATION_REPORT.md com: (1) Resumo de todos os testes, (2) Root cause de cada falha, (3) Proposta de correção",
           "verification": {
             "type": "manual",
-            "instructions": "Verificar se INVESTIGATION_REPORT.md foi criado com an\u00e1lise completa dos problemas"
+            "instructions": "Verificar se INVESTIGATION_REPORT.md foi criado com análise completa dos problemas"
           },
           "status": "completed",
           "notes": "Created comprehensive INVESTIGATION_REPORT.md with: (1) Analysis of 4 test files with 47 total tests, (2) Identified 60% tests with weak assertions, (3) Found 4 critical gaps for migration testing, (4) Documented 6 recommended priority fixes with code examples, (5) Provided detailed test execution instructions",
@@ -156,7 +156,7 @@
       "id": "phase-3-fix",
       "name": "Corrigir Problemas Identificados",
       "type": "implementation",
-      "description": "Implementar corre\u00e7\u00f5es para testes ou funcionalidade quebrada (BLOQUEADO at\u00e9 fase 2 completar)",
+      "description": "Implementar correções para testes ou funcionalidade quebrada (BLOQUEADO até fase 2 completar)",
       "depends_on": [
         "phase-2-investigate"
       ],
@@ -176,7 +176,7 @@
           "notes": "Fixed Playwright selectors: Added test.use() config for headless mode, changed BASE_PATH from /app to /demo-app, added helper functions (goToMachines, goToSettings, goToFailoverReport, goToDashboard), updated all navigation to use helpers. Commit: bda4658",
           "verification": {
             "type": "command",
-            "command": "cd tests && USE_DEMO_MODE=true npx playwright test e2e-journeys/cpu-standby-failover.spec.js --reporter=line 2>&1 | grep -E '(passed|failed|\u2713|\u2717)'",
+            "command": "cd tests && USE_DEMO_MODE=true npx playwright test e2e-journeys/cpu-standby-failover.spec.js --reporter=line 2>&1 | grep -E '(passed|failed|✓|✗)'",
             "expected": "Tests pass or show clear progress"
           },
           "status": "completed",
@@ -184,7 +184,7 @@
         },
         {
           "id": "subtask-3-2",
-          "description": "Corrigir seletores em failover-complete-journeys.spec.js se necess\u00e1rio",
+          "description": "Corrigir seletores em failover-complete-journeys.spec.js se necessário",
           "service": "tests",
           "files_to_modify": [
             "tests/e2e-journeys/failover-complete-journeys.spec.js"
@@ -193,10 +193,10 @@
           "patterns_from": [
             "tests/e2e-journeys/cpu-standby-failover.spec.js"
           ],
-          "notes": "Corrigidos seletores em failover-complete-journeys.spec.js seguindo o padr\u00e3o de cpu-standby-failover.spec.js: adicionado test.use() com headless/viewport, criadas fun\u00e7\u00f5es helper de navega\u00e7\u00e3o (goToMachines, goToSettings, goToFailoverReport, goToDashboard), substitu\u00eddos cliques em links por page.goto() direto, adicionado .first() em todos os seletores, padronizado uso de .catch(() => false). Commit: 86be727",
+          "notes": "Corrigidos seletores em failover-complete-journeys.spec.js seguindo o padrão de cpu-standby-failover.spec.js: adicionado test.use() com headless/viewport, criadas funções helper de navegação (goToMachines, goToSettings, goToFailoverReport, goToDashboard), substituídos cliques em links por page.goto() direto, adicionado .first() em todos os seletores, padronizado uso de .catch(() => false). Commit: 86be727",
           "verification": {
             "type": "command",
-            "command": "cd tests && USE_DEMO_MODE=true npx playwright test e2e-journeys/failover-complete-journeys.spec.js --reporter=line 2>&1 | grep -E '(passed|failed|\u2713|\u2717)'",
+            "command": "cd tests && USE_DEMO_MODE=true npx playwright test e2e-journeys/failover-complete-journeys.spec.js --reporter=line 2>&1 | grep -E '(passed|failed|✓|✗)'",
             "expected": "Tests pass or show improvement"
           },
           "status": "completed",
@@ -204,7 +204,7 @@
         },
         {
           "id": "subtask-3-3",
-          "description": "Atualizar auth.setup.js se necess\u00e1rio para melhor suporte a demo mode",
+          "description": "Atualizar auth.setup.js se necessário para melhor suporte a demo mode",
           "service": "tests",
           "files_to_modify": [
             "tests/auth.setup.js"
@@ -214,7 +214,7 @@
           "notes": "Updated auth.setup.js for better demo mode support: Added test.use() config for headless mode, DEMO_APP_PATH constant, .first() to all selectors, .catch(() => false) for error handling, changed to 'domcontentloaded' wait state, added fallback login via Enter key, try-catch for redirect timeout, expanded skip modal selectors, and final navigation verification for demo mode. Commit: 1c06d87",
           "verification": {
             "type": "command",
-            "command": "cd tests && USE_DEMO_MODE=true npx playwright test auth.setup.js --project=setup 2>&1 | grep -E '(passed|failed|\u2713)'",
+            "command": "cd tests && USE_DEMO_MODE=true npx playwright test auth.setup.js --project=setup 2>&1 | grep -E '(passed|failed|✓)'",
             "expected": "Auth setup passes"
           },
           "status": "completed",
@@ -224,7 +224,7 @@
     },
     {
       "id": "phase-4-harden",
-      "name": "Valida\u00e7\u00e3o Final e Documenta\u00e7\u00e3o",
+      "name": "Validação Final e Documentação",
       "type": "integration",
       "description": "Executar suite completa de testes de failover e documentar resultados finais",
       "depends_on": [
@@ -234,7 +234,7 @@
       "subtasks": [
         {
           "id": "subtask-4-1",
-          "description": "Executar todos os testes de failover em sequ\u00eancia e gerar relat\u00f3rio",
+          "description": "Executar todos os testes de failover em sequência e gerar relatório",
           "all_services": true,
           "files_to_modify": [],
           "files_to_create": [],
@@ -245,7 +245,7 @@
               "Iniciar frontend em localhost:5173",
               "Executar npx playwright test e2e-journeys/*failover*.spec.js",
               "Verificar que todos os testes passam",
-              "Gerar relat\u00f3rio HTML com npx playwright show-report"
+              "Gerar relatório HTML com npx playwright show-report"
             ]
           },
           "status": "completed",
@@ -254,7 +254,7 @@
         },
         {
           "id": "subtask-4-2",
-          "description": "Documentar status final dos testes e corre\u00e7\u00f5es aplicadas",
+          "description": "Documentar status final dos testes e correções aplicadas",
           "service": "tests",
           "files_to_modify": [],
           "files_to_create": [
@@ -263,7 +263,7 @@
           "patterns_from": [],
           "verification": {
             "type": "manual",
-            "instructions": "Verificar que FINAL_TEST_STATUS.md documenta: (1) Testes que passam, (2) Corre\u00e7\u00f5es aplicadas, (3) Pr\u00f3ximos passos"
+            "instructions": "Verificar que FINAL_TEST_STATUS.md documenta: (1) Testes que passam, (2) Correções aplicadas, (3) Próximos passos"
           },
           "status": "completed",
           "notes": "Created tests/FINAL_TEST_STATUS.md documenting: (1) All 47 tests across 3 spec files with their status, (2) 4 commits with corrections applied in Phase 3 (fixes to selectors, navigation helpers, demo mode support), (3) Test execution commands and expected results, (4) Known limitations and next steps. Commit: bbb4cc5",
@@ -297,9 +297,9 @@
     "security_scanning_required": false,
     "staging_deployment_required": false,
     "acceptance_criteria": [
-      "Playwright est\u00e1 instalado e funcional",
-      "Testes de CPU Standby/Failover executam sem erros cr\u00edticos",
-      "UI de migra\u00e7\u00e3o GPU\u2192CPU \u00e9 validada pelos testes",
+      "Playwright está instalado e funcional",
+      "Testes de CPU Standby/Failover executam sem erros críticos",
+      "UI de migração GPU→CPU é validada pelos testes",
       "Nenhum teste existente regrediu"
     ],
     "verification_steps": [
@@ -399,9 +399,9 @@
     "ready_for_qa_revalidation": false
   },
   "last_updated": "2026-01-01T00:26:40.616766+00:00",
-  "status": "human_review",
-  "planStatus": "review",
-  "updated_at": "2025-12-31T21:46:13.540Z",
+  "status": "done",
+  "planStatus": "completed",
+  "updated_at": "2026-01-01T08:46:36.516Z",
   "recoveryNote": "Task recovered from stuck state at 2025-12-31T21:46:13.540Z",
   "qa_iteration_history": [
     {
