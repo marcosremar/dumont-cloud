@@ -11,6 +11,7 @@ from .email_verification_token import EmailVerificationToken
 from .snapshot_metadata import SnapshotMetadata, SnapshotStatus, DeletionReason
 from .email_preferences import EmailPreference
 from .email_delivery_log import EmailDeliveryLog
+from .shareable_report import ShareableReport
 
 __all__ = [
     'PriceHistory',
@@ -42,4 +43,6 @@ __all__ = [
     # Email reports
     'EmailPreference',
     'EmailDeliveryLog',
+    # Shareable reports
+    'ShareableReport',
 ]
