@@ -178,6 +178,16 @@ class RestoreSnapshotResponse(BaseModel):
     errors: List[str]
 
 
+class RetentionPolicyResponse(BaseModel):
+    """Retention policy response"""
+    retention_days: int = Field(..., description="Default retention days")
+    min_snapshots_to_keep: int = Field(..., description="Minimum snapshots to keep")
+    max_snapshots_per_instance: int = Field(..., description="Maximum snapshots per instance")
+    cleanup_enabled: bool = Field(..., description="Whether automatic cleanup is enabled")
+    instance_id: Optional[str] = Field(None, description="Instance ID (null for global policy)")
+    is_instance_policy: bool = Field(False, description="Whether this is an instance-specific policy")
+
+
 # Settings Responses
 
 class SettingsResponse(BaseModel):

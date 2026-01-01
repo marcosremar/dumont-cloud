@@ -98,6 +98,20 @@ class PruneSnapshotsRequest(BaseModel):
     keep_last: int = Field(10, ge=1, description="Number of snapshots to keep")
 
 
+class SetKeepForeverRequest(BaseModel):
+    """Set keep-forever flag on snapshot request"""
+    keep_forever: bool = Field(..., description="Whether to keep this snapshot forever (protected from automatic cleanup)")
+
+
+class UpdateRetentionPolicyRequest(BaseModel):
+    """Update retention policy request"""
+    retention_days: Optional[int] = Field(None, ge=0, le=365, description="Default retention days (0 = keep forever)")
+    min_snapshots_to_keep: Optional[int] = Field(None, ge=1, le=100, description="Minimum snapshots to keep per instance")
+    max_snapshots_per_instance: Optional[int] = Field(None, ge=1, le=1000, description="Maximum snapshots per instance")
+    cleanup_enabled: Optional[bool] = Field(None, description="Enable/disable automatic cleanup")
+    instance_id: Optional[str] = Field(None, description="Instance ID for instance-specific policy (omit for global)")
+
+
 # Migration Requests
 
 class MigrateInstanceRequest(BaseModel):

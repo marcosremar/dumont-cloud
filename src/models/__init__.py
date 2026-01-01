@@ -8,6 +8,7 @@ from .snapshot_config import SnapshotConfig
 from .economy import SavingsHistory, ProviderPricing
 from .user import User
 from .email_verification_token import EmailVerificationToken
+from .snapshot_metadata import SnapshotMetadata, SnapshotStatus, DeletionReason
 
 __all__ = [
     'PriceHistory',
@@ -32,4 +33,8 @@ __all__ = [
     'User',
     # Email verification token
     'EmailVerificationToken',
+    # Snapshot lifecycle
+    'SnapshotMetadata',
+    'SnapshotStatus',
+    'DeletionReason',
 ]
