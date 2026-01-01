@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 # Import database configuration and models
 from src.config.database import Base, DATABASE_URL
 from src.models.user import User  # noqa: F401 - Import for model registration
+from src.models.email_verification_token import EmailVerificationToken  # noqa: F401 - Import for model registration
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
