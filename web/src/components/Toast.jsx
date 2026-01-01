@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useMemo } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react'
 
 const ToastContext = createContext(null)
@@ -32,7 +32,7 @@ const variants = {
 }
 
 // Progress bar that shrinks from 100% to 0% over the toast duration
-function ProgressBar({ duration = 4000, accentColor = 'bg-blue-500' }) {
+function ProgressBar({ duration = 4000, accentColor = 'bg-blue-500', isPaused = false }) {
   // Don't render for persistent toasts (duration = 0)
   if (duration <= 0) return null
 
@@ -43,7 +43,8 @@ function ProgressBar({ duration = 4000, accentColor = 'bg-blue-500' }) {
         style={{
           animationDuration: `${duration}ms`,
           animationTimingFunction: 'linear',
-          animationFillMode: 'forwards'
+          animationFillMode: 'forwards',
+          animationPlayState: isPaused ? 'paused' : 'running'
         }}
       />
     </div>
@@ -55,12 +56,63 @@ function ToastItem({ id, message, type = 'info', duration = 4000, isExiting = fa
   const Icon = variant.icon
   const animationClass = isExiting ? 'animate-toast-out' : 'animate-toast-in'
 
+  // Hover pause state
+  const [isPaused, setIsPaused] = useState(false)
+  const remainingTimeRef = useRef(duration)
+  const startTimeRef = useRef(Date.now())
+  const timerRef = useRef(null)
+
+  // Handle auto-dismiss with pause/resume support
+  useEffect(() => {
+    // Don't set timer for persistent toasts or if already exiting
+    if (duration <= 0 || isExiting) return
+
+    const scheduleRemoval = (delay) => {
+      timerRef.current = setTimeout(() => {
+        onClose(id)
+      }, delay)
+    }
+
+    if (!isPaused) {
+      // Start or resume timer
+      startTimeRef.current = Date.now()
+      scheduleRemoval(remainingTimeRef.current)
+    } else {
+      // Pause: clear timer and calculate remaining time
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+        const elapsed = Date.now() - startTimeRef.current
+        remainingTimeRef.current = Math.max(0, remainingTimeRef.current - elapsed)
+      }
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+      }
+    }
+  }, [isPaused, duration, isExiting, id, onClose])
+
+  const handleMouseEnter = () => {
+    if (duration > 0 && !isExiting) {
+      setIsPaused(true)
+    }
+  }
+
+  const handleMouseLeave = () => {
+    if (duration > 0 && !isExiting) {
+      setIsPaused(false)
+    }
+  }
+
   return (
     <div
       className={`toast flex flex-col bg-gray-900 rounded-lg shadow-2xl shadow-black/50 overflow-hidden ${animationClass} border border-gray-700`}
       style={{ minWidth: '320px', maxWidth: '500px' }}
       role="alert"
       aria-live="polite"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className="flex items-stretch flex-1">
         {/* Color accent bar on left */}
@@ -81,7 +133,7 @@ function ToastItem({ id, message, type = 'info', duration = 4000, isExiting = fa
       </div>
 
       {/* Progress bar at bottom */}
-      <ProgressBar duration={duration} accentColor={variant.accent} />
+      <ProgressBar duration={duration} accentColor={variant.accent} isPaused={isPaused} />
     </div>
   )
 }
@@ -106,15 +158,9 @@ export function ToastProvider({ children }) {
   const addToast = useCallback((message, type = 'info', duration = 4000) => {
     const id = Date.now() + Math.random()
     setToasts(prev => [...prev, { id, message, type, duration }])
-
-    if (duration > 0) {
-      setTimeout(() => {
-        removeToast(id)
-      }, duration)
-    }
-
+    // Auto-dismiss timer is now managed by ToastItem to support hover pause
     return id
-  }, [removeToast])
+  }, [])
 
   const toast = useMemo(() => ({
     success: (message, duration) => addToast(message, 'success', duration),
