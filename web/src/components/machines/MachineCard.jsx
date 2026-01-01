@@ -107,6 +107,7 @@ export default function MachineCard({
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false)
   const [copiedField, setCopiedField] = useState(null)
   const [copyAnnouncement, setCopyAnnouncement] = useState('')
+  const [failoverAnnouncement, setFailoverAnnouncement] = useState('')
   const [showBackupInfo, setShowBackupInfo] = useState(false)
   const [showFailoverMigration, setShowFailoverMigration] = useState(false)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
@@ -258,6 +259,28 @@ export default function MachineCard({
   const currentStrategyCost = strategyCosts[currentStrategy] || 0
 
   const isInFailover = failoverProgress && failoverProgress.phase !== 'idle'
+
+  // Generate announcements for failover progress changes
+  useEffect(() => {
+    if (!failoverProgress || failoverProgress.phase === 'idle') {
+      setFailoverAnnouncement('')
+      return
+    }
+
+    const phaseAnnouncements = {
+      gpu_lost: 'Failover iniciado: GPU interrompida, preparando recuperação',
+      failover_active: 'Failover para CPU Standby em andamento',
+      searching: 'Buscando nova GPU disponível',
+      provisioning: `Provisionando ${failoverProgress.newGpu || 'nova GPU'}`,
+      restoring: 'Restaurando dados para a nova GPU',
+      complete: `Failover concluído com sucesso${failoverProgress.metrics?.total_time_ms ? ` em ${(failoverProgress.metrics.total_time_ms / 1000).toFixed(1)} segundos` : ''}`
+    }
+
+    const announcement = phaseAnnouncements[failoverProgress.phase]
+    if (announcement) {
+      setFailoverAnnouncement(announcement)
+    }
+  }, [failoverProgress?.phase, failoverProgress?.newGpu, failoverProgress?.metrics?.total_time_ms])
 
   // Timer for loading elapsed time
   useEffect(() => {
@@ -458,12 +481,19 @@ export default function MachineCard({
       `}
     >
       {isInFailover && (
-        <div className="mb-3 p-3 rounded-lg bg-white/5 border border-white/10" data-testid="failover-progress-panel">
+        <div
+          className="mb-3 p-3 rounded-lg bg-white/5 border border-white/10"
+          data-testid="failover-progress-panel"
+          role="region"
+          aria-label="Progresso do failover"
+          aria-live="polite"
+          aria-atomic="false"
+        >
           <div className="flex items-center gap-2 mb-3">
             <Zap className={`w-4 h-4 ${failoverProgress.phase === 'gpu_lost' ? 'text-red-400 animate-pulse' :
               failoverProgress.phase === 'complete' ? 'text-brand-400' :
                 'text-brand-400 animate-pulse'
-              }`} />
+              }`} aria-hidden="true" />
             <span className="text-sm font-semibold text-white">Failover em Progresso</span>
           </div>
 
@@ -1202,6 +1232,17 @@ export default function MachineCard({
         data-testid="copy-announcement"
       >
         {copyAnnouncement}
+      </div>
+
+      {/* Aria-live region for failover progress announcements */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+        data-testid="failover-announcement"
+      >
+        {failoverAnnouncement}
       </div>
     </Card>
   )

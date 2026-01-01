@@ -1,7 +1,7 @@
 {
   "spec_id": "023-add-aria-labels-and-keyboard-navigation-to-machine",
   "created_at": "2026-01-01T06:00:18.692712+00:00",
-  "updated_at": "2026-01-01T06:37:41.507011+00:00",
+  "updated_at": "2026-01-01T06:39:46.941435+00:00",
   "phases": {
     "planning": {
       "phase": "planning",
@@ -5582,6 +5582,380 @@
           "tool_input": "git add . && git status",
           "subtask_id": "6.1",
           "session": 15
+        },
+        {
+          "timestamp": "2026-01-01T06:37:43.160473+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "6.1",
+          "session": 15,
+          "detail": "On branch auto-claude/023-add-aria-labels-and-keyboard-navigation-to-machine\nChanges to be committed:\n  (use \"git restore --staged <file>...\" to unstage)\n\tmodified:   .auto-claude-status\n\tmodified:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/implementation_plan.json\n\tmodified:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/attempt_history.json\n\tmodified:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/build_commits.json\n\tmodified:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/codebase_map.json\n\tnew file:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_012.json\n\tnew file:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_013.json\n\tnew file:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_014.json\n\tmodified:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/task_logs.json\n\tmodified:   web/src/components/machines/MachineCard.jsx",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:37:50.340408+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git commit -m \"$(cat <<'EOF'\nauto-claude: 6.1 -...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git commit -m \"$(cat <<'EOF'\nauto-claude: 6.1 -...",
+          "subtask_id": "6.1",
+          "session": 15
+        },
+        {
+          "timestamp": "2026-01-01T06:37:51.768149+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "6.1",
+          "session": 15,
+          "detail": "[auto-claude/023-add-aria-labels-and-keyboard-navigation-to-machine ef90656] auto-claude: 6.1 - Add aria-label to machine status badge for accessibility\n 10 files changed, 1543 insertions(+), 23 deletions(-)\n create mode 100644 .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_012.json\n create mode 100644 .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_013.json\n create mode 100644 .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_014.json",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:37:54.859752+00:00",
+          "type": "text",
+          "content": "Now let me update the subtask status to \"completed\":",
+          "phase": "coding",
+          "subtask_id": "6.1",
+          "session": 15
+        },
+        {
+          "timestamp": "2026-01-01T06:37:56.724015+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__update_subtask_status]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "6.1",
+          "session": 15
+        },
+        {
+          "timestamp": "2026-01-01T06:37:56.766147+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__update_subtask_status] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "6.1",
+          "session": 15,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:38:03.127270+00:00",
+          "type": "text",
+          "content": "## Summary\n\nI've successfully completed subtask 6.1 by adding accessible status indicators to the MachineCard component:\n\n### Changes Made\n\n1. **Status Badge** (`line 589-597`):\n   - Added `aria-label={`Status da máquina: ${statusDisplay.label}`}` to convey status to screen readers\n   - Added `aria-busy={isLoading}` to indicate when the machine is in a loading state\n\n2. **Loading Indicator Panel** (`line 1108`):\n   - Added `aria-busy=\"true\"` to explicitly indicate busy state\n   - Added `aria-label` with descriptive text for the loading state\n\n### Acceptance Criteria Met\n\n| Criterion | Status |\n|-----------|--------|\n| Status badge has aria-label 'Status da máquina: {status}' | ✅ |\n| Loading states include aria-busy='true' | ✅ |\n\nThe commit has been made with message: `auto-claude: 6.1 - Add aria-label to machine status badge for accessibility`",
+          "phase": "coding",
+          "subtask_id": "6.1",
+          "session": 15
+        },
+        {
+          "timestamp": "2026-01-01T06:38:24.795168+00:00",
+          "type": "text",
+          "content": "I'll start by getting the session context and reading the relevant files to understand the current implementation and patterns.",
+          "phase": "coding",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:38:25.156080+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_session_context]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:38:25.339169+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_build_progress]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_build_progress",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:38:26.173307+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...bels-and-keyboard-navigation-to-machine/spec.md",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...bels-and-keyboard-navigation-to-machine/spec.md",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:38:26.868455+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...-navigation-to-machine/implementation_plan.json",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...-navigation-to-machine/implementation_plan.json",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:38:26.906597+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "6.2",
+          "session": 16,
+          "detail": "[{'type': 'text', 'text': '## Codebase Discoveries\\n- `web/src/components/machines/MachineCard.jsx`: Added aria-live region (role=\"status\", aria-live=\"polite\") to announce copy feedback to screen readers. Uses copyAnnouncement state to provide contextual messages like \"Endereço IP copiado!\" for IP copy, \"Comando SSH copiado!\" for SSH command copy, and \"Configuração SSH copiada!\" for SSH config copy.\\n- `web/src/components/tailadmin-ui/index.jsx`: DropdownMenu now has full keyboard navigation: DropdownContext provides focusedIndex, menuItemsRef, triggerRef, and registerMenuItem for keyboard navigation. DropdownMenuTrigger handles Enter/Space/Arrow to open menu. DropdownMenuContent handles Escape/Arrow/Home/End/Tab navigation. DropdownMenuItem registers itself and handles Enter/Space activation. Focus ring styles added for keyboard visibility.\\n- `web/src/components/Tooltip.jsx`: Tooltip.jsx already has good accessibility patterns: uses role=\\'tooltip\\', has aria-label on HelpTooltip component, and handles focus/blur events. Can use as reference for accessibility patterns.'}]",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:38:30.949376+00:00",
+          "type": "text",
+          "content": "Now let me read the MachineCard.jsx file to find the failover progress panel:",
+          "phase": "coding",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:38:32.032692+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:38:32.380174+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "6.2",
+          "session": 16,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:38:51.373224+00:00",
+          "type": "text",
+          "content": "Now I understand the task. I can see the failover progress panel (lines 460-582). It shows progress through different phases but doesn't have aria-live to announce changes to screen readers.\n\nI need to:\n1. Add `aria-live=\"polite\"` to the failover progress panel\n2. Add state to track progress announcements\n3. Add a useEffect to generate announcement messages when the phase changes\n\nLet me implement this:",
+          "phase": "coding",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:38:52.322008+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:38:52.405329+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "6.2",
+          "session": 16,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   104→  const [showConfigModal, setShowConfigModal] = useState(false)\n   105→  const [showSSHInstructions, setShowSSHInstructions] = useState(false)\n   106→  const [alertDialog, setAlertDialog] = useState({ open: false, title: '', description: '', action: null })\n   107→  const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false)\n   108→  const [copiedField, setCopiedField] = useState(null)\n   109→  const [copyAnnouncement, setCopyAnnouncement] = useState('')\n   110→  const [failoverAnnouncement, setFailoverAnnouncement] = useState('')\n   111→  const [showBackupInfo, setShowBackupInfo] = useState(false)\n   112→  const [showFailoverMigration, setShowFailoverMigration] = useState(false)\n   113→  const [showDetailsModal, setShowDetailsModal] = useState(false)\n   114→  const [elapsedTime, setElapsedTime] = useState(0)",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:38:56.171563+00:00",
+          "type": "text",
+          "content": "Now let me add a useEffect to generate announcements when the failover phase changes:",
+          "phase": "coding",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:39:03.852483+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:39:05.630630+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "6.2",
+          "session": 16,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   257→  const strategyCosts = calculateStrategyCosts(machine)\n   258→  const strategyInfo = FAILOVER_STRATEGIES_BASE[currentStrategy] || FAILOVER_STRATEGIES_BASE.disabled\n   259→  const currentStrategyCost = strategyCosts[currentStrategy] || 0\n   260→\n   261→  const isInFailover = failoverProgress && failoverProgress.phase !== 'idle'\n   262→\n   263→  // Generate announcements for failover progress changes\n   264→  useEffect(() => {\n   265→    if (!failoverProgress || failoverProgress.phase === 'idle') {\n   266→      setFailoverAnnouncement('')\n   267→      return\n   268→    }\n   269→\n   270→    const phaseAnnouncements = {\n   271→      gpu_lost: 'Failover iniciado: GPU interrompida, preparando recuperação',\n   272→      failover_active: 'Failover para CPU Standby em andamento',\n   273→      searching: 'Buscando nova GPU disponível',\n   274→      provisioning: `Provisionando ${failoverProgress.newGpu || 'nova GPU'}`,\n   275→      restoring: 'Restaurando dados para a nova GPU',\n   276→      complete: `Failover concluído com sucesso${failoverProgress.metrics?.total_time_ms ? ` em ${(failoverProgress.metrics.total_time_ms / 1000).toFixed(1)} segundos` : ''}`\n   277→    }\n   278→\n   279→    const announcement = phaseAnnouncements[failoverProgress.phase]\n   280→    if (announcement) {\n   281→      setFailoverAnnouncement(announcement)\n   282→    }\n   283→  }, [failoverProgress?.phase, failoverProgress?.newGpu, failoverProgress?.metrics?.total_time_ms])\n   284→\n   285→  // Timer for loading elapsed time\n   286→  useEffect(() => {\n   287→    const loadingStates = ['loading', 'creating', 'starting', 'pending', 'provisioning', 'configuring']\n   288→    const status = machine.actual_status || 'stopped'\n   289→    const isLoading = loadingStates.includes(status)",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:39:11.516464+00:00",
+          "type": "text",
+          "content": "Now let me add aria-live and role attributes to the failover progress panel container:",
+          "phase": "coding",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:39:18.469769+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:39:18.523075+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "6.2",
+          "session": 16,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   479→            : 'hover:border-gray-700 dark:hover:border-gray-700'\n   480→        }\n   481→      `}\n   482→    >\n   483→      {isInFailover && (\n   484→        <div\n   485→          className=\"mb-3 p-3 rounded-lg bg-white/5 border border-white/10\"\n   486→          data-testid=\"failover-progress-panel\"\n   487→          role=\"region\"\n   488→          aria-label=\"Progresso do failover\"\n   489→          aria-live=\"polite\"\n   490→          aria-atomic=\"false\"\n   491→        >\n   492→          <div className=\"flex items-center gap-2 mb-3\">\n   493→            <Zap className={`w-4 h-4 ${failoverProgress.phase === 'gpu_lost' ? 'text-red-400 animate-pulse' :\n   494→              failoverProgress.phase === 'complete' ? 'text-brand-400' :\n   495→                'text-brand-400 animate-pulse'\n   496→              }`} aria-hidden=\"true\" />\n   497→            <span className=\"text-sm font-semibold text-white\">Failover em Progresso</span>\n   498→          </div>\n   499→\n   500→          <div className=\"space-y-1.5 text-xs\">\n   501→            <div className={`flex items-center gap-2 ${failoverProgress.phase === 'gpu_lost' ? 'text-red-400' :\n   502→              ['failover_active', 'searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? 'text-green-400' :",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:39:22.845893+00:00",
+          "type": "text",
+          "content": "Now let me add a dedicated aria-live region for failover announcements (similar to the copy announcements pattern):",
+          "phase": "coding",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:39:26.922641+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:39:26.958717+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "6.2",
+          "session": 16,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n  1222→          </AlertDialogFooter>\n  1223→        </AlertDialogContent>\n  1224→      </AlertDialog>\n  1225→\n  1226→      {/* Aria-live region for copy announcements */}\n  1227→      <div\n  1228→        role=\"status\"\n  1229→        aria-live=\"polite\"\n  1230→        aria-atomic=\"true\"\n  1231→        className=\"sr-only\"\n  1232→        data-testid=\"copy-announcement\"\n  1233→      >\n  1234→        {copyAnnouncement}\n  1235→      </div>\n  1236→\n  1237→      {/* Aria-live region for failover progress announcements */}\n  1238→      <div\n  1239→        role=\"status\"\n  1240→        aria-live=\"polite\"\n  1241→        aria-atomic=\"true\"\n  1242→        className=\"sr-only\"\n  1243→        data-testid=\"failover-announcement\"\n  1244→      >\n  1245→        {failoverAnnouncement}\n  1246→      </div>\n  1247→    </Card>\n  1248→  )\n  1249→}\n  1250→",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:39:31.612047+00:00",
+          "type": "text",
+          "content": "Now let me verify the changes are correct by reading the modified sections and running tests:",
+          "phase": "coding",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:39:32.890008+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cd ./web && npm run lint 2>&1 | head -50",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "cd ./web && npm run lint 2>&1 | head -50",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:39:32.926355+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Error: Command 'npm' is not in the allowed commands for this project",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "6.2",
+          "session": 16,
+          "detail": "Command 'npm' is not in the allowed commands for this project",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:39:36.686108+00:00",
+          "type": "text",
+          "content": "Let me verify the changes by reading the modified file sections:",
+          "phase": "coding",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:39:37.795935+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:39:38.741345+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:39:39.688314+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:39:40.615468+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:39:40.675122+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "6.2",
+          "session": 16,
+          "detail": "   107→  const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false)\n   108→  const [copiedField, setCopiedField] = useState(null)\n   109→  const [copyAnnouncement, setCopyAnnouncement] = useState('')\n   110→  const [failoverAnnouncement, setFailoverAnnouncement] = useState('')\n   111→  const [showBackupInfo, setShowBackupInfo] = useState(false)\n   112→  const [showFailoverMigration, setShowFailoverMigration] = useState(false)\n   113→  const [showDetailsModal, setShowDetailsModal] = useState(false)\n   114→  const [elapsedTime, setElapsedTime] = useState(0)\n   115→  const [showStrategyMenu, setShowStrategyMenu] = useState(false)\n   116→  const [focusedStrategyIndex, setFocusedStrategyIndex] = useState(0)\n\n<system-reminder>\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\n</system-reminder>\n",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:39:44.686462+00:00",
+          "type": "text",
+          "content": "All the changes are in place. Let me now commit and update the subtask status:",
+          "phase": "coding",
+          "subtask_id": "6.2",
+          "session": 16
+        },
+        {
+          "timestamp": "2026-01-01T06:39:46.941399+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git add . && git status",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git add . && git status",
+          "subtask_id": "6.2",
+          "session": 16
         }
       ]
     },

@@ -266,14 +266,16 @@
           "id": "6.1",
           "title": "Add aria-label to status badge",
           "description": "Add aria-label to the machine status badge to convey status information.",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/machines/MachineCard.jsx"
           ],
           "acceptance_criteria": [
             "Status badge has aria-label 'Status da m\u00e1quina: {status}'",
             "Loading states include aria-busy='true'"
-          ]
+          ],
+          "notes": "Added aria-label=\"Status da m\u00e1quina: {status}\" to the machine status badge and aria-busy={isLoading} for loading states. Also added aria-busy=\"true\" and descriptive aria-label to the loading indicator panel for complete accessibility coverage.",
+          "updated_at": "2026-01-01T06:37:56.738879+00:00"
         },
         {
           "id": "6.2",
@@ -339,5 +341,5 @@
     "issues": "",
     "tests_passed": ""
   },
-  "last_updated": "2026-01-01T06:36:13.642158+00:00"
+  "last_updated": "2026-01-01T06:37:56.738890+00:00"
 }
