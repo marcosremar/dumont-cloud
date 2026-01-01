@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 # Baseline hourly GPU pricing by provider (USD)
 # These values are approximations based on public pricing as of 2024
 # Sources: AWS EC2 pricing, GCP Compute Engine, Azure VMs
+# Note: Keys are uppercase to match provider.upper() lookups
 PROVIDER_GPU_PRICING: Dict[str, Dict[str, float]] = {
     'AWS': {
         'RTX 4090': 4.10,      # p5.xlarge equivalent
@@ -50,7 +51,7 @@ PROVIDER_GPU_PRICING: Dict[str, Dict[str, float]] = {
         'H100': 55.00,         # a3-highgpu-1g
         'default': 2.75,
     },
-    'Azure': {
+    'AZURE': {
         'RTX 4090': 4.50,
         'RTX 4080': 3.80,
         'RTX 4070': 3.10,
@@ -124,7 +125,7 @@ class PricingService:
         self._dumont_pricing = DUMONT_GPU_PRICING.copy()
         self._gpu_vram = GPU_VRAM_SPECS.copy()
         self._last_updated = datetime.utcnow()
-        self._supported_providers = ['AWS', 'GCP', 'Azure']
+        self._supported_providers = ['AWS', 'GCP', 'AZURE']
 
     def get_provider_price(self, provider: str, gpu_type: str) -> float:
         """

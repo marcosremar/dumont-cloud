@@ -15,6 +15,7 @@ economy_bp = Blueprint('economy', __name__, url_prefix='/api/v1/economy')
 
 # Precos base por hora de GPUs nos provedores de nuvem (USD)
 # Estes valores sao aproximacoes baseadas em precos publicos
+# Note: Keys support both 'Azure' and 'AZURE' for case-insensitive lookup
 PROVIDER_GPU_PRICING = {
     'AWS': {
         'RTX 4090': 4.10,      # p5.xlarge equivalent
@@ -47,6 +48,19 @@ PROVIDER_GPU_PRICING = {
         'A10': 5.80,
         'V100': 3.06,
         'T4': 0.526,
+        'H100': 68.00,         # ND H100 v5
+        'default': 3.25,
+    },
+    'AZURE': {
+        'RTX 4090': 4.50,
+        'RTX 4080': 3.80,
+        'RTX 3090': 3.30,
+        'RTX 3080': 2.70,
+        'A100': 32.77,         # NC A100 v4
+        'A10': 5.80,
+        'V100': 3.06,
+        'T4': 0.526,
+        'H100': 68.00,         # ND H100 v5
         'default': 3.25,
     }
 }

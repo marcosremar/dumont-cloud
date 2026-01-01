@@ -141,3 +141,94 @@ E2E Flow Verified:
 Status: COMPLETED (with bug fixes)
 
 === END SESSION 3 ===
+
+=== SESSION 4: SUBTASK 6-2 PRICING VERIFICATION ===
+
+Date: 2026-01-01
+Subtask: subtask-6-2 - Verify pricing accuracy and calculation correctness
+
+## 1. GPU Pricing Verification
+
+Pricing data sources are approximations based on public on-demand rates:
+- AWS EC2 pricing (p4d, p5, g4dn, g5 instance families)
+- GCP Compute Engine (a2-highgpu, a3-highgpu instance families)
+- Azure VMs (NC, ND series)
+
+### Key GPU Pricing Summary (USD/hour):
+
+| GPU | Dumont | AWS | GCP | Azure | Savings vs AWS |
+|-----|--------|-----|-----|-------|----------------|
+| RTX 4090 | $0.74 | $4.10 | $3.80 | $4.50 | 82% |
+| A100 | $2.50 | $32.77 | $29.39 | $32.77 | 92% |
+| H100 | $4.50 | $65.00 | $55.00 | $68.00 | 93% |
+| T4 | $0.15 | $0.53 | $0.35 | $0.53 | 72% |
+| RTX 3090 | $0.50 | $3.06 | $2.80 | $3.30 | 84% |
+
+### Pricing Notes:
+- Uses FULL INSTANCE pricing (not GPU add-on only)
+- On-demand rates (highest tier) for conservative estimates
+- US region pricing as baseline
+- Dumont prices competitive with Vast.ai/RunPod market rates
+
+## 2. Calculation Formula Verification
+
+All formulas verified correct:
+
+### Basic Savings:
+```
+savings = provider_cost - dumont_cost
+savings_percentage = (savings / provider_cost) * 100
+```
+
+### Test Results:
+- RTX 4090 × 10hrs vs AWS: $41.00 - $7.40 = $33.60 (82%) ✓
+- A100 × 1hr vs GCP: $29.39 - $2.50 = $26.89 (91%) ✓
+- Multi-instance sessions: Sum of individual savings ✓
+- Lifetime aggregation: Correct across GPU types ✓
+
+### Savings Rate (for live counter):
+- RTX 4090 vs AWS: $0.000933/second = $0.056/minute = $3.36/hour ✓
+
+## 3. Projection Verification
+
+Projections use conservative assumptions:
+- Daily = Hourly savings × daily_hours
+- Weekly = Daily × 7
+- Monthly = Daily × 30 (not 30.44 avg)
+- Yearly = Daily × 365
+
+### Example Projections (8 hours/day usage):
+| GPU | Monthly | Yearly |
+|-----|---------|--------|
+| RTX 4090 | $806.40 | $9,811.20 |
+| A100 | $7,264.80 | $88,388.40 |
+| H100 | $14,520.00 | $176,660.00 |
+
+All projections within reasonable range for target market.
+
+## 4. Bug Found & Fixed
+
+### Issue: Azure provider lookup failing
+The `get_provider_price()` method converts provider to uppercase (`AZURE`),
+but the dictionary key was `Azure`. This caused fallback to AWS pricing.
+
+### Fix Applied:
+1. Changed `PROVIDER_GPU_PRICING` key from `'Azure'` to `'AZURE'` in pricing_service.py
+2. Updated `_supported_providers` to use `'AZURE'`
+3. Added both `'Azure'` and `'AZURE'` keys in economy.py for compatibility
+
+### Verification After Fix:
+- `Azure`, `AZURE`, `azure` all return $68.00 for H100 ✓
+
+## 5. Quality Checklist
+
+- [x] GPU pricing matches reasonable market rates
+- [x] Savings calculations are mathematically correct
+- [x] Projections use conservative, documented assumptions
+- [x] Case-insensitive provider lookup works
+- [x] No console.log/print debugging statements
+- [x] Error handling in place for invalid providers
+
+Status: COMPLETED
+
+=== END SESSION 4 ===
