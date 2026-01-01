@@ -585,17 +585,47 @@ export function Slider({ value = [0], onValueChange, min = 0, max = 100, step = 
 }
 
 // Dropdown Menu Components with state management
-const DropdownContext = React.createContext({ isOpen: false, setIsOpen: () => {} });
+const DropdownContext = React.createContext({
+  isOpen: false,
+  setIsOpen: () => {},
+  focusedIndex: -1,
+  setFocusedIndex: () => {},
+  menuItemRefs: { current: [] },
+  triggerRef: { current: null },
+  registerMenuItem: () => {},
+  itemCount: 0
+});
 
 export function DropdownMenu({ children }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [itemCount, setItemCount] = useState(0);
   const dropdownRef = useRef(null);
+  const triggerRef = useRef(null);
+  const menuItemRefs = useRef([]);
+
+  // Reset focused index when menu closes
+  const handleSetIsOpen = useCallback((open) => {
+    setIsOpen(open);
+    if (!open) {
+      setFocusedIndex(-1);
+      // Return focus to trigger when menu closes
+      if (triggerRef.current) {
+        triggerRef.current.focus();
+      }
+    }
+  }, []);
+
+  // Register menu item for tracking
+  const registerMenuItem = useCallback((index, element) => {
+    menuItemRefs.current[index] = element;
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
+        handleSetIsOpen(false);
       }
     };
 
@@ -603,10 +633,50 @@ export function DropdownMenu({ children }) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
+  }, [isOpen, handleSetIsOpen]);
+
+  // Handle Escape key at document level
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === 'Escape' && isOpen) {
+        event.preventDefault();
+        handleSetIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, handleSetIsOpen]);
+
+  // Focus the appropriate item when focusedIndex changes
+  useEffect(() => {
+    if (isOpen && focusedIndex >= 0 && menuItemRefs.current[focusedIndex]) {
+      menuItemRefs.current[focusedIndex].focus();
+    }
+  }, [focusedIndex, isOpen]);
+
+  // Set initial focus when menu opens
+  useEffect(() => {
+    if (isOpen) {
+      // Focus first item when menu opens
+      setFocusedIndex(0);
+    }
   }, [isOpen]);
 
   return (
-    <DropdownContext.Provider value={{ isOpen, setIsOpen }}>
+    <DropdownContext.Provider value={{
+      isOpen,
+      setIsOpen: handleSetIsOpen,
+      focusedIndex,
+      setFocusedIndex,
+      menuItemRefs,
+      triggerRef,
+      registerMenuItem,
+      itemCount,
+      setItemCount
+    }}>
       <div ref={dropdownRef} className="relative inline-block">
         {children}
       </div>
@@ -615,7 +685,15 @@ export function DropdownMenu({ children }) {
 }
 
 export function DropdownMenuTrigger({ children, asChild, ...props }) {
-  const { isOpen, setIsOpen } = React.useContext(DropdownContext);
+  const { isOpen, setIsOpen, triggerRef } = React.useContext(DropdownContext);
+  const localRef = useRef(null);
+
+  // Store ref in context for focus management
+  useEffect(() => {
+    if (localRef.current && triggerRef) {
+      triggerRef.current = localRef.current;
+    }
+  }, [triggerRef]);
 
   const handleClick = (e) => {
     e.stopPropagation();
@@ -628,29 +706,115 @@ export function DropdownMenuTrigger({ children, asChild, ...props }) {
   };
 
   if (asChild) {
-    return React.cloneElement(children, { onClick: handleClick, ...ariaProps });
+    // Clone with ref and event handlers
+    return React.cloneElement(children, {
+      ref: localRef,
+      onClick: handleClick,
+      ...ariaProps
+    });
   }
-  return <button onClick={handleClick} aria-expanded={isOpen} aria-haspopup="menu" {...props}>{children}</button>;
+  return (
+    <button
+      ref={localRef}
+      onClick={handleClick}
+      aria-expanded={isOpen}
+      aria-haspopup="menu"
+      {...props}
+    >
+      {children}
+    </button>
+  );
 }
 
-export function DropdownMenuContent({ children, align = 'end', className = '' }) {
-  const { isOpen } = React.useContext(DropdownContext);
+export function DropdownMenuContent({ children, align = 'end', className = '', id }) {
+  const { isOpen, setIsOpen, focusedIndex, setFocusedIndex, setItemCount } = React.useContext(DropdownContext);
+  const contentRef = useRef(null);
+
+  // Count menu items (only DropdownMenuItem components, not separators or labels)
+  const menuItems = React.Children.toArray(children).filter(
+    (child) => React.isValidElement(child) && child.type === DropdownMenuItem
+  );
+  const itemCount = menuItems.length;
+
+  // Update item count in context
+  useEffect(() => {
+    if (setItemCount) {
+      setItemCount(itemCount);
+    }
+  }, [itemCount, setItemCount]);
+
+  // Handle keyboard navigation within the menu
+  const handleKeyDown = useCallback((e) => {
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev + 1) % itemCount);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev - 1 + itemCount) % itemCount);
+        break;
+      case 'Home':
+        e.preventDefault();
+        setFocusedIndex(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        setFocusedIndex(itemCount - 1);
+        break;
+      case 'Tab':
+        // Close menu and allow normal tab behavior
+        setIsOpen(false);
+        break;
+      default:
+        break;
+    }
+  }, [itemCount, setFocusedIndex, setIsOpen]);
 
   if (!isOpen) return null;
 
   const alignClass = align === 'end' ? 'right-0' : 'left-0';
+  const menuId = id || 'dropdown-menu';
+
+  // Clone children to pass index to DropdownMenuItem components
+  let itemIndex = 0;
+  const childrenWithIndex = React.Children.map(children, (child) => {
+    if (React.isValidElement(child) && child.type === DropdownMenuItem) {
+      const clonedChild = React.cloneElement(child, {
+        _index: itemIndex,
+        _menuId: menuId
+      });
+      itemIndex++;
+      return clonedChild;
+    }
+    return child;
+  });
+
   return (
     <div
+      ref={contentRef}
+      id={menuId}
       role="menu"
+      aria-activedescendant={focusedIndex >= 0 ? `${menuId}-item-${focusedIndex}` : undefined}
+      onKeyDown={handleKeyDown}
       className={`absolute ${alignClass} mt-2 w-56 rounded-lg bg-dark-surface-card border border-white/10 shadow-lg z-50 py-1 ${className}`}
     >
-      {children}
+      {childrenWithIndex}
     </div>
   );
 }
 
-export function DropdownMenuItem({ children, onClick, className = '', disabled }) {
-  const { setIsOpen } = React.useContext(DropdownContext);
+export function DropdownMenuItem({ children, onClick, className = '', disabled, _index, _menuId }) {
+  const { setIsOpen, focusedIndex, registerMenuItem } = React.useContext(DropdownContext);
+  const itemRef = useRef(null);
+  const isFocused = focusedIndex === _index;
+
+  // Register ref with context for focus management
+  useEffect(() => {
+    if (registerMenuItem && _index !== undefined && itemRef.current) {
+      registerMenuItem(_index, itemRef.current);
+    }
+  }, [registerMenuItem, _index]);
 
   const handleClick = (e) => {
     if (disabled) return;
@@ -658,12 +822,27 @@ export function DropdownMenuItem({ children, onClick, className = '', disabled }
     if (onClick) onClick(e);
   };
 
+  const handleKeyDown = (e) => {
+    if (disabled) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setIsOpen(false);
+      if (onClick) onClick(e);
+    }
+  };
+
+  const itemId = _menuId !== undefined && _index !== undefined ? `${_menuId}-item-${_index}` : undefined;
+
   return (
     <button
+      ref={itemRef}
+      id={itemId}
       role="menuitem"
+      tabIndex={isFocused ? 0 : -1}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       disabled={disabled}
-      className={`w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-inset ${isFocused ? 'bg-gray-100 dark:bg-gray-800' : ''} ${className}`}
     >
       {children}
     </button>
