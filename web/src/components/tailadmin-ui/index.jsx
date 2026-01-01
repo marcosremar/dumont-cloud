@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, forwardRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -197,7 +197,7 @@ export function Button({
 }
 
 // Badge Component
-export function Badge({ children, variant = 'gray', size = 'md', dot = false, className = '' }) {
+export const Badge = forwardRef(function Badge({ children, variant = 'gray', size = 'md', dot = false, className = '', ...props }, ref) {
   const variants = {
     primary: 'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-400',
     success: 'bg-success-50 text-success-700 dark:bg-success-500/10 dark:text-success-400',
@@ -221,12 +221,16 @@ export function Badge({ children, variant = 'gray', size = 'md', dot = false, cl
   };
 
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full font-medium ${variants[variant]} ${sizes[size]} ${className}`}>
+    <span
+      ref={ref}
+      className={`inline-flex items-center gap-1.5 rounded-full font-medium ${variants[variant]} ${sizes[size]} ${className}`}
+      {...props}
+    >
       {dot && <span className={`w-1.5 h-1.5 rounded-full ${dotColors[variant]} ${className.includes('animate-pulse') ? 'animate-pulse' : ''}`} />}
       {children}
     </span>
   );
-}
+});
 
 // Table Component
 export function Table({ columns, data, onRowClick, emptyMessage = 'Nenhum dado encontrado' }) {

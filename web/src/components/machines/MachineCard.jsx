@@ -115,6 +115,8 @@ export default function MachineCard({
   const strategyMenuRef = useRef(null)
   const strategyButtonRefs = useRef([])
   const strategyTriggerRef = useRef(null)
+  const backupBadgeRef = useRef(null)
+  const backupPopupRef = useRef(null)
 
   // Strategy keys for keyboard navigation
   const strategyKeys = Object.keys(FAILOVER_STRATEGIES_BASE)
@@ -216,6 +218,37 @@ export default function MachineCard({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showStrategyMenu])
+
+  // Handle keyboard navigation for backup info popup
+  const handleBackupPopupKeyDown = useCallback((e) => {
+    if (!showBackupInfo) return
+
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      setShowBackupInfo(false)
+      // Return focus to trigger badge
+      backupBadgeRef.current?.focus()
+    }
+  }, [showBackupInfo])
+
+  // Close backup popup when clicking outside
+  useEffect(() => {
+    if (!showBackupInfo) return
+
+    const handleClickOutside = (event) => {
+      if (
+        backupPopupRef.current &&
+        !backupPopupRef.current.contains(event.target) &&
+        backupBadgeRef.current &&
+        !backupBadgeRef.current.contains(event.target)
+      ) {
+        setShowBackupInfo(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showBackupInfo])
 
   // Get current failover strategy and calculate real costs
   const currentStrategy = machine.failover_strategy || (machine.cpu_standby?.enabled ? 'cpu_standby' : 'disabled')
@@ -672,10 +705,21 @@ export default function MachineCard({
             {/* Backup Info Badge */}
             <div className="relative">
               <Badge
+                ref={backupBadgeRef}
                 variant={hasCpuStandby ? 'primary' : 'gray'}
-                className="cursor-pointer hover:opacity-80 text-[9px]"
+                className="cursor-pointer hover:opacity-80 text-[9px] focus:outline-none focus:ring-2 focus:ring-brand-500"
                 onClick={() => setShowBackupInfo(!showBackupInfo)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    setShowBackupInfo(!showBackupInfo)
+                  } else if (e.key === 'Escape' && showBackupInfo) {
+                    e.preventDefault()
+                    setShowBackupInfo(false)
+                  }
+                }}
                 role="button"
+                tabIndex={0}
                 aria-expanded={showBackupInfo}
                 aria-label={`Informações de backup: ${hasCpuStandby ? 'Backup ativo' : 'Sem backup'}`}
               >
@@ -684,15 +728,22 @@ export default function MachineCard({
               </Badge>
 
             {showBackupInfo && (
-              <div className="absolute top-full left-0 mt-2 z-50 w-72 p-4 bg-[#131713] border border-white/10 rounded-xl shadow-xl">
+              <div
+                ref={backupPopupRef}
+                className="absolute top-full left-0 mt-2 z-50 w-72 p-4 bg-[#131713] border border-white/10 rounded-xl shadow-xl"
+                onKeyDown={handleBackupPopupKeyDown}
+              >
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-semibold text-white flex items-center gap-2">
                     <Layers className="w-4 h-4 text-brand-400" />
                     CPU Backup (Espelho)
                   </span>
                   <button
-                    onClick={() => setShowBackupInfo(false)}
-                    className="p-1 rounded-lg hover:bg-white/10 text-gray-500 hover:text-gray-300"
+                    onClick={() => {
+                      setShowBackupInfo(false)
+                      backupBadgeRef.current?.focus()
+                    }}
+                    className="p-1 rounded-lg hover:bg-white/10 text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
                     aria-label="Fechar informações de backup"
                   >
                     <X className="w-4 h-4" />
