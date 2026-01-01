@@ -70,13 +70,22 @@ export const useFocusTrap = (
   const { isOpen, onClose, initialFocusRef } = options;
 
   /**
-   * Handles keyboard events for focus trapping.
+   * Handles keyboard events for focus trapping and Escape key.
    * Traps Tab and Shift+Tab to cycle within focusable elements.
+   * Triggers onClose callback when Escape key is pressed.
    */
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       const container = containerRef.current;
       if (!container) return;
+
+      // Handle Escape key to close the dialog
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        onClose?.();
+        return;
+      }
 
       if (event.key === "Tab") {
         const focusableElements = getFocusableElements(container);
@@ -113,10 +122,8 @@ export const useFocusTrap = (
           }
         }
       }
-
-      // Escape key handler will be implemented in subtask 1.5
     },
-    [containerRef]
+    [containerRef, onClose]
   );
 
   /**
@@ -279,8 +286,6 @@ export const useFocusTrap = (
       previouslyFocusedElementRef.current = null;
     }
   }, [isOpen]);
-
-  // Escape key handler will be implemented in subtask 1.5
 };
 
 export default useFocusTrap;
