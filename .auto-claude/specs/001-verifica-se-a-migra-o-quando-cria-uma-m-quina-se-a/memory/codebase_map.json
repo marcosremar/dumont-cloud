@@ -1,0 +1,25 @@
+{
+  "discovered_files": {
+    "tests/auth.setup.js": {
+      "description": "Auth setup now uses test.use() for headless/viewport config, DEMO_APP_PATH constant, .first() on all selectors, .catch(() => false) for resilience, 'domcontentloaded' wait state (faster than networkidle), fallback login via Enter key, expanded skip modal selectors array, and final navigation verification for demo mode. Follows same patterns as cpu-standby-failover.spec.js.",
+      "category": "test-patterns",
+      "discovered_at": "2025-12-31T22:32:55.809692+00:00"
+    },
+    "tests/e2e-journeys/cpu-standby-failover.spec.js": {
+      "description": "Contains 11 E2E tests in 3 suites: CPU Standby Failover (4 tests), Metrics (2 tests), Failover Report (5 tests). Tests use flexible Playwright patterns with .first(), .catch(() => false), and force clicks. Some tests have weak assertions that always pass.",
+      "category": "testing",
+      "discovered_at": "2025-12-31T21:57:20.578036+00:00"
+    },
+    "tests/e2e-journeys/failover-complete-journeys.spec.js": {
+      "description": "Refactored to follow cpu-standby-failover.spec.js patterns: uses BASE_PATH='/demo-app', helper functions for navigation (goToMachines, goToSettings, goToFailoverReport, goToDashboard), test.use() for headless config, and consistent use of .first() and .catch(() => false) for resilient selectors.",
+      "category": "test_patterns",
+      "discovered_at": "2025-12-31T22:29:47.861782+00:00"
+    },
+    "tests/run-failover-tests.sh": {
+      "description": "Automated test runner script for all failover E2E tests. Checks dependencies, verifies frontend is running at localhost:5173, runs 3 test files (47 tests total) in sequence with USE_DEMO_MODE=true, and generates HTML report. Usage: chmod +x run-failover-tests.sh && ./run-failover-tests.sh",
+      "category": "testing",
+      "discovered_at": "2025-12-31T22:36:36.681427+00:00"
+    }
+  },
+  "last_updated": "2025-12-31T22:36:36.681452+00:00"
+}

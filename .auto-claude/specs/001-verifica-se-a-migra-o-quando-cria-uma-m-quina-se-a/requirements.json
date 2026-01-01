@@ -1,0 +1,4 @@
+{
+  "task_description": "Verifica se a migração, quando cria uma máquina, se a migração de GPU para CPU, né? Com o objetivo de economizar, ela acaba fazendo, tipo assim, funcionando, né? Então eu queria que você verificasse na interface, acho que tem lá já o Playwright instalado no projeto, né? Se está funcionando. Tem um outro tipo de teste também de interface, acho que um tipo de teste que termina com JS, tá? Eu queria que você verificasse tudo isso. Depois, caso não esteja funcionando ainda, você tem que corrigir, tá bom?",
+  "workflow_type": "feature"
+}

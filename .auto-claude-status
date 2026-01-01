@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "001-verifica-se-a-migra-o-quando-cria-uma-m-quina-se-a",
+  "state": "complete",
+  "subtasks": {
+    "completed": 12,
+    "total": 12,
+    "in_progress": 0,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Valida\u00e7\u00e3o Final e Documenta\u00e7\u00e3o",
+    "id": null,
+    "total": 2
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 10,
+    "started_at": "2025-12-31T22:46:26.127421"
+  },
+  "last_update": "2025-12-31T23:41:17.065495"
+}
