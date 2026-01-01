@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useCallback, useRef, forwardRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
+
+// Alert Dialog Context for sharing state and IDs between components
+const AlertDialogContext = React.createContext({
+  open: false,
+  onOpenChange: () => {},
+  titleId: '',
+  descriptionId: '',
+});
 
 // Page Header with Breadcrumb
 export function PageHeader({ title, subtitle, breadcrumbs = [], actions }) {
@@ -1098,17 +1108,33 @@ export function DropdownMenuLabel({ children, className = '' }) {
 
 // Alert Dialog Components (usando Portal)
 export function AlertDialog({ children, open, onOpenChange }) {
+  const dialogRef = useRef(null);
+  const uniqueId = useId();
+  const titleId = `alertdialog-title-${uniqueId}`;
+  const descriptionId = `alertdialog-description-${uniqueId}`;
+
+  // Set up focus trap - called unconditionally per React hooks rules
+  useFocusTrap(dialogRef, {
+    isOpen: open,
+    onClose: () => onOpenChange?.(false),
+  });
+
   if (!open) return null;
 
   const modalContent = (
-    <>
+    <AlertDialogContext.Provider value={{ open, onOpenChange, titleId, descriptionId }}>
       <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm" onClick={() => onOpenChange?.(false)} />
       <div className="fixed inset-0 z-[1000] flex items-center justify-center pointer-events-none p-4">
-        <div className="pointer-events-auto relative" data-open={open} data-onOpenChange={onOpenChange}>
+        <div
+          ref={dialogRef}
+          className="pointer-events-auto relative"
+          data-open={open}
+          data-onOpenChange={onOpenChange}
+        >
           {children}
         </div>
       </div>
-    </>
+    </AlertDialogContext.Provider>
   );
 
   return createPortal(modalContent, document.body);
@@ -1122,8 +1148,16 @@ export function AlertDialogTrigger({ children, asChild, ...props }) {
 }
 
 export function AlertDialogContent({ children, className = '' }) {
+  const { titleId, descriptionId } = React.useContext(AlertDialogContext);
+
   return (
-    <div className={`bg-dark-surface-card rounded-xl border border-white/10 shadow-xl max-w-md w-full mx-4 ${className}`}>
+    <div
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
+      className={`bg-dark-surface-card rounded-xl border border-white/10 shadow-xl max-w-md w-full mx-4 ${className}`}
+    >
       {children}
     </div>
   );
@@ -1134,11 +1168,13 @@ export function AlertDialogHeader({ children, className = '' }) {
 }
 
 export function AlertDialogTitle({ children, className = '' }) {
-  return <h2 className={`text-lg font-semibold text-white ${className}`}>{children}</h2>;
+  const { titleId } = React.useContext(AlertDialogContext);
+  return <h2 id={titleId} className={`text-lg font-semibold text-white ${className}`}>{children}</h2>;
 }
 
 export function AlertDialogDescription({ children, className = '' }) {
-  return <p className={`text-sm text-gray-500 dark:text-gray-400 mt-2 ${className}`}>{children}</p>;
+  const { descriptionId } = React.useContext(AlertDialogContext);
+  return <p id={descriptionId} className={`text-sm text-gray-500 dark:text-gray-400 mt-2 ${className}`}>{children}</p>;
 }
 
 export function AlertDialogFooter({ children, className = '' }) {
@@ -1154,8 +1190,18 @@ export function AlertDialogAction({ children, onClick, className = '' }) {
 }
 
 export function AlertDialogCancel({ children, onClick, className = '' }) {
+  const { onOpenChange } = React.useContext(AlertDialogContext);
+
+  const handleClick = (e) => {
+    if (onClick) {
+      onClick(e);
+    } else {
+      onOpenChange?.(false);
+    }
+  };
+
   return (
-    <Button variant="outline" onClick={onClick} className={className}>
+    <Button variant="outline" onClick={handleClick} className={className}>
       {children}
     </Button>
   );
