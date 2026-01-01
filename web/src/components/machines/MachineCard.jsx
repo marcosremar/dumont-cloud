@@ -449,8 +449,12 @@ export default function MachineCard({
             <div className="relative" data-testid="failover-strategy-container">
               <button
                 type="button"
+                id={`failover-trigger-${machine.id}`}
                 data-testid="failover-selector"
                 aria-label={`Failover strategy: ${strategyInfo.label}. Click to change strategy`}
+                aria-expanded={showStrategyMenu}
+                aria-haspopup="menu"
+                aria-controls={showStrategyMenu ? `failover-menu-${machine.id}` : undefined}
                 className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 ${
                   currentStrategy === 'disabled' ? 'bg-gray-500/20 text-gray-400' :
                   currentStrategy === 'warm_pool' ? 'bg-green-500/20 text-green-400' :
@@ -467,11 +471,14 @@ export default function MachineCard({
 
               {showStrategyMenu && (
                 <div
+                  id={`failover-menu-${machine.id}`}
+                  role="menu"
+                  aria-labelledby={`failover-menu-label-${machine.id}`}
                   className="absolute top-full left-0 mt-1 z-50 w-64 p-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl"
                   data-testid="failover-dropdown-menu"
                 >
                   <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-700">
-                    <span className="text-[10px] font-semibold text-gray-300">Estratégia de Failover</span>
+                    <span id={`failover-menu-label-${machine.id}`} className="text-[10px] font-semibold text-gray-300">Estratégia de Failover</span>
                     <button
                       onClick={() => setShowStrategyMenu(false)}
                       className="p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300"
@@ -487,7 +494,9 @@ export default function MachineCard({
                       return (
                         <button
                           key={key}
+                          role="menuitem"
                           data-testid={`failover-option-${key}`}
+                          aria-current={currentStrategy === key ? 'true' : undefined}
                           onClick={() => {
                             // TODO: Call API to change strategy
                             setShowStrategyMenu(false)
