@@ -34,10 +34,11 @@ const variants = {
 function ToastItem({ id, message, type = 'info', isExiting = false, onClose }) {
   const variant = variants[type] || variants.info
   const Icon = variant.icon
+  const animationClass = isExiting ? 'animate-toast-out' : 'animate-toast-in'
 
   return (
     <div
-      className="toast flex items-stretch bg-gray-900 rounded-lg shadow-2xl shadow-black/50 overflow-hidden animate-toast-in border border-gray-700"
+      className={`toast flex items-stretch bg-gray-900 rounded-lg shadow-2xl shadow-black/50 overflow-hidden ${animationClass} border border-gray-700`}
       style={{ minWidth: '320px', maxWidth: '500px' }}
       role="alert"
       aria-live="polite"
