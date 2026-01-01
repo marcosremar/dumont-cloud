@@ -584,3 +584,110 @@ class SQLAlchemyTeamRepository(ITeamRepository):
                 })
 
         return result
+
+    def get_quota_for_update(self, team_id: int) -> Optional[TeamQuota]:
+        """
+        Get team quota with row lock for atomic updates.
+        Uses SELECT FOR UPDATE to prevent race conditions.
+
+        Args:
+            team_id: Team ID to get quota for
+
+        Returns:
+            TeamQuota with row lock, or None if no quota exists
+        """
+        return self.session.query(TeamQuota).filter(
+            TeamQuota.team_id == team_id
+        ).with_for_update().first()
+
+    def check_and_reserve_instance_quota(
+        self,
+        team_id: int,
+        instances_needed: int = 1
+    ) -> Dict[str, Any]:
+        """
+        Check if quota allows provisioning new instances and reserve if available.
+        Uses SELECT FOR UPDATE to prevent race conditions.
+
+        This is an atomic operation that:
+        1. Locks the quota row
+        2. Checks if quota allows the request
+        3. If allowed, increments the usage counter
+
+        Args:
+            team_id: Team ID to check quota for
+            instances_needed: Number of instances to provision (default 1)
+
+        Returns:
+            Dict with:
+              - available: bool - whether quota is available
+              - quota_exists: bool - whether quota record exists
+              - violations: list - details of quota violations if any
+              - quota: TeamQuota - the quota object (if exists)
+        """
+        # Get quota with row lock to prevent race conditions
+        quota = self.get_quota_for_update(team_id)
+
+        result = {
+            'available': True,
+            'quota_exists': quota is not None,
+            'violations': [],
+            'quota': quota
+        }
+
+        if not quota:
+            # No quota set means unlimited
+            return result
+
+        # Check concurrent instances
+        if quota.max_concurrent_instances is not None:
+            if quota.current_concurrent_instances + instances_needed > quota.max_concurrent_instances:
+                result['available'] = False
+                result['violations'].append({
+                    'type': 'max_concurrent_instances',
+                    'current': quota.current_concurrent_instances,
+                    'limit': quota.max_concurrent_instances,
+                    'requested': instances_needed,
+                    'message': f'Team quota exceeded: max_concurrent_instances ({quota.current_concurrent_instances}/{quota.max_concurrent_instances})'
+                })
+
+        # If quota is available, reserve the instance (increment counter)
+        if result['available'] and quota:
+            quota.current_concurrent_instances += instances_needed
+            quota.updated_at = datetime.utcnow()
+            self.session.flush()
+            logger.info(f"Reserved {instances_needed} instance(s) for team {team_id}. "
+                       f"Current: {quota.current_concurrent_instances}/{quota.max_concurrent_instances}")
+
+        return result
+
+    def release_instance_quota(
+        self,
+        team_id: int,
+        instances_released: int = 1
+    ) -> Optional[TeamQuota]:
+        """
+        Release instance quota when instance is terminated.
+
+        Args:
+            team_id: Team ID to release quota for
+            instances_released: Number of instances released (default 1)
+
+        Returns:
+            Updated TeamQuota or None if no quota exists
+        """
+        quota = self.get_quota(team_id)
+
+        if not quota:
+            return None
+
+        quota.current_concurrent_instances = max(
+            0,
+            quota.current_concurrent_instances - instances_released
+        )
+        quota.updated_at = datetime.utcnow()
+        self.session.flush()
+        logger.info(f"Released {instances_released} instance(s) for team {team_id}. "
+                   f"Current: {quota.current_concurrent_instances}")
+
+        return quota
