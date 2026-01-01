@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive } from 'lucide-react'
+import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive, Globe } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import StandbyConfig from '../components/StandbyConfig'
 import FailoverReport from '../components/FailoverReport'
+import RegionPreferences from '../components/settings/RegionPreferences'
 import { Alert, Card, Button } from '../components/tailadmin-ui'
 
 const API_BASE = ''
@@ -232,7 +233,8 @@ function Toast({ message, title = 'Saldo Baixo!', type = 'warning', onClose }) {
 // Menu items para Settings
 const SETTINGS_MENU = [
   { id: 'apis', label: 'APIs & Credenciais', icon: Key, color: 'green' },
-  { id: 'storage', label: 'Armazenamento', icon: Database, color: 'blue' },
+  { id: 'regions', label: 'Preferencias de Regiao', icon: Globe, color: 'blue' },
+  { id: 'storage', label: 'Armazenamento', icon: Database, color: 'cyan' },
   { id: 'cloudstorage', label: 'Cloud Storage Failover', icon: Cloud, color: 'purple' },
   { id: 'agent', label: 'Agent Sync', icon: Server, color: 'cyan' },
   { id: 'notifications', label: 'Notificações', icon: AlertCircle, color: 'yellow' },
@@ -599,6 +601,13 @@ export default function Settings() {
             <Alert variant={message.type === 'success' ? 'success' : 'error'}>
               {message.text}
             </Alert>
+          )}
+
+          {/* Region Preferences Tab */}
+          {activeTab === 'regions' && (
+            <div className="space-y-6">
+              <RegionPreferences />
+            </div>
           )}
 
           {/* APIs & Credenciais Tab */}
