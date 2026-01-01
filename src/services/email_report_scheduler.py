@@ -8,12 +8,17 @@ Features:
 - Weekly email reports every Monday at 8:00 AM UTC
 - Configurable via environment variables
 - SQLAlchemy job store for persistence across restarts
-- Batch processing with rate limiting
+- Batch processing with rate limiting and concurrency control
+- Thread-pool based concurrent email sending within batches
 - Integration with existing email services
 """
 
 import os
 import logging
+import threading
+from concurrent.futures import ThreadPoolExecutor as ConcurrentThreadPoolExecutor
+from concurrent.futures import as_completed
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from zoneinfo import ZoneInfo
@@ -40,8 +45,77 @@ EMAIL_TIMEZONE = os.getenv('EMAIL_TIMEZONE', 'UTC')
 ENABLE_EMAIL_REPORTS = os.getenv('ENABLE_EMAIL_REPORTS', 'true').lower() == 'true'
 
 # Batch processing configuration
-BATCH_SIZE = 50
-BATCH_DELAY_SECONDS = 1.0  # Delay between batches for rate limiting
+BATCH_SIZE = int(os.getenv('EMAIL_BATCH_SIZE', '50'))
+BATCH_DELAY_SECONDS = float(os.getenv('EMAIL_BATCH_DELAY', '1.0'))  # Delay between batches
+MAX_CONCURRENT_SENDS = int(os.getenv('EMAIL_MAX_CONCURRENT', '10'))  # Concurrent sends per batch
+
+
+@dataclass
+class BatchStatistics:
+    """Statistics for a batch email send operation."""
+
+    sent: int = 0
+    failed: int = 0
+    skipped: int = 0
+    total_users: int = 0
+    batches_processed: int = 0
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    errors: List[Dict[str, Any]] = field(default_factory=list)
+
+    @property
+    def duration_seconds(self) -> float:
+        """Calculate total duration in seconds."""
+        if self.start_time and self.end_time:
+            return (self.end_time - self.start_time).total_seconds()
+        return 0.0
+
+    @property
+    def success_rate(self) -> float:
+        """Calculate success rate as a percentage."""
+        total = self.sent + self.failed
+        if total == 0:
+            return 100.0
+        return (self.sent / total) * 100
+
+    @property
+    def emails_per_second(self) -> float:
+        """Calculate throughput in emails per second."""
+        if self.duration_seconds <= 0:
+            return 0.0
+        return (self.sent + self.failed) / self.duration_seconds
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        return {
+            'sent': self.sent,
+            'failed': self.failed,
+            'skipped': self.skipped,
+            'total_users': self.total_users,
+            'batches_processed': self.batches_processed,
+            'duration_seconds': self.duration_seconds,
+            'success_rate': round(self.success_rate, 1),
+            'emails_per_second': round(self.emails_per_second, 2),
+            'errors': self.errors[:10],  # Limit errors to first 10
+        }
+
+
+@dataclass
+class UserEmailTask:
+    """Represents a single user email send task."""
+
+    user_pref: EmailPreference
+    user_id: str
+    user_email: str
+
+    @classmethod
+    def from_preference(cls, pref: EmailPreference) -> 'UserEmailTask':
+        """Create task from EmailPreference object."""
+        return cls(
+            user_pref=pref,
+            user_id=pref.user_id,
+            user_email=pref.email,
+        )
 
 
 class EmailReportScheduler:
@@ -184,6 +258,11 @@ class EmailReportScheduler:
             'running': self.is_running(),
             'timezone': self.timezone,
             'schedule': f'{self.send_day} {self.send_hour:02d}:{self.send_minute:02d}',
+            'batch_config': {
+                'batch_size': BATCH_SIZE,
+                'max_concurrent': MAX_CONCURRENT_SENDS,
+                'delay_seconds': BATCH_DELAY_SECONDS,
+            },
         }
 
         if self.scheduler:
@@ -204,6 +283,98 @@ class EmailReportScheduler:
         """
         logger.info("Manual trigger: sending weekly reports now")
         return self._send_weekly_reports()
+
+    def trigger_test_batch(
+        self,
+        limit: int = 5,
+        user_ids: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Trigger a test batch send with limited users (for testing).
+
+        This method allows testing the batch sending logic without
+        sending emails to all eligible users. Useful for verifying
+        concurrency control and batch processing work correctly.
+
+        Args:
+            limit: Maximum number of users to send to (default: 5)
+            user_ids: Optional list of specific user IDs to send to.
+                     If provided, limit is ignored.
+
+        Returns:
+            Dictionary with execution results including batch statistics
+        """
+        start_time = datetime.utcnow()
+        logger.info("=" * 60)
+        logger.info(f"Starting TEST batch email send - {start_time}")
+        logger.info(f"  Limit: {limit}, User IDs: {user_ids}")
+        logger.info("=" * 60)
+
+        # Check if email sender is configured
+        sender = get_email_sender()
+        if not sender.is_configured():
+            logger.error("Email sender not configured - RESEND_API_KEY missing")
+            return {'error': 'Email sender not configured', 'sent': 0, 'failed': 0}
+
+        db = SessionLocal()
+        try:
+            # Query eligible users with optional filters
+            query = db.query(EmailPreference).filter(
+                EmailPreference.frequency == 'weekly',
+                EmailPreference.unsubscribed == False,
+            )
+
+            if user_ids:
+                query = query.filter(EmailPreference.user_id.in_(user_ids))
+                eligible_users = query.all()
+            else:
+                eligible_users = query.limit(limit).all()
+
+            logger.info(f"Test batch: Found {len(eligible_users)} users to process")
+
+            if not eligible_users:
+                return {
+                    'sent': 0,
+                    'failed': 0,
+                    'skipped': 0,
+                    'duration_seconds': 0,
+                    'test_mode': True,
+                }
+
+            # Process the test batch
+            results = self._process_users_batch(db, eligible_users)
+            results['test_mode'] = True
+
+            duration = (datetime.utcnow() - start_time).total_seconds()
+            results['duration_seconds'] = duration
+
+            logger.info(
+                f"Test batch complete: "
+                f"sent={results['sent']}, failed={results['failed']}, "
+                f"skipped={results['skipped']}, duration={duration:.1f}s"
+            )
+
+            return results
+
+        except Exception as e:
+            logger.error(f"Error in test batch send: {e}", exc_info=True)
+            return {'error': str(e), 'sent': 0, 'failed': 0, 'test_mode': True}
+        finally:
+            db.close()
+
+    def get_batch_config(self) -> Dict[str, Any]:
+        """
+        Get current batch processing configuration.
+
+        Returns:
+            Dictionary with batch configuration parameters
+        """
+        return {
+            'batch_size': BATCH_SIZE,
+            'max_concurrent_sends': MAX_CONCURRENT_SENDS,
+            'batch_delay_seconds': BATCH_DELAY_SECONDS,
+            'skip_zero_usage': os.getenv('EMAIL_SKIP_ZERO_USAGE', 'true').lower() == 'true',
+        }
 
     def _send_weekly_reports(self) -> Dict[str, Any]:
         """
@@ -279,49 +450,179 @@ class EmailReportScheduler:
         self,
         db,
         users: List[EmailPreference]
-    ) -> Dict[str, int]:
+    ) -> Dict[str, Any]:
         """
-        Process users in batches to respect rate limits.
+        Process users in batches with concurrency control.
+
+        Uses ThreadPoolExecutor to send emails concurrently within each batch,
+        with configurable concurrency limits and rate limiting between batches.
 
         Args:
             db: Database session
             users: List of eligible users
 
         Returns:
-            Dictionary with send statistics
+            Dictionary with send statistics including throughput metrics
         """
         import time
 
-        sent = 0
-        failed = 0
-        skipped = 0
+        stats = BatchStatistics(
+            total_users=len(users),
+            start_time=datetime.utcnow(),
+        )
 
-        for i, user_pref in enumerate(users):
+        # Create thread-local storage for database sessions
+        # Each thread needs its own session for thread-safety
+        thread_local = threading.local()
+
+        def get_thread_session():
+            """Get or create a database session for the current thread."""
+            if not hasattr(thread_local, 'session'):
+                thread_local.session = SessionLocal()
+            return thread_local.session
+
+        def close_thread_session():
+            """Close the database session for the current thread if it exists."""
+            if hasattr(thread_local, 'session'):
+                try:
+                    thread_local.session.close()
+                except Exception:
+                    pass
+
+        def send_email_task(task: UserEmailTask) -> Dict[str, Any]:
+            """
+            Send email for a single user task.
+
+            This function runs in a thread pool worker and uses
+            a thread-local database session.
+
+            Args:
+                task: UserEmailTask with user info
+
+            Returns:
+                Dictionary with result status
+            """
+            thread_session = get_thread_session()
+
             try:
-                # Check unsubscribed flag immediately before sending
-                db.refresh(user_pref)
+                # Re-fetch preference to check current unsubscribed status
+                user_pref = thread_session.query(EmailPreference).filter(
+                    EmailPreference.user_id == task.user_id
+                ).first()
+
+                if user_pref is None:
+                    return {
+                        'status': 'skipped',
+                        'user_id': task.user_id,
+                        'reason': 'User preference not found',
+                    }
+
                 if user_pref.unsubscribed:
-                    logger.info(f"User {user_pref.user_id} unsubscribed, skipping")
-                    skipped += 1
-                    continue
+                    return {
+                        'status': 'skipped',
+                        'user_id': task.user_id,
+                        'reason': 'User unsubscribed',
+                    }
 
                 # Send email to user
-                success = self._send_user_report(db, user_pref)
-                if success:
-                    sent += 1
-                else:
-                    failed += 1
+                success = self._send_user_report(thread_session, user_pref)
 
-                # Rate limiting between batches
-                if (i + 1) % BATCH_SIZE == 0:
-                    logger.info(f"Processed {i + 1}/{len(users)} users, pausing for rate limit...")
-                    time.sleep(BATCH_DELAY_SECONDS)
+                return {
+                    'status': 'sent' if success else 'failed',
+                    'user_id': task.user_id,
+                    'email': task.user_email,
+                }
 
             except Exception as e:
-                logger.error(f"Error processing user {user_pref.user_id}: {e}")
-                failed += 1
+                logger.error(f"Error sending email to {task.user_email}: {e}")
+                return {
+                    'status': 'failed',
+                    'user_id': task.user_id,
+                    'email': task.user_email,
+                    'error': str(e),
+                }
 
-        return {'sent': sent, 'failed': failed, 'skipped': skipped}
+        # Process users in batches
+        total_batches = (len(users) + BATCH_SIZE - 1) // BATCH_SIZE
+
+        for batch_num in range(total_batches):
+            batch_start = batch_num * BATCH_SIZE
+            batch_end = min(batch_start + BATCH_SIZE, len(users))
+            batch_users = users[batch_start:batch_end]
+
+            logger.info(
+                f"Processing batch {batch_num + 1}/{total_batches} "
+                f"({len(batch_users)} users, concurrent={MAX_CONCURRENT_SENDS})"
+            )
+
+            # Create tasks for this batch
+            tasks = [UserEmailTask.from_preference(pref) for pref in batch_users]
+
+            # Process batch concurrently using ThreadPoolExecutor
+            with ConcurrentThreadPoolExecutor(max_workers=MAX_CONCURRENT_SENDS) as executor:
+                # Submit all tasks for concurrent execution
+                future_to_task = {
+                    executor.submit(send_email_task, task): task
+                    for task in tasks
+                }
+
+                # Collect results as they complete
+                for future in as_completed(future_to_task):
+                    task = future_to_task[future]
+                    try:
+                        result = future.result()
+                        status = result.get('status', 'failed')
+
+                        if status == 'sent':
+                            stats.sent += 1
+                        elif status == 'skipped':
+                            stats.skipped += 1
+                            logger.info(
+                                f"Skipped {task.user_email}: "
+                                f"{result.get('reason', 'unknown')}"
+                            )
+                        else:
+                            stats.failed += 1
+                            if 'error' in result:
+                                stats.errors.append({
+                                    'user_id': task.user_id,
+                                    'email': task.user_email,
+                                    'error': result['error'],
+                                })
+
+                    except Exception as e:
+                        logger.error(
+                            f"Task exception for {task.user_email}: {e}"
+                        )
+                        stats.failed += 1
+                        stats.errors.append({
+                            'user_id': task.user_id,
+                            'email': task.user_email,
+                            'error': str(e),
+                        })
+
+            stats.batches_processed += 1
+
+            # Rate limiting delay between batches (not after last batch)
+            if batch_num < total_batches - 1:
+                logger.info(
+                    f"Batch {batch_num + 1} complete: "
+                    f"sent={stats.sent}, failed={stats.failed}, skipped={stats.skipped}. "
+                    f"Pausing {BATCH_DELAY_SECONDS}s for rate limit..."
+                )
+                time.sleep(BATCH_DELAY_SECONDS)
+
+        # Clean up thread-local sessions
+        close_thread_session()
+
+        stats.end_time = datetime.utcnow()
+
+        logger.info(
+            f"Batch processing complete: {stats.batches_processed} batches, "
+            f"{stats.emails_per_second:.2f} emails/sec"
+        )
+
+        return stats.to_dict()
 
     def _send_user_report(self, db, user_pref: EmailPreference) -> bool:
         """
