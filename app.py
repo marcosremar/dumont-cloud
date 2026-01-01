@@ -53,7 +53,7 @@ def create_app():
 
     # Inicializar sistema de agentes
     def init_agents():
-        """Inicializa agentes automaticos (monitoramento de precos, auto-hibernacao, etc)."""
+        """Inicializa agentes automaticos (monitoramento de precos, auto-hibernacao, snapshot scheduler, etc)."""
         import logging
         import os
         from src.services.agent_manager import agent_manager
@@ -62,6 +62,100 @@ def create_app():
 
         logger = logging.getLogger(__name__)
         logger.info("Inicializando agentes automaticos...")
+
+        # ========== SNAPSHOT SCHEDULER INITIALIZATION ==========
+        # Initialize the snapshot scheduler and restore state from database
+        try:
+            from src.services.snapshot_scheduler import get_snapshot_scheduler, SnapshotJobInfo
+            from src.services.alert_manager import get_alert_manager
+            from src.config.database import SessionLocal
+            from src.models.snapshot_config import SnapshotConfig
+            from datetime import datetime
+
+            logger.info("Inicializando Snapshot Scheduler...")
+
+            # Get AlertManager for Slack/webhook notifications
+            alert_manager = get_alert_manager()
+
+            # Define callback to persist scheduler state to database
+            def on_snapshot_state_change(job_info: SnapshotJobInfo):
+                """Persist scheduler state to database when it changes."""
+                db = SessionLocal()
+                try:
+                    config = db.query(SnapshotConfig).filter(
+                        SnapshotConfig.instance_id == job_info.instance_id
+                    ).first()
+
+                    if config:
+                        # Update existing config with scheduler state
+                        if job_info.last_snapshot_at:
+                            config.last_snapshot_at = datetime.fromtimestamp(job_info.last_snapshot_at)
+                        if job_info.next_snapshot_at:
+                            config.next_snapshot_at = datetime.fromtimestamp(job_info.next_snapshot_at)
+                        config.last_snapshot_status = job_info.last_status.value
+                        config.last_snapshot_error = job_info.last_error
+                        config.consecutive_failures = job_info.consecutive_failures
+                        config.enabled = job_info.enabled
+                        db.commit()
+                        logger.debug(f"Persisted scheduler state for {job_info.instance_id}")
+                except Exception as e:
+                    logger.error(f"Failed to persist scheduler state for {job_info.instance_id}: {e}")
+                    db.rollback()
+                finally:
+                    db.close()
+
+            # Create snapshot scheduler with alert integration and state persistence callback
+            snapshot_scheduler = get_snapshot_scheduler(
+                alert_manager=alert_manager,
+                on_state_change=on_snapshot_state_change,
+            )
+
+            # Load existing configurations from database
+            db = SessionLocal()
+            try:
+                configs = db.query(SnapshotConfig).filter(
+                    SnapshotConfig.enabled == True
+                ).all()
+
+                if configs:
+                    # Convert database models to config dicts for scheduler
+                    config_dicts = []
+                    for config in configs:
+                        config_dict = {
+                            'instance_id': config.instance_id,
+                            'interval_minutes': config.interval_minutes,
+                            'enabled': config.enabled,
+                            'consecutive_failures': config.consecutive_failures,
+                        }
+                        # Add timestamp fields if they exist
+                        if config.last_snapshot_at:
+                            config_dict['last_snapshot_at'] = config.last_snapshot_at.timestamp()
+                        if config.next_snapshot_at:
+                            config_dict['next_snapshot_at'] = config.next_snapshot_at.timestamp()
+
+                        config_dicts.append(config_dict)
+
+                    # Load configs into scheduler
+                    snapshot_scheduler.load_from_configs(config_dicts)
+                    logger.info(f"✓ Loaded {len(config_dicts)} snapshot configurations from database")
+                else:
+                    logger.info("No existing snapshot configurations found in database")
+
+            finally:
+                db.close()
+
+            # Start the scheduler
+            snapshot_scheduler.start()
+
+            # Save reference in app for use in endpoints and shutdown
+            app.snapshot_scheduler = snapshot_scheduler
+
+            logger.info("✓ Snapshot Scheduler started successfully")
+
+        except Exception as e:
+            logger.error(f"Erro ao iniciar Snapshot Scheduler: {e}")
+            import traceback
+            traceback.print_exc()
 
         # Carregar config do primeiro usuario para obter API key
         config = load_user_config()
@@ -159,6 +253,16 @@ def create_app():
         logger = logging.getLogger(__name__)
         logger.info("Parando agentes...")
         agent_manager.stop_all()
+
+        # Stop snapshot scheduler if running
+        if hasattr(app, 'snapshot_scheduler'):
+            try:
+                logger.info("Parando Snapshot Scheduler...")
+                app.snapshot_scheduler.stop(wait=True)
+                logger.info("Snapshot Scheduler parado")
+            except Exception as e:
+                logger.error(f"Erro ao parar Snapshot Scheduler: {e}")
+
         logger.info("Agentes parados")
 
     atexit.register(shutdown_agents)
