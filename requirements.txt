@@ -28,6 +28,9 @@ google-cloud-compute==1.40.0
 numpy==2.4.0
 scikit-learn==1.8.0
 
+# Email Service
+resend>=0.7.0
+
 # Utilities
 python-dateutil==2.9.0.post0
 colorama==0.4.6
