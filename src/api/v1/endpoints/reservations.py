@@ -60,7 +60,7 @@ def get_reservation_service(db: Session = Depends(get_db)) -> ReservationService
 
 
 # =============================================================================
-# RESERVATION CRUD ENDPOINTS
+# RESERVATION LIST & CREATE ENDPOINTS
 # =============================================================================
 
 @router.get("", response_model=ListReservationsResponse)
@@ -168,97 +168,10 @@ async def create_reservation(
         )
 
 
-@router.get("/{reservation_id}", response_model=ReservationResponse)
-async def get_reservation(
-    reservation_id: int,
-    user_email: str = Depends(get_current_user_email),
-    service: ReservationService = Depends(get_reservation_service),
-):
-    """
-    Get a specific reservation by ID.
-
-    Returns detailed information about a reservation including
-    pricing, status, and credit information.
-    """
-    try:
-        reservation = service.get_reservation(reservation_id)
-
-        # Verify ownership
-        if reservation.user_id != user_email:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized to access this reservation"
-            )
-
-        return ReservationResponse.from_model(reservation)
-
-    except NotFoundException as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
-
-
-@router.delete("/{reservation_id}", response_model=CancelReservationResponse)
-async def cancel_reservation(
-    reservation_id: int,
-    request: Optional[CancelReservationRequest] = None,
-    user_email: str = Depends(get_current_user_email),
-    service: ReservationService = Depends(get_reservation_service),
-):
-    """
-    Cancel a reservation and refund unused credits.
-
-    For pending reservations: Full refund
-    For active reservations: Partial refund based on unused time
-    For completed/cancelled: Cannot be cancelled
-
-    Returns the refund amount and percentage.
-    """
-    try:
-        reservation = service.get_reservation(reservation_id)
-
-        # Verify ownership
-        if reservation.user_id != user_email:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized to cancel this reservation"
-            )
-
-        reason = request.reason if request else None
-        updated_reservation, refund_credit = service.cancel_reservation(
-            reservation_id=reservation_id,
-            reason=reason
-        )
-
-        credits_refunded = refund_credit.amount if refund_credit else 0.0
-        refund_percentage = (
-            (credits_refunded / reservation.credits_used * 100)
-            if reservation.credits_used > 0 else 0.0
-        )
-
-        return CancelReservationResponse(
-            success=True,
-            reservation_id=reservation_id,
-            message=f"Reservation {reservation_id} cancelled successfully",
-            credits_refunded=credits_refunded,
-            refund_percentage=round(refund_percentage, 2)
-        )
-
-    except NotFoundException as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
-    except ValidationException as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-
-
 # =============================================================================
 # AVAILABILITY & PRICING ENDPOINTS
+# Note: These static path routes MUST come BEFORE /{reservation_id} routes
+# to avoid FastAPI matching "availability" as a reservation_id
 # =============================================================================
 
 @router.get("/availability", response_model=AvailabilityResponse)
@@ -352,6 +265,7 @@ async def get_pricing_estimate(
 
 # =============================================================================
 # CREDIT MANAGEMENT ENDPOINTS
+# Note: These static path routes MUST come BEFORE /{reservation_id} routes
 # =============================================================================
 
 @router.get("/credits", response_model=CreditBalanceResponse)
@@ -464,3 +378,98 @@ async def get_credit_history(
         credits=credit_responses,
         count=len(credit_responses)
     )
+
+
+# =============================================================================
+# SINGLE RESERVATION ENDPOINTS (Path parameter routes)
+# Note: These MUST come AFTER all static path routes like /availability,
+# /pricing, /credits to avoid route matching issues in FastAPI
+# =============================================================================
+
+@router.get("/{reservation_id}", response_model=ReservationResponse)
+async def get_reservation(
+    reservation_id: int,
+    user_email: str = Depends(get_current_user_email),
+    service: ReservationService = Depends(get_reservation_service),
+):
+    """
+    Get a specific reservation by ID.
+
+    Returns detailed information about a reservation including
+    pricing, status, and credit information.
+    """
+    try:
+        reservation = service.get_reservation(reservation_id)
+
+        # Verify ownership
+        if reservation.user_id != user_email:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to access this reservation"
+            )
+
+        return ReservationResponse.from_model(reservation)
+
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+
+
+@router.delete("/{reservation_id}", response_model=CancelReservationResponse)
+async def cancel_reservation(
+    reservation_id: int,
+    request: Optional[CancelReservationRequest] = None,
+    user_email: str = Depends(get_current_user_email),
+    service: ReservationService = Depends(get_reservation_service),
+):
+    """
+    Cancel a reservation and refund unused credits.
+
+    For pending reservations: Full refund
+    For active reservations: Partial refund based on unused time
+    For completed/cancelled: Cannot be cancelled
+
+    Returns the refund amount and percentage.
+    """
+    try:
+        reservation = service.get_reservation(reservation_id)
+
+        # Verify ownership
+        if reservation.user_id != user_email:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to cancel this reservation"
+            )
+
+        reason = request.reason if request else None
+        updated_reservation, refund_credit = service.cancel_reservation(
+            reservation_id=reservation_id,
+            reason=reason
+        )
+
+        credits_refunded = refund_credit.amount if refund_credit else 0.0
+        refund_percentage = (
+            (credits_refunded / reservation.credits_used * 100)
+            if reservation.credits_used > 0 else 0.0
+        )
+
+        return CancelReservationResponse(
+            success=True,
+            reservation_id=reservation_id,
+            message=f"Reservation {reservation_id} cancelled successfully",
+            credits_refunded=credits_refunded,
+            refund_percentage=round(refund_percentage, 2)
+        )
+
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except ValidationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
