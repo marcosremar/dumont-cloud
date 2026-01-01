@@ -1,0 +1,91 @@
+{
+  "feature": "Fix focus ring visibility on dark theme custom components",
+  "description": "Update focus ring styles across custom components to use visible colors on dark backgrounds by changing focus:ring-offset-2 background color to match dark surface.",
+  "created_at": "2025-12-31T21:16:43.824Z",
+  "updated_at": "2025-01-01T07:05:00.000Z",
+  "status": "in_progress",
+  "planStatus": "approved",
+  "workflow_type": "development",
+  "services_involved": [
+    "web"
+  ],
+  "spec_file": "spec.md",
+  "phases": [
+    {
+      "name": "Phase 1: Fix Button Component Focus Ring",
+      "description": "Update the Button component in tailadmin-ui to include dark mode ring offset color",
+      "subtasks": [
+        {
+          "id": "1.1",
+          "title": "Add dark mode ring-offset color to Button component",
+          "description": "The Button component in web/src/components/tailadmin-ui/index.jsx uses focus:ring-2 focus:ring-offset-2 but has no dark mode offset color. Add dark:focus:ring-offset-dark-surface to match the page background (#0a0d0a).",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "status": "completed",
+          "notes": "Added dark:focus:ring-offset-dark-surface to Button component className to match dark theme page background (#0a0d0a)",
+          "updated_at": "2026-01-01T06:04:01.467091+00:00"
+        }
+      ]
+    },
+    {
+      "name": "Phase 2: Fix Slider and Switch Invalid Color References",
+      "description": "Fix the Slider and Switch components that reference non-existent dark-surface-bg color",
+      "subtasks": [
+        {
+          "id": "2.1",
+          "title": "Fix Slider component invalid color reference",
+          "description": "The Slider component uses dark:focus-visible:ring-offset-dark-surface-bg but 'dark-surface-bg' is not defined in tailwind config. Change to dark:focus-visible:ring-offset-dark-surface which correctly references the DEFAULT value (#0a0d0a).",
+          "file": "web/src/components/ui/slider.jsx",
+          "status": "completed",
+          "notes": "Fixed invalid color reference in Slider Thumb component: changed dark:focus-visible:ring-offset-dark-surface-bg to dark:focus-visible:ring-offset-dark-surface. The suffix '-bg' was removed as the dark-surface color in tailwind config uses DEFAULT to define the page background color #0a0d0a.",
+          "updated_at": "2026-01-01T06:04:58.384201+00:00"
+        },
+        {
+          "id": "2.2",
+          "title": "Fix Switch component invalid color reference",
+          "description": "The Switch component uses dark:focus-visible:ring-offset-dark-surface-bg but 'dark-surface-bg' is not defined in tailwind config. Change to dark:focus-visible:ring-offset-dark-surface.",
+          "file": "web/src/components/ui/switch.jsx",
+          "status": "completed",
+          "notes": "Fixed invalid color reference in Switch component: changed dark:focus-visible:ring-offset-dark-surface-bg to dark:focus-visible:ring-offset-dark-surface. The suffix '-bg' was removed as the dark-surface color in tailwind config uses DEFAULT to define the page background color #0a0d0a.",
+          "updated_at": "2026-01-01T06:06:11.540406+00:00"
+        }
+      ]
+    },
+    {
+      "name": "Phase 3: Fix Dialog Close Button Focus Ring",
+      "description": "Update Dialog component close button to use proper dark mode focus ring offset",
+      "subtasks": [
+        {
+          "id": "3.1",
+          "title": "Fix Dialog close button focus ring for dark mode",
+          "description": "The Dialog close button uses ring-offset-background with focus:ring-offset-2 but needs explicit dark mode handling. Add dark:focus:ring-offset-dark-surface for proper visibility on dark backgrounds.",
+          "file": "web/src/components/ui/dialog.jsx",
+          "status": "completed",
+          "notes": "Added dark:focus:ring-offset-dark-surface to Dialog close button className. This ensures the focus ring offset matches the dark theme page background (#0a0d0a) for proper visibility.",
+          "updated_at": "2026-01-01T06:07:07.155798+00:00"
+        }
+      ]
+    },
+    {
+      "name": "Phase 4: Verification and Testing",
+      "description": "Verify changes work correctly and test across components",
+      "subtasks": [
+        {
+          "id": "4.1",
+          "title": "Run build to verify no compilation errors",
+          "description": "Run npm build to ensure all changes compile correctly and no invalid Tailwind classes remain.",
+          "file": "",
+          "status": "completed",
+          "notes": "Verified all Tailwind classes manually (build commands not available in restricted environment). Confirmed: 1) Button uses dark:focus:ring-offset-dark-surface \u2705, 2) Slider uses dark:focus-visible:ring-offset-dark-surface \u2705 (fixed from dark-surface-bg), 3) Switch uses dark:focus-visible:ring-offset-dark-surface \u2705 (fixed from dark-surface-bg), 4) Dialog uses dark:focus:ring-offset-dark-surface \u2705. All classes correctly reference the dark-surface DEFAULT color (#0a0d0a) defined in tailwind.config.js.",
+          "updated_at": "2026-01-01T06:08:25.500764+00:00"
+        }
+      ]
+    }
+  ],
+  "qa_signoff": {
+    "status": "pending",
+    "issues": "",
+    "tests_passed": ""
+  },
+  "final_acceptance": [],
+  "last_updated": "2026-01-01T06:08:25.500782+00:00"
+}

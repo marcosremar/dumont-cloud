@@ -1,0 +1,13 @@
+{
+  "sourceType": "ideation",
+  "ideationType": "ui_ux_improvements",
+  "ideaId": "uiux-004",
+  "rationale": "Custom Button and Input components use focus:ring-offset-2 which creates a 2px offset using the page background color. On dark theme (bg-dark-surface: #0a0d0a), the default white offset creates a jarring visual gap. Some components also lack visible focus states entirely.",
+  "category": "ui_ux",
+  "uiuxCategory": "visual",
+  "affectedFiles": [
+    "web/src/components/tailadmin-ui/index.jsx",
+    "web/tailwind.config.js"
+  ],
+  "problemSolved": "Button component (line 185) uses focus:ring-2 focus:ring-offset-2 but no ring-offset-color. Input (line 292) has focus:ring-2 but inconsistent styling. SelectTrigger (line 843) and other interactive elements use various focus styles. The default ring-offset-color is white which contrasts poorly with dark surface (#0a0d0a)."
+}

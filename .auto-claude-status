@@ -55,6 +55,11 @@
   "subtasks": {
     "completed": 9,
     "total": 10,
+  "spec": "028-fix-focus-ring-visibility-on-dark-theme-custom-com",
+  "state": "building",
+  "subtasks": {
+    "completed": 4,
+    "total": 5,
     "in_progress": 1,
     "failed": 0
   },
@@ -104,6 +109,9 @@
     "current": "Testing and Verification",
     "id": null,
     "total": 2
+    "current": "Phase 4: Verification and Testing",
+    "id": null,
+    "total": 1
   },
   "workers": {
     "active": 0,
@@ -158,4 +166,7 @@
     "started_at": "2026-01-01T07:00:06.244360"
   },
   "last_update": "2026-01-01T07:24:59.381817"
+    "started_at": "2026-01-01T06:59:58.103151"
+  },
+  "last_update": "2026-01-01T07:07:27.559907"
 }
