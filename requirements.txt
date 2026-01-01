@@ -15,6 +15,9 @@ httpx==0.28.1
 aiohttp==3.11.16
 aiofiles==25.1.0
 
+# Email
+fastapi-mail==1.4.1
+
 # Database
 sqlalchemy==2.0.40
 psycopg2-binary==2.9.11
