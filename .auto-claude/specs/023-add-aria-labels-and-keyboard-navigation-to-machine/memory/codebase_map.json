@@ -1,0 +1,20 @@
+{
+  "discovered_files": {
+    "web/src/components/machines/MachineCard.jsx": {
+      "description": "MachineCard has 15+ interactive elements including: failover strategy dropdown (custom implementation), backup info popup (custom), main options dropdown (DropdownMenu from tailadmin-ui), copy buttons for IP/SSH, IDE buttons (VS Code dropdown, Cursor, Windsurf), failover action buttons, and machine action buttons (Start, Pause, CPU migration). Most lack ARIA labels.",
+      "category": "accessibility",
+      "discovered_at": "2026-01-01T06:03:12.832405+00:00"
+    },
+    "web/src/components/tailadmin-ui/index.jsx": {
+      "description": "DropdownMenu component uses React Context for state (isOpen, setIsOpen). It has basic click-outside detection but no keyboard navigation or ARIA attributes. Needs aria-expanded, aria-haspopup on trigger, and role='menu'/role='menuitem' on content/items.",
+      "category": "accessibility",
+      "discovered_at": "2026-01-01T06:03:12.890064+00:00"
+    },
+    "web/src/components/Tooltip.jsx": {
+      "description": "Tooltip.jsx already has good accessibility patterns: uses role='tooltip', has aria-label on HelpTooltip component, and handles focus/blur events. Can use as reference for accessibility patterns.",
+      "category": "accessibility",
+      "discovered_at": "2026-01-01T06:03:12.930112+00:00"
+    }
+  },
+  "last_updated": "2026-01-01T06:03:12.930130+00:00"
+}

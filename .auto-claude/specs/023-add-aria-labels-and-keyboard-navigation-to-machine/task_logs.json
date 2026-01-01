@@ -1,0 +1,1214 @@
+{
+  "spec_id": "023-add-aria-labels-and-keyboard-navigation-to-machine",
+  "created_at": "2026-01-01T06:00:18.692712+00:00",
+  "updated_at": "2026-01-01T06:08:18.205180+00:00",
+  "phases": {
+    "planning": {
+      "phase": "planning",
+      "status": "completed",
+      "started_at": "2026-01-01T06:00:18.756443+00:00",
+      "completed_at": "2026-01-01T06:03:49.226475+00:00",
+      "entries": [
+        {
+          "timestamp": "2026-01-01T06:00:18.756577+00:00",
+          "type": "phase_start",
+          "content": "Starting implementation planning...",
+          "phase": "planning"
+        },
+        {
+          "timestamp": "2026-01-01T06:00:26.105011+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...bels-and-keyboard-navigation-to-machine/spec.md",
+          "phase": "planning",
+          "tool_name": "Read",
+          "tool_input": "...bels-and-keyboard-navigation-to-machine/spec.md",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:00:26.241148+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_session_context]",
+          "phase": "planning",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:00:26.330020+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__get_session_context] Done",
+          "phase": "planning",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "session": 1,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:00:30.479180+00:00",
+          "type": "text",
+          "content": "Let me explore the codebase to understand the MachineCard component structure and its interactive elements before creating the implementation plan.",
+          "phase": "planning",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:00:30.969902+00:00",
+          "type": "tool_start",
+          "content": "[Glob] pattern: **/*MachineCard*",
+          "phase": "planning",
+          "tool_name": "Glob",
+          "tool_input": "pattern: **/*MachineCard*",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:00:31.525687+00:00",
+          "type": "tool_start",
+          "content": "[Glob] pattern: **/*machine*card*",
+          "phase": "planning",
+          "tool_name": "Glob",
+          "tool_input": "pattern: **/*machine*card*",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:00:32.155212+00:00",
+          "type": "tool_start",
+          "content": "[Grep] pattern: MachineCard",
+          "phase": "planning",
+          "tool_name": "Grep",
+          "tool_input": "pattern: MachineCard",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:00:33.033193+00:00",
+          "type": "tool_end",
+          "content": "[Grep] Done",
+          "phase": "planning",
+          "tool_name": "Grep",
+          "session": 1,
+          "detail": "No files found",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:00:36.390286+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "planning",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:00:36.714238+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "planning",
+          "tool_name": "Read",
+          "session": 1,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:00:48.105992+00:00",
+          "type": "text",
+          "content": "Let me explore the existing UI components and patterns for accessibility to understand how to properly implement ARIA attributes:",
+          "phase": "planning",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:00:48.696720+00:00",
+          "type": "tool_start",
+          "content": "[Glob] pattern: **/DropdownMenu*",
+          "phase": "planning",
+          "tool_name": "Glob",
+          "tool_input": "pattern: **/DropdownMenu*",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:00:49.371917+00:00",
+          "type": "tool_start",
+          "content": "[Glob] pattern: **/tailadmin-ui/**",
+          "phase": "planning",
+          "tool_name": "Glob",
+          "tool_input": "pattern: **/tailadmin-ui/**",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:00:50.593555+00:00",
+          "type": "tool_start",
+          "content": "[Grep] pattern: aria-",
+          "phase": "planning",
+          "tool_name": "Grep",
+          "tool_input": "pattern: aria-",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:00:51.357691+00:00",
+          "type": "tool_end",
+          "content": "[Grep] Done",
+          "phase": "planning",
+          "tool_name": "Grep",
+          "session": 1,
+          "detail": "Found 5 files\nweb/src/components/tailadmin/form/MultiSelect.tsx\nweb/src/components/layout/AppHeader.jsx\nweb/src/components/Tooltip.jsx\nweb/src/components/Toast.jsx\nweb/src/components/MobileMenu.jsx",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:00:56.031856+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/tailadmin-ui/index.jsx",
+          "phase": "planning",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/tailadmin-ui/index.jsx",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:00:56.533019+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/Tooltip.jsx",
+          "phase": "planning",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/Tooltip.jsx",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:00:56.610032+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "planning",
+          "tool_name": "Read",
+          "session": 1,
+          "detail": "     1→import { useState, useRef, useEffect } from 'react'\n     2→import { HelpCircle } from 'lucide-react'\n     3→import './Tooltip.css'\n     4→\n     5→export function Tooltip({ content, children, position = 'top', delay = 200 }) {\n     6→  const [isVisible, setIsVisible] = useState(false)\n     7→  const [coords, setCoords] = useState({ top: 0, left: 0 })\n     8→  const triggerRef = useRef(null)\n     9→  const tooltipRef = useRef(null)\n    10→  const timeoutRef = useRef(null)\n    11→\n    12→  const showTooltip = () => {\n    13→    timeoutRef.current = setTimeout(() => {\n    14→      setIsVisible(true)\n    15→    }, delay)\n    16→  }\n    17→\n    18→  const hideTooltip = () => {\n    19→    if (timeoutRef.current) {\n    20→      clearTimeout(timeoutRef.current)\n    21→    }\n    22→    setIsVisible(false)\n    23→  }\n    24→\n    25→  useEffect(() => {\n    26→    if (isVisible && triggerRef.current && tooltipRef.current) {\n    27→      const triggerRect = triggerRef.current.getBoundingClientRect()\n    28→      const tooltipRect = tooltipRef.current.getBoundingClientRect()\n    29→\n    30→      let top = 0\n    31→      let left = 0\n    32→\n    33→      switch (position) {\n    34→        case 'top':\n    35→          top = triggerRect.top - tooltipRect.height - 8\n    36→          left = triggerRect.left + (triggerRect.width - tooltipRect.width) / 2\n    37→          break\n    38→        case 'bottom':\n    39→          top = triggerRect.bottom + 8\n    40→          left = triggerRect.left + (triggerRect.width - tooltipRect.width) / 2\n    41→          break\n    42→        case 'left':\n    43→          top = triggerRect.top + (triggerRect.height - tooltipRect.height) / 2\n    44→          left = triggerRect.left - tooltipRect.width - 8\n    45→          break\n    46→        case 'right':\n    47→          top = triggerRect.top + (triggerRect.height - tooltipRect.height) / 2\n    48→          left = triggerRect.right + 8\n    49→          break\n    50→      }\n    51→\n    52→      // Manter dentro da viewport\n    53→      const padding = 8\n    54→      if (left < padding) left = padding\n    55→      if (left + tooltipRect.width > window.innerWidth - padding) {\n    56→        left = window.innerWidth - tooltipRect.width - padding\n    57→      }\n    58→      if (top < padding) top = triggerRect.bottom + 8\n    59→      if (top + tooltipRect.height > window.innerHeight - padding) {\n    60→        top = triggerRect.top - tooltipRect.height - 8\n    61→      }\n    62→\n    63→      setCoords({ top, left })\n    64→    }\n    65→  }, [isVisible, position])\n    66→\n    67→  return (\n    68→    <span className=\"tooltip-wrapper\">\n    69→      <span\n    70→        ref={triggerRef}\n    71→        className=\"tooltip-trigger\"\n    72→        onMouseEnter={showTooltip}\n    73→        onMouseLeave={hideTooltip}\n    74→        onFocus={showTooltip}\n    75→        onBlur={hideTooltip}\n    76→      >\n    77→        {children}\n    78→      </span>\n    79→      {isVisible && (\n    80→        <div\n    81→          ref={tooltipRef}\n    82→          className={`tooltip-content tooltip-${position}`}\n    83→          style={{ top: coords.top, left: coords.left }}\n    84→          role=\"tooltip\"\n    85→        >\n    86→          {content}\n    87→          <div className={`tooltip-arrow tooltip-arrow-${position}`} />\n    88→        </div>\n    89→      )}\n    90→    </span>\n    91→  )\n    92→}\n    93→\n    94→// Tooltip com ícone de ajuda integrado\n    95→export function HelpTooltip({ content, size = 14 }) {\n    96→  return (\n    97→    <Tooltip content={content} position=\"top\">\n    98→      <HelpCircle\n    99→        size={size}\n   100→        className=\"help-tooltip-icon\"\n   101→        tabIndex={0}\n   102→        aria-label=\"Ajuda\"\n   103→      />\n   104→    </Tooltip>\n   105→  )\n   106→}\n   107→\n   108→// Definições de termos técnicos comuns\n   109→export const GLOSSARY = {\n   110→  'GPU Frac': 'Fração da GPU disponível. 1.0 = GPU completa, 0.5 = metade da GPU compartilhada.',\n   111→  'DLPerf': 'Deep Learning Performance. Score relativo de desempenho para cargas de trabalho de ML.',\n   112→  'PCIe BW': 'PCIe Bandwidth. Velocidade de transferência entre CPU e GPU em GB/s.',\n   113→  'VRAM': 'Video RAM. Memória dedicada da GPU para processar gráficos e dados.',\n   114→  'TFlops': 'Teraflops. Trilhões de operações de ponto flutuante por segundo.',\n   115→  'Uptime': 'Tempo que a máquina está rodando desde o início.',\n   116→  'Stage Timeout': 'Tempo máximo para cada etapa do processo de restore.',\n   117→  'Restic': 'Ferramenta de backup incremental usada para snapshots.',\n   118→  'R2': 'Cloudflare R2. Serviço de armazenamento compatível com S3.',\n   119→  'Vast.ai': 'Provedor de GPUs em nuvem usado para alugar máquinas.',\n   120→  'Hot Start': 'Mantém uma máquina em standby para restore instantâneo.',\n   121→  'Cold Start': 'Inicia uma máquina nova, mais barato mas mais lento.',\n   122→}\n   123→\n   124→// Componente que adiciona tooltip a termos do glossário automaticamente\n   125→export function GlossaryTerm({ term }) {\n   126→  const definition = GLOSSARY[term]\n   127→  if (!definition) return <span>{term}</span>\n   128→\n   129→  return (\n   130→    <Tooltip content={definition}>\n   131→      <span className=\"glossary-term\">{term}</span>\n   132→    </Tooltip>\n   133→  )\n   134→}\n   135→\n   136→export default Tooltip\n   137→\n\n<system-reminder>\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\n</system-reminder>\n",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:01:13.838298+00:00",
+          "type": "text",
+          "content": "Now I have a comprehensive understanding of the MachineCard component and its interactive elements. Let me create the implementation plan:",
+          "phase": "planning",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:01:57.710923+00:00",
+          "type": "tool_start",
+          "content": "[Write] ...-navigation-to-machine/implementation_plan.json",
+          "phase": "planning",
+          "tool_name": "Write",
+          "tool_input": "...-navigation-to-machine/implementation_plan.json",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:01:57.736245+00:00",
+          "type": "tool_end",
+          "content": "[Write] Error: <tool_use_error>File has not been read yet. Read it first before writing to it.</tool_use_error>",
+          "phase": "planning",
+          "tool_name": "Write",
+          "session": 1,
+          "detail": "<tool_use_error>File has not been read yet. Read it first before writing to it.</tool_use_error>",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:02:02.549705+00:00",
+          "type": "tool_start",
+          "content": "[Bash] ls -la ./.auto-claude/specs/023-add-aria-labels...",
+          "phase": "planning",
+          "tool_name": "Bash",
+          "tool_input": "ls -la ./.auto-claude/specs/023-add-aria-labels...",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:02:02.672360+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "planning",
+          "tool_name": "Bash",
+          "session": 1,
+          "detail": "total 35\ndrwxr-xr-x  1 marcos  501    138 Jan  1 07:02 .\ndrwxr-xr-x  1 marcos  501    216 Jan  1 07:00 ..\n-rw-r--r--  1 marcos  501    636 Dec 31 22:16 implementation_plan.json\ndrwxr-xr-x  1 marcos  501     76 Jan  1 07:00 memory\n-rw-r--r--  1 marcos  501    675 Dec 31 22:16 spec.md\n-rw-------  1 marcos  501  14359 Jan  1 07:02 task_logs.json\n-rw-r--r--  1 marcos  501    801 Dec 31 22:16 task_metadata.json",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:02:06.451762+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...-navigation-to-machine/implementation_plan.json",
+          "phase": "planning",
+          "tool_name": "Read",
+          "tool_input": "...-navigation-to-machine/implementation_plan.json",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:02:06.483681+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "planning",
+          "tool_name": "Read",
+          "session": 1,
+          "detail": "     1→{\n     2→  \"feature\": \"Add ARIA labels and keyboard navigation to MachineCard interactive elements\",\n     3→  \"description\": \"Add proper accessibility attributes (aria-label, aria-expanded, aria-haspopup) to all interactive elements in MachineCard including failover dropdown, backup info popup, and action buttons. Implement keyboard navigation support for nested dropdown menus.\",\n     4→  \"created_at\": \"2025-12-31T21:16:30.997Z\",\n     5→  \"updated_at\": \"2025-12-31T21:16:30.997Z\",\n     6→  \"status\": \"backlog\",\n     7→  \"planStatus\": \"pending\",\n     8→  \"phases\": [],\n     9→  \"workflow_type\": \"development\",\n    10→  \"services_involved\": [],\n    11→  \"final_acceptance\": [],\n    12→  \"spec_file\": \"spec.md\"\n    13→}\n\n<system-reminder>\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\n</system-reminder>\n",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:02:59.038937+00:00",
+          "type": "tool_start",
+          "content": "[Write] ...-navigation-to-machine/implementation_plan.json",
+          "phase": "planning",
+          "tool_name": "Write",
+          "tool_input": "...-navigation-to-machine/implementation_plan.json",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:02:59.100200+00:00",
+          "type": "tool_end",
+          "content": "[Write] Done",
+          "phase": "planning",
+          "tool_name": "Write",
+          "session": 1,
+          "detail": "The file ./.auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/implementation_plan.json has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n     1→{\n     2→  \"feature\": \"Add ARIA labels and keyboard navigation to MachineCard interactive elements\",\n     3→  \"description\": \"Add proper accessibility attributes (aria-label, aria-expanded, aria-haspopup) to all interactive elements in MachineCard including failover dropdown, backup info popup, and action buttons. Implement keyboard navigation support for nested dropdown menus.\",\n     4→  \"created_at\": \"2025-12-31T21:16:30.997Z\",\n     5→  \"updated_at\": \"2026-01-01T00:00:00.000Z\",\n     6→  \"status\": \"in_progress\",\n     7→  \"planStatus\": \"approved\",\n     8→  \"workflow_type\": \"development\",\n     9→  \"services_involved\": [\"web/src/components/machines/MachineCard.jsx\", \"web/src/components/tailadmin-ui/index.jsx\"],\n    10→  \"spec_file\": \"spec.md\",\n    11→  \"phases\": [\n    12→    {\n    13→      \"id\": \"phase-1\",\n    14→      \"name\": \"Add ARIA labels to action buttons\",\n    15→      \"description\": \"Add aria-label attributes to all action buttons in MachineCard for screen reader support\",\n    16→      \"subtasks\": [\n    17→        {\n    18→          \"id\": \"1.1\",\n    19→          \"title\": \"Add aria-labels to main action buttons\",\n    20→          \"description\": \"Add aria-label to Start, Pause, Destroy, CPU migration, Failover, and Testar buttons. These buttons use icons and short text that may not fully convey their purpose to screen readers.\",\n    21→          \"status\": \"pending\",\n    22→          \"files\": [\"web/src/components/machines/MachineCard.jsx\"],\n    23→          \"acceptance_criteria\": [\n    24→            \"Start button has aria-label 'Iniciar máquina {gpuName}'\",\n    25→            \"Pause button has aria-label 'Pausar máquina {gpuName}'\",\n    26→            \"CPU migration button has aria-label 'Migrar para CPU'\",\n    27→            \"Failover button has aria-label 'Configurar failover'\",\n    28→            \"Testar button has aria-label 'Simular failover'\"\n    29→          ]\n    30→        },\n    31→        {\n    32→          \"id\": \"1.2\",\n    33→          \"title\": \"Add aria-labels to IDE buttons\",\n    34→          \"description\": \"Add aria-label to VS Code dropdown, Cursor, and Windsurf buttons to clarify their purpose for screen readers.\",\n    35→          \"status\": \"pending\",\n    36→          \"files\": [\"web/src/components/machines/MachineCard.jsx\"],\n    37→          \"acceptance_criteria\": [\n    38→            \"VS Code button has aria-label 'Abrir VS Code' and aria-haspopup='menu'\",\n    39→            \"Cursor button has aria-label 'Abrir Cursor IDE'\",\n    40→            \"Windsurf button has aria-label 'Abrir Windsurf IDE'\"\n    41→          ]\n    42→        },\n    43→        {\n    44→          \"id\": \"1.3\",\n    45→          \"title\": \"Add aria-label to main menu trigger (MoreVertical)\",\n    46→          \"description\": \"Add aria-label and aria-haspopup to the main dropdown menu trigger button.\",\n    47→          \"status\": \"pending\",\n    48→          \"files\": [\"web/src/components/machines/MachineCard.jsx\"],\n    49→          \"acceptance_criteria\": [\n    50→            \"MoreVertical button has aria-label 'Menu de opções da máquina'\",\n    51→            \"Button has aria-haspopup='menu'\"\n    52→          ]\n    53→        }\n    54→      ]\n    55→    },\n    56→    {\n    57→      \"id\": \"phase-2\",\n    58→      \"name\": \"Add ARIA attributes to failover strategy dropdown\",\n    59→      \"description\": \"Enhance the custom failover strategy dropdown with proper ARIA attributes for accessibility\",\n    60→      \"subtasks\": [\n    61→        {\n    62→          \"id\": \"2.1\",\n    63→          \"title\": \"Add aria-expanded and aria-haspopup to failover trigger\",\n    64→          \"description\": \"Add aria-expanded, aria-haspopup, and aria-label to the failover strategy badge/button that opens the dropdown.\",\n    65→          \"status\": \"pending\",\n    66→          \"files\": [\"web/src/components/machines/MachineCard.jsx\"],\n    67→          \"acceptance_criteria\": [\n    68→            \"Failover trigger has aria-haspopup='menu'\",\n    69→            \"Failover trigger has aria-expanded bound to showStrategyMenu state\",\n    70→            \"Failover trigger has aria-label 'Estratégia de failover: {currentStrategy}'\"\n    71→          ]\n    72→        },\n    73→        {\n    74→          \"id\": \"2.2\",\n    75→          \"title\": \"Add role and aria attributes to failover dropdown menu\",\n    76→          \"description\": \"Add role='menu' to the dropdown container and role='menuitem' to each strategy option.\",\n    77→          \"status\": \"pending\",\n    78→          \"files\": [\"web/src/components/machines/MachineCard.jsx\"],\n    79→          \"acceptance_criteria\": [\n    80→            \"Dropdown container has role='menu'\",\n    81→            \"Dropdown has aria-label='Opções de estratégia de failover'\",\n    82→            \"Each strategy option has role='menuitem'\",\n    83→            \"Close button has aria-label='Fechar menu de failover'\"\n    84→          ]\n    85→        },\n    86→        {\n    87→          \"id\": \"2.3\",\n    88→          \"title\": \"Add keyboard navigation to failover dropdown\",\n    89→          \"description\": \"Implement arrow key navigation, Enter to select, and Escape to close for the failover dropdown.\",\n    90→          \"status\": \"pending\",\n    91→          \"files\": [\"web/src/components/machines/MachineCard.jsx\"],\n    92→          \"acceptance_criteria\": [\n    93→            \"Escape key closes the dropdown\",\n    94→            \"Arrow Up/Down navigates between options\",\n    95→            \"Enter key selects the focused option\",\n    96→            \"Tab key moves focus correctly\",\n    97→            \"Focus is trapped within dropdown when open\"\n    98→          ]\n    99→        }\n   100→      ]\n   101→    },\n   102→    {\n   103→      \"id\": \"phase-3\",\n   104→      \"name\": \"Add ARIA attributes to backup info popup\",\n   105→      \"description\": \"Enhance the backup info badge/popup with proper ARIA attributes\",\n   106→      \"subtasks\": [\n   107→        {\n   108→          \"id\": \"3.1\",\n   109→          \"title\": \"Add aria-expanded and aria-label to backup badge\",\n   110→          \"description\": \"Add aria-expanded and aria-label to the Backup/Sem backup badge that opens the info popup.\",\n   111→          \"status\": \"pending\",\n   112→          \"files\": [\"web/src/components/machines/MachineCard.jsx\"],\n   113→          \"acceptance_criteria\": [\n   114→            \"Badge has role='button'\",\n   115→            \"Badge has aria-expanded bound to showBackupInfo state\",\n   116→            \"Badge has aria-label 'Informações de backup: {status}'\"\n   117→          ]\n   118→        },\n   119→        {\n   120→          \"id\": \"3.2\",\n   121→          \"title\": \"Add aria-label to backup popup close button\",\n   122→          \"description\": \"Add aria-label to the close button in the backup info popup.\",\n   123→          \"status\": \"pending\",\n   124→          \"files\": [\"web/src/components/machines/MachineCard.jsx\"],\n   125→          \"acceptance_criteria\": [\n   126→            \"Close button has aria-label='Fechar informações de backup'\"\n   127→          ]\n   128→        },\n   129→        {\n   130→          \"id\": \"3.3\",\n   131→          \"title\": \"Add keyboard support to backup popup\",\n   132→          \"description\": \"Add Escape key to close the backup info popup.\",\n   133→          \"status\": \"pending\",\n   134→          \"files\": [\"web/src/components/machines/MachineCard.jsx\"],\n   135→          \"acceptance_criteria\": [\n   136→            \"Escape key closes the popup\",\n   137→            \"Focus returns to trigger badge after closing\"\n   138→          ]\n   139→        }\n   140→      ]\n   141→    },\n   142→    {\n   143→      \"id\": \"phase-4\",\n   144→      \"name\": \"Add ARIA attributes to copy buttons and specs\",\n   145→      \"description\": \"Add aria-labels to copy buttons for IP, SSH, and other copyable content\",\n   146→      \"subtasks\": [\n   147→        {\n   148→          \"id\": \"4.1\",\n   149→          \"title\": \"Add aria-labels to copy buttons\",\n   150→          \"description\": \"Add aria-labels to the IP copy button, SSH copy button, and SSH config copy button in the dropdown menu.\",\n   151→          \"status\": \"pending\",\n   152→          \"files\": [\"web/src/components/machines/MachineCard.jsx\"],\n   153→          \"acceptance_criteria\": [\n   154→            \"IP copy button has aria-label 'Copiar endereço IP'\",\n   155→            \"SSH copy button has aria-label 'Copiar comando SSH'\",\n   156→            \"SSH Config menu item has descriptive text for screen readers\"\n   157→          ]\n   158→        },\n   159→        {\n   160→          \"id\": \"4.2\",\n   161→          \"title\": \"Add aria-live for copy feedback\",\n   162→          \"description\": \"Add aria-live region to announce when content is copied to clipboard.\",\n   163→          \"status\": \"pending\",\n   164→          \"files\": [\"web/src/components/machines/MachineCard.jsx\"],\n   165→          \"acceptance_criteria\": [\n   166→            \"Screen reader announces 'Copiado!' when content is copied\",\n   167→            \"Uses aria-live='polite' for non-intrusive announcements\"\n   168→          ]\n   169→        }\n   170→      ]\n   171→    },\n   172→    {\n   173→      \"id\": \"phase-5\",\n   174→      \"name\": \"Enhance DropdownMenu component with ARIA\",\n   175→      \"description\": \"Improve the tailadmin-ui DropdownMenu component with proper ARIA attributes and keyboard navigation\",\n   176→      \"subtasks\": [\n   177→        {\n   178→          \"id\": \"5.1\",\n   179→          \"title\": \"Add ARIA attributes to DropdownMenu components\",\n   180→          \"description\": \"Add aria-expanded, aria-haspopup, role='menu', and role='menuitem' to DropdownMenu components.\",\n   181→          \"status\": \"pending\",\n   182→          \"files\": [\"web/src/components/tailadmin-ui/index.jsx\"],\n   183→          \"acceptance_criteria\": [\n   184→            \"DropdownMenuTrigger has aria-expanded bound to open state\",\n   185→            \"DropdownMenuTrigger has aria-haspopup='menu'\",\n   186→            \"DropdownMenuContent has role='menu'\",\n   187→            \"DropdownMenuItem has role='menuitem'\"\n   188→          ]\n   189→        },\n  \n\n... [truncated - full output was 14429 chars]",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:03:03.893644+00:00",
+          "type": "text",
+          "content": "Now let me record some key discoveries about the codebase and create the initial build progress file:",
+          "phase": "planning",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:03:07.998978+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__record_discovery] web/src/components/machines/MachineCard.jsx",
+          "phase": "planning",
+          "tool_name": "mcp__auto-claude__record_discovery",
+          "tool_input": "web/src/components/machines/MachineCard.jsx",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:03:10.830420+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__record_discovery] web/src/components/tailadmin-ui/index.jsx",
+          "phase": "planning",
+          "tool_name": "mcp__auto-claude__record_discovery",
+          "tool_input": "web/src/components/tailadmin-ui/index.jsx",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:03:12.803237+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__record_discovery] web/src/components/Tooltip.jsx",
+          "phase": "planning",
+          "tool_name": "mcp__auto-claude__record_discovery",
+          "tool_input": "web/src/components/Tooltip.jsx",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:03:12.881456+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__record_discovery] Done",
+          "phase": "planning",
+          "tool_name": "mcp__auto-claude__record_discovery",
+          "session": 1,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:03:18.294360+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cat ./.auto-claude/specs/023-add-aria-labels-an...",
+          "phase": "planning",
+          "tool_name": "Bash",
+          "tool_input": "cat ./.auto-claude/specs/023-add-aria-labels-an...",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:03:19.850950+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "planning",
+          "tool_name": "Bash",
+          "session": 1,
+          "detail": "File does not exist",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:03:34.234208+00:00",
+          "type": "tool_start",
+          "content": "[Write] ...yboard-navigation-to-machine/build-progress.txt",
+          "phase": "planning",
+          "tool_name": "Write",
+          "tool_input": "...yboard-navigation-to-machine/build-progress.txt",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:03:35.313795+00:00",
+          "type": "tool_end",
+          "content": "[Write] Done",
+          "phase": "planning",
+          "tool_name": "Write",
+          "session": 1,
+          "detail": "File created successfully at: ./.auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/build-progress.txt",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:03:45.041285+00:00",
+          "type": "text",
+          "content": "I've created a comprehensive implementation plan for adding ARIA labels and keyboard navigation to the MachineCard component. Here's a summary:\n\n## Implementation Plan Created\n\n**File:** `.auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/implementation_plan.json`\n\n### 7 Phases with 16 Subtasks:\n\n| Phase | Name | Subtasks |\n|-------|------|----------|\n| 1 | Add ARIA labels to action buttons | 3 subtasks (main buttons, IDE buttons, menu trigger) |\n| 2 | Add ARIA attributes to failover dropdown | 3 subtasks (trigger, menu, keyboard nav) |\n| 3 | Add ARIA attributes to backup popup | 3 subtasks (badge, close button, keyboard) |\n| 4 | Add ARIA to copy buttons | 2 subtasks (labels, aria-live feedback) |\n| 5 | Enhance DropdownMenu component | 2 subtasks (ARIA attrs, keyboard nav) |\n| 6 | Add accessible status indicators | 2 subtasks (status badge, failover progress) |\n| 7 | Testing and validation | 1 subtask (accessibility tests) |\n\n### Key Files to Modify:\n- `web/src/components/machines/MachineCard.jsx` - Main component with 15+ interactive elements\n- `web/src/components/tailadmin-ui/index.jsx` - DropdownMenu component\n\n### Key Discoveries Recorded:\n1. MachineCard has custom failover dropdown and backup popup implementations that need ARIA enhancements\n2. DropdownMenu from tailadmin-ui lacks keyboard navigation and ARIA attributes\n3. Tooltip.jsx has good accessibility patterns that can serve as reference",
+          "phase": "planning",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:03:49.226519+00:00",
+          "type": "phase_end",
+          "content": "Implementation plan created",
+          "phase": "planning",
+          "session": 1
+        }
+      ]
+    },
+    "coding": {
+      "phase": "coding",
+      "status": "active",
+      "started_at": "2026-01-01T06:03:49.245796+00:00",
+      "completed_at": null,
+      "entries": [
+        {
+          "timestamp": "2026-01-01T06:03:49.245842+00:00",
+          "type": "phase_start",
+          "content": "Starting implementation...",
+          "phase": "coding",
+          "session": 1
+        },
+        {
+          "timestamp": "2026-01-01T06:03:54.959683+00:00",
+          "type": "text",
+          "content": "I'll start by reading the spec and implementation plan to understand the context, then find the relevant files to modify.",
+          "phase": "coding",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:03:56.049118+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...bels-and-keyboard-navigation-to-machine/spec.md",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...bels-and-keyboard-navigation-to-machine/spec.md",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:03:56.954130+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...-navigation-to-machine/implementation_plan.json",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...-navigation-to-machine/implementation_plan.json",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:03:57.010925+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_session_context]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:03:57.083772+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__get_session_context] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "1.1",
+          "session": 2,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:04:01.235050+00:00",
+          "type": "text",
+          "content": "Now let me read the MachineCard.jsx file to understand the current implementation:",
+          "phase": "coding",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:04:01.813146+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:04:02.279359+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "1.1",
+          "session": 2,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:04:21.302308+00:00",
+          "type": "text",
+          "content": "Now I have a clear understanding of the MachineCard component. Let me identify the buttons that need aria-labels according to the acceptance criteria:\n\n1. **Start button** (line 917-925) - needs `aria-label=\"Iniciar máquina {gpuName}\"`\n2. **Pause button** (line 837) - needs `aria-label=\"Pausar máquina {gpuName}\"`\n3. **CPU migration button** (line 825-833) - needs `aria-label=\"Migrar para CPU\"`\n4. **Failover button** (line 798-807) - needs `aria-label=\"Configurar failover\"`\n5. **Testar button** (line 809-818) - needs `aria-label=\"Simular failover\"`\n\nLet me make these edits:",
+          "phase": "coding",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:04:29.452398+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:04:34.847672+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:04:38.143813+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:04:38.208805+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "1.1",
+          "session": 2,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   791→              Windsurf\n   792→            </Button>\n   793→          </div>\n   794→\n   795→          {/* Action Buttons - Row 1: Failover actions */}\n   796→          {hasCpuStandby && !isInFailover && (\n   797→            <div className=\"flex gap-1 mb-1.5\">\n   798→              <Button\n   799→                variant=\"outline\"\n   800→                size=\"xs\"\n   801→                icon={Shield}\n   802→                className=\"flex-1 text-[10px] h-7\"\n   803→                onClick={() => setShowFailoverMigration(true)}\n   804→                title=\"Migrar para outro tipo de failover\"\n   805→                aria-label=\"Configurar failover\"\n   806→              >\n   807→                Failover\n   808→              </Button>\n   809→              {onSimulateFailover && (\n   810→                <Button\n   811→                  variant=\"outline\"\n   812→                  size=\"xs\"\n   813→                  icon={Zap}\n   814→                  className=\"flex-1 text-[10px] h-7\"\n   815→                  onClick={() => onSimulateFailover(machine)}\n   816→                  title=\"Simular roubo de GPU e failover automático\"\n   817→                  aria-label=\"Simular failover\"\n   818→                >\n   819→                  Testar\n   820→                </Button>\n   821→              )}\n   822→            </div>\n   823→          )}\n   824→\n   825→          {/* Action Buttons - Row 2: Machine actions */}\n   826→          <div className=\"flex gap-1\">\n   827→            <Button",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:04:44.177843+00:00",
+          "type": "text",
+          "content": "I also noticed there's a GPU migration button when the machine is stopped. Let me add an aria-label to that as well for consistency:",
+          "phase": "coding",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:04:47.701331+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:04:47.774556+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "1.1",
+          "session": 2,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   904→                </div>\n   905→              </div>\n   906→            ) : (\n   907→              <>\n   908→                {machine.num_gpus === 0 && (\n   909→                  <Button\n   910→                    variant=\"success\"\n   911→                    size=\"xs\"\n   912→                    icon={ArrowLeftRight}\n   913→                    className=\"flex-1 text-[10px] h-7\"\n   914→                    onClick={() => onMigrate && onMigrate(machine)}\n   915→                    aria-label=\"Migrar para GPU\"\n   916→                  >\n   917→                    GPU\n   918→                  </Button>\n   919→                )}\n   920→\n   921→                <Button\n   922→                  variant=\"secondary\"\n   923→                  size=\"xs\"",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:04:52.183936+00:00",
+          "type": "text",
+          "content": "Now let me verify the changes by running the linter and any relevant tests:",
+          "phase": "coding",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:04:53.358883+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cd ./web && npm run lint -- --max-warnings=0 sr...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "cd ./web && npm run lint -- --max-warnings=0 sr...",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:04:53.444725+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Error: Command 'npm' is not in the allowed commands for this project",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.1",
+          "session": 2,
+          "detail": "Command 'npm' is not in the allowed commands for this project",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:04:57.453381+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cd ./web && pnpm run lint -- --max-warnings=0 s...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "cd ./web && pnpm run lint -- --max-warnings=0 s...",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:04:57.551573+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Error: Command 'pnpm' is not in the allowed commands for this project",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.1",
+          "session": 2,
+          "detail": "Command 'pnpm' is not in the allowed commands for this project",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:05:01.401189+00:00",
+          "type": "tool_start",
+          "content": "[Glob] pattern: **/package.json",
+          "phase": "coding",
+          "tool_name": "Glob",
+          "tool_input": "pattern: **/package.json",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:05:02.499109+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cat ./web/package.json 2>&1 | head -50",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "cat ./web/package.json 2>&1 | head -50",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:05:03.934774+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.1",
+          "session": 2,
+          "detail": "/Users/marcos/OrbStack/dumontcloud/home/marcos/projects/dumont-cloud/.worktrees/023-add-aria-labels-and-keyboard-navigation-to-machine/package.json\n/Users/marcos/OrbStack/dumontcloud/home/marcos/projects/dumont-cloud/.worktrees/023-add-aria-labels-and-keyboard-navigation-to-machine/scripts/screenshots/package.json\n/Users/marcos/OrbStack/dumontcloud/home/marcos/projects/dumont-cloud/.worktrees/023-add-aria-labels-and-keyboard-navigation-to-machine/tests/package.json\n/Users/marcos/OrbStack/dumontcloud/home/marcos/projects/dumont-cloud/.worktrees/023-add-aria-labels-and-keyboard-navigation-to-machine/vscode-extension/dumont-machine-switcher/package.json\n/Users/marcos/OrbStack/dumontcloud/home/marcos/projects/dumont-cloud/.worktrees/023-add-aria-labels-and-keyboard-navigation-to-machine/web/package.json",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:05:09.406640+00:00",
+          "type": "text",
+          "content": "Let me verify the changes by reading the modified sections of the file:",
+          "phase": "coding",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:05:10.448416+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:05:10.506412+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "1.1",
+          "session": 2,
+          "detail": "   795→          {/* Action Buttons - Row 1: Failover actions */}\n   796→          {hasCpuStandby && !isInFailover && (\n   797→            <div className=\"flex gap-1 mb-1.5\">\n   798→              <Button\n   799→                variant=\"outline\"\n   800→                size=\"xs\"\n   801→                icon={Shield}\n   802→                className=\"flex-1 text-[10px] h-7\"\n   803→                onClick={() => setShowFailoverMigration(true)}\n   804→                title=\"Migrar para outro tipo de failover\"\n   805→                aria-label=\"Configurar failover\"\n   806→              >\n   807→                Failover\n   808→              </Button>\n   809→              {onSimulateFailover && (\n   810→                <Button\n   811→                  variant=\"outline\"\n   812→                  size=\"xs\"\n   813→                  icon={Zap}\n   814→                  className=\"flex-1 text-[10px] h-7\"\n   815→                  onClick={() => onSimulateFailover(machine)}\n   816→                  title=\"Simular roubo de GPU e failover automático\"\n   817→                  aria-label=\"Simular failover\"\n   818→                >\n   819→                  Testar\n   820→                </Button>\n   821→              )}\n   822→            </div>\n   823→          )}\n   824→\n   825→          {/* Action Buttons - Row 2: Machine actions */}\n   826→          <div className=\"flex gap-1\">\n   827→            <Button\n   828→              variant=\"secondary\"\n   829→              size=\"xs\"\n   830→              icon={ArrowLeftRight}\n   831→              className=\"flex-1 text-[10px] h-7\"\n   832→              onClick={() => onMigrate && onMigrate(machine)}\n   833→              aria-label=\"Migrar para CPU\"\n   834→            >\n   835→              CPU\n   836→            </Button>\n   837→\n   838→            <AlertDialog>\n   839→              <AlertDialogTrigger asChild>\n   840→                <Button variant=\"outline\" size=\"xs\" icon={Pause} className=\"flex-1 text-[10px] h-7\" aria-label={`Pausar máquina ${gpuName}`}>\n   841→                  Pausar\n   842→                </Button>\n   843→              </AlertDialogTrigger>\n   844→              <AlertDialogContent>\n   845→                <AlertDialogHeader>\n   846→                  <AlertDialogTitle>Pausar máquina?</AlertDialogTitle>\n   847→                  <AlertDialogDescription>\n   848→                    Isso irá pausar a máquina {gpuName}. Processos em execução serão interrompidos.\n   849→                    Você poderá reiniciá-la depois.\n   850→                  </AlertDialogDescription>\n   851→                </AlertDialogHeader>\n   852→                <AlertDialogFooter>\n   853→                  <AlertDialogCancel>Cancelar</AlertDialogCancel>\n   854→                  <AlertDialogAction onClick={() => onPause && onPause(machine.id)}>\n   855→                    Pausar\n   856→                  </AlertDialogAction>\n   857→                </AlertDialogFooter>\n   858→              </AlertDialogContent>\n   859→            </AlertDialog>\n   860→          </div>\n   861→        </>\n   862→      ) : (\n   863→        <>\n   864→          {/* Specs Grid - Offline - Compact */}\n   865→          <div className=\"grid grid-cols-4 gap-0.5 mb-2 p-2 rounded-lg bg-gray-800/20 border border-gray-700/20 text-center\">\n   866→            <div>\n   867→              <div className=\"text-gray-900 dark:text-white font-mono text-xs font-bold\">{gpuRam}GB</div>\n   868→              <div className=\"text-[8px] text-gray-500 dark:text-gray-400 uppercase\">VRAM</div>\n   869→            </div>\n   870→            <div>\n   871→              <div className=\"text-gray-900 dark:text-white font-mono text-xs font-bold\">{cpuCores}</div>\n   872→              <div className=\"text-[8px] text-gray-500 dark:text-gray-400 uppercase\">CPU</div>\n   873→            </div>\n   874→            <div>\n   875→              <div className=\"text-gray-900 dark:text-white font-mono text-xs font-bold\">{disk}GB</div>\n   876→              <div className=\"text-[8px] text-gray-500 dark:text-gray-400 uppercase\">DISK</div>\n   877→            </div>\n   878→            <div>\n   879→              <div className=\"text-brand-500 dark:text-brand-400 font-mono text-xs font-bold\" title={hasCpuStandby ? `GPU: $${costPerHour.toFixed(2)} + CPU: $${cpuCostPerHour.toFixed(3)}` : ''}>\n   880→                ${totalCostPerHour.toFixed(2)}\n   881→              </div>\n   882→              <div className=\"text-[8px] text-gray-500 dark:text-gray-400 uppercase\">/hora</div>\n   883→            </div>\n   884→          </div>\n   885→\n   886→          {/* Action Buttons - Offline/Loading */}\n   887→          <div className=\"flex gap-1.5\">\n   888→            {isLoading ? (\n   889→              /* Show loading indicator with ID and elapsed time */\n   890→              <div className=\"w-full p-2 rounded-lg bg-warning-500/10 border border-warning-500/20\">\n   891→                <div className=\"flex items-center justify-between mb-1.5\">\n   892→                  <div className=\"flex items-center gap-1.5\">\n   893→                    <RefreshCw className=\"w-3 h-3 text-warning-400 animate-spin\" />\n   894→                    <span className=\"text-xs text-warning-400 font-medium\">{statusDisplay.label}...</span>\n   895→                  </div>\n   896→                  <div className=\"flex items-center gap-1 text-warning-400\">\n   897→                    <Clock className=\"w-3 h-3\" />\n   898→                    <span className=\"text-xs font-mono\">{formatElapsedTime(elapsedTime)}</span>\n   899→                  </div>\n   900→                </div>\n   901→                <div className=\"flex items-center gap-1 text-[10px] text-gray-400\">\n   902→                  <Hash className=\"w-2.5 h-2.5\" />\n   903→                  <span className=\"font-mono\">VAST ID: {machine.id}</span>\n   904→                </div>\n   905→              </div>\n   906→            ) : (\n   907→              <>\n   908→                {machine.num_gpus === 0 && (\n   909→                  <Button\n   910→                    variant=\"success\"\n   911→                    size=\"xs\"\n   912→                    icon={ArrowLeftRight}\n   913→                    className=\"flex-1 text-[10px] h-7\"\n   914→                    onClick={() => onMigrate && onMigrate(machine)}\n   915→                    aria-label=\"Migrar para GPU\"\n   916→                  >\n   917→                    GPU\n   918→                  </Button>\n   919→                )}\n   920→\n   921→                <Button\n   922→                  variant=\"secondary\"\n   923→                  size=\"xs\"\n   924→                  icon={Play}\n   925→                  className={`text-[10px] h-7 ${machine.num_gpus === 0 ? 'flex-1' : 'w-full'}`}\n   926→                  onClick={() => onStart && onStart(machine.id)}\n   927→                  aria-label={`Iniciar máquina ${gpuName}`}\n   928→                >\n   929→                  Iniciar\n   930→                </Button>\n   931→              </>\n   932→            )}\n   933→          </div>\n   934→        </>\n   935→      )}\n   936→\n   937→      {showSSHInstructions && (\n   938→        <div className=\"mt-2 p-2 rounded bg-brand-500/10 border border-brand-500/20 text-[10px] text-brand-300 text-center\">\n   939→          SSH Config copiado! Cole em ~/.ssh/config\n\n<system-reminder>\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\n</system-reminder>\n",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:05:16.925980+00:00",
+          "type": "text",
+          "content": "All aria-labels are correctly added. Let me now commit the changes:",
+          "phase": "coding",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:05:17.710987+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cd . && git status",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "cd . && git status",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:05:18.070850+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.1",
+          "session": 2,
+          "detail": "On branch auto-claude/023-add-aria-labels-and-keyboard-navigation-to-machine\nChanges not staged for commit:\n  (use \"git add <file>...\" to update what will be committed)\n  (use \"git restore <file>...\" to discard changes in working directory)\n\tmodified:   web/src/components/machines/MachineCard.jsx\n\nUntracked files:\n  (use \"git add <file>...\" to include in what will be committed)\n\t.auto-claude-status\n\t.auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/\n\t.claude_settings.json\n\nno changes added to commit (use \"git add\" and/or \"git commit -a\")",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:05:24.279445+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cd . && git diff web/src/components/machines/Ma...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "cd . && git diff web/src/components/machines/Ma...",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:05:24.679739+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.1",
+          "session": 2,
+          "detail": "diff --git a/web/src/components/machines/MachineCard.jsx b/web/src/components/machines/MachineCard.jsx\nindex 8c60071..b682754 100644\n--- a/web/src/components/machines/MachineCard.jsx\n+++ b/web/src/components/machines/MachineCard.jsx\n@@ -802,6 +802,7 @@ export default function MachineCard({\n                 className=\"flex-1 text-[10px] h-7\"\n                 onClick={() => setShowFailoverMigration(true)}\n                 title=\"Migrar para outro tipo de failover\"\n+                aria-label=\"Configurar failover\"\n               >\n                 Failover\n               </Button>\n@@ -813,6 +814,7 @@ export default function MachineCard({\n                   className=\"flex-1 text-[10px] h-7\"\n                   onClick={() => onSimulateFailover(machine)}\n                   title=\"Simular roubo de GPU e failover automático\"\n+                  aria-label=\"Simular failover\"\n                 >\n                   Testar\n                 </Button>\n@@ -828,13 +830,14 @@ export default function MachineCard({\n               icon={ArrowLeftRight}\n               className=\"flex-1 text-[10px] h-7\"\n               onClick={() => onMigrate && onMigrate(machine)}\n+              aria-label=\"Migrar para CPU\"\n             >\n               CPU\n             </Button>\n \n             <AlertDialog>\n               <AlertDialogTrigger asChild>\n-                <Button variant=\"outline\" size=\"xs\" icon={Pause} className=\"flex-1 text-[10px] h-7\">\n+                <Button variant=\"outline\" size=\"xs\" icon={Pause} className=\"flex-1 text-[10px] h-7\" aria-label={`Pausar máquina ${gpuName}`}>\n                   Pausar\n                 </Button>\n               </AlertDialogTrigger>\n@@ -909,6 +912,7 @@ export default function MachineCard({\n                     icon={ArrowLeftRight}\n                     className=\"flex-1 text-[10px] h-7\"\n                     onClick={() => onMigrate && onMigrate(machine)}\n+                    aria-label=\"Migrar para GPU\"\n                   >\n                     GPU\n                   </Button>\n@@ -920,6 +924,7 @@ export default function MachineCard({\n                   icon={Play}\n                   className={`text-[10px] h-7 ${machine.num_gpus === 0 ? 'flex-1' : 'w-full'}`}\n                   onClick={() => onStart && onStart(machine.id)}\n+                  aria-label={`Iniciar máquina ${gpuName}`}\n                 >\n                   Iniciar\n                 </Button>",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:05:33.460873+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cd . && git add web/src/components/machines/Mac...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "cd . && git add web/src/components/machines/Mac...",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:05:36.247088+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.1",
+          "session": 2,
+          "detail": "[auto-claude/023-add-aria-labels-and-keyboard-navigation-to-machine 6cf0f6a] auto-claude: 1.1 - Add aria-labels to main action buttons\n 1 file changed, 6 insertions(+), 1 deletion(-)",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:05:40.272117+00:00",
+          "type": "text",
+          "content": "Now let me update the plan to mark subtask 1.1 as completed:",
+          "phase": "coding",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:05:42.071381+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__update_subtask_status]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:05:42.120198+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__update_subtask_status] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "1.1",
+          "session": 2,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:05:45.978352+00:00",
+          "type": "text",
+          "content": "Let me verify the completion and check the build progress:",
+          "phase": "coding",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:05:46.151187+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_build_progress]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_build_progress",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:05:46.219301+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__get_build_progress] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_build_progress",
+          "subtask_id": "1.1",
+          "session": 2,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:05:53.803009+00:00",
+          "type": "text",
+          "content": "## ✅ Subtask 1.1 Completed\n\n**Summary of changes made to `web/src/components/machines/MachineCard.jsx`:**\n\n| Button | aria-label Added |\n|--------|-----------------|\n| Start | `Iniciar máquina {gpuName}` |\n| Pause | `Pausar máquina {gpuName}` |\n| CPU migration | `Migrar para CPU` |\n| GPU migration | `Migrar para GPU` |\n| Failover | `Configurar failover` |\n| Testar | `Simular failover` |\n\n**Acceptance Criteria Met:**\n- ✅ Start button has aria-label 'Iniciar máquina {gpuName}'\n- ✅ Pause button has aria-label 'Pausar máquina {gpuName}'\n- ✅ CPU migration button has aria-label 'Migrar para CPU'\n- ✅ Failover button has aria-label 'Configurar failover'\n- ✅ Testar button has aria-label 'Simular failover'\n\n**Commit:** `6cf0f6a` - auto-claude: 1.1 - Add aria-labels to main action buttons\n\n**Build Progress:** 1/17 subtasks (6%) - Next up is subtask 1.2 (Add aria-labels to IDE buttons).",
+          "phase": "coding",
+          "subtask_id": "1.1",
+          "session": 2
+        },
+        {
+          "timestamp": "2026-01-01T06:06:13.064927+00:00",
+          "type": "text",
+          "content": "I'll start by reading the spec and implementation plan to understand the context, then implement the subtask.",
+          "phase": "coding",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:14.197276+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...bels-and-keyboard-navigation-to-machine/spec.md",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...bels-and-keyboard-navigation-to-machine/spec.md",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:14.888474+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...-navigation-to-machine/implementation_plan.json",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...-navigation-to-machine/implementation_plan.json",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:15.142199+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_session_context]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:15.252002+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__get_session_context] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "1.2",
+          "session": 3,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:06:21.134831+00:00",
+          "type": "text",
+          "content": "Now I understand the context. Let me read the MachineCard.jsx file to find the IDE buttons and understand the current implementation.",
+          "phase": "coding",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:21.938523+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:22.224874+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "1.2",
+          "session": 3,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:06:32.722998+00:00",
+          "type": "text",
+          "content": "Now I can see the IDE buttons section (lines 773-793). I need to add aria-labels to:\n1. VS Code dropdown button (with aria-haspopup='menu')\n2. Cursor button\n3. Windsurf button\n\nLet me implement the changes:",
+          "phase": "coding",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:41.891313+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:41.941994+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "1.2",
+          "session": 3,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   769→              </div>\n   770→            )}\n   771→          </div>\n   772→\n   773→          {/* IDE Buttons */}\n   774→          <div className=\"flex gap-1 mb-2\">\n   775→            <DropdownMenu>\n   776→              <DropdownMenuTrigger asChild>\n   777→                <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" icon={Code} aria-label=\"Abrir VS Code\" aria-haspopup=\"menu\">\n   778→                  VS Code\n   779→                  <ChevronDown className=\"w-2.5 h-2.5 opacity-50 ml-0.5\" />\n   780→                </Button>\n   781→              </DropdownMenuTrigger>\n   782→              <DropdownMenuContent>\n   783→                <DropdownMenuItem onClick={openVSCodeOnline}>Online (Web)</DropdownMenuItem>\n   784→                <DropdownMenuItem onClick={() => openIDE('VS Code', 'vscode')}>Desktop (SSH)</DropdownMenuItem>\n   785→              </DropdownMenuContent>\n   786→            </DropdownMenu>\n   787→            <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" onClick={() => openIDE('Cursor', 'cursor')} aria-label=\"Abrir Cursor IDE\">\n   788→              Cursor\n   789→            </Button>\n   790→            <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" onClick={() => openIDE('Windsurf', 'windsurf')} aria-label=\"Abrir Windsurf IDE\">\n   791→              Windsurf\n   792→            </Button>\n   793→          </div>\n   794→\n   795→          {/* Action Buttons - Row 1: Failover actions */}\n   796→          {hasCpuStandby && !isInFailover && (\n   797→            <div className=\"flex gap-1 mb-1.5\">",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:06:46.499509+00:00",
+          "type": "text",
+          "content": "The changes have been applied. Now let me verify the changes and commit them:",
+          "phase": "coding",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:48.658582+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git diff --stat",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git diff --stat",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:50.612368+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cd web && npm run lint -- --max-warnings=0 2>&1...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "cd web && npm run lint -- --max-warnings=0 2>&1...",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:51.020146+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.2",
+          "session": 3,
+          "detail": " web/src/components/machines/MachineCard.jsx | 6 +++---\n 1 file changed, 3 insertions(+), 3 deletions(-)",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:06:54.147770+00:00",
+          "type": "text",
+          "content": "Let me verify the changes visually and then commit:",
+          "phase": "coding",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:54.926427+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git diff web/src/components/machines/MachineCar...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git diff web/src/components/machines/MachineCar...",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:55.013296+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.2",
+          "session": 3,
+          "detail": "diff --git a/web/src/components/machines/MachineCard.jsx b/web/src/components/machines/MachineCard.jsx\nindex b682754..41a6146 100644\n--- a/web/src/components/machines/MachineCard.jsx\n+++ b/web/src/components/machines/MachineCard.jsx\n@@ -774,7 +774,7 @@ export default function MachineCard({\n           <div className=\"flex gap-1 mb-2\">\n             <DropdownMenu>\n               <DropdownMenuTrigger asChild>\n-                <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" icon={Code}>\n+                <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" icon={Code} aria-label=\"Abrir VS Code\" aria-haspopup=\"menu\">\n                   VS Code\n                   <ChevronDown className=\"w-2.5 h-2.5 opacity-50 ml-0.5\" />\n                 </Button>\n@@ -784,10 +784,10 @@ export default function MachineCard({\n                 <DropdownMenuItem onClick={() => openIDE('VS Code', 'vscode')}>Desktop (SSH)</DropdownMenuItem>\n               </DropdownMenuContent>\n             </DropdownMenu>\n-            <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" onClick={() => openIDE('Cursor', 'cursor')}>\n+            <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" onClick={() => openIDE('Cursor', 'cursor')} aria-label=\"Abrir Cursor IDE\">\n               Cursor\n             </Button>\n-            <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" onClick={() => openIDE('Windsurf', 'windsurf')}>\n+            <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" onClick={() => openIDE('Windsurf', 'windsurf')} aria-label=\"Abrir Windsurf IDE\">\n               Windsurf\n             </Button>\n           </div>",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:07:00.524053+00:00",
+          "type": "text",
+          "content": "The changes match all acceptance criteria:\n- ✅ VS Code button has aria-label 'Abrir VS Code' and aria-haspopup='menu'\n- ✅ Cursor button has aria-label 'Abrir Cursor IDE'\n- ✅ Windsurf button has aria-label 'Abrir Windsurf IDE'\n\nNow let me commit and update the plan:",
+          "phase": "coding",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:07:05.003173+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git add web/src/components/machines/MachineCard...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git add web/src/components/machines/MachineCard...",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:07:07.627282+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.2",
+          "session": 3,
+          "detail": "[auto-claude/023-add-aria-labels-and-keyboard-navigation-to-machine f5c086d] auto-claude: 1.2 - Add aria-labels to IDE buttons\n 1 file changed, 3 insertions(+), 3 deletions(-)",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:07:11.271365+00:00",
+          "type": "text",
+          "content": "Now let me update the subtask status in the implementation plan:",
+          "phase": "coding",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:07:13.009385+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__update_subtask_status]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:07:13.087089+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__update_subtask_status] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "1.2",
+          "session": 3,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:07:16.438232+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git log --oneline -1",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git log --oneline -1",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:07:16.616246+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.2",
+          "session": 3,
+          "detail": "f5c086d auto-claude: 1.2 - Add aria-labels to IDE buttons",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:07:22.793829+00:00",
+          "type": "text",
+          "content": "## ✅ Subtask 1.2 Complete\n\n**Summary:** Added aria-labels to IDE buttons in MachineCard for screen reader accessibility.\n\n**Changes made:**\n| Button | Aria Attributes Added |\n|--------|----------------------|\n| VS Code dropdown | `aria-label=\"Abrir VS Code\"` + `aria-haspopup=\"menu\"` |\n| Cursor | `aria-label=\"Abrir Cursor IDE\"` |\n| Windsurf | `aria-label=\"Abrir Windsurf IDE\"` |\n\n**Acceptance Criteria:**\n- ✅ VS Code button has aria-label 'Abrir VS Code' and aria-haspopup='menu'\n- ✅ Cursor button has aria-label 'Abrir Cursor IDE'  \n- ✅ Windsurf button has aria-label 'Abrir Windsurf IDE'\n\n**Commit:** `f5c086d auto-claude: 1.2 - Add aria-labels to IDE buttons`",
+          "phase": "coding",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:07:40.711790+00:00",
+          "type": "text",
+          "content": "I'll start by reading the spec and implementation plan to understand the context, then find the relevant files to modify.",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:41.524128+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...bels-and-keyboard-navigation-to-machine/spec.md",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...bels-and-keyboard-navigation-to-machine/spec.md",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:42.653657+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...-navigation-to-machine/implementation_plan.json",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...-navigation-to-machine/implementation_plan.json",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:42.952764+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_session_context]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:43.166869+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__get_session_context] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "1.3",
+          "session": 4,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:07:47.400531+00:00",
+          "type": "text",
+          "content": "Now let me read the MachineCard.jsx file to find the MoreVertical button:",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:48.580299+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:49.095316+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "1.3",
+          "session": 4,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:07:55.981843+00:00",
+          "type": "text",
+          "content": "I found the MoreVertical button at lines 621-626. I need to add `aria-label=\"Menu de opções da máquina\"` and `aria-haspopup=\"menu\"` to this button. Let me make the edit:",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:59.662129+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:59.713851+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "1.3",
+          "session": 4,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   617→            )}\n   618→            </div>\n   619→          </div>\n   620→        </div>\n   621→        <DropdownMenu>\n   622→          <DropdownMenuTrigger asChild>\n   623→            <button className=\"p-1.5 rounded-lg hover:bg-gray-800/50 text-gray-500 hover:text-gray-300 flex-shrink-0\" aria-label=\"Menu de opções da máquina\" aria-haspopup=\"menu\">\n   624→              <MoreVertical className=\"w-4 h-4\" />\n   625→            </button>\n   626→          </DropdownMenuTrigger>\n   627→          <DropdownMenuContent align=\"end\" className=\"w-48\">\n   628→            <DropdownMenuItem onClick={() => setShowDetailsModal(true)}>\n   629→              <Info className=\"w-3.5 h-3.5 mr-2\" />\n   630→              Ver Detalhes",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:08:03.961805+00:00",
+          "type": "text",
+          "content": "The edit was successful. Now let me verify the change by reading the updated section and then commit and update the plan:",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:08:05.644554+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cd ./web && npm run lint -- --max-warnings=0 sr...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "cd ./web && npm run lint -- --max-warnings=0 sr...",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:08:05.696449+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Error: Command 'npm' is not in the allowed commands for this project",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.3",
+          "session": 4,
+          "detail": "Command 'npm' is not in the allowed commands for this project",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:08:08.454333+00:00",
+          "type": "text",
+          "content": "Let me verify the changes look correct and then commit:",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:08:10.797245+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git diff web/src/components/machines/MachineCar...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git diff web/src/components/machines/MachineCar...",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:08:10.957903+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.3",
+          "session": 4,
+          "detail": "diff --git a/web/src/components/machines/MachineCard.jsx b/web/src/components/machines/MachineCard.jsx\nindex 41a6146..2bb9e69 100644\n--- a/web/src/components/machines/MachineCard.jsx\n+++ b/web/src/components/machines/MachineCard.jsx\n@@ -620,7 +620,7 @@ export default function MachineCard({\n         </div>\n         <DropdownMenu>\n           <DropdownMenuTrigger asChild>\n-            <button className=\"p-1.5 rounded-lg hover:bg-gray-800/50 text-gray-500 hover:text-gray-300 flex-shrink-0\">\n+            <button className=\"p-1.5 rounded-lg hover:bg-gray-800/50 text-gray-500 hover:text-gray-300 flex-shrink-0\" aria-label=\"Menu de opções da máquina\" aria-haspopup=\"menu\">\n               <MoreVertical className=\"w-4 h-4\" />\n             </button>\n           </DropdownMenuTrigger>",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:08:14.211457+00:00",
+          "type": "text",
+          "content": "The changes look correct. Now let me commit and update the plan:",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:08:18.204690+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git add . && git commit -m \"$(cat <<'EOF'\nauto-...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git add . && git commit -m \"$(cat <<'EOF'\nauto-...",
+          "subtask_id": "1.3",
+          "session": 4
+        }
+      ]
+    },
+    "validation": {
+      "phase": "validation",
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "entries": []
+    }
+  }
+}

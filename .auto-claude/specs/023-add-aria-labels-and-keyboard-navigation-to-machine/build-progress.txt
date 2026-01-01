@@ -1,0 +1,48 @@
+# Build Progress: Add ARIA Labels and Keyboard Navigation to MachineCard
+
+## Status: Planning Complete
+
+## Summary
+This task adds proper accessibility attributes (aria-label, aria-expanded, aria-haspopup) to all interactive elements in MachineCard component, plus keyboard navigation support for dropdown menus.
+
+## Key Files
+- `web/src/components/machines/MachineCard.jsx` - Main component with 15+ interactive elements
+- `web/src/components/tailadmin-ui/index.jsx` - DropdownMenu component to enhance
+
+## Interactive Elements Identified
+1. **Failover Strategy Dropdown** (custom) - Lines 450-526
+   - Trigger button lacks aria-expanded, aria-haspopup, aria-label
+   - Options need role="menuitem"
+   - Close button needs aria-label
+
+2. **Backup Info Popup** (custom) - Lines 530-618
+   - Badge needs role="button", aria-expanded
+   - Close button needs aria-label
+
+3. **Main Options Menu** (DropdownMenu) - Lines 621-665
+   - Trigger needs aria-label
+
+4. **Copy Buttons** - Lines 671-723
+   - IP copy button needs aria-label
+   - SSH copy button needs aria-label
+
+5. **IDE Buttons** - Lines 774-793
+   - VS Code dropdown needs aria-haspopup
+   - Cursor/Windsurf buttons need aria-labels
+
+6. **Action Buttons** - Lines 796-930
+   - Failover, Testar, CPU, Pause, Start buttons need aria-labels
+
+## Implementation Plan
+7 phases with 16 subtasks total:
+- Phase 1: Add ARIA labels to action buttons (3 subtasks)
+- Phase 2: Add ARIA attributes to failover dropdown (3 subtasks)
+- Phase 3: Add ARIA attributes to backup popup (3 subtasks)
+- Phase 4: Add ARIA to copy buttons (2 subtasks)
+- Phase 5: Enhance DropdownMenu component (2 subtasks)
+- Phase 6: Add accessible status indicators (2 subtasks)
+- Phase 7: Testing and validation (1 subtask)
+
+## Progress Log
+- [2026-01-01] Created implementation plan with 7 phases and 16 subtasks
+- [2026-01-01] Recorded codebase discoveries for accessibility patterns

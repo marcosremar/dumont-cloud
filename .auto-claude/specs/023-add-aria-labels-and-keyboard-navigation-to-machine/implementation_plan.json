@@ -1,0 +1,321 @@
+{
+  "feature": "Add ARIA labels and keyboard navigation to MachineCard interactive elements",
+  "description": "Add proper accessibility attributes (aria-label, aria-expanded, aria-haspopup) to all interactive elements in MachineCard including failover dropdown, backup info popup, and action buttons. Implement keyboard navigation support for nested dropdown menus.",
+  "created_at": "2025-12-31T21:16:30.997Z",
+  "updated_at": "2026-01-01T00:00:00.000Z",
+  "status": "in_progress",
+  "planStatus": "approved",
+  "workflow_type": "development",
+  "services_involved": [
+    "web/src/components/machines/MachineCard.jsx",
+    "web/src/components/tailadmin-ui/index.jsx"
+  ],
+  "spec_file": "spec.md",
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Add ARIA labels to action buttons",
+      "description": "Add aria-label attributes to all action buttons in MachineCard for screen reader support",
+      "subtasks": [
+        {
+          "id": "1.1",
+          "title": "Add aria-labels to main action buttons",
+          "description": "Add aria-label to Start, Pause, Destroy, CPU migration, Failover, and Testar buttons. These buttons use icons and short text that may not fully convey their purpose to screen readers.",
+          "status": "completed",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "acceptance_criteria": [
+            "Start button has aria-label 'Iniciar m\u00e1quina {gpuName}'",
+            "Pause button has aria-label 'Pausar m\u00e1quina {gpuName}'",
+            "CPU migration button has aria-label 'Migrar para CPU'",
+            "Failover button has aria-label 'Configurar failover'",
+            "Testar button has aria-label 'Simular failover'"
+          ],
+          "notes": "Added aria-labels to all main action buttons: Start (Iniciar m\u00e1quina {gpuName}), Pause (Pausar m\u00e1quina {gpuName}), CPU migration (Migrar para CPU), GPU migration (Migrar para GPU), Failover (Configurar failover), and Testar (Simular failover).",
+          "updated_at": "2026-01-01T06:05:42.085820+00:00"
+        },
+        {
+          "id": "1.2",
+          "title": "Add aria-labels to IDE buttons",
+          "description": "Add aria-label to VS Code dropdown, Cursor, and Windsurf buttons to clarify their purpose for screen readers.",
+          "status": "completed",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "acceptance_criteria": [
+            "VS Code button has aria-label 'Abrir VS Code' and aria-haspopup='menu'",
+            "Cursor button has aria-label 'Abrir Cursor IDE'",
+            "Windsurf button has aria-label 'Abrir Windsurf IDE'"
+          ],
+          "notes": "Added aria-labels to all IDE buttons: VS Code button has aria-label='Abrir VS Code' and aria-haspopup='menu', Cursor button has aria-label='Abrir Cursor IDE', Windsurf button has aria-label='Abrir Windsurf IDE'.",
+          "updated_at": "2026-01-01T06:07:13.032870+00:00"
+        },
+        {
+          "id": "1.3",
+          "title": "Add aria-label to main menu trigger (MoreVertical)",
+          "description": "Add aria-label and aria-haspopup to the main dropdown menu trigger button.",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "acceptance_criteria": [
+            "MoreVertical button has aria-label 'Menu de op\u00e7\u00f5es da m\u00e1quina'",
+            "Button has aria-haspopup='menu'"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "Add ARIA attributes to failover strategy dropdown",
+      "description": "Enhance the custom failover strategy dropdown with proper ARIA attributes for accessibility",
+      "subtasks": [
+        {
+          "id": "2.1",
+          "title": "Add aria-expanded and aria-haspopup to failover trigger",
+          "description": "Add aria-expanded, aria-haspopup, and aria-label to the failover strategy badge/button that opens the dropdown.",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "acceptance_criteria": [
+            "Failover trigger has aria-haspopup='menu'",
+            "Failover trigger has aria-expanded bound to showStrategyMenu state",
+            "Failover trigger has aria-label 'Estrat\u00e9gia de failover: {currentStrategy}'"
+          ]
+        },
+        {
+          "id": "2.2",
+          "title": "Add role and aria attributes to failover dropdown menu",
+          "description": "Add role='menu' to the dropdown container and role='menuitem' to each strategy option.",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "acceptance_criteria": [
+            "Dropdown container has role='menu'",
+            "Dropdown has aria-label='Op\u00e7\u00f5es de estrat\u00e9gia de failover'",
+            "Each strategy option has role='menuitem'",
+            "Close button has aria-label='Fechar menu de failover'"
+          ]
+        },
+        {
+          "id": "2.3",
+          "title": "Add keyboard navigation to failover dropdown",
+          "description": "Implement arrow key navigation, Enter to select, and Escape to close for the failover dropdown.",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "acceptance_criteria": [
+            "Escape key closes the dropdown",
+            "Arrow Up/Down navigates between options",
+            "Enter key selects the focused option",
+            "Tab key moves focus correctly",
+            "Focus is trapped within dropdown when open"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "Add ARIA attributes to backup info popup",
+      "description": "Enhance the backup info badge/popup with proper ARIA attributes",
+      "subtasks": [
+        {
+          "id": "3.1",
+          "title": "Add aria-expanded and aria-label to backup badge",
+          "description": "Add aria-expanded and aria-label to the Backup/Sem backup badge that opens the info popup.",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "acceptance_criteria": [
+            "Badge has role='button'",
+            "Badge has aria-expanded bound to showBackupInfo state",
+            "Badge has aria-label 'Informa\u00e7\u00f5es de backup: {status}'"
+          ]
+        },
+        {
+          "id": "3.2",
+          "title": "Add aria-label to backup popup close button",
+          "description": "Add aria-label to the close button in the backup info popup.",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "acceptance_criteria": [
+            "Close button has aria-label='Fechar informa\u00e7\u00f5es de backup'"
+          ]
+        },
+        {
+          "id": "3.3",
+          "title": "Add keyboard support to backup popup",
+          "description": "Add Escape key to close the backup info popup.",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "acceptance_criteria": [
+            "Escape key closes the popup",
+            "Focus returns to trigger badge after closing"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "name": "Add ARIA attributes to copy buttons and specs",
+      "description": "Add aria-labels to copy buttons for IP, SSH, and other copyable content",
+      "subtasks": [
+        {
+          "id": "4.1",
+          "title": "Add aria-labels to copy buttons",
+          "description": "Add aria-labels to the IP copy button, SSH copy button, and SSH config copy button in the dropdown menu.",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "acceptance_criteria": [
+            "IP copy button has aria-label 'Copiar endere\u00e7o IP'",
+            "SSH copy button has aria-label 'Copiar comando SSH'",
+            "SSH Config menu item has descriptive text for screen readers"
+          ]
+        },
+        {
+          "id": "4.2",
+          "title": "Add aria-live for copy feedback",
+          "description": "Add aria-live region to announce when content is copied to clipboard.",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "acceptance_criteria": [
+            "Screen reader announces 'Copiado!' when content is copied",
+            "Uses aria-live='polite' for non-intrusive announcements"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-5",
+      "name": "Enhance DropdownMenu component with ARIA",
+      "description": "Improve the tailadmin-ui DropdownMenu component with proper ARIA attributes and keyboard navigation",
+      "subtasks": [
+        {
+          "id": "5.1",
+          "title": "Add ARIA attributes to DropdownMenu components",
+          "description": "Add aria-expanded, aria-haspopup, role='menu', and role='menuitem' to DropdownMenu components.",
+          "status": "pending",
+          "files": [
+            "web/src/components/tailadmin-ui/index.jsx"
+          ],
+          "acceptance_criteria": [
+            "DropdownMenuTrigger has aria-expanded bound to open state",
+            "DropdownMenuTrigger has aria-haspopup='menu'",
+            "DropdownMenuContent has role='menu'",
+            "DropdownMenuItem has role='menuitem'"
+          ]
+        },
+        {
+          "id": "5.2",
+          "title": "Add keyboard navigation to DropdownMenu",
+          "description": "Implement arrow key navigation, Enter to activate, and Escape to close for DropdownMenu.",
+          "status": "pending",
+          "files": [
+            "web/src/components/tailadmin-ui/index.jsx"
+          ],
+          "acceptance_criteria": [
+            "Escape key closes the dropdown",
+            "Arrow Up/Down navigates between menu items",
+            "Enter/Space activates the focused menu item",
+            "Home/End keys go to first/last item"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-6",
+      "name": "Add accessible status indicators",
+      "description": "Ensure status badges and loading states are accessible to screen readers",
+      "subtasks": [
+        {
+          "id": "6.1",
+          "title": "Add aria-label to status badge",
+          "description": "Add aria-label to the machine status badge to convey status information.",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "acceptance_criteria": [
+            "Status badge has aria-label 'Status da m\u00e1quina: {status}'",
+            "Loading states include aria-busy='true'"
+          ]
+        },
+        {
+          "id": "6.2",
+          "title": "Add aria-live to failover progress panel",
+          "description": "Add aria-live region to the failover progress panel so screen readers announce progress updates.",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "acceptance_criteria": [
+            "Failover progress panel has aria-live='polite'",
+            "Step changes are announced to screen readers",
+            "Completion is announced"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-7",
+      "name": "Testing and validation",
+      "description": "Test all accessibility improvements and ensure they work correctly",
+      "subtasks": [
+        {
+          "id": "7.1",
+          "title": "Create accessibility tests",
+          "description": "Add tests to verify ARIA attributes and keyboard navigation work correctly.",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.test.jsx"
+          ],
+          "acceptance_criteria": [
+            "Test that all buttons have aria-labels",
+            "Test that dropdowns have proper ARIA attributes",
+            "Test that keyboard navigation works",
+            "Test that focus management is correct"
+          ]
+        },
+        {
+          "id": "7.2",
+          "title": "Manual screen reader testing",
+          "description": "Test the component manually with a screen reader to verify accessibility.",
+          "status": "pending",
+          "files": [],
+          "acceptance_criteria": [
+            "All interactive elements are announced correctly",
+            "Navigation order makes sense",
+            "Status changes are announced",
+            "Error messages are accessible"
+          ]
+        }
+      ]
+    }
+  ],
+  "final_acceptance": [
+    "All interactive elements have appropriate ARIA labels",
+    "Dropdowns and popups have proper aria-expanded and aria-haspopup attributes",
+    "Keyboard navigation works for all dropdown menus",
+    "Screen readers can navigate and understand all machine card functionality",
+    "Focus management is correct for all modal/popup interactions"
+  ],
+  "qa_signoff": {
+    "status": "pending",
+    "issues": "",
+    "tests_passed": ""
+  },
+  "last_updated": "2026-01-01T06:07:13.032884+00:00"
+}

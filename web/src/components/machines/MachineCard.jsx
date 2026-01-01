@@ -620,7 +620,7 @@ export default function MachineCard({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded-lg hover:bg-gray-800/50 text-gray-500 hover:text-gray-300 flex-shrink-0">
+            <button className="p-1.5 rounded-lg hover:bg-gray-800/50 text-gray-500 hover:text-gray-300 flex-shrink-0" aria-label="Menu de opções da máquina" aria-haspopup="menu">
               <MoreVertical className="w-4 h-4" />
             </button>
           </DropdownMenuTrigger>
