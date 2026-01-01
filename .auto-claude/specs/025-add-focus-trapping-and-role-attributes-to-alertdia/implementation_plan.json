@@ -158,14 +158,16 @@
           "id": "2.4",
           "title": "Update AlertDialogDescription with id",
           "description": "Add unique id to AlertDialogDescription for aria-describedby reference",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "AlertDialogDescription has unique id attribute",
             "id is accessible via context or passed to parent"
           ],
           "files": [
             "web/src/components/tailadmin-ui/index.jsx"
-          ]
+          ],
+          "notes": "AlertDialogDescription now consumes descriptionId from AlertDialogContext and applies it as the id attribute on the p element, completing the aria-describedby connection with AlertDialogContent.",
+          "updated_at": "2026-01-01T06:24:03.856926+00:00"
         },
         {
           "id": "2.5",
@@ -250,5 +252,5 @@
     "Consider using inert attribute on background content for better isolation",
     "Focus trap must handle dynamic content (elements added/removed after dialog opens)"
   ],
-  "last_updated": "2026-01-01T06:22:15.094808+00:00"
+  "last_updated": "2026-01-01T06:24:03.856943+00:00"
 }

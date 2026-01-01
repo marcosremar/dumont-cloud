@@ -6,6 +6,8 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 // Alert Dialog Context for sharing state and IDs between components
 const AlertDialogContext = React.createContext({
+  open: false,
+  onOpenChange: () => {},
   titleId: '',
   descriptionId: '',
 });
@@ -686,7 +688,7 @@ export function AlertDialog({ children, open, onOpenChange }) {
   if (!open) return null;
 
   const modalContent = (
-    <AlertDialogContext.Provider value={{ titleId, descriptionId }}>
+    <AlertDialogContext.Provider value={{ open, onOpenChange, titleId, descriptionId }}>
       <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm" onClick={() => onOpenChange?.(false)} />
       <div className="fixed inset-0 z-[1000] flex items-center justify-center pointer-events-none p-4">
         <div
@@ -754,8 +756,18 @@ export function AlertDialogAction({ children, onClick, className = '' }) {
 }
 
 export function AlertDialogCancel({ children, onClick, className = '' }) {
+  const { onOpenChange } = React.useContext(AlertDialogContext);
+
+  const handleClick = (e) => {
+    if (onClick) {
+      onClick(e);
+    } else {
+      onOpenChange?.(false);
+    }
+  };
+
   return (
-    <Button variant="outline" onClick={onClick} className={className}>
+    <Button variant="outline" onClick={handleClick} className={className}>
       {children}
     </Button>
   );
