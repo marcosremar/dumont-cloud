@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { apiGet, apiPost, apiDelete, isDemoMode } from '../utils/api'
 import { ConfirmModal } from '../components/ui/dumont-ui'
-import { Plus, Server, Shield, Cpu, Activity, Check, RefreshCw, DollarSign, TrendingDown, Wallet } from 'lucide-react'
+import { Plus, Server, Shield, Cpu, Activity, Check, RefreshCw, DollarSign, TrendingDown, Wallet, ArrowUpDown, Filter, Eye, EyeOff } from 'lucide-react'
 import MigrationModal from '../components/MigrationModal'
 import { ErrorState } from '../components/ErrorState'
 import { EmptyState } from '../components/EmptyState'
@@ -17,6 +17,9 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
+  Switch,
+  Slider,
+  Checkbox,
 } from '../components/tailadmin-ui'
 
 
@@ -39,6 +42,13 @@ export default function Machines() {
   const [failoverHistory, setFailoverHistory] = useState([]) // Array of completed failover events
   const [newMachineIds, setNewMachineIds] = useState(new Set()) // Track newly created machines for highlight animation
   const [vastBalance, setVastBalance] = useState(null) // VAST.ai account balance
+
+  // Reliability filter/sort state
+  const [sortByReliability, setSortByReliability] = useState(false) // Sort by reliability score
+  const [reliabilityThreshold, setReliabilityThreshold] = useState(70) // Minimum reliability threshold (0-100)
+  const [autoExcludeBelowThreshold, setAutoExcludeBelowThreshold] = useState(false) // Auto-exclude machines below threshold
+  const [showAllMachines, setShowAllMachines] = useState(false) // Show all machines even when auto-exclude is on
+  const [reliabilityData, setReliabilityData] = useState({}) // Machine ID -> reliability data
 
   // Create machine modal state
   const [createModal, setCreateModal] = useState({ open: false, offer: null, creating: false, error: null })
@@ -74,7 +84,59 @@ export default function Machines() {
         setVastBalance(data)
       }
     } catch (e) {
-      console.error('Error fetching balance:', e)
+      // Silently fail - balance is not critical
+    }
+  }
+
+  // Fetch reliability data for machines
+  const fetchReliabilityData = async (machineList) => {
+    if (!machineList || machineList.length === 0) return
+
+    // In demo mode, generate mock reliability data
+    if (isDemo) {
+      const mockData = {}
+      machineList.forEach((machine, index) => {
+        const machineKey = machine.machine_id || machine.id
+        // Use deterministic scores based on index for predictable testing:
+        // - First machine: 95 (excellent)
+        // - Second machine: 85 (good)
+        // - Third machine: 65 (below threshold)
+        // - Fourth machine: 55 (low)
+        // - Others: cycle through 90, 75, 60
+        const scorePatterns = [95, 85, 65, 55, 90, 75, 60, 80, 70, 50]
+        const baseScore = scorePatterns[index % scorePatterns.length]
+        mockData[machineKey] = {
+          overall_score: baseScore,
+          uptime_score: Math.min(100, baseScore + 5),
+          performance_score: Math.max(50, baseScore - 5),
+          user_rating: Math.round((baseScore / 20) * 10) / 10, // 4.75, 4.25, 3.25, etc.
+          total_ratings: 10 + index * 5
+        }
+      })
+      setReliabilityData(mockData)
+      return
+    }
+
+    try {
+      // Get machine IDs - prefer machine_id if available
+      const machineIds = machineList
+        .map(m => m.machine_id || m.id)
+        .filter(id => id != null)
+
+      if (machineIds.length === 0) return
+
+      // Build query params
+      const params = new URLSearchParams()
+      machineIds.forEach(id => params.append('machine_id', id))
+
+      const res = await apiGet(`/api/v1/reliability/machines?${params}`)
+      if (res.ok) {
+        const data = await res.json()
+        // API returns { reliability: { machine_id: data, ... } }
+        setReliabilityData(data.reliability || data)
+      }
+    } catch (e) {
+      // Silently fail - reliability data is optional, sorting/filtering will use fallbacks
     }
   }
 
@@ -105,6 +167,13 @@ export default function Machines() {
       handleCreateInstance(offer)
     }
   }, []) // Run only once on mount
+
+  // Fetch reliability data when machines change
+  useEffect(() => {
+    if (machines.length > 0) {
+      fetchReliabilityData(machines)
+    }
+  }, [machines.length]) // Only refetch when machine count changes
 
   // Auto-sync every 30 seconds for running machines
   useEffect(() => {
@@ -589,23 +658,62 @@ export default function Machines() {
     return dateB - dateA // Most recent first
   }
 
+  // Sort function: by reliability score (highest first)
+  const sortByReliabilityScore = (a, b) => {
+    // Check both machine_id and id for reliability data lookup
+    const dataA = reliabilityData[a.machine_id] || reliabilityData[a.id]
+    const dataB = reliabilityData[b.machine_id] || reliabilityData[b.id]
+    const scoreA = dataA?.overall_score || dataA?.reliability_score || a.reliability_score || 0
+    const scoreB = dataB?.overall_score || dataB?.reliability_score || b.reliability_score || 0
+    return scoreB - scoreA // Highest reliability first
+  }
+
+  // Get reliability score for a machine
+  const getReliabilityScore = (machine) => {
+    const data = reliabilityData[machine.machine_id] || reliabilityData[machine.id]
+    return data?.overall_score || data?.reliability_score || machine.reliability_score || null
+  }
+
+  // Check if machine meets reliability threshold
+  const meetsReliabilityThreshold = (machine) => {
+    const score = getReliabilityScore(machine)
+    // If no reliability data, consider it as meeting threshold (don't exclude for insufficient data)
+    if (score === null || score === undefined) return true
+    return score >= reliabilityThreshold
+  }
+
+  // Choose sort function based on settings
+  const getCurrentSortFn = sortByReliability ? sortByReliabilityScore : sortByRecent
+
   // Group machines: Loading → Running → Stopped
-  const loadingMachines = machines.filter(m => loadingStates.includes(m.actual_status)).sort(sortByRecent)
-  const runningMachines = machines.filter(m => m.actual_status === 'running').sort(sortByRecent)
+  const loadingMachines = machines.filter(m => loadingStates.includes(m.actual_status)).sort(getCurrentSortFn)
+  const runningMachines = machines.filter(m => m.actual_status === 'running').sort(getCurrentSortFn)
   const stoppedMachines = machines.filter(m =>
     !loadingStates.includes(m.actual_status) && m.actual_status !== 'running'
-  ).sort(sortByRecent)
+  ).sort(getCurrentSortFn)
 
   // For stats, "active" includes loading + running
   const activeMachines = [...loadingMachines, ...runningMachines]
   const inactiveMachines = stoppedMachines
 
   // Build filtered list: Loading always first, then based on filter
-  const filteredMachines = filter === 'online'
+  let filteredMachines = filter === 'online'
     ? [...loadingMachines, ...runningMachines]
     : filter === 'offline'
       ? stoppedMachines
       : [...loadingMachines, ...runningMachines, ...stoppedMachines]
+
+  // Apply reliability threshold filtering if enabled
+  const machinesExcludedByThreshold = autoExcludeBelowThreshold && !showAllMachines
+    ? filteredMachines.filter(m => !meetsReliabilityThreshold(m))
+    : []
+
+  if (autoExcludeBelowThreshold && !showAllMachines) {
+    filteredMachines = filteredMachines.filter(meetsReliabilityThreshold)
+  }
+
+  // Count of excluded machines for display
+  const excludedCount = machinesExcludedByThreshold.length
 
   const totalGpuMem = activeMachines.reduce((acc, m) => acc + (m.gpu_ram || 24000), 0)
   const totalCostPerHour = activeMachines.reduce((acc, m) => acc + (m.total_dph || m.dph_total || 0), 0)
@@ -728,6 +836,79 @@ export default function Machines() {
                   {tab.label} ({tab.count})
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Reliability Sort & Filter Controls */}
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <div className="flex flex-wrap items-center gap-6">
+              {/* Sort by Reliability Toggle */}
+              <div className="flex items-center gap-3">
+                <ArrowUpDown className="w-4 h-4 text-gray-400" />
+                <Switch
+                  checked={sortByReliability}
+                  onCheckedChange={setSortByReliability}
+                  label="Ordenar por confiabilidade"
+                />
+              </div>
+
+              {/* Reliability Threshold Slider */}
+              <div className="flex items-center gap-3 min-w-[200px]">
+                <Filter className="w-4 h-4 text-gray-400" />
+                <div className="flex flex-col flex-1">
+                  <span className="text-xs text-gray-400 mb-1">
+                    Limite mínimo: <span className="text-white font-medium">{reliabilityThreshold}%</span>
+                  </span>
+                  <Slider
+                    value={[reliabilityThreshold]}
+                    onValueChange={(values) => setReliabilityThreshold(values[0])}
+                    min={0}
+                    max={100}
+                    step={5}
+                  />
+                </div>
+              </div>
+
+              {/* Auto-exclude Checkbox */}
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={autoExcludeBelowThreshold}
+                  onChange={(e) => {
+                    setAutoExcludeBelowThreshold(e.target.checked)
+                    // Reset show all when disabling auto-exclude
+                    if (!e.target.checked) {
+                      setShowAllMachines(false)
+                    }
+                  }}
+                  label="Ocultar abaixo do limite"
+                />
+              </div>
+
+              {/* Show All Machines Toggle (only visible when auto-exclude is enabled) */}
+              {autoExcludeBelowThreshold && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowAllMachines(!showAllMachines)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                      showAllMachines
+                        ? 'bg-brand-500/20 text-brand-400 border border-brand-500/30'
+                        : 'bg-gray-700/50 text-gray-400 border border-gray-600/30 hover:bg-gray-700'
+                    }`}
+                  >
+                    {showAllMachines ? (
+                      <>
+                        <Eye className="w-4 h-4" />
+                        Mostrando todas
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="w-4 h-4" />
+                        Mostrar todas ({excludedCount} ocultas)
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

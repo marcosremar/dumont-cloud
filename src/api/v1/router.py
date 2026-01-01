@@ -8,6 +8,7 @@ from .endpoints import warmpool, failover_settings, failover, serverless, spot_d
 from .endpoints import market, hosts, templates
 from .endpoints.settings import balance_router
 from .endpoints.spot import router as spot_router
+from .endpoints.metrics import reliability_router
 
 # Create API v1 router
 api_router = APIRouter()
@@ -66,3 +67,6 @@ api_router.include_router(hosts.router, tags=["Hosts"])
 
 # Templates - ML Workload Template Marketplace
 api_router.include_router(templates.router, tags=["Templates"])
+
+# Machine Reliability - Reliability scores and user ratings
+api_router.include_router(reliability_router, tags=["Machine Reliability"])

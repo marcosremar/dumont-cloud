@@ -1,0 +1,58 @@
+{
+  "task_description": "Enhance existing machine blacklist system by adding reliability scoring and visibility features for GPU host selection",
+  "files_to_modify": {
+    "backend": [
+      "src/models/machine_history.py",
+      "src/api/v1/endpoints/metrics.py",
+      "src/api/v1/schemas/spot/reliability.py"
+    ],
+    "frontend": [
+      "web/src/components/machines/MachineCard.jsx",
+      "web/src/store/slices/instancesSlice.js",
+      "web/src/api/instances.js"
+    ]
+  },
+  "files_to_reference": [
+    "src/models/machine_history.py",
+    "src/api/v1/endpoints/metrics.py",
+    "web/src/components/machines/MachineCard.jsx",
+    "web/src/store/slices/instancesSlice.js"
+  ],
+  "patterns": {
+    "database_model_pattern": "SQLAlchemy declarative base in src/models/, using Column, Index, relationships",
+    "api_endpoint_pattern": "FastAPI routers in src/api/v1/endpoints/, using Depends for DI, Pydantic schemas for validation",
+    "schema_pattern": "Pydantic BaseModel in src/api/v1/schemas/, using Field for validation and documentation",
+    "redux_pattern": "Redux Toolkit with createSlice and createAsyncThunk, extraReducers for async actions",
+    "component_pattern": "React functional components with hooks, Radix UI components, Tailwind CSS styling"
+  },
+  "existing_implementations": {
+    "description": "Found comprehensive machine reliability infrastructure already exists",
+    "relevant_files": [
+      "src/models/machine_history.py - MachineStats model with reliability_status property",
+      "src/models/machine_history.py - OfferStability model with stability_score calculation",
+      "src/api/v1/schemas/spot/reliability.py - ReliabilityScoreItem with overall_score, uptime_score, price_stability_score",
+      "src/api/v1/endpoints/metrics.py - Provider reliability ranking endpoints",
+      "web/src/components/machines/MachineCard.jsx - Machine card display component",
+      "web/src/store/slices/instancesSlice.js - Redux state for instances with fetchOffers thunk"
+    ],
+    "key_findings": {
+      "backend": {
+        "models_exist": true,
+        "schemas_exist": true,
+        "endpoints_exist": true,
+        "reliability_calculation": "MachineStats has success_rate and reliability_status property"
+      },
+      "frontend": {
+        "machine_card_exists": true,
+        "redux_slice_exists": true,
+        "api_client_exists": true
+      }
+    }
+  },
+  "integration_points": {
+    "database": "PostgreSQL via SQLAlchemy, connection from src/config/database.py",
+    "caching": "Redis via REDIS_URL environment variable",
+    "api_base": "FastAPI running on APP_PORT (8000)",
+    "frontend_api_call": "Fetch from VITE_API_URL or empty string (relative paths)"
+  }
+}
