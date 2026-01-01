@@ -60,6 +60,11 @@
   "subtasks": {
     "completed": 4,
     "total": 5,
+  "spec": "029-add-escape-key-support-and-focus-management-to-dro",
+  "state": "building",
+  "subtasks": {
+    "completed": 5,
+    "total": 9,
     "in_progress": 1,
     "failed": 0
   },
@@ -112,6 +117,9 @@
     "current": "Phase 4: Verification and Testing",
     "id": null,
     "total": 1
+    "current": "Focus Management",
+    "id": null,
+    "total": 3
   },
   "workers": {
     "active": 0,
@@ -169,4 +177,8 @@
     "started_at": "2026-01-01T06:59:58.103151"
   },
   "last_update": "2026-01-01T07:07:27.559907"
+    "number": 7,
+    "started_at": "2025-12-31T22:20:01.887863"
+  },
+  "last_update": "2025-12-31T22:37:13.003534"
 }
