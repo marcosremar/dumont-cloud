@@ -84,7 +84,59 @@ export default function Machines() {
         setVastBalance(data)
       }
     } catch (e) {
-      console.error('Error fetching balance:', e)
+      // Silently fail - balance is not critical
+    }
+  }
+
+  // Fetch reliability data for machines
+  const fetchReliabilityData = async (machineList) => {
+    if (!machineList || machineList.length === 0) return
+
+    // In demo mode, generate mock reliability data
+    if (isDemo) {
+      const mockData = {}
+      machineList.forEach((machine, index) => {
+        const machineKey = machine.machine_id || machine.id
+        // Use deterministic scores based on index for predictable testing:
+        // - First machine: 95 (excellent)
+        // - Second machine: 85 (good)
+        // - Third machine: 65 (below threshold)
+        // - Fourth machine: 55 (low)
+        // - Others: cycle through 90, 75, 60
+        const scorePatterns = [95, 85, 65, 55, 90, 75, 60, 80, 70, 50]
+        const baseScore = scorePatterns[index % scorePatterns.length]
+        mockData[machineKey] = {
+          overall_score: baseScore,
+          uptime_score: Math.min(100, baseScore + 5),
+          performance_score: Math.max(50, baseScore - 5),
+          user_rating: Math.round((baseScore / 20) * 10) / 10, // 4.75, 4.25, 3.25, etc.
+          total_ratings: 10 + index * 5
+        }
+      })
+      setReliabilityData(mockData)
+      return
+    }
+
+    try {
+      // Get machine IDs - prefer machine_id if available
+      const machineIds = machineList
+        .map(m => m.machine_id || m.id)
+        .filter(id => id != null)
+
+      if (machineIds.length === 0) return
+
+      // Build query params
+      const params = new URLSearchParams()
+      machineIds.forEach(id => params.append('machine_id', id))
+
+      const res = await apiGet(`/api/v1/reliability/machines?${params}`)
+      if (res.ok) {
+        const data = await res.json()
+        // API returns { reliability: { machine_id: data, ... } }
+        setReliabilityData(data.reliability || data)
+      }
+    } catch (e) {
+      // Silently fail - reliability data is optional, sorting/filtering will use fallbacks
     }
   }
 
@@ -115,6 +167,13 @@ export default function Machines() {
       handleCreateInstance(offer)
     }
   }, []) // Run only once on mount
+
+  // Fetch reliability data when machines change
+  useEffect(() => {
+    if (machines.length > 0) {
+      fetchReliabilityData(machines)
+    }
+  }, [machines.length]) // Only refetch when machine count changes
 
   // Auto-sync every 30 seconds for running machines
   useEffect(() => {
@@ -601,8 +660,11 @@ export default function Machines() {
 
   // Sort function: by reliability score (highest first)
   const sortByReliabilityScore = (a, b) => {
-    const scoreA = reliabilityData[a.machine_id]?.overall_score || reliabilityData[a.machine_id]?.reliability_score || a.reliability_score || 0
-    const scoreB = reliabilityData[b.machine_id]?.overall_score || reliabilityData[b.machine_id]?.reliability_score || b.reliability_score || 0
+    // Check both machine_id and id for reliability data lookup
+    const dataA = reliabilityData[a.machine_id] || reliabilityData[a.id]
+    const dataB = reliabilityData[b.machine_id] || reliabilityData[b.id]
+    const scoreA = dataA?.overall_score || dataA?.reliability_score || a.reliability_score || 0
+    const scoreB = dataB?.overall_score || dataB?.reliability_score || b.reliability_score || 0
     return scoreB - scoreA // Highest reliability first
   }
 
