@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from src.config import settings
 from src.api import snapshots_bp, instances_bp
 from src.api.deploy import deploy_bp
+from src.api.regions import regions_bp, users_regions_bp
 from src.api.gpu_checkpoints import gpu_bp
 from src.api.price_reports import price_reports_bp
 from src.api.snapshots_ans import snapshots_ans_bp
@@ -53,6 +54,8 @@ def create_app():
     app.register_blueprint(hibernation_bp)
     app.register_blueprint(instances_bp)
     app.register_blueprint(deploy_bp)
+    app.register_blueprint(regions_bp)
+    app.register_blueprint(users_regions_bp)
     app.register_blueprint(gpu_bp)
     app.register_blueprint(price_reports_bp)
     app.register_blueprint(cpu_standby_bp)

@@ -1,5 +1,8 @@
 """
 Service para interacao com a API do vast.ai
+
+This module provides the VastService class for interacting with the Vast.ai API,
+including GPU offer search, instance management, and region-aware operations.
 """
 import asyncio
 import requests
@@ -10,6 +13,7 @@ from dataclasses import dataclass
 from functools import wraps
 
 from src.services.webhook_service import trigger_webhooks
+from ..region_mapper import RegionMapper, ParsedGeolocation, get_region_mapper
 
 logger = logging.getLogger(__name__)
 
@@ -239,7 +243,27 @@ class VastService:
         return []
 
     def _get_region_codes(self, region: str) -> List[str]:
-        """Retorna codigos de paises para uma regiao"""
+        """
+        Get matching patterns for a region filter.
+
+        Uses RegionMapper to normalize region filters into search patterns.
+        Falls back to legacy region mapping for backward compatibility.
+
+        Args:
+            region: Region filter string (e.g., "EU", "US", "California")
+
+        Returns:
+            List of patterns to match against geolocation strings
+        """
+        try:
+            mapper = get_region_mapper()
+            patterns = mapper.normalize_region_filter(region)
+            if patterns:
+                return patterns
+        except Exception as e:
+            logger.debug(f"RegionMapper fallback due to: {e}")
+
+        # Legacy fallback for backward compatibility
         regions = {
             "EU": ["ES", "DE", "FR", "NL", "IT", "PL", "CZ", "BG", "UK", "GB",
                    "Spain", "Germany", "France", "Netherlands", "Poland",
@@ -248,6 +272,282 @@ class VastService:
             "ASIA": ["JP", "Japan", "KR", "Korea", "SG", "Singapore", "TW", "Taiwan"],
         }
         return regions.get(region.upper(), [])
+
+    def extract_region_from_offer(self, offer: Dict[str, Any]) -> Optional[ParsedGeolocation]:
+        """
+        Extract structured region information from a GPU offer.
+
+        Args:
+            offer: Vast.ai offer dictionary
+
+        Returns:
+            ParsedGeolocation object with structured region data or None
+        """
+        geolocation = offer.get("geolocation", "")
+        if not geolocation:
+            return None
+
+        try:
+            mapper = get_region_mapper()
+            return mapper.parse_geolocation(geolocation)
+        except Exception as e:
+            logger.warning(f"Failed to parse geolocation '{geolocation}': {e}")
+            return None
+
+    def get_offer_region_id(self, offer: Dict[str, Any]) -> Optional[str]:
+        """
+        Get the standardized region ID for an offer.
+
+        Args:
+            offer: Vast.ai offer dictionary
+
+        Returns:
+            Standardized region ID (e.g., "eu-de", "na-us-ca") or None
+        """
+        parsed = self.extract_region_from_offer(offer)
+        return parsed.region_id if parsed else None
+
+    def is_offer_in_eu(self, offer: Dict[str, Any]) -> bool:
+        """
+        Check if an offer is in an EU/GDPR-compliant region.
+
+        Args:
+            offer: Vast.ai offer dictionary
+
+        Returns:
+            True if the offer is in an EU/EEA region
+        """
+        parsed = self.extract_region_from_offer(offer)
+        return parsed.is_eu if parsed else False
+
+    def get_regions_from_offers(
+        self,
+        offers: List[Dict[str, Any]]
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Extract unique regions from a list of offers with pricing aggregates.
+
+        Args:
+            offers: List of Vast.ai offer dictionaries
+
+        Returns:
+            Dictionary of region_id -> region data with pricing info
+        """
+        regions: Dict[str, Dict[str, Any]] = {}
+        mapper = get_region_mapper()
+
+        for offer in offers:
+            parsed = self.extract_region_from_offer(offer)
+            if not parsed or not parsed.region_id:
+                continue
+
+            region_id = parsed.region_id
+            price = offer.get("dph_total", 0)
+
+            if region_id not in regions:
+                regions[region_id] = {
+                    "region_id": region_id,
+                    "country_code": parsed.country_code,
+                    "country_name": parsed.country_name,
+                    "continent_code": parsed.continent_code,
+                    "continent_name": parsed.continent_name,
+                    "state": parsed.state,
+                    "is_eu": parsed.is_eu,
+                    "compliance_tags": mapper.get_compliance_tags(parsed.raw),
+                    "offer_count": 0,
+                    "min_price": float('inf'),
+                    "max_price": 0,
+                    "avg_price": 0,
+                    "total_price": 0,
+                    "gpu_types": set(),
+                }
+
+            region = regions[region_id]
+            region["offer_count"] += 1
+            region["total_price"] += price
+            region["min_price"] = min(region["min_price"], price)
+            region["max_price"] = max(region["max_price"], price)
+            region["avg_price"] = region["total_price"] / region["offer_count"]
+
+            gpu_name = offer.get("gpu_name", "")
+            if gpu_name:
+                region["gpu_types"].add(gpu_name)
+
+        # Convert sets to lists for JSON serialization
+        for region_id, region in regions.items():
+            region["gpu_types"] = sorted(list(region["gpu_types"]))
+            if region["min_price"] == float('inf'):
+                region["min_price"] = 0
+
+        return regions
+
+    def get_available_regions(
+        self,
+        gpu_name: Optional[str] = None,
+        max_price: float = 10.0,
+        min_reliability: float = 0.0,
+    ) -> List[Dict[str, Any]]:
+        """
+        Get list of available regions with GPU offers.
+
+        Args:
+            gpu_name: Optional GPU name filter
+            max_price: Maximum price per hour filter
+            min_reliability: Minimum reliability score
+
+        Returns:
+            List of region dictionaries with availability and pricing info
+        """
+        try:
+            # Fetch offers without region filter to get all regions
+            offers = self.search_offers(
+                gpu_name=gpu_name,
+                max_price=max_price,
+                min_reliability=min_reliability,
+                limit=200,  # Fetch more to get good region coverage
+            )
+
+            regions = self.get_regions_from_offers(offers)
+
+            # Convert to list and sort by offer count
+            region_list = sorted(
+                regions.values(),
+                key=lambda r: r["offer_count"],
+                reverse=True
+            )
+
+            logger.info(f"Found {len(region_list)} regions with GPU offers")
+            return region_list
+
+        except Exception as e:
+            logger.error(f"Failed to get available regions: {e}")
+            return []
+
+    def search_offers_by_region_id(
+        self,
+        region_id: str,
+        gpu_name: Optional[str] = None,
+        num_gpus: int = 1,
+        min_gpu_ram: float = 0,
+        min_disk: float = 50,
+        max_price: float = 1.0,
+        min_reliability: float = 0.0,
+        limit: int = 50,
+        machine_type: str = "on-demand",
+    ) -> List[Dict[str, Any]]:
+        """
+        Search for GPU offers filtered by standardized region ID.
+
+        Args:
+            region_id: Standardized region ID (e.g., "eu-de", "na-us-ca")
+            gpu_name: Optional GPU name filter
+            num_gpus: Number of GPUs required
+            min_gpu_ram: Minimum GPU RAM in GB
+            min_disk: Minimum disk space in GB
+            max_price: Maximum price per hour
+            min_reliability: Minimum reliability score
+            limit: Maximum number of results
+            machine_type: "on-demand" or "interruptible"
+
+        Returns:
+            List of matching offer dictionaries
+        """
+        # First, get offers without region filter
+        offers = self.search_offers(
+            gpu_name=gpu_name,
+            num_gpus=num_gpus,
+            min_gpu_ram=min_gpu_ram,
+            min_disk=min_disk,
+            max_price=max_price,
+            min_reliability=min_reliability,
+            limit=limit * 3,  # Fetch extra since we'll filter
+            machine_type=machine_type,
+        )
+
+        # Filter by region ID
+        matching_offers = []
+        for offer in offers:
+            offer_region_id = self.get_offer_region_id(offer)
+            if offer_region_id and offer_region_id == region_id:
+                matching_offers.append(offer)
+                if len(matching_offers) >= limit:
+                    break
+
+        logger.debug(f"Found {len(matching_offers)} offers in region {region_id}")
+        return matching_offers
+
+    def get_pricing_for_region(
+        self,
+        region_id: str,
+        gpu_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Get pricing information for a specific region.
+
+        Args:
+            region_id: Standardized region ID
+            gpu_name: Optional GPU name filter
+
+        Returns:
+            Pricing data dictionary with min, max, avg prices and GPU breakdown
+        """
+        offers = self.search_offers_by_region_id(
+            region_id=region_id,
+            gpu_name=gpu_name,
+            max_price=100.0,  # High limit to get all pricing data
+            limit=100,
+        )
+
+        if not offers:
+            return {
+                "region_id": region_id,
+                "available": False,
+                "error": "No offers found in this region",
+            }
+
+        prices = [o.get("dph_total", 0) for o in offers]
+        gpu_prices = {}
+
+        for offer in offers:
+            gpu = offer.get("gpu_name", "Unknown")
+            price = offer.get("dph_total", 0)
+
+            if gpu not in gpu_prices:
+                gpu_prices[gpu] = {
+                    "gpu_name": gpu,
+                    "min_price": float('inf'),
+                    "max_price": 0,
+                    "offer_count": 0,
+                    "prices": [],
+                }
+
+            gpu_prices[gpu]["min_price"] = min(gpu_prices[gpu]["min_price"], price)
+            gpu_prices[gpu]["max_price"] = max(gpu_prices[gpu]["max_price"], price)
+            gpu_prices[gpu]["offer_count"] += 1
+            gpu_prices[gpu]["prices"].append(price)
+
+        # Calculate averages
+        for gpu, data in gpu_prices.items():
+            if data["prices"]:
+                data["avg_price"] = sum(data["prices"]) / len(data["prices"])
+            else:
+                data["avg_price"] = 0
+            del data["prices"]  # Remove raw prices from response
+            if data["min_price"] == float('inf'):
+                data["min_price"] = 0
+
+        return {
+            "region_id": region_id,
+            "available": True,
+            "currency": "USD",
+            "offer_count": len(offers),
+            "compute_price": {
+                "min": min(prices) if prices else 0,
+                "max": max(prices) if prices else 0,
+                "avg": sum(prices) / len(prices) if prices else 0,
+            },
+            "by_gpu": list(gpu_prices.values()),
+        }
 
     def create_instance(
         self,

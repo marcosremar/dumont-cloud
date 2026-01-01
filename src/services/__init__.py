@@ -11,6 +11,8 @@ from .gpu import (
     GPUMonitorAgent,
     VastAIService,
 )
+# Alias for backward compatibility
+from .gpu.vast import VastService
 
 # Storage services
 from .storage import (
@@ -73,6 +75,7 @@ __all__ = [
     "GPUCheckpointService",
     "GPUMonitorAgent",
     "VastAIService",
+    "VastService",
     # Storage
     "ResticService",
     "create_snapshot_service_b2",

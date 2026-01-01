@@ -29,6 +29,7 @@ from .rbac import (
 )
 from .reservation import Reservation, ReservationStatus
 from .reservation_credit import ReservationCredit, CreditStatus, CreditTransactionType
+from .user_region_preference import UserRegionPreference
 
 __all__ = [
     'PriceHistory',
@@ -90,4 +91,6 @@ __all__ = [
     'ReservationCredit',
     'CreditStatus',
     'CreditTransactionType',
+    # Region preferences
+    'UserRegionPreference',
 ]

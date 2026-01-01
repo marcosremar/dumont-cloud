@@ -13,6 +13,11 @@ import { useToast } from '../components/Toast'
 import StandbyConfig from '../components/StandbyConfig'
 import FailoverReport from '../components/FailoverReport'
 import LanguageSelector from '../components/LanguageSelector'
+import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive, Globe } from 'lucide-react'
+import { useToast } from '../components/Toast'
+import StandbyConfig from '../components/StandbyConfig'
+import FailoverReport from '../components/FailoverReport'
+import RegionPreferences from '../components/settings/RegionPreferences'
 import { Alert, Card, Button } from '../components/tailadmin-ui'
 
 const API_BASE = ''
@@ -254,7 +259,8 @@ function Toast({ message, title = 'Saldo Baixo!', type = 'warning', onClose }) {
 // Menu items para Settings - labels will be translated in the component
 const SETTINGS_MENU = [
   { id: 'apis', label: 'APIs & Credenciais', icon: Key, color: 'green' },
-  { id: 'storage', label: 'Armazenamento', icon: Database, color: 'blue' },
+  { id: 'regions', label: 'Preferencias de Regiao', icon: Globe, color: 'blue' },
+  { id: 'storage', label: 'Armazenamento', icon: Database, color: 'cyan' },
   { id: 'cloudstorage', label: 'Cloud Storage Failover', icon: Cloud, color: 'purple' },
   { id: 'agent', label: 'Agent Sync', icon: Server, color: 'cyan' },
   { id: 'webhooks', label: 'Webhooks', icon: Webhook, color: 'orange' },
@@ -690,6 +696,10 @@ export default function Settings() {
               >
                 <LanguageSelector />
               </Card>
+          {/* Region Preferences Tab */}
+          {activeTab === 'regions' && (
+            <div className="space-y-6">
+              <RegionPreferences />
             </div>
           )}
 

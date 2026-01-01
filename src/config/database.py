@@ -46,3 +46,11 @@ def init_db():
 def get_session_factory():
     """Retorna a factory de sessões do banco de dados."""
     return SessionLocal
+
+
+def get_db_session():
+    """
+    Retorna uma sessao do banco de dados para uso direto.
+    O chamador e responsavel por fechar a sessao apos uso.
+    """
+    return SessionLocal()
