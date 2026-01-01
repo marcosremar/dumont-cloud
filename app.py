@@ -58,6 +58,7 @@ def create_app():
         from src.services.agent_manager import agent_manager
         from src.services.price_monitor_agent import PriceMonitorAgent
         from src.services.standby import AutoHibernationManager
+        from src.services.snapshot_cleanup_agent import SnapshotCleanupAgent
 
         logger = logging.getLogger(__name__)
         logger.info("Inicializando agentes automaticos...")
@@ -148,6 +149,18 @@ def create_app():
                 logger.error(f"Erro ao iniciar CPU Standby service: {e}")
         else:
             logger.warning("Nenhuma API key configurada - agentes nao iniciados")
+
+        # Registrar agente de limpeza de snapshots (nao requer API key)
+        try:
+            agent_manager.register_agent(
+                SnapshotCleanupAgent,
+                interval_hours=24,  # Rodar diariamente
+                dry_run=False,
+                batch_size=100,
+            )
+            logger.info("✓ Agente de limpeza de snapshots iniciado (interval=24h)")
+        except Exception as e:
+            logger.error(f"Erro ao iniciar agente de limpeza de snapshots: {e}")
 
     # Shutdown handler para parar agentes
     import atexit
