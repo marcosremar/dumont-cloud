@@ -6,6 +6,8 @@ from fastapi import APIRouter
 from .endpoints import auth, instances, snapshots, settings, metrics, ai_wizard, standby, agent, savings, advisor, hibernation, finetune, chat
 from .endpoints import warmpool, failover_settings, failover, serverless, spot_deploy, machine_history, jobs, models
 from .endpoints import market, hosts, templates
+from .endpoints import market, hosts
+from .endpoints import email_preferences, unsubscribe
 from .endpoints.settings import balance_router
 from .endpoints.spot import router as spot_router
 from .endpoints.metrics import reliability_router
@@ -70,3 +72,8 @@ api_router.include_router(templates.router, tags=["Templates"])
 
 # Machine Reliability - Reliability scores and user ratings
 api_router.include_router(reliability_router, tags=["Machine Reliability"])
+# Email Preferences - User email report settings
+api_router.include_router(email_preferences.router, tags=["Email Preferences"])
+
+# Unsubscribe - One-click email unsubscribe (no auth required per CAN-SPAM)
+api_router.include_router(unsubscribe.router, tags=["Unsubscribe"])

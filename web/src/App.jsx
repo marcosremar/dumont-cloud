@@ -7,6 +7,7 @@ import { SidebarProvider } from './context/SidebarContext'
 import { ThemeProvider } from './context/ThemeContext'
 import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
+import EmailPreferences from './pages/Settings/EmailPreferences'
 import Login from './pages/Login'
 import LandingPage from './pages/LandingPage'
 import Machines from './pages/Machines'
@@ -335,6 +336,20 @@ export default function App() {
                 </AppLayout>
               </ProtectedRoute>
             } />
+            <Route path="/app/settings/email-preferences" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <EmailPreferences />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/settings/email-preferences" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <EmailPreferences />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
             <Route path="/app/failover-report" element={
               <ProtectedRoute user={user}>
                 <AppLayout user={user} onLogout={handleLogout}>
@@ -458,6 +473,13 @@ export default function App() {
               <DemoRoute>
                 <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
                   <Settings />
+                </AppLayout>
+              </DemoRoute>
+            } />
+            <Route path="/demo-app/settings/email-preferences" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <EmailPreferences />
                 </AppLayout>
               </DemoRoute>
             } />

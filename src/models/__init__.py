@@ -9,6 +9,8 @@ from .economy import SavingsHistory, ProviderPricing
 from .user import User
 from .email_verification_token import EmailVerificationToken
 from .snapshot_metadata import SnapshotMetadata, SnapshotStatus, DeletionReason
+from .email_preferences import EmailPreference
+from .email_delivery_log import EmailDeliveryLog
 
 __all__ = [
     'PriceHistory',
@@ -37,4 +39,7 @@ __all__ = [
     'SnapshotMetadata',
     'SnapshotStatus',
     'DeletionReason',
+    # Email reports
+    'EmailPreference',
+    'EmailDeliveryLog',
 ]

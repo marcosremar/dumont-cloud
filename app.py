@@ -26,6 +26,8 @@ from src.api.cpu_standby import cpu_standby_bp, init_standby_service
 from src.api.chat import chat_bp
 from src.api.economy import economy_bp
 from src.api.templates import templates_bp
+from src.api.email_preferences import email_preferences_bp
+from src.api.unsubscribe import unsubscribe_bp
 
 
 def create_app():
@@ -54,6 +56,8 @@ def create_app():
     app.register_blueprint(chat_bp)
     app.register_blueprint(economy_bp)
     app.register_blueprint(templates_bp)
+    app.register_blueprint(email_preferences_bp)
+    app.register_blueprint(unsubscribe_bp)
 
     # Inicializar sistema de agentes
     def init_agents():
@@ -64,12 +68,12 @@ def create_app():
         from src.services.price_monitor_agent import PriceMonitorAgent
         from src.services.standby import AutoHibernationManager
         from src.services.snapshot_cleanup_agent import SnapshotCleanupAgent
+        from src.services.email_report_scheduler import init_email_scheduler, shutdown_email_scheduler
 
         logger = logging.getLogger(__name__)
         logger.info("Inicializando agentes automaticos...")
 
-        # ========== SNAPSHOT SCHEDULER INITIALIZATION ==========
-        # Initialize the snapshot scheduler and restore state from database
+        # ========== SNAPSHOT SCHEDULER INITIALIZATION ===        # Initialize the snapshot scheduler and restore state from database
         try:
             from src.services.snapshot_scheduler import get_snapshot_scheduler, SnapshotJobInfo
             from src.services.alert_manager import get_alert_manager
@@ -161,6 +165,15 @@ def create_app():
             logger.error(f"Erro ao iniciar Snapshot Scheduler: {e}")
             import traceback
             traceback.print_exc()
+=======
+        # Inicializar Email Report Scheduler (APScheduler)
+        try:
+            email_scheduler = init_email_scheduler()
+            if email_scheduler:
+                app.email_scheduler = email_scheduler
+                logger.info("✓ Email Report Scheduler iniciado (APScheduler)")
+        except Exception as e:
+            logger.error(f"Erro ao iniciar Email Report Scheduler: {e}")
 
         # Carregar config do primeiro usuario para obter API key
         config = load_user_config()
@@ -267,6 +280,7 @@ def create_app():
         """Para todos os agentes ao desligar o servidor."""
         import logging
         from src.services.agent_manager import agent_manager
+        from src.services.email_report_scheduler import shutdown_email_scheduler
         logger = logging.getLogger(__name__)
         logger.info("Parando agentes...")
         agent_manager.stop_all()
@@ -280,6 +294,7 @@ def create_app():
             except Exception as e:
                 logger.error(f"Erro ao parar Snapshot Scheduler: {e}")
 
+        shutdown_email_scheduler()
         logger.info("Agentes parados")
 
     atexit.register(shutdown_agents)
