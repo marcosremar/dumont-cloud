@@ -1,15 +1,15 @@
 {
   "discovered_files": {
     "web/src/components/machines/MachineCard.jsx": {
-      "description": "Action buttons (Failover, Testar, CPU Migration, Pause, GPU Migration, Start) now have descriptive aria-labels. The Start button uses a dynamic label with the GPU name for context. Pause button includes warning about interrupted processes.",
+      "description": "Backup info popup (lines 662-760) now has full keyboard accessibility: Escape key closes popup via document-level event listener, close button auto-focuses when popup opens, focus returns to trigger Badge when closed. Uses backupInfoTriggerRef for trigger and backupInfoCloseRef for close button. Visual focus indicator with ring-2 ring-brand-400 on close button.",
       "category": "accessibility",
-      "discovered_at": "2026-01-01T06:10:27.760355+00:00"
+      "discovered_at": "2026-01-01T06:27:04.255444+00:00"
     },
     "web/src/components/tailadmin-ui/index.jsx": {
-      "description": "DropdownMenu component (lines 577-664) is custom implementation lacking ARIA attributes. Used for main options menu and VS Code IDE dropdown. Needs aria-expanded, aria-haspopup, role='menu', role='menuitem', and keyboard navigation.",
+      "description": "DropdownMenu components (lines 587-862) now have full keyboard navigation: arrow keys (Up/Down) for navigation with wrap-around, Home/End keys, Enter/Space to activate, Escape to close at document level, Tab to close and continue tabbing. Uses React Context for state management (focusedIndex, menuItemRefs, triggerRef, registerMenuItem). Auto-focuses first item when menu opens, returns focus to trigger when closed. Visual focus with ring-2 ring-brand-400 and aria-activedescendant for screen readers.",
       "category": "accessibility",
-      "discovered_at": "2026-01-01T06:02:42.275880+00:00"
+      "discovered_at": "2026-01-01T06:30:24.523582+00:00"
     }
   },
-  "last_updated": "2026-01-01T06:10:27.760471+00:00"
+  "last_updated": "2026-01-01T06:30:24.523608+00:00"
 }
