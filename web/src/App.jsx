@@ -23,6 +23,7 @@ import Models from './pages/Models'
 import Documentation from './pages/Documentation'
 import ButtonShowcase from './pages/ButtonShowcase'
 import ForgotPassword from './pages/ForgotPassword'
+import Reservations from './pages/Reservations'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import './styles/landing.css'
@@ -378,6 +379,13 @@ export default function App() {
               <ProtectedRoute user={user}>
                 <AppLayout user={user} onLogout={handleLogout}>
                   <Models />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/app/reservations" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <Reservations />
                 </AppLayout>
               </ProtectedRoute>
             } />
