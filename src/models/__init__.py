@@ -6,6 +6,8 @@ from .metrics import MarketSnapshot, ProviderReliability, PricePrediction, CostE
 from .machine_history import MachineAttempt, MachineBlacklist, MachineStats
 from .snapshot_config import SnapshotConfig
 from .economy import SavingsHistory, ProviderPricing
+from .user import User
+from .email_verification_token import EmailVerificationToken
 
 __all__ = [
     'PriceHistory',
@@ -26,4 +28,8 @@ __all__ = [
     # Economy widget models
     'SavingsHistory',
     'ProviderPricing',
+    # User model with trial support
+    'User',
+    # Email verification token
+    'EmailVerificationToken',
 ]

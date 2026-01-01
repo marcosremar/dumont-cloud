@@ -60,6 +60,9 @@ from .pricing_service import PricingService, get_pricing_service
 # Other services
 from .deploy_wizard import DeployWizardService, DeployConfig, get_wizard_service
 
+# Email services
+from .email_service import EmailService, get_email_service
+
 __all__ = [
     # GPU
     "GPUProvisioner",
@@ -111,4 +114,7 @@ __all__ = [
     "DeployWizardService",
     "DeployConfig",
     "get_wizard_service",
+    # Email
+    "EmailService",
+    "get_email_service",
 ]
