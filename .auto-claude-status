@@ -3,13 +3,13 @@
   "spec": "025-add-focus-trapping-and-role-attributes-to-alertdia",
   "state": "building",
   "subtasks": {
-    "completed": 3,
+    "completed": 7,
     "total": 13,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Create useFocusTrap Hook",
+    "current": "Update AlertDialog Components",
     "id": null,
     "total": 5
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 5,
+    "number": 9,
     "started_at": "2026-01-01T07:00:13.744224"
   },
-  "last_update": "2026-01-01T07:08:35.022305"
+  "last_update": "2026-01-01T07:20:58.936341"
 }

@@ -732,7 +732,8 @@ export function AlertDialogHeader({ children, className = '' }) {
 }
 
 export function AlertDialogTitle({ children, className = '' }) {
-  return <h2 className={`text-lg font-semibold text-white ${className}`}>{children}</h2>;
+  const { titleId } = React.useContext(AlertDialogContext);
+  return <h2 id={titleId} className={`text-lg font-semibold text-white ${className}`}>{children}</h2>;
 }
 
 export function AlertDialogDescription({ children, className = '' }) {

@@ -86,7 +86,7 @@
           "id": "1.5",
           "title": "Implement Escape key handler",
           "description": "Add keyboard event listener for Escape key to close the dialog",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "Pressing Escape triggers onClose callback",
             "Event listener properly cleaned up on unmount",
@@ -94,7 +94,9 @@
           ],
           "files": [
             "web/src/hooks/useFocusTrap.ts"
-          ]
+          ],
+          "notes": "Implemented Escape key handler in useFocusTrap hook:\n- Added Escape key handling in handleKeyDown callback (lines 82-88)\n- Uses event.preventDefault() and event.stopPropagation() to prevent default behavior and bubbling\n- Calls onClose?.() callback when Escape is pressed\n- Added onClose to useCallback dependencies for proper memoization\n- Event listener is properly cleaned up on unmount (handled by existing cleanup in useEffect)\n- Only responds when dialog is open (handleKeyDown only registered when isOpen is true)",
+          "updated_at": "2026-01-01T06:15:28.965628+00:00"
         }
       ]
     },
@@ -108,7 +110,7 @@
           "id": "2.1",
           "title": "Update AlertDialog component with useFocusTrap",
           "description": "Integrate the useFocusTrap hook into the main AlertDialog component wrapper",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "AlertDialog uses useFocusTrap hook",
             "Focus trap activated when open=true",
@@ -116,13 +118,15 @@
           ],
           "files": [
             "web/src/components/tailadmin-ui/index.jsx"
-          ]
+          ],
+          "notes": "Integrated useFocusTrap hook into AlertDialog component in web/src/components/tailadmin-ui/index.jsx:\n- Added import for useFocusTrap from ../../hooks/useFocusTrap\n- Created dialogRef using useRef(null)\n- Called useFocusTrap hook unconditionally with isOpen: open and onClose: () => onOpenChange?.(false)\n- Attached ref to the dialog content wrapper div\n- Focus trap is now activated when open=true\n- Escape key now triggers onOpenChange(false) via the hook's onClose callback",
+          "updated_at": "2026-01-01T06:17:28.803362+00:00"
         },
         {
           "id": "2.2",
           "title": "Add ARIA attributes to AlertDialogContent",
           "description": "Add role=\"alertdialog\", aria-modal=\"true\", aria-labelledby, and aria-describedby attributes",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "role=\"alertdialog\" added to content container",
             "aria-modal=\"true\" added to content container",
@@ -131,7 +135,9 @@
           ],
           "files": [
             "web/src/components/tailadmin-ui/index.jsx"
-          ]
+          ],
+          "notes": "Added ARIA attributes to AlertDialogContent for accessibility compliance:\n- Added role=\"alertdialog\" to content container\n- Added aria-modal=\"true\" to content container\n- Added aria-labelledby referencing title element id (to be connected in 2.3)\n- Added aria-describedby referencing description element id (to be connected in 2.4)\n- Created AlertDialogContext to share generated IDs between AlertDialog and AlertDialogContent\n- Used React.useId() for generating unique IDs to support multiple dialogs",
+          "updated_at": "2026-01-01T06:20:33.228528+00:00"
         },
         {
           "id": "2.3",
@@ -242,5 +248,5 @@
     "Consider using inert attribute on background content for better isolation",
     "Focus trap must handle dynamic content (elements added/removed after dialog opens)"
   ],
-  "last_updated": "2026-01-01T06:12:16.240157+00:00"
+  "last_updated": "2026-01-01T06:20:33.228540+00:00"
 }
