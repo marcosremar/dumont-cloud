@@ -75,7 +75,7 @@
           "id": "2.1",
           "title": "Create ProgressBar component",
           "description": "Build a thin progress bar that shrinks from 100% to 0% over the toast duration. Use CSS animation for smooth performance.",
-          "status": "pending",
+          "status": "completed",
           "file_paths": [
             "web/src/components/Toast.jsx"
           ],
@@ -84,13 +84,15 @@
             "Bar starts at 100% width and shrinks to 0%",
             "Animation uses CSS linear timing over toast duration",
             "Bar color matches toast variant accent color"
-          ]
+          ],
+          "notes": "Created ProgressBar component with CSS animation that shrinks from 100% to 0% width. Uses linear timing, configurable duration via props, and matches toast variant accent color. Component renders at bottom of toast and handles persistent toasts (duration=0) by returning null. Commit: 385768e",
+          "updated_at": "2026-01-01T06:08:42.094476+00:00"
         },
         {
           "id": "2.2",
           "title": "Integrate progress bar into ToastItem",
           "description": "Add ProgressBar to ToastItem, passing duration and variant props. Position at bottom of toast.",
-          "status": "pending",
+          "status": "completed",
           "file_paths": [
             "web/src/components/Toast.jsx"
           ],
@@ -98,7 +100,9 @@
             "Progress bar visible at bottom of toast",
             "Progress bar uses variant-specific color",
             "Duration prop flows from addToast through to ProgressBar"
-          ]
+          ],
+          "notes": "ProgressBar component is already integrated into ToastItem (done as part of 2.1 implementation). ProgressBar receives duration prop from ToastItem and accentColor from variant.accent. Positioned at bottom of toast using flex-col layout. Currently uses ToastItem's default duration (4000ms) - subtask 2.3 will connect the full duration flow from addToast.",
+          "updated_at": "2026-01-01T06:12:23.269658+00:00"
         },
         {
           "id": "2.3",
@@ -196,5 +200,5 @@
     "issues": "",
     "tests_passed": ""
   },
-  "last_updated": "2026-01-01T06:06:36.556658+00:00"
+  "last_updated": "2026-01-01T06:12:23.269694+00:00"
 }
