@@ -494,6 +494,13 @@ export default function App() {
                 </AppLayout>
               </DemoRoute>
             } />
+            <Route path="/demo-app/reservations" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <Reservations />
+                </AppLayout>
+              </DemoRoute>
+            } />
 
             {/* Demo Documentation Routes */}
             <Route path="/demo-docs" element={

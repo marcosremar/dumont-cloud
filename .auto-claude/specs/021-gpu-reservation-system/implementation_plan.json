@@ -534,7 +534,9 @@
               "Click navigates to /app/reservations"
             ]
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added Reservations navigation link to both Layout.jsx (desktop nav) and MobileMenu.jsx (mobile nav with Calendar icon). Both navigate to /app/reservations.",
+          "updated_at": "2026-01-01T06:50:50.568930+00:00"
         }
       ]
     },
@@ -571,7 +573,9 @@
               "Check database: SELECT * FROM reservations;"
             ]
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Verified complete reservation creation flow:\n\n1. Backend Components:\n   - Reservation model with 5 statuses (pending, active, completed, cancelled, failed)\n   - ReservationCredit model with 5 credit statuses (available, locked, used, expired, refunded)\n   - ReservationService with pricing, availability, and credit management\n   - 9 API endpoints in reservations router with auth\n   - APScheduler for credit expiration at midnight UTC\n\n2. Frontend Components:\n   - ReservationCalendar with react-big-calendar and dark theme styling\n   - ReservationForm with Flatpickr datetime pickers and GPU selector\n   - Reservations page integrating calendar and form with modal\n   - Redux reservationSlice with async thunks\n   - reservationApi.js client with all API methods\n\n3. Routing:\n   - /app/reservations (protected route)\n   - /demo-app/reservations (demo route with sample data)\n\n4. Bug Fix:\n   - Fixed getCreditBalance() endpoint in reservationApi.js (/credits instead of /credits/balance)\n\nAll components verified to import and integrate correctly. Demo mode works with sample reservation data.",
+          "updated_at": "2026-01-01T06:57:56.517936+00:00"
         },
         {
           "id": "subtask-9-2",
@@ -873,7 +877,7 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2026-01-01T06:49:27.428220+00:00",
+  "last_updated": "2026-01-01T06:57:56.517951+00:00",
   "status": "backlog",
   "planStatus": "pending",
   "updated_at": "2026-01-01T06:07:14.293Z",

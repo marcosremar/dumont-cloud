@@ -182,7 +182,7 @@ export async function getPricingEstimate({ gpu_type, gpu_count = 1, start_time, 
  * @returns {Promise<Object>} Credit balance info
  */
 export async function getCreditBalance() {
-  const response = await apiGet(`${API_PREFIX}/credits/balance`)
+  const response = await apiGet(`${API_PREFIX}/credits`)
 
   if (!response.ok) {
     const error = await response.json()
