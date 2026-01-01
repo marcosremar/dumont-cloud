@@ -586,7 +586,13 @@ export default function MachineCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 mb-1">
             <span className="text-gray-900 dark:text-white font-semibold text-sm truncate">{gpuName}</span>
-            <Badge variant={statusDisplay.variant} dot className={`text-[9px] ${statusDisplay.animate ? 'animate-pulse' : ''}`}>
+            <Badge
+              variant={statusDisplay.variant}
+              dot
+              className={`text-[9px] ${statusDisplay.animate ? 'animate-pulse' : ''}`}
+              aria-label={`Status da máquina: ${statusDisplay.label}`}
+              aria-busy={isLoading}
+            >
               {statusDisplay.label}
             </Badge>
           </div>
@@ -1099,7 +1105,7 @@ export default function MachineCard({
           <div className="flex gap-1.5">
             {isLoading ? (
               /* Show loading indicator with ID and elapsed time */
-              <div className="w-full p-2 rounded-lg bg-warning-500/10 border border-warning-500/20">
+              <div className="w-full p-2 rounded-lg bg-warning-500/10 border border-warning-500/20" aria-busy="true" aria-label={`Máquina ${statusDisplay.label.toLowerCase()}`}>
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-1.5">
                     <RefreshCw className="w-3 h-3 text-warning-400 animate-spin" />

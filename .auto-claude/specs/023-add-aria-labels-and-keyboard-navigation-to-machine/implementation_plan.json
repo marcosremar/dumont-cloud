@@ -203,14 +203,16 @@
           "id": "4.2",
           "title": "Add aria-live for copy feedback",
           "description": "Add aria-live region to announce when content is copied to clipboard.",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/machines/MachineCard.jsx"
           ],
           "acceptance_criteria": [
             "Screen reader announces 'Copiado!' when content is copied",
             "Uses aria-live='polite' for non-intrusive announcements"
-          ]
+          ],
+          "notes": "Added aria-live region with role=\"status\" and aria-live=\"polite\" to announce copy feedback. Updated copySSHConfig() to announce \"Configura\u00e7\u00e3o SSH copiada!\" and copyToClipboard() to announce contextual messages like \"Endere\u00e7o IP copiado!\" and \"Comando SSH copiado!\". Messages auto-clear after the copy confirmation timeout.",
+          "updated_at": "2026-01-01T06:30:27.289243+00:00"
         }
       ]
     },
@@ -223,7 +225,7 @@
           "id": "5.1",
           "title": "Add ARIA attributes to DropdownMenu components",
           "description": "Add aria-expanded, aria-haspopup, role='menu', and role='menuitem' to DropdownMenu components.",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/tailadmin-ui/index.jsx"
           ],
@@ -232,13 +234,15 @@
             "DropdownMenuTrigger has aria-haspopup='menu'",
             "DropdownMenuContent has role='menu'",
             "DropdownMenuItem has role='menuitem'"
-          ]
+          ],
+          "notes": "Added ARIA attributes to DropdownMenu components: aria-expanded and aria-haspopup='menu' on DropdownMenuTrigger, role='menu' and aria-orientation='vertical' on DropdownMenuContent, role='menuitem' and aria-disabled on DropdownMenuItem.",
+          "updated_at": "2026-01-01T06:32:16.513889+00:00"
         },
         {
           "id": "5.2",
           "title": "Add keyboard navigation to DropdownMenu",
           "description": "Implement arrow key navigation, Enter to activate, and Escape to close for DropdownMenu.",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/tailadmin-ui/index.jsx"
           ],
@@ -247,7 +251,9 @@
             "Arrow Up/Down navigates between menu items",
             "Enter/Space activates the focused menu item",
             "Home/End keys go to first/last item"
-          ]
+          ],
+          "notes": "Implemented full keyboard navigation for DropdownMenu component: Escape closes dropdown and returns focus to trigger, Arrow Up/Down navigates between menu items with wrap-around, Enter/Space activates focused menu item, Home/End keys go to first/last item, Tab closes dropdown. Added focus management with refs, focus ring styles for visibility, and displayName for robust component detection.",
+          "updated_at": "2026-01-01T06:36:13.642150+00:00"
         }
       ]
     },
@@ -333,5 +339,5 @@
     "issues": "",
     "tests_passed": ""
   },
-  "last_updated": "2026-01-01T06:28:04.482175+00:00"
+  "last_updated": "2026-01-01T06:36:13.642158+00:00"
 }

@@ -119,11 +119,47 @@
         }
       ],
       "status": "completed"
+    },
+    "4.2": {
+      "attempts": [
+        {
+          "session": 12,
+          "timestamp": "2026-01-01T07:30:43.153972",
+          "approach": "Implemented: Add aria-live region to announce when content is copied to clipboard.",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "5.1": {
+      "attempts": [
+        {
+          "session": 13,
+          "timestamp": "2026-01-01T07:32:30.283557",
+          "approach": "Implemented: Add aria-expanded, aria-haspopup, role='menu', and role='menuitem' to DropdownMenu components.",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "5.2": {
+      "attempts": [
+        {
+          "session": 14,
+          "timestamp": "2026-01-01T07:36:26.179838",
+          "approach": "Implemented: Implement arrow key navigation, Enter to activate, and Escape to close for DropdownMenu.",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-01T07:00:18.575852",
-    "last_updated": "2026-01-01T07:28:17.596688"
+    "last_updated": "2026-01-01T07:36:26.179850"
   }
 }
