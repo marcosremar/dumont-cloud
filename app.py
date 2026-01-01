@@ -58,9 +58,19 @@ def create_app():
         from src.services.agent_manager import agent_manager
         from src.services.price_monitor_agent import PriceMonitorAgent
         from src.services.standby import AutoHibernationManager
+        from src.services.email_report_scheduler import init_email_scheduler, shutdown_email_scheduler
 
         logger = logging.getLogger(__name__)
         logger.info("Inicializando agentes automaticos...")
+
+        # Inicializar Email Report Scheduler (APScheduler)
+        try:
+            email_scheduler = init_email_scheduler()
+            if email_scheduler:
+                app.email_scheduler = email_scheduler
+                logger.info("✓ Email Report Scheduler iniciado (APScheduler)")
+        except Exception as e:
+            logger.error(f"Erro ao iniciar Email Report Scheduler: {e}")
 
         # Carregar config do primeiro usuario para obter API key
         config = load_user_config()
@@ -155,9 +165,11 @@ def create_app():
         """Para todos os agentes ao desligar o servidor."""
         import logging
         from src.services.agent_manager import agent_manager
+        from src.services.email_report_scheduler import shutdown_email_scheduler
         logger = logging.getLogger(__name__)
         logger.info("Parando agentes...")
         agent_manager.stop_all()
+        shutdown_email_scheduler()
         logger.info("Agentes parados")
 
     atexit.register(shutdown_agents)
