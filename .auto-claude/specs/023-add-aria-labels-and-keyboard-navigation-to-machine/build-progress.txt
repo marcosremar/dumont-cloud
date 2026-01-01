@@ -46,3 +46,11 @@ This task adds proper accessibility attributes (aria-label, aria-expanded, aria-
 ## Progress Log
 - [2026-01-01] Created implementation plan with 7 phases and 16 subtasks
 - [2026-01-01] Recorded codebase discoveries for accessibility patterns
+- [2026-01-01] Completed 5.2: Added full keyboard navigation to DropdownMenu component
+  - Escape key closes dropdown and returns focus to trigger
+  - Arrow Up/Down navigates between menu items (with wrap-around)
+  - Enter/Space activates focused menu item
+  - Home/End keys go to first/last item
+  - Tab closes dropdown and lets focus move naturally
+  - Focus ring styles for keyboard visibility
+  - Focus management with proper ref tracking
