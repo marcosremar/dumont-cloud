@@ -151,3 +151,38 @@ Alternatively, to run services manually:
   ./init.sh
 
 === END SESSION 1 ===
+
+=== SUBTASK 6-3 VERIFICATION ===
+
+Session: 2026-01-01
+Subtask: Verify CLI Spanish output completeness
+
+Verification Results:
+✅ Total translatable strings: 299 in POT
+✅ Total translated strings: 299 in Spanish PO
+✅ All translations complete (100%)
+
+Tested Commands:
+1. `python3 -m cli --language es config show`
+   - Output: "📋 Configuración Actual", "URL de API", "Clave API", "Estado", "Ejecuta:"
+   - Status: ✅ PASS
+
+2. `python3 -m cli --language es instances list`
+   - Output: "⚠️ ¡CLI no configurado!", "Para usar el CLI de Dumont, necesitas configurar tu clave API.", "¿Deseas configurar ahora? [S/n]:"
+   - Status: ✅ PASS (prompts in Spanish before config requirement)
+
+3. `python3 -m cli --language es --help`
+   - Output: All sections translated (Configuración, Autenticación, Mercado (Spot), Ahorros, GPU Serverless, Pool en Espera, Trabajos, Instantáneas, Modelos, Hibernación, Ajuste Fino, API Directa, Asistente)
+   - Status: ✅ PASS
+
+Translation Coverage:
+- CLI main module: ✅ Complete
+- Config commands: ✅ Complete
+- Wizard commands: ✅ Complete
+- Model commands: ✅ Complete
+- Models (plural) commands: ✅ Complete
+- API commands: ✅ Complete
+- Base commands: ✅ Complete
+- Jinja2 templates: ✅ Complete
+
+Status: COMPLETED
