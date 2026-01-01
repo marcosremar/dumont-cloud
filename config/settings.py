@@ -66,6 +66,9 @@ class SnapshotConfig:
     max_concurrent: int = field(
         default_factory=lambda: int(os.getenv("SNAPSHOT_MAX_CONCURRENT", "1"))
     )
+    slack_webhook: str = field(
+        default_factory=lambda: os.getenv("SLACK_WEBHOOK_URL", "")
+    )
 
 
 @dataclass
