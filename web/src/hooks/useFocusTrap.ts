@@ -1,4 +1,4 @@
-import { useEffect, RefObject } from "react";
+import { useEffect, useCallback, RefObject } from "react";
 
 export interface UseFocusTrapOptions {
   /** Whether the focus trap is active */
@@ -8,6 +8,53 @@ export interface UseFocusTrapOptions {
   /** Optional ref to element that should receive initial focus */
   initialFocusRef?: RefObject<HTMLElement>;
 }
+
+/**
+ * Selector for all focusable elements within a container.
+ * Includes buttons, inputs, selects, textareas, links with href,
+ * and elements with tabindex >= 0.
+ */
+const FOCUSABLE_SELECTOR = [
+  'button:not([disabled]):not([tabindex="-1"])',
+  'input:not([disabled]):not([type="hidden"]):not([tabindex="-1"])',
+  'select:not([disabled]):not([tabindex="-1"])',
+  'textarea:not([disabled]):not([tabindex="-1"])',
+  'a[href]:not([tabindex="-1"])',
+  '[tabindex]:not([tabindex="-1"]):not([disabled])',
+  '[contenteditable="true"]:not([tabindex="-1"])',
+].join(", ");
+
+/**
+ * Gets all focusable elements within a container, filtered by visibility.
+ * @param container - The container element to search within
+ * @returns Array of focusable HTMLElements
+ */
+const getFocusableElements = (
+  container: HTMLElement | null
+): HTMLElement[] => {
+  if (!container) return [];
+
+  const elements = Array.from(
+    container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+  );
+
+  // Filter out elements that are not visible or have zero dimensions
+  return elements.filter((el) => {
+    // Check if element is visible
+    const style = window.getComputedStyle(el);
+    if (style.display === "none" || style.visibility === "hidden") {
+      return false;
+    }
+
+    // Check if element has dimensions (not hidden with width/height 0)
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) {
+      return false;
+    }
+
+    return true;
+  });
+};
 
 /**
  * Hook that traps focus within a container element when open.
@@ -22,15 +69,109 @@ export const useFocusTrap = (
 ): void => {
   const { isOpen, onClose, initialFocusRef } = options;
 
+  /**
+   * Handles keyboard events for focus trapping.
+   * Traps Tab and Shift+Tab to cycle within focusable elements.
+   */
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      if (event.key === "Tab") {
+        const focusableElements = getFocusableElements(container);
+
+        if (focusableElements.length === 0) {
+          // No focusable elements, prevent Tab from escaping
+          event.preventDefault();
+          return;
+        }
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+        const activeElement = document.activeElement as HTMLElement;
+
+        if (event.shiftKey) {
+          // Shift+Tab: Moving backward
+          if (
+            activeElement === firstElement ||
+            !container.contains(activeElement)
+          ) {
+            // At first element or focus outside container, wrap to last
+            event.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          // Tab: Moving forward
+          if (
+            activeElement === lastElement ||
+            !container.contains(activeElement)
+          ) {
+            // At last element or focus outside container, wrap to first
+            event.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
+
+      // Escape key handler will be implemented in subtask 1.5
+    },
+    [containerRef]
+  );
+
+  /**
+   * Handles focus events to prevent focus from escaping the dialog.
+   * If focus moves outside the container, redirect it back inside.
+   */
+  const handleFocusIn = useCallback(
+    (event: FocusEvent) => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const target = event.target as HTMLElement;
+
+      // If focus moved outside the container, redirect it back
+      if (!container.contains(target)) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const focusableElements = getFocusableElements(container);
+        if (focusableElements.length > 0) {
+          focusableElements[0].focus();
+        } else {
+          // If no focusable elements, focus the container itself
+          container.focus();
+        }
+      }
+    },
+    [containerRef]
+  );
+
   useEffect(() => {
     if (!isOpen) return;
 
-    // Focus trap logic will be implemented in subsequent subtasks
-    // - 1.2: Focus trap Tab/Shift+Tab cycling
-    // - 1.3: Auto-focus on open
-    // - 1.4: Focus return on close
-    // - 1.5: Escape key handler
-  }, [isOpen, containerRef, onClose, initialFocusRef]);
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Ensure container can receive focus if it has no focusable children
+    if (!container.hasAttribute("tabindex")) {
+      container.setAttribute("tabindex", "-1");
+    }
+
+    // Add event listeners for focus trapping
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("focusin", handleFocusIn);
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("focusin", handleFocusIn);
+    };
+  }, [isOpen, containerRef, handleKeyDown, handleFocusIn]);
+
+  // Auto-focus logic will be implemented in subtask 1.3
+  // Focus return logic will be implemented in subtask 1.4
+  // Escape key handler will be implemented in subtask 1.5
 };
 
 export default useFocusTrap;
