@@ -30,6 +30,7 @@ import TemplatePage from './pages/TemplatePage'
 import TemplateDetailPage from './pages/TemplateDetailPage'
 import ShareableReportView from './components/tailadmin/reports/ShareableReportView'
 import NPSTrends from './pages/Admin/NPSTrends'
+import AffiliateDashboard from './components/affiliate/AffiliateDashboard'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import NPSSurvey from './components/NPSSurvey'
@@ -489,6 +490,10 @@ export default function App() {
               <ProtectedRoute user={user}>
                 <AppLayout user={user} onLogout={handleLogout}>
                   <TemplateDetailPage />
+            <Route path="/app/affiliate" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <AffiliateDashboard />
                 </AppLayout>
               </ProtectedRoute>
             } />
@@ -631,6 +636,10 @@ export default function App() {
               <DemoRoute>
                 <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
                   <TemplateDetailPage />
+            <Route path="/demo-app/affiliate" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <AffiliateDashboard />
                 </AppLayout>
               </DemoRoute>
             } />

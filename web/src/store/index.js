@@ -12,6 +12,8 @@ import templateReducer from './slices/templateSlice'
 import emailPreferencesSlice from './slices/emailPreferencesSlice'
 import npsSlice from './slices/npsSlice'
 import webhooksSlice from './slices/webhooksSlice'
+import referralSlice from './slices/referralSlice'
+import affiliateSlice from './slices/affiliateSlice'
 
 export const store = configureStore({
   reducer: {
@@ -24,12 +26,14 @@ export const store = configureStore({
     emailPreferences: emailPreferencesSlice,
     nps: npsSlice,
     webhooks: webhooksSlice,
+    referral: referralSlice,
+    affiliate: affiliateSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
         // Ignore these action types for serialization check
-        ignoredActions: ['instances/setSelectedOffer'],
+        ignoredActions: ['instances/setSelectedOffer', 'affiliate/exportData/fulfilled'],
       },
     }),
   devTools: import.meta.env.DEV,

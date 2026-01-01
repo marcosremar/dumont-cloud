@@ -28,6 +28,9 @@ from src.api.economy import economy_bp
 from src.api.templates import templates_bp
 from src.api.email_preferences import email_preferences_bp
 from src.api.unsubscribe import unsubscribe_bp
+from src.api.referrals import referrals_bp
+from src.api.affiliates import affiliates_bp
+from src.api.credits import credits_bp
 
 
 def create_app():
@@ -58,6 +61,9 @@ def create_app():
     app.register_blueprint(templates_bp)
     app.register_blueprint(email_preferences_bp)
     app.register_blueprint(unsubscribe_bp)
+    app.register_blueprint(referrals_bp)
+    app.register_blueprint(affiliates_bp)
+    app.register_blueprint(credits_bp)
 
     # Inicializar sistema de agentes
     def init_agents():
@@ -165,7 +171,6 @@ def create_app():
             logger.error(f"Erro ao iniciar Snapshot Scheduler: {e}")
             import traceback
             traceback.print_exc()
-=======
         # Inicializar Email Report Scheduler (APScheduler)
         try:
             email_scheduler = init_email_scheduler()
