@@ -703,6 +703,21 @@ export function AlertDialogContent({ children, className = '' }) {
   // Trap focus within the dialog when it's open
   useFocusTrap(contentRef, !!open);
 
+  // Handle Escape key to close the dialog
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onOpenChange?.(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onOpenChange]);
+
   return (
     <AlertDialogContext.Provider value={{ titleId, descriptionId, open, onOpenChange }}>
       <div
