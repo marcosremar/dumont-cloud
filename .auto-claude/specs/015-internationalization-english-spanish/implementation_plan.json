@@ -155,7 +155,9 @@
             "command": "grep -q \"import.*i18n\" web/src/main.jsx && echo 'OK'",
             "expected": "OK"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added import \"./i18n\" to web/src/main.jsx to initialize i18next before React renders. The import triggers the i18n initialization which was configured in subtask-1-2. Verification passed with grep confirming the import statement exists.",
+          "updated_at": "2025-12-31T21:57:57.654007+00:00"
         },
         {
           "id": "subtask-2-2",
@@ -174,8 +176,9 @@
             "type": "manual",
             "instructions": "Review web/public/locales/en/translation.json - should contain keys for dashboard, layout, and navigation"
           },
-          "status": "pending",
-          "notes": "Replace hardcoded strings with t('key.path') calls, add keys to translation.json"
+          "status": "completed",
+          "notes": "Extracted hardcoded strings from Dashboard.jsx and Layout.jsx to English translation file. Added useTranslation hook to both components. Updated translation.json with dashboard.newInstance, dashboard.deployMethods, dashboard.results, dashboard.toasts, navigation (analytics, metrics, savings, aiAdvisor), and layout (brandName, brandHighlight, demoBadge) keys. AppLayout.jsx had no user-visible text strings to translate.",
+          "updated_at": "2025-12-31T22:14:54.898595+00:00"
         },
         {
           "id": "subtask-2-3",
@@ -194,7 +197,9 @@
             "type": "manual",
             "instructions": "Review web/public/locales/en/translation.json - should contain keys for settings, machines, and GPU sections"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added 375 lines of English translations for Settings, Machines, and GPUMetrics pages. Includes: menu items, validation messages, toast notifications, page titles, stats labels, filter tabs, empty states, error messages, sync status, and spot reports sections.",
+          "updated_at": "2025-12-31T22:25:22.616699+00:00"
         },
         {
           "id": "subtask-2-4",
@@ -214,7 +219,9 @@
             "type": "manual",
             "instructions": "Review web/public/locales/en/translation.json - should contain keys for serverless, jobs, models, and docs sections"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Extracted strings from Serverless.jsx, Jobs.jsx, Models.jsx, and Documentation.jsx. Added useTranslation hooks and replaced all hardcoded Portuguese strings with translation function calls. Updated both English and Spanish translation.json files with all new keys for serverless (stats, empty state), jobs (status labels, form fields, how it works), models (wizard steps, card actions, supported types), and documentation (live docs, footer, loading states).",
+          "updated_at": "2025-12-31T22:44:44.688124+00:00"
         },
         {
           "id": "subtask-2-5",
@@ -234,7 +241,9 @@
             "type": "manual",
             "instructions": "Review web/public/locales/en/translation.json - should contain keys for common UI components"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "All shared components internationalized with useTranslation hook:\n- EmptyState.jsx: t() for noItemFound, createNew, back\n- ErrorState.jsx: t() for somethingWentWrong, errorLoadingData, tryAgain, retrying, retryingIn\n- DeployWizard.jsx: t() for all wizard strings (regions, speeds, filters, errors)\n- MigrationModal.jsx: t() for all modal strings (title, progress, steps, errors)\n\nBoth English and Spanish translations complete in translation.json files.",
+          "updated_at": "2026-01-01T02:01:35.601517+00:00"
         },
         {
           "id": "subtask-2-6",
@@ -257,8 +266,9 @@
               "Shows English and Espa\u00f1ol options"
             ]
           },
-          "status": "pending",
-          "notes": "Use Radix UI Select component to match existing UI patterns"
+          "status": "completed",
+          "notes": "Created LanguageSelector.jsx component with English/Espa\u00f1ol options. Added new Preferences tab to Settings page. Updated menu to use translation keys. Added missing Spanish translations.",
+          "updated_at": "2026-01-01T02:05:38.261765+00:00"
         },
         {
           "id": "subtask-2-7",
@@ -275,8 +285,9 @@
             "type": "manual",
             "instructions": "Verify es/translation.json has same structure as en/translation.json with Spanish values"
           },
-          "status": "pending",
-          "notes": "Mirror the nested key structure from English file, translate values to Spanish"
+          "status": "completed",
+          "notes": "Completed all Spanish translations to match the English translation file. Added 427 new lines covering: navigation (exitDemo, analytics, metrics, savings, aiAdvisor), layout section, dashboard (newInstance, deployMethods, results, toasts), machines (pageTitle, pageSubtitle, stats, filters, emptyState, toast, errors, sync, destroy, create, failover), gpuMetrics (full translation including pageTitle, tabs, filters, machineTypes, market, providers, efficiency, spot, errors), settings (validation, actions, toast, apis, storage, cloudStorage, notifications, agent, failover). Both files now have identical 985-line structures. JSON validated successfully.",
+          "updated_at": "2026-01-01T02:10:56.483442+00:00"
         },
         {
           "id": "subtask-2-8",
@@ -297,7 +308,9 @@
               "Change language to Spanish, refresh page, language persists"
             ]
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Implemented language preference persistence in localStorage and Redux state. Added language state, setLanguage action, and selectLanguage selector to uiSlice. Updated LanguageSelector component to use Redux dispatch for proper state synchronization.",
+          "updated_at": "2026-01-01T02:13:41.825286+00:00"
         }
       ]
     },
@@ -327,8 +340,9 @@
             "command": "python -m cli --help | grep -q '\\-\\-language' && echo 'OK'",
             "expected": "OK"
           },
-          "status": "pending",
-          "notes": "Add argparse argument for --language, initialize gettext with selected language"
+          "status": "completed",
+          "notes": "Initialized gettext at module level with pre-parsing for --language flag to enable translated help text. Added --language/-l argument with choices [en, es]. Language detection follows: CLI flag \u2192 LANGUAGE env var \u2192 'en' default. Translation files loaded from cli/translations/ directory with fallback to English if not found. Verification passed: python -m cli --help shows --language flag with {en,es} choices.",
+          "updated_at": "2026-01-01T02:15:31.761835+00:00"
         },
         {
           "id": "subtask-3-2",
@@ -347,7 +361,9 @@
             "type": "manual",
             "instructions": "Review files - all user-facing strings should use _('string') format"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Created cli/i18n.py shared translation module with gettext initialization (supports --language flag and LANGUAGE env var). Updated cli/__main__.py, cli/commands/base.py, and cli/commands/api.py to use _() translation calls for all user-facing strings. Replaced ~50+ hardcoded Portuguese/English strings with translatable format. Verified syntax with py_compile and tested CLI help output.",
+          "updated_at": "2026-01-01T02:21:57.067942+00:00"
         },
         {
           "id": "subtask-3-3",
@@ -367,7 +383,9 @@
             "type": "manual",
             "instructions": "Review files - all user-facing strings should use _('string') format"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Replaced all user-facing strings in config.py, wizard.py, model.py, and models.py with _() calls. Added i18n import and used .format() for variable substitution following the pattern from base.py.",
+          "updated_at": "2026-01-01T02:28:29.673959+00:00"
         },
         {
           "id": "subtask-3-4",
@@ -383,8 +401,9 @@
             "command": "pybabel extract -F cli/babel.cfg -o cli/messages.pot cli/ && test -f cli/messages.pot && echo 'OK'",
             "expected": "OK"
           },
-          "status": "pending",
-          "notes": "Run from project root: pybabel extract -F cli/babel.cfg -o cli/messages.pot cli/"
+          "status": "completed",
+          "notes": "Extracted 190+ translatable strings from CLI Python files to cli/messages.pot using pybabel extract. The POT file includes: proper source file references and line numbers, python-brace-format annotations for variable interpolation, UTF-8 encoding, and header metadata. Verification command passed successfully.",
+          "updated_at": "2026-01-01T02:30:07.797701+00:00"
         },
         {
           "id": "subtask-3-5",
@@ -401,8 +420,9 @@
             "command": "pybabel init -i cli/messages.pot -d cli/translations -l en && pybabel init -i cli/messages.pot -d cli/translations -l es && test -f cli/translations/es/LC_MESSAGES/messages.po && echo 'OK'",
             "expected": "OK"
           },
-          "status": "pending",
-          "notes": "Run from project root for both en and es locales"
+          "status": "completed",
+          "notes": "Successfully initialized English and Spanish locales from messages.pot. Created cli/translations/en/LC_MESSAGES/messages.po and cli/translations/es/LC_MESSAGES/messages.po with 190+ translatable strings. Verification passed.",
+          "updated_at": "2026-01-01T02:31:50.904954+00:00"
         },
         {
           "id": "subtask-3-6",
@@ -419,8 +439,9 @@
             "type": "manual",
             "instructions": "Review cli/translations/es/LC_MESSAGES/messages.po - all msgstr fields should have Spanish translations"
           },
-          "status": "pending",
-          "notes": "Edit .po file, fill in msgstr values with Spanish translations for each msgid"
+          "status": "completed",
+          "notes": "Translated all 130+ CLI message strings to Spanish. Translations include menu items, error messages, help text, status messages, wizard/deployment messages, and model installation messages. All formatting, emojis, and placeholder variables preserved.",
+          "updated_at": "2026-01-01T02:35:05.814588+00:00"
         },
         {
           "id": "subtask-3-7",
@@ -437,8 +458,9 @@
             "command": "pybabel compile -d cli/translations && test -f cli/translations/es/LC_MESSAGES/messages.mo && echo 'OK'",
             "expected": "OK"
           },
-          "status": "pending",
-          "notes": "CRITICAL: Must compile before testing CLI - gettext requires .mo files"
+          "status": "completed",
+          "notes": "Compiled .po files to .mo binary format using pybabel. Created cli/translations/en/LC_MESSAGES/messages.mo (445 bytes) and cli/translations/es/LC_MESSAGES/messages.mo (17807 bytes). These binary files are required for gettext runtime translation.",
+          "updated_at": "2026-01-01T02:36:30.580640+00:00"
         },
         {
           "id": "subtask-3-8",
@@ -452,8 +474,9 @@
             "command": "python -m cli --language es --help | grep -q 'Configuraci\u00f3n' && echo 'OK'",
             "expected": "OK"
           },
-          "status": "pending",
-          "notes": "Verify Spanish help text appears when --language es flag is used"
+          "status": "completed",
+          "notes": "CLI i18n testing completed successfully. Verified:\n1. `--language es` flag works correctly - displays Spanish help text with \"Configuraci\u00f3n:\", \"Gesti\u00f3n de GPU en la Nube\"\n2. `--language en` (default) works correctly - displays English help text with \"Configuration:\", \"GPU Cloud Management\"\n3. LANGUAGE env var support works - `LANGUAGE=es python3 -m cli --help` displays Spanish output\n4. `config show` command works in both languages - Spanish shows \"Configuraci\u00f3n Actual\", English shows \"Current Configuration\"\n5. Verification command passed: `python -m cli --language es --help | grep -q 'Configuraci\u00f3n' && echo 'OK'` returns OK",
+          "updated_at": "2026-01-01T02:38:09.905417+00:00"
         }
       ]
     },
@@ -482,8 +505,9 @@
             "type": "manual",
             "instructions": "Review template file - user-facing messages should use {% trans %}...{% endtrans %} or {{ _('') }}"
           },
-          "status": "pending",
-          "notes": "Only translate user-facing messages, keep technical output in English"
+          "status": "completed",
+          "notes": "Wrapped all translatable strings in finetune_task.yaml.j2 with Jinja2 trans tags. Used {{ _('...') }} for simple strings and {% trans %}...{% endtrans %} for strings with embedded variables. Applied to: YAML comments, shell echo statements, Python print statements, docstrings, error messages (ValueError), and Python comments.",
+          "updated_at": "2026-01-01T02:41:53.470313+00:00"
         },
         {
           "id": "subtask-4-2",
@@ -500,7 +524,9 @@
             "type": "manual",
             "instructions": "Review template file - UI strings use Jinja2 translation syntax"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Wrapped 17 translatable strings in marketing_doc.html using Jinja2 {{ _() }} syntax. Includes page title, sidebar headers, nav items, loading/error messages, footer text, and JavaScript UI strings.",
+          "updated_at": "2026-01-01T02:44:20.199597+00:00"
         },
         {
           "id": "subtask-4-3",
@@ -518,8 +544,9 @@
             "command": "grep -q 'jinja2:.*templates' cli/babel.cfg && echo 'OK'",
             "expected": "OK"
           },
-          "status": "pending",
-          "notes": "Add jinja2 extraction rule for src/templates/**/*.html and **/*.j2 files"
+          "status": "completed",
+          "notes": "Babel config already has Jinja2 template extraction configured with [jinja2: **/templates/**.html] and [jinja2: **/templates/**.j2] sections, both including jinja2.ext.i18n extension. Verification passes.",
+          "updated_at": "2026-01-01T02:45:24.202756+00:00"
         },
         {
           "id": "subtask-4-4",
@@ -896,5 +923,5 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2025-12-31T21:56:29.697148+00:00"
+  "last_updated": "2026-01-01T02:45:24.202766+00:00"
 }

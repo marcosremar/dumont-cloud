@@ -3,23 +3,23 @@
   "spec": "015-internationalization-english-spanish",
   "state": "building",
   "subtasks": {
-    "completed": 6,
+    "completed": 25,
     "total": 35,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Web Frontend i18n Implementation",
+    "current": "Backend Templates i18n",
     "id": null,
-    "total": 8
+    "total": 6
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 7,
+    "number": 838,
     "started_at": "2025-12-31T22:40:03.926942"
   },
-  "last_update": "2025-12-31T22:56:54.635882"
+  "last_update": "2026-01-01T03:45:37.776073"
 }

@@ -9,7 +9,17 @@
       "description": "Added Internationalization section with Flask-Babel>=4.0.0 and Babel>=2.14.0 for Python i18n support",
       "category": "dependencies",
       "discovered_at": "2025-12-31T21:51:01.335374+00:00"
+    },
+    "cli/messages.pot": {
+      "description": "POT template file containing 190+ translatable strings extracted from all CLI Python files. Generated with: python3 -m babel.messages.frontend extract -F cli/babel.cfg -o cli/messages.pot cli/",
+      "category": "i18n",
+      "discovered_at": "2026-01-01T02:30:17.273259+00:00"
+    },
+    "src/templates/marketing_doc.html": {
+      "description": "Live Docs HTML template with 17 translatable strings wrapped using {{ _() }} syntax. Includes both static HTML content and JavaScript strings that are rendered server-side before serving to client.",
+      "category": "templates",
+      "discovered_at": "2026-01-01T02:44:25.827351+00:00"
     }
   },
-  "last_updated": "2025-12-31T21:51:01.335447+00:00"
+  "last_updated": "2026-01-01T02:44:25.827369+00:00"
 }
