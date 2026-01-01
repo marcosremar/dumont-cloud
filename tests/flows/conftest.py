@@ -425,6 +425,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "flow8: Auth e Settings")
     config.addinivalue_line("markers", "flow9: Email Preferences")
     config.addinivalue_line("markers", "flow10: Email Send")
+    config.addinivalue_line("markers", "flow9: Webhook Integration")
     config.addinivalue_line("markers", "real_gpu: Requer GPU real (custa $$$)")
     config.addinivalue_line("markers", "slow: Teste lento (>1 min)")
     config.addinivalue_line("markers", "destructive: Pode destruir recursos")

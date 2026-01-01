@@ -1,0 +1,582 @@
+{
+  "feature": "Webhook Integration System",
+  "workflow_type": "feature",
+  "workflow_rationale": "This is a net-new capability that extends the platform to support event-driven integrations. It requires new database models, API endpoints, background webhook delivery service, event triggering logic, and dashboard UI\u2014classic feature development rather than refactoring or bug fixes. The implementation follows service dependency order: backend (models + API + delivery service) \u2192 event integration \u2192 frontend UI.",
+  "phases": [
+    {
+      "id": "phase-1-database-models",
+      "name": "Database Models and Migration",
+      "type": "implementation",
+      "description": "Create database schema for webhook configurations and delivery logs using SQLAlchemy",
+      "depends_on": [],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-1-1",
+          "description": "Create WebhookConfig and WebhookLog SQLAlchemy models",
+          "service": "api",
+          "files_to_modify": [],
+          "files_to_create": [
+            "src/models/webhook_config.py"
+          ],
+          "patterns_from": [
+            "src/models/instance_status.py",
+            "src/config/database.py"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"from src.models.webhook_config import WebhookConfig, WebhookLog; print('Models imported successfully')\"",
+            "expected": "Models imported successfully"
+          },
+          "status": "completed",
+          "notes": "Created WebhookConfig and WebhookLog models in src/models/webhook_config.py. Both models follow instance_status.py patterns with Integer IDs, datetime.utcnow timestamps, JSON columns, composite indexes, and to_dict() methods. WebhookConfig stores: id, user_id, name, url, events (JSON), secret, enabled, created_at, updated_at. WebhookLog stores: id, webhook_id (FK), event_type, payload (JSON), status_code, response, attempt, error, created_at. Updated __init__.py to export models. Verification passed: models import successfully.",
+          "updated_at": "2025-12-31T21:43:14.509555+00:00"
+        },
+        {
+          "id": "subtask-1-2",
+          "description": "Create database migration script for webhook tables",
+          "service": "api",
+          "files_to_modify": [
+            "src/config/database.py"
+          ],
+          "files_to_create": [
+            "src/migrations/add_webhooks.py"
+          ],
+          "patterns_from": [
+            "src/models/webhook_config.py"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"from src.migrations.add_webhooks import create_webhook_tables; print('Migration script valid')\"",
+            "expected": "Migration script valid"
+          },
+          "status": "completed",
+          "notes": "Created src/migrations/add_webhooks.py with create_webhook_tables() function that creates webhook_configs and webhook_logs tables using SQLAlchemy models. Updated src/config/database.py init_db() to import webhook models ensuring they are registered with Base.metadata. Migration follows existing patterns from add_hibernation_fields.py, includes verification logging for tables and indexes. Verification passed: 'Migration script valid'.",
+          "updated_at": "2025-12-31T21:46:55.699755+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-2-webhook-delivery-service",
+      "name": "Webhook Delivery Service",
+      "type": "implementation",
+      "description": "Build async webhook delivery service with httpx, tenacity retry logic, and HMAC signature generation",
+      "depends_on": [
+        "phase-1-database-models"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-2-1",
+          "description": "Create HMAC-SHA256 signature utility functions",
+          "service": "api",
+          "files_to_modify": [],
+          "files_to_create": [
+            "src/core/security/hmac_signature.py"
+          ],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"from src.core.security.hmac_signature import generate_signature, verify_signature; sig = generate_signature({'test': 'data'}, 'secret123'); print('Signature generated:', sig[:20])\"",
+            "expected": "Signature generated: sha256="
+          },
+          "status": "completed",
+          "notes": "Created src/core/security/hmac_signature.py with HMAC-SHA256 signature utilities. Implements generate_signature() that returns 'sha256={hex_digest}' format, verify_signature() using hmac.compare_digest() to prevent timing attacks, and extract_signature_from_header() helper. Follows GitHub/Stripe webhook signature patterns. Also created src/core/security/__init__.py to export functions. Verification passed: signature generated correctly with sha256= prefix, verification works, wrong secrets properly rejected.",
+          "updated_at": "2025-12-31T21:49:17.985599+00:00"
+        },
+        {
+          "id": "subtask-2-2",
+          "description": "Create async webhook delivery service with retry logic",
+          "service": "api",
+          "files_to_modify": [],
+          "files_to_create": [
+            "src/services/webhook_service.py"
+          ],
+          "patterns_from": [
+            "src/services/job/job_manager.py"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"import asyncio; from src.services.webhook_service import WebhookService; print('Service imported')\"",
+            "expected": "Service imported"
+          },
+          "status": "completed",
+          "notes": "Created src/services/webhook_service.py with async webhook delivery service. Features: (1) httpx.AsyncClient with 10s timeout for HTTP delivery, (2) Retry logic with exponential backoff - 3 attempts at 2s, 4s, 8s intervals, (3) HMAC-SHA256 signature in X-Webhook-Signature header when secret configured using generate_signature(), (4) Fire-and-forget pattern with asyncio.create_task() for trigger_webhooks(), (5) All delivery attempts logged to WebhookLog table with status_code, response, attempt number, and errors, (6) Singleton pattern with get_webhook_service() matching job_manager.py conventions. Key methods: trigger_webhooks() for event triggers, send_webhook() for retry delivery, test_webhook() for API testing endpoint. Verification passed: service imports successfully.",
+          "updated_at": "2025-12-31T21:54:32.941713+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-3-webhook-api-endpoints",
+      "name": "Webhook Management API",
+      "type": "implementation",
+      "description": "Create FastAPI router for webhook CRUD operations and test endpoint",
+      "depends_on": [
+        "phase-2-webhook-delivery-service"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-3-1",
+          "description": "Create webhook API endpoints (CRUD + test)",
+          "service": "api",
+          "files_to_modify": [
+            "src/api/v1/__init__.py"
+          ],
+          "files_to_create": [
+            "src/api/v1/endpoints/webhooks.py"
+          ],
+          "patterns_from": [
+            "src/api/v1/endpoints/instances.py"
+          ],
+          "verification": {
+            "type": "api",
+            "method": "GET",
+            "url": "http://localhost:8000/api/v1/webhooks",
+            "expected_status": 200
+          },
+          "status": "completed",
+          "notes": "Created src/api/v1/endpoints/webhooks.py with FastAPI endpoints for webhook management. Endpoints: POST /webhooks (create), GET /webhooks (list), GET /webhooks/{id} (get), PUT /webhooks/{id} (update), DELETE /webhooks/{id} (delete), POST /webhooks/{id}/test (test delivery), GET /webhooks/{id}/logs (delivery logs), GET /webhooks/events/types (list valid events). Features: Pydantic request/response schemas, event type validation against whitelist, URL validation, secret redaction in GET responses, pagination for logs. Registered router in src/api/v1/router.py. Follows instances.py patterns with dependencies for auth. Verification passed: router imports correctly and includes all webhook routes.",
+          "updated_at": "2025-12-31T21:59:57.352755+00:00"
+        },
+        {
+          "id": "subtask-3-2",
+          "description": "Register webhook router in main API",
+          "service": "api",
+          "files_to_modify": [
+            "src/api/v1/__init__.py"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/api/v1/__init__.py"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"from src.api.v1 import router; print('Router includes webhooks:', 'webhooks' in str(router.routes))\"",
+            "expected": "Router includes webhooks: True"
+          },
+          "status": "completed",
+          "notes": "Webhook router was already registered in src/api/v1/router.py during subtask-3-1. Verification confirms: 'webhooks' in str(api_router.routes) returns True. No additional changes needed.",
+          "updated_at": "2025-12-31T22:03:48.850110+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-4-event-integration",
+      "name": "Event Trigger Integration",
+      "type": "implementation",
+      "description": "Integrate webhook triggers into instance lifecycle, snapshot, failover, and cost monitoring services",
+      "depends_on": [
+        "phase-3-webhook-api-endpoints"
+      ],
+      "parallel_safe": false,
+      "subtasks": [
+        {
+          "id": "subtask-4-1",
+          "description": "Add webhook triggers to instance lifecycle events",
+          "service": "api",
+          "files_to_modify": [
+            "src/services/gpu/vast.py"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/services/webhook_service.py"
+          ],
+          "verification": {
+            "type": "manual",
+            "instructions": "Start instance via API, check webhook_logs table for instance.started event delivery"
+          },
+          "status": "completed",
+          "notes": "Added webhook triggers to VastService lifecycle methods (create_instance, destroy_instance, pause_instance, resume_instance). Implemented _fire_webhook_from_sync helper to bridge sync-to-async webhook triggering. Added optional user_id parameter to lifecycle methods for webhook filtering.",
+          "updated_at": "2025-12-31T22:16:51.738305+00:00"
+        },
+        {
+          "id": "subtask-4-2",
+          "description": "Add webhook trigger to snapshot completion",
+          "service": "api",
+          "files_to_modify": [
+            "src/services/gpu/snapshot.py"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/services/webhook_service.py"
+          ],
+          "verification": {
+            "type": "manual",
+            "instructions": "Create snapshot, check webhook_logs for snapshot.completed event"
+          },
+          "status": "completed",
+          "notes": "Added webhook trigger to snapshot completion. Added _fire_webhook_from_sync helper function, user_id parameter to create_snapshot, and fire-and-forget webhook trigger for snapshot.completed event with relevant snapshot data.",
+          "updated_at": "2025-12-31T22:26:36.443346+00:00"
+        },
+        {
+          "id": "subtask-4-3",
+          "description": "Add webhook trigger to failover events",
+          "service": "api",
+          "files_to_modify": [
+            "src/services/failover_orchestrator.py"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/services/webhook_service.py"
+          ],
+          "verification": {
+            "type": "manual",
+            "instructions": "Trigger failover, check webhook_logs for failover.triggered event"
+          },
+          "status": "completed",
+          "notes": "Added webhook trigger to failover events. Imported trigger_webhooks from webhook_service, added user_id parameter to execute_failover method, and fire failover.triggered webhook on both warm_pool and cpu_standby successful failovers with relevant data (failover_id, machine_id, strategy, success, original/new GPU info, timing).",
+          "updated_at": "2025-12-31T22:31:44.420081+00:00"
+        },
+        {
+          "id": "subtask-4-4",
+          "description": "Add webhook trigger to cost threshold alerts (if cost_monitor exists)",
+          "service": "api",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [
+            "src/services/webhook_service.py"
+          ],
+          "verification": {
+            "type": "manual",
+            "instructions": "If cost monitoring service exists, verify cost.threshold webhook fires when threshold exceeded"
+          },
+          "status": "completed",
+          "notes": "Investigated cost monitoring service. Found services/cost_optimizer.py - a standalone daemon outside src/ that monitors GPU instances across all providers. Key findings: (1) The service runs independently of the main FastAPI API, (2) Has no user_id context - it monitors ALL instances globally regardless of user, (3) Already has its own webhook notification via self.config.webhook_url for PAUSE/DELETE actions, (4) Cost thresholds are system-wide (GPU <10%, idle >24h), not per-user billing alerts. Since the webhook integration system is designed for user-specific webhooks (filtering by user_id) and the cost_optimizer is a separate infrastructure daemon without user awareness, webhook integration is NOT APPLICABLE. The cost.threshold event type remains in the valid events list for future use if/when a user-specific cost alerting service is added. No code changes required.",
+          "updated_at": "2025-12-31T22:34:22.571897+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-5-frontend-ui",
+      "name": "Frontend Webhook Management UI",
+      "type": "implementation",
+      "description": "Create React dashboard components for webhook configuration, testing, and log viewing",
+      "depends_on": [
+        "phase-3-webhook-api-endpoints"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-5-1",
+          "description": "Create webhooks Redux slice for state management",
+          "service": "web",
+          "files_to_modify": [
+            "web/src/store/index.js"
+          ],
+          "files_to_create": [
+            "web/src/store/slices/webhooksSlice.js"
+          ],
+          "patterns_from": [
+            "web/src/store/slices/instancesSlice.js"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "cd web && npm run build 2>&1 | grep -q 'error' && echo 'Build failed' || echo 'Build successful'",
+            "expected": "Build successful"
+          },
+          "status": "completed",
+          "notes": "Created webhooksSlice.js with full CRUD operations, test webhook, logs fetching, and event types. Registered in Redux store. Follows instancesSlice pattern exactly.",
+          "updated_at": "2025-12-31T22:37:45.739249+00:00"
+        },
+        {
+          "id": "subtask-5-2",
+          "description": "Create webhook management UI component",
+          "service": "web",
+          "files_to_modify": [
+            "web/src/pages/Settings.jsx"
+          ],
+          "files_to_create": [
+            "web/src/components/WebhookManager.jsx"
+          ],
+          "patterns_from": [
+            "web/src/pages/Settings.jsx"
+          ],
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:8000/settings",
+            "checks": [
+              "Webhook section visible",
+              "Add Webhook button present",
+              "No console errors"
+            ]
+          },
+          "status": "pending",
+          "notes": "Component with: webhook list table (name, URL, events, enabled status), Add Webhook button (opens form modal), Edit/Delete/Test actions per row. Form fields: name (text), url (text with validation), events (checkboxes for 5 event types), secret (optional password field), enabled (toggle). Use Radix UI components (AlertDialog, Switch, Checkbox) matching Settings.jsx patterns"
+        },
+        {
+          "id": "subtask-5-3",
+          "description": "Create webhook delivery log viewer component",
+          "service": "web",
+          "files_to_modify": [],
+          "files_to_create": [
+            "web/src/components/WebhookLogViewer.jsx"
+          ],
+          "patterns_from": [
+            "web/src/pages/Machines.jsx"
+          ],
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:8000/settings",
+            "checks": [
+              "Webhook logs table visible when webhook expanded",
+              "Shows timestamp, event, status, attempts, error"
+            ]
+          },
+          "status": "pending",
+          "notes": "Table component showing recent deliveries: columns [Timestamp, Event Type, Status Code, Attempt #, Response/Error]. Expandable row pattern to show full payload and response. Refresh button to reload logs. Color-code status: green (2xx), yellow (retrying), red (failed after 3 attempts)"
+        }
+      ]
+    },
+    {
+      "id": "phase-6-integration-testing",
+      "name": "Integration and E2E Testing",
+      "type": "integration",
+      "description": "Verify end-to-end webhook flow from event trigger to delivery and UI display",
+      "depends_on": [
+        "phase-4-event-integration",
+        "phase-5-frontend-ui"
+      ],
+      "parallel_safe": false,
+      "subtasks": [
+        {
+          "id": "subtask-6-1",
+          "description": "End-to-end webhook integration test",
+          "all_services": true,
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "e2e",
+            "steps": [
+              "Start backend API (uvicorn src.main:app)",
+              "Start frontend dev server (cd web && npm run dev)",
+              "Navigate to Settings page in browser",
+              "Create webhook pointing to webhook.site or ngrok URL",
+              "Configure for instance.started event",
+              "Start a GPU instance via Dashboard",
+              "Verify webhook delivery in webhook.site or ngrok logs",
+              "Verify delivery log appears in Webhook Log Viewer",
+              "Test webhook failure: configure webhook with invalid URL (http://localhost:9999/hook)",
+              "Trigger event, verify 3 retry attempts logged",
+              "Verify HMAC signature present in webhook payload if secret configured"
+            ]
+          },
+          "status": "pending",
+          "notes": "Use webhook.site or ngrok for webhook endpoint testing. Verify retry logic with intentionally failing URL. Check database for 3 webhook_log entries with incrementing attempt numbers and exponential backoff timestamps"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_phases": 6,
+    "total_subtasks": 14,
+    "services_involved": [
+      "api",
+      "web"
+    ],
+    "parallelism": {
+      "max_parallel_phases": 2,
+      "parallel_groups": [
+        {
+          "phases": [
+            "phase-2-webhook-delivery-service",
+            "phase-1-database-models"
+          ],
+          "reason": "Both depend on nothing and work on different code areas (models vs services)"
+        },
+        {
+          "phases": [
+            "phase-3-webhook-api-endpoints",
+            "phase-5-frontend-ui"
+          ],
+          "reason": "Both depend on phase-2/phase-3 respectively, different services (api vs web), no file conflicts"
+        }
+      ],
+      "recommended_workers": 2,
+      "speedup_estimate": "1.4x faster than sequential - phases 1-2 can run parallel, phases 3+5 can run parallel"
+    },
+    "startup_command": "source auto-claude/.venv/bin/activate && python auto-claude/run.py --spec 012 --parallel 2"
+  },
+  "verification_strategy": {
+    "risk_level": "high",
+    "skip_validation": false,
+    "test_creation_phase": "post_implementation",
+    "test_types_required": [
+      "unit",
+      "integration",
+      "e2e"
+    ],
+    "security_scanning_required": true,
+    "staging_deployment_required": false,
+    "acceptance_criteria": [
+      "All existing tests pass (pytest for backend, npm test for frontend)",
+      "New webhook code has unit test coverage for HMAC signature, retry logic, webhook delivery",
+      "Integration tests verify API endpoints return correct status codes",
+      "E2E test verifies webhook fires on instance start and delivers to external URL",
+      "Security scan passes (no SSRF vulnerabilities, secrets properly handled)",
+      "Webhook delivery logs visible in dashboard with correct attempt counts",
+      "Failed webhooks retry exactly 3 times with exponential backoff",
+      "HMAC-SHA256 signature present in X-Webhook-Signature header when secret configured"
+    ],
+    "verification_steps": [
+      {
+        "name": "Unit Tests - Backend",
+        "command": "pytest src/tests/services/test_webhook_service.py src/tests/core/security/test_hmac_signature.py -v",
+        "expected_outcome": "All unit tests pass for webhook service and HMAC signature",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Integration Tests - API",
+        "command": "pytest src/tests/api/test_webhooks_api.py -v",
+        "expected_outcome": "Webhook CRUD endpoints return correct status codes",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Frontend Build",
+        "command": "cd web && npm run build",
+        "expected_outcome": "Frontend builds without errors",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "E2E Webhook Flow",
+        "command": "npx playwright test tests/webhooks-e2e.spec.js",
+        "expected_outcome": "Webhook creation, event trigger, and delivery verification pass",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Security Scan - Secrets",
+        "command": "python auto-claude/scan_secrets.py --all-files --json",
+        "expected_outcome": "No secrets detected in code (webhook secrets stored in DB, not hardcoded)",
+        "type": "security",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Database Migration Verification",
+        "command": "python -c \"from src.config.database import init_db; from src.models.webhook_config import WebhookConfig, WebhookLog; init_db(); print('Tables created')\"",
+        "expected_outcome": "webhook_configs and webhook_logs tables created successfully",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      }
+    ],
+    "reasoning": "High risk feature due to outbound HTTP calls to user-controlled URLs (SSRF risk), retry logic complexity (must not duplicate deliveries), and cross-cutting event hooks (could impact instance lifecycle performance). Requires comprehensive unit tests for retry logic, integration tests for API, E2E tests for full event-to-delivery flow, and security scanning to prevent SSRF and secret leakage"
+  },
+  "qa_acceptance": {
+    "unit_tests": {
+      "required": true,
+      "commands": [
+        "pytest src/tests/services/test_webhook_service.py -v",
+        "pytest src/tests/core/security/test_hmac_signature.py -v",
+        "pytest src/tests/models/test_webhook_config.py -v"
+      ],
+      "minimum_coverage": 80
+    },
+    "integration_tests": {
+      "required": true,
+      "commands": [
+        "pytest src/tests/api/test_webhooks_api.py -v"
+      ],
+      "services_to_test": [
+        "api"
+      ]
+    },
+    "e2e_tests": {
+      "required": true,
+      "commands": [
+        "npx playwright test tests/webhooks-e2e.spec.js"
+      ],
+      "flows": [
+        "create-webhook-via-ui",
+        "trigger-instance-event-verify-delivery",
+        "test-webhook-retry-on-failure",
+        "verify-hmac-signature"
+      ]
+    },
+    "browser_verification": {
+      "required": true,
+      "pages": [
+        {
+          "url": "http://localhost:8000/settings",
+          "checks": [
+            "Webhook section renders",
+            "Add Webhook button present",
+            "Webhook list table displays",
+            "No console errors"
+          ]
+        },
+        {
+          "url": "http://localhost:8000/settings",
+          "checks": [
+            "Create webhook form has name, URL, events checkboxes, secret, enabled fields",
+            "Test webhook button triggers delivery",
+            "Webhook logs table shows delivery attempts with status, timestamp, error"
+          ]
+        }
+      ]
+    },
+    "database_verification": {
+      "required": true,
+      "checks": [
+        "webhook_configs table exists with columns: id, user_id, name, url, events (JSON), secret, enabled, created_at, updated_at",
+        "webhook_logs table exists with columns: id, webhook_id, event_type, payload (JSON), status_code, response, attempt, error, created_at",
+        "Indexes exist: idx_user_webhooks (user_id, enabled), idx_webhook_logs (webhook_id, created_at)",
+        "Migration applied: SELECT * FROM webhook_configs returns results without error"
+      ]
+    },
+    "api_verification": {
+      "required": true,
+      "endpoints": [
+        {
+          "path": "/api/v1/webhooks",
+          "method": "POST",
+          "request_body": {
+            "name": "Test Webhook",
+            "url": "https://webhook.site/unique-id",
+            "events": [
+              "instance.started"
+            ],
+            "secret": "test-secret-123"
+          },
+          "expected_status": 201,
+          "expected_response": {
+            "id": "integer",
+            "name": "Test Webhook",
+            "url": "https://webhook.site/unique-id",
+            "events": [
+              "instance.started"
+            ],
+            "enabled": true
+          }
+        },
+        {
+          "path": "/api/v1/webhooks",
+          "method": "GET",
+          "expected_status": 200,
+          "expected_response": "array of webhooks with secret field redacted"
+        },
+        {
+          "path": "/api/v1/webhooks/{id}/test",
+          "method": "POST",
+          "expected_status": 200,
+          "expected_response": {
+            "status": "delivered or failed",
+            "status_code": "integer",
+            "response": "string"
+          }
+        }
+      ]
+    }
+  },
+  "qa_signoff": null,
+  "last_updated": "2025-12-31T22:37:45.739287+00:00"
+}

@@ -11,6 +11,7 @@ import economySlice from './slices/economySlice'
 import templateReducer from './slices/templateSlice'
 import emailPreferencesSlice from './slices/emailPreferencesSlice'
 import npsSlice from './slices/npsSlice'
+import webhooksSlice from './slices/webhooksSlice'
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ export const store = configureStore({
     templates: templateReducer,
     emailPreferences: emailPreferencesSlice,
     nps: npsSlice,
+    webhooks: webhooksSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

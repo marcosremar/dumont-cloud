@@ -10,6 +10,11 @@
   "subtasks": {
     "completed": 12,
     "total": 15,
+  "spec": "012-webhook-integrations",
+  "state": "building",
+  "subtasks": {
+    "completed": 11,
+    "total": 14,
     "in_progress": 1,
     "failed": 0
   },
@@ -20,6 +25,9 @@
     "current": "Frontend UI Components",
     "id": null,
     "total": 4
+    "current": "Frontend Webhook Management UI",
+    "id": null,
+    "total": 3
   },
   "workers": {
     "active": 0,
@@ -34,4 +42,8 @@
     "started_at": "2025-12-31T22:35:21.966915"
   },
   "last_update": "2025-12-31T23:34:41.937606"
+    "number": 12,
+    "started_at": "2025-12-31T22:40:18.290540"
+  },
+  "last_update": "2025-12-31T23:38:17.669210"
 }

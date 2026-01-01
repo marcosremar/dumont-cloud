@@ -1,6 +1,7 @@
 """
 Service para interacao com a API do vast.ai
 """
+import asyncio
 import requests
 import time
 import logging
@@ -8,7 +9,43 @@ from typing import Optional, Dict, List, Any, TypeVar, Callable
 from dataclasses import dataclass
 from functools import wraps
 
+from src.services.webhook_service import trigger_webhooks
+
 logger = logging.getLogger(__name__)
+
+
+def _fire_webhook_from_sync(
+    event_type: str,
+    data: Dict[str, Any],
+    user_id: Optional[str] = None
+) -> None:
+    """
+    Fire a webhook from synchronous code (fire-and-forget).
+
+    This helper safely schedules webhook delivery without blocking.
+    It handles the sync-to-async boundary by scheduling a task on
+    the running event loop (if available).
+    """
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an async context, schedule the task
+        loop.create_task(trigger_webhooks(event_type, data, user_id))
+        logger.debug(
+            f"[VastAPI] Scheduled webhook for event {event_type}, user={user_id}"
+        )
+    except RuntimeError:
+        # No running event loop - create a new one for this delivery
+        # This shouldn't normally happen in FastAPI context, but handle gracefully
+        try:
+            asyncio.run(trigger_webhooks(event_type, data, user_id))
+            logger.debug(
+                f"[VastAPI] Fired webhook synchronously for event {event_type}, user={user_id}"
+            )
+        except Exception as e:
+            # Never let webhook errors propagate to main flow
+            logger.warning(
+                f"[VastAPI] Failed to fire webhook for {event_type}: {e}"
+            )
 
 T = TypeVar('T')
 
@@ -225,6 +262,7 @@ class VastService:
         onstart_cmd: Optional[str] = None,
         use_template: bool = True,
         label: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> Optional[int]:
         """
         Cria uma nova instancia.
@@ -326,6 +364,20 @@ tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &
                     data = resp.json()
                     instance_id = data.get("new_contract")
                     logger.debug(f"create_instance: Criada instancia {instance_id}")
+
+                    # Trigger instance.started webhook (fire-and-forget)
+                    if instance_id:
+                        _fire_webhook_from_sync(
+                            event_type="instance.started",
+                            data={
+                                "instance_id": str(instance_id),
+                                "offer_id": offer_id,
+                                "gpu_type": label or "unknown",
+                                "disk_gb": disk,
+                            },
+                            user_id=user_id,
+                        )
+
                     return instance_id
                 except requests.exceptions.HTTPError as e:
                     if e.response is not None and e.response.status_code == 429:
@@ -415,7 +467,12 @@ tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &
 
         return {"error": "Max retries exceeded", "status": "error"}
 
-    def destroy_instance(self, instance_id: int, max_retries: int = 3) -> bool:
+    def destroy_instance(
+        self,
+        instance_id: int,
+        max_retries: int = 3,
+        user_id: Optional[str] = None,
+    ) -> bool:
         """Destroi uma instancia com retry para rate limiting"""
         delay = 1.0
 
@@ -436,7 +493,21 @@ tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &
                         delay = min(delay * 2, 10.0)
                         continue
                     return False
-                return resp.status_code in [200, 204]
+
+                success = resp.status_code in [200, 204]
+
+                # Trigger instance.stopped webhook on successful destroy
+                if success:
+                    _fire_webhook_from_sync(
+                        event_type="instance.stopped",
+                        data={
+                            "instance_id": str(instance_id),
+                            "action": "destroyed",
+                        },
+                        user_id=user_id,
+                    )
+
+                return success
             except requests.exceptions.HTTPError as e:
                 if e.response is not None and e.response.status_code == 429:
                     if attempt < max_retries:
@@ -464,7 +535,12 @@ tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &
 
         return False
 
-    def pause_instance(self, instance_id: int, max_retries: int = 3) -> bool:
+    def pause_instance(
+        self,
+        instance_id: int,
+        max_retries: int = 3,
+        user_id: Optional[str] = None,
+    ) -> bool:
         """Pausa uma instancia (stop sem destruir) com retry para rate limiting"""
         delay = 1.0
 
@@ -487,7 +563,21 @@ tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &
                         delay = min(delay * 2, 10.0)
                         continue
                     return False
-                return resp.status_code == 200 and resp.json().get("success", False)
+
+                success = resp.status_code == 200 and resp.json().get("success", False)
+
+                # Trigger instance.stopped webhook on successful pause
+                if success:
+                    _fire_webhook_from_sync(
+                        event_type="instance.stopped",
+                        data={
+                            "instance_id": str(instance_id),
+                            "action": "paused",
+                        },
+                        user_id=user_id,
+                    )
+
+                return success
             except Exception as e:
                 if "429" in str(e) or "too many" in str(e).lower():
                     if attempt < max_retries:
@@ -503,7 +593,12 @@ tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &
 
         return False
 
-    def resume_instance(self, instance_id: int, max_retries: int = 3) -> bool:
+    def resume_instance(
+        self,
+        instance_id: int,
+        max_retries: int = 3,
+        user_id: Optional[str] = None,
+    ) -> bool:
         """Resume uma instancia pausada com retry para rate limiting"""
         delay = 1.0
 
@@ -526,7 +621,21 @@ tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &
                         delay = min(delay * 2, 10.0)
                         continue
                     return False
-                return resp.status_code == 200 and resp.json().get("success", False)
+
+                success = resp.status_code == 200 and resp.json().get("success", False)
+
+                # Trigger instance.started webhook on successful resume
+                if success:
+                    _fire_webhook_from_sync(
+                        event_type="instance.started",
+                        data={
+                            "instance_id": str(instance_id),
+                            "action": "resumed",
+                        },
+                        user_id=user_id,
+                    )
+
+                return success
             except Exception as e:
                 if "429" in str(e) or "too many" in str(e).lower():
                     if attempt < max_retries:

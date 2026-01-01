@@ -12,6 +12,7 @@ from .snapshot_metadata import SnapshotMetadata, SnapshotStatus, DeletionReason
 from .email_preferences import EmailPreference
 from .email_delivery_log import EmailDeliveryLog
 from .shareable_report import ShareableReport
+from .webhook_config import WebhookConfig, WebhookLog
 
 __all__ = [
     'PriceHistory',
@@ -45,4 +46,7 @@ __all__ = [
     'EmailDeliveryLog',
     # Shareable reports
     'ShareableReport',
+    # Webhook integrations
+    'WebhookConfig',
+    'WebhookLog',
 ]
