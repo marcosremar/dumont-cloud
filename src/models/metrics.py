@@ -7,6 +7,8 @@ Inclui:
 - PricePrediction: Previsões de preço geradas por ML
 - CostEfficiencyRanking: Rankings de custo-benefício
 - CostForecast: Previsões de custo para 7 dias
+- PredictionAccuracy: Rastreamento de precisão das previsões
+- BudgetAlert: Alertas de orçamento configuráveis por usuário
 """
 
 from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Index, Text
@@ -320,3 +322,46 @@ class PredictionAccuracy(Base):
 
     def __repr__(self):
         return f"<PredictionAccuracy {self.gpu_name}:{self.machine_type} MAPE={self.mape:.2f}%>"
+
+
+class BudgetAlert(Base):
+    """
+    Configuração de alertas de orçamento por usuário.
+    Dispara notificação quando custo previsto excede o limiar configurado.
+    """
+    __tablename__ = "budget_alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    # Identificação do usuário
+    user_id = Column(Integer, nullable=False, index=True)
+
+    # Configuração do alerta
+    gpu_name = Column(String(100), nullable=True, index=True)  # Null = todos os GPUs
+    machine_type = Column(String(20), nullable=False, default="on-demand")
+    threshold_amount = Column(Float, nullable=False)  # Limiar em $ para 7 dias
+
+    # Contato para notificação
+    email = Column(String(255), nullable=False)
+
+    # Estado do alerta
+    enabled = Column(Boolean, default=True, nullable=False)
+
+    # Histórico de disparo
+    last_triggered_at = Column(DateTime, nullable=True)
+    last_forecasted_cost = Column(Float, nullable=True)  # Último custo previsto que disparou alerta
+
+    # Metadados
+    alert_name = Column(String(100), nullable=True)  # Nome amigável (opcional)
+    notification_settings = Column(JSONB, nullable=True)  # Configurações extras (cooldown, frequência, etc)
+
+    __table_args__ = (
+        Index('idx_budget_alert_user', 'user_id'),
+        Index('idx_budget_alert_enabled', 'enabled'),
+        Index('idx_budget_alert_user_gpu', 'user_id', 'gpu_name'),
+    )
+
+    def __repr__(self):
+        gpu = self.gpu_name or "ALL"
+        return f"<BudgetAlert user={self.user_id} gpu={gpu} threshold=${self.threshold_amount:.2f}>"
