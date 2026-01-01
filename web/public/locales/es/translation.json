@@ -360,6 +360,16 @@
   "settings": {
     "title": "Configuración",
     "description": "Administra la configuración de tu cuenta",
+    "pageTitle": "Configuración",
+    "pageSubtitle": "Administra tus APIs, almacenamiento y preferencias",
+    "menu": {
+      "apis": "APIs y Credenciales",
+      "storage": "Almacenamiento",
+      "cloudstorage": "Cloud Storage Failover",
+      "agent": "Agent Sync",
+      "notifications": "Notificaciones",
+      "failover": "CPU Failover"
+    },
     "profile": {
       "title": "Perfil",
       "name": "Nombre",
