@@ -70,7 +70,7 @@
           "id": "1.4",
           "title": "Implement focus return on close",
           "description": "Store the previously focused element and restore focus when dialog closes",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "Previously focused element stored on dialog open",
             "Focus returned to trigger element when dialog closes",
@@ -78,7 +78,9 @@
           ],
           "files": [
             "web/src/hooks/useFocusTrap.ts"
-          ]
+          ],
+          "notes": "Implemented focus return on close functionality in useFocusTrap hook:\n- Added previouslyFocusedElementRef to store the element that had focus when dialog opened\n- Capture document.activeElement before moving focus into the dialog (at start of auto-focus effect)\n- Added new useEffect that runs when isOpen becomes false to restore focus\n- Handles edge cases: checks if element still exists in DOM, is not disabled, and is visible\n- Uses requestAnimationFrame for smooth focus transitions after dialog closes\n- Clears the stored reference after restoration attempt to prevent stale references",
+          "updated_at": "2026-01-01T06:12:16.240137+00:00"
         },
         {
           "id": "1.5",
@@ -240,5 +242,5 @@
     "Consider using inert attribute on background content for better isolation",
     "Focus trap must handle dynamic content (elements added/removed after dialog opens)"
   ],
-  "last_updated": "2026-01-01T06:08:07.735591+00:00"
+  "last_updated": "2026-01-01T06:12:16.240157+00:00"
 }
