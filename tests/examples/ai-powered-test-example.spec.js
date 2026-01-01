@@ -36,11 +36,11 @@ test.describe('🤖 Exemplo: Testes AI-Powered', () => {
     // 4. Clicar
     await machinesLink.click();
 
-    // 5. Verificar que navegou (usando heading ao invés de URL)
-    await expect(page.getByRole('heading', { name: 'Minhas Máquinas' })).toBeVisible();
+    // 5. Verificar que navegou (usando heading ao invés de URL) - bilingual
+    await expect(page.getByRole('heading', { name: /My Machines|Minhas Máquinas|Mis Máquinas/i })).toBeVisible();
   });
 
-  test('✅ CORRETO: Clicar em Iniciar usando getByRole', async ({ page }) => {
+  test('✅ CORRETO: Clicar em Start/Iniciar usando getByRole', async ({ page }) => {
     await page.goto('/app/machines');
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
@@ -49,16 +49,16 @@ test.describe('🤖 Exemplo: Testes AI-Powered', () => {
     const hasOffline = await page.getByText('Offline').first().isVisible({ timeout: 5000 }).catch(() => false);
 
     if (hasOffline) {
-      // Encontrar botão "Iniciar" pelo ROLE e NAME (robusto!)
-      const startButton = page.getByRole('button', { name: 'Iniciar' }).first();
+      // Encontrar botão "Start/Iniciar" pelo ROLE e NAME (bilingual!)
+      const startButton = page.getByRole('button', { name: /^Start$|^Iniciar$/i }).first();
       const hasButton = await startButton.isVisible({ timeout: 5000 }).catch(() => false);
 
       if (hasButton) {
         await startButton.click({ force: true });
         await page.waitForTimeout(2000);
-        console.log('✅ Botão Iniciar clicado com sucesso');
+        console.log('✅ Botão Start/Iniciar clicado com sucesso');
       } else {
-        console.log('ℹ️ Botão Iniciar não visível');
+        console.log('ℹ️ Botão Start/Iniciar não visível');
       }
     } else {
       // Sem máquinas offline - verificar que tem máquinas online
@@ -73,18 +73,18 @@ test.describe('🤖 Exemplo: Testes AI-Powered', () => {
     // Verificar que a página carregou com máquinas
     const hasMachines = await page.getByText(/RTX|A100|H100|4090|3090/i).first().isVisible({ timeout: 5000 }).catch(() => false);
     expect(hasMachines).toBeTruthy();
-    console.log('✅ Teste de Iniciar concluído');
+    console.log('✅ Teste de Start/Iniciar concluído');
   });
 
-  test('✅ CORRETO: Verificar elementos usando getByText', async ({ page }) => {
+  test('✅ CORRETO: Verificar elementos usando getByText (bilingual)', async ({ page }) => {
     await page.goto('/app/machines');
     await page.waitForLoadState('domcontentloaded');
 
-    // Verificar textos importantes estão visíveis
-    await expect(page.getByText('Minhas Máquinas')).toBeVisible();
-    await expect(page.getByText('GPUs Ativas')).toBeVisible();
-    await expect(page.getByText('CPU Backup')).toBeVisible();
-    await expect(page.getByText('VRAM Total')).toBeVisible();
+    // Verificar textos importantes estão visíveis (bilingual: PT/EN/ES)
+    await expect(page.getByText(/My Machines|Minhas Máquinas|Mis Máquinas/i).first()).toBeVisible();
+    await expect(page.getByText(/Active GPUs|GPUs Ativas|GPUs Activas/i).first()).toBeVisible();
+    await expect(page.getByText(/CPU Backup|Respaldo CPU/i).first()).toBeVisible();
+    await expect(page.getByText(/Total VRAM|VRAM Total/i).first()).toBeVisible();
   });
 
   test('✅ CORRETO: Filtrar máquinas usando getByRole', async ({ page }) => {
@@ -127,10 +127,10 @@ test.describe('🤖 Exemplo: Testes AI-Powered', () => {
     await expect(dashboardLink).toBeVisible();
 
     // Machines
-    const machinesLink = page.getByRole('link', { name: 'Machines' });
+    const machinesLink = page.getByRole('link', { name: /Machines|Máquinas/i });
     await expect(machinesLink).toBeVisible();
     await machinesLink.click();
-    await expect(page.getByRole('heading', { name: 'Minhas Máquinas' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /My Machines|Minhas Máquinas|Mis Máquinas/i })).toBeVisible();
 
     // Settings
     const settingsLink = page.getByRole('link', { name: 'Settings' });
@@ -154,7 +154,7 @@ test.describe('🤖 Exemplo: Testes AI-Powered', () => {
 });
 
 test.describe('🚀 Exemplo: Fluxos Completos AI-Powered', () => {
-  test('Dashboard → Machines → Iniciar Máquina', async ({ page }) => {
+  test('Dashboard → Machines → Start/Iniciar Máquina', async ({ page }) => {
     // 1. Ver Dashboard
     await page.goto('/app');
     await page.waitForLoadState('domcontentloaded');
@@ -186,8 +186,8 @@ test.describe('🚀 Exemplo: Fluxos Completos AI-Powered', () => {
     const hasOffline = await page.getByText('Offline').first().isVisible({ timeout: 5000 }).catch(() => false);
 
     if (hasOffline) {
-      // 4. Iniciar máquina
-      const startButton = page.getByRole('button', { name: 'Iniciar' }).first();
+      // 4. Start/Iniciar máquina (bilingual)
+      const startButton = page.getByRole('button', { name: /^Start$|^Iniciar$/i }).first();
       const hasStartButton = await startButton.isVisible({ timeout: 5000 }).catch(() => false);
 
       if (hasStartButton) {

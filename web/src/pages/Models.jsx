@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Play, Square, RefreshCw, Clock, DollarSign, Cpu, Server,
   Plus, Loader2, CheckCircle, XCircle, AlertCircle, Terminal,
@@ -7,26 +8,27 @@ import {
 } from 'lucide-react';
 import { DEMO_MODELS, DEMO_TEMPLATES } from '../constants/demoData';
 
-// Model type icons
+// Model type icons (labels are translation keys)
 const MODEL_TYPE_CONFIG = {
-  llm: { icon: MessageSquare, label: 'LLM', color: 'text-blue-400', bg: 'bg-blue-500/10' },
-  speech: { icon: Mic, label: 'Speech', color: 'text-purple-400', bg: 'bg-purple-500/10' },
-  image: { icon: Image, label: 'Image', color: 'text-pink-400', bg: 'bg-pink-500/10' },
-  embeddings: { icon: Search, label: 'Embeddings', color: 'text-amber-400', bg: 'bg-amber-500/10' },
+  llm: { icon: MessageSquare, labelKey: 'models.types.llm', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+  speech: { icon: Mic, labelKey: 'models.types.speech', color: 'text-purple-400', bg: 'bg-purple-500/10' },
+  image: { icon: Image, labelKey: 'models.types.image', color: 'text-pink-400', bg: 'bg-pink-500/10' },
+  embeddings: { icon: Search, labelKey: 'models.types.embeddings', color: 'text-amber-400', bg: 'bg-amber-500/10' },
 };
 
-// Status colors and icons
+// Status colors and icons (labels are translation keys)
 const STATUS_CONFIG = {
-  pending: { color: 'text-gray-400', bg: 'bg-gray-500/10', icon: Clock, label: 'Pendente' },
-  deploying: { color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Loader2, label: 'Deployando' },
-  downloading: { color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Loader2, label: 'Baixando' },
-  starting: { color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Loader2, label: 'Iniciando' },
-  running: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: Play, label: 'Running' },
-  stopped: { color: 'text-gray-400', bg: 'bg-gray-500/10', icon: Square, label: 'Parado' },
-  error: { color: 'text-red-400', bg: 'bg-red-500/10', icon: XCircle, label: 'Erro' },
+  pending: { color: 'text-gray-400', bg: 'bg-gray-500/10', icon: Clock, labelKey: 'models.status.pending' },
+  deploying: { color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Loader2, labelKey: 'models.status.deploying' },
+  downloading: { color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Loader2, labelKey: 'models.status.downloading' },
+  starting: { color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Loader2, labelKey: 'models.status.starting' },
+  running: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: Play, labelKey: 'models.status.running' },
+  stopped: { color: 'text-gray-400', bg: 'bg-gray-500/10', icon: Square, labelKey: 'models.status.stopped' },
+  error: { color: 'text-red-400', bg: 'bg-red-500/10', icon: XCircle, labelKey: 'models.status.error' },
 };
 
 const Models = () => {
+  const { t } = useTranslation();
   const [models, setModels] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -213,18 +215,18 @@ const Models = () => {
         fetchModels();
       } else {
         const error = await response.json();
-        alert(`Erro ao fazer deploy: ${error.detail || 'Erro desconhecido'}`);
+        alert(`${t('models.errors.deployError')}: ${error.detail || t('models.errors.unknownError')}`);
       }
     } catch (error) {
       console.error('Error deploying model:', error);
-      alert('Erro ao fazer deploy');
+      alert(t('models.errors.deployError'));
     } finally {
       setDeploying(false);
     }
   };
 
   const handleStopModel = async (modelId) => {
-    if (!confirm('Tem certeza que deseja parar este modelo?')) return;
+    if (!confirm(t('models.confirmStop'))) return;
 
     // In demo mode, simulate stop
     if (isDemoMode()) {
@@ -251,7 +253,7 @@ const Models = () => {
   };
 
   const handleDeleteModel = async (modelId) => {
-    if (!confirm('Tem certeza que deseja deletar este deploy? Esta ação não pode ser desfeita.')) return;
+    if (!confirm(t('models.confirmDelete'))) return;
 
     // In demo mode, simulate delete
     if (isDemoMode()) {
@@ -283,7 +285,7 @@ const Models = () => {
     return (
       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.color}`}>
         <Icon className={`w-3.5 h-3.5 ${isAnimated ? 'animate-spin' : ''}`} />
-        {config.label}
+        {t(config.labelKey)}
       </span>
     );
   };
@@ -306,9 +308,9 @@ const Models = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-100">Models</h1>
+          <h1 className="text-2xl font-bold text-gray-100">{t('models.title')}</h1>
           <p className="text-sm text-gray-400 mt-1">
-            Deploy modelos de ML/AI com endpoint de API
+            {t('models.pageSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -324,7 +326,7 @@ const Models = () => {
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 transition-all"
           >
             <Rocket className="w-4 h-4" />
-            Deploy Model
+            {t('models.deployModel')}
           </button>
         </div>
       </div>
@@ -337,9 +339,9 @@ const Models = () => {
             <div className="p-6 border-b border-white/10">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-100">Deploy Model</h2>
+                  <h2 className="text-lg font-semibold text-gray-100">{t('models.wizard.title')}</h2>
                   <p className="text-xs text-gray-500 mt-1">
-                    Passo {wizardStep} de 4
+                    {t('models.wizard.stepOf', { current: wizardStep, total: 4 })}
                   </p>
                 </div>
                 <button
@@ -370,7 +372,7 @@ const Models = () => {
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-sm font-medium text-gray-300 mb-4">
-                      Escolha o tipo de modelo
+                      {t('models.wizard.chooseModelType')}
                     </h3>
                     <div className="grid grid-cols-2 gap-4">
                       {templates.map((template) => {
@@ -417,7 +419,7 @@ const Models = () => {
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-sm font-medium text-gray-300 mb-4">
-                      Escolha o modelo
+                      {t('models.wizard.chooseModel')}
                     </h3>
 
                     {/* Popular models */}
@@ -447,13 +449,13 @@ const Models = () => {
                     {/* Custom model input */}
                     <div className="border-t border-white/10 pt-6">
                       <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Ou use um modelo customizado (HuggingFace ID)
+                        {t('models.wizard.customModelLabel')}
                       </label>
                       <input
                         type="text"
                         value={formData.custom_model ? formData.model_id : ''}
                         onChange={(e) => setFormData({ ...formData, model_id: e.target.value, custom_model: true })}
-                        placeholder="Ex: meta-llama/Llama-3.2-3B-Instruct"
+                        placeholder={t('models.wizard.customModelPlaceholder')}
                         className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50"
                       />
                     </div>
@@ -466,14 +468,14 @@ const Models = () => {
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-sm font-medium text-gray-300 mb-4">
-                      Configuração de GPU
+                      {t('models.wizard.gpuConfig')}
                     </h3>
 
                     <div className="space-y-4">
                       {/* GPU Type */}
                       <div>
                         <label className="block text-xs font-medium text-gray-400 mb-2">
-                          Tipo de GPU
+                          {t('models.wizard.gpuType')}
                         </label>
                         <select
                           value={formData.gpu_type}
@@ -492,7 +494,7 @@ const Models = () => {
                       {/* Num GPUs */}
                       <div>
                         <label className="block text-xs font-medium text-gray-400 mb-2">
-                          Quantidade de GPUs
+                          {t('models.wizard.numGpus')}
                         </label>
                         <select
                           value={formData.num_gpus}
@@ -508,7 +510,7 @@ const Models = () => {
                       {/* Max Price */}
                       <div>
                         <label className="block text-xs font-medium text-gray-400 mb-2">
-                          Preço máximo por hora ($/h)
+                          {t('models.wizard.maxPrice')}
                         </label>
                         <input
                           type="number"
@@ -524,13 +526,13 @@ const Models = () => {
                       {/* Name */}
                       <div>
                         <label className="block text-xs font-medium text-gray-400 mb-2">
-                          Nome (opcional)
+                          {t('models.wizard.name')}
                         </label>
                         <input
                           type="text"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          placeholder="Ex: Meu LLM de produção"
+                          placeholder={t('models.wizard.namePlaceholder')}
                           className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50"
                         />
                       </div>
@@ -544,14 +546,14 @@ const Models = () => {
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-sm font-medium text-gray-300 mb-4">
-                      Configuração de Acesso
+                      {t('models.wizard.accessConfig')}
                     </h3>
 
                     <div className="space-y-4">
                       {/* Access Type */}
                       <div>
                         <label className="block text-xs font-medium text-gray-400 mb-2">
-                          Tipo de Acesso
+                          {t('models.wizard.accessType')}
                         </label>
                         <div className="grid grid-cols-2 gap-3">
                           <button
@@ -565,10 +567,10 @@ const Models = () => {
                           >
                             <div className="flex items-center gap-2 mb-2">
                               <Lock className="w-4 h-4 text-amber-400" />
-                              <span className="text-sm font-medium text-gray-200">Privado</span>
+                              <span className="text-sm font-medium text-gray-200">{t('models.wizard.private')}</span>
                             </div>
                             <p className="text-xs text-gray-500">
-                              Acesso via API key gerada automaticamente
+                              {t('models.wizard.privateDescription')}
                             </p>
                           </button>
                           <button
@@ -582,10 +584,10 @@ const Models = () => {
                           >
                             <div className="flex items-center gap-2 mb-2">
                               <Globe className="w-4 h-4 text-emerald-400" />
-                              <span className="text-sm font-medium text-gray-200">Público</span>
+                              <span className="text-sm font-medium text-gray-200">{t('models.wizard.public')}</span>
                             </div>
                             <p className="text-xs text-gray-500">
-                              Qualquer pessoa pode acessar o endpoint
+                              {t('models.wizard.publicDescription')}
                             </p>
                           </button>
                         </div>
@@ -594,7 +596,7 @@ const Models = () => {
                       {/* Port */}
                       <div>
                         <label className="block text-xs font-medium text-gray-400 mb-2">
-                          Porta
+                          {t('models.wizard.port')}
                         </label>
                         <input
                           type="number"
@@ -608,26 +610,26 @@ const Models = () => {
 
                       {/* Summary */}
                       <div className="mt-6 p-4 rounded-lg bg-white/5 border border-white/10">
-                        <h4 className="text-xs font-medium text-gray-400 mb-3">Resumo do Deploy</h4>
+                        <h4 className="text-xs font-medium text-gray-400 mb-3">{t('models.wizard.deploySummary')}</h4>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-gray-500">Tipo:</span>
-                            <span className="text-gray-200">{MODEL_TYPE_CONFIG[formData.model_type]?.label}</span>
+                            <span className="text-gray-500">{t('models.wizard.type')}:</span>
+                            <span className="text-gray-200">{t(MODEL_TYPE_CONFIG[formData.model_type]?.labelKey)}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-500">Modelo:</span>
-                            <span className="text-gray-200 font-mono text-xs">{formData.model_id || 'Não selecionado'}</span>
+                            <span className="text-gray-500">{t('models.wizard.modelLabel')}:</span>
+                            <span className="text-gray-200 font-mono text-xs">{formData.model_id || t('models.wizard.notSelected')}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-500">GPU:</span>
+                            <span className="text-gray-500">{t('models.wizard.gpu')}:</span>
                             <span className="text-gray-200">{formData.num_gpus}x {formData.gpu_type}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-500">Acesso:</span>
-                            <span className="text-gray-200">{formData.access_type === 'private' ? 'Privado (API Key)' : 'Público'}</span>
+                            <span className="text-gray-500">{t('models.wizard.access')}:</span>
+                            <span className="text-gray-200">{formData.access_type === 'private' ? t('models.wizard.privateApiKey') : t('models.wizard.public')}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-500">Porta:</span>
+                            <span className="text-gray-500">{t('models.wizard.port')}:</span>
                             <span className="text-gray-200">{formData.port}</span>
                           </div>
                         </div>
@@ -646,7 +648,7 @@ const Models = () => {
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm transition-all"
               >
                 <ChevronLeft className="w-4 h-4" />
-                {wizardStep === 1 ? 'Cancelar' : 'Voltar'}
+                {wizardStep === 1 ? t('models.wizard.cancel') : t('models.wizard.back')}
               </button>
 
               {wizardStep < 4 ? (
@@ -656,7 +658,7 @@ const Models = () => {
                   disabled={wizardStep === 2 && !formData.model_id}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Próximo
+                  {t('models.wizard.next')}
                   <ChevronRight className="w-4 h-4" />
                 </button>
               ) : (
@@ -669,12 +671,12 @@ const Models = () => {
                   {deploying ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Deployando...
+                      {t('models.wizard.deploying')}
                     </>
                   ) : (
                     <>
                       <Rocket className="w-4 h-4" />
-                      Deploy
+                      {t('models.wizard.deploy')}
                     </>
                   )}
                 </button>
@@ -688,21 +690,21 @@ const Models = () => {
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400 mr-3" />
-          <span className="text-gray-400">Carregando modelos...</span>
+          <span className="text-gray-400">{t('models.loading')}</span>
         </div>
       ) : models.length === 0 ? (
         <div className="text-center py-20 border border-dashed border-white/10 rounded-xl">
           <Zap className="w-12 h-12 mx-auto text-gray-600 mb-4" />
-          <h3 className="text-lg font-medium text-gray-300 mb-2">Nenhum modelo deployado</h3>
+          <h3 className="text-lg font-medium text-gray-300 mb-2">{t('models.noModels')}</h3>
           <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-            Deploy modelos de LLM, Speech-to-Text, Image Generation ou Embeddings com um clique
+            {t('models.noModelsDescription')}
           </p>
           <button
             onClick={openDeployWizard}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 transition-all"
           >
             <Rocket className="w-4 h-4" />
-            Deploy Primeiro Modelo
+            {t('models.deployFirstModel')}
           </button>
         </div>
       ) : (
@@ -738,7 +740,7 @@ const Models = () => {
                 {isDeploying && (
                   <div className="px-4 py-3 border-b border-white/5 bg-white/[0.02]">
                     <div className="flex items-center justify-between text-xs mb-2">
-                      <span className="text-gray-400">{model.status_message || 'Preparando...'}</span>
+                      <span className="text-gray-400">{model.status_message || t('models.wizard.preparing')}</span>
                       <span className="text-gray-500">{Math.round(model.progress)}%</span>
                     </div>
                     <div className="h-1 bg-white/10 rounded-full overflow-hidden">
@@ -768,7 +770,7 @@ const Models = () => {
                         <button
                           onClick={() => copyToClipboard(model.endpoint_url)}
                           className="p-1 rounded hover:bg-white/10 text-gray-400"
-                          title="Copiar URL"
+                          title={t('models.card.copyUrl')}
                         >
                           <Copy className="w-3.5 h-3.5" />
                         </button>
@@ -789,7 +791,7 @@ const Models = () => {
                         <button
                           onClick={() => copyToClipboard(model.api_key)}
                           className="p-1 rounded hover:bg-amber-500/20 text-amber-400"
-                          title="Copiar API Key"
+                          title={t('models.card.copyApiKey')}
                         >
                           <Copy className="w-3.5 h-3.5" />
                         </button>
@@ -817,7 +819,7 @@ const Models = () => {
                         className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs transition-all"
                       >
                         <Square className="w-3.5 h-3.5" />
-                        Stop
+                        {t('models.card.stop')}
                       </button>
                       <a
                         href={`/api/v1/models/${model.id}/logs`}
@@ -826,7 +828,7 @@ const Models = () => {
                         className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs transition-all"
                       >
                         <Terminal className="w-3.5 h-3.5" />
-                        Logs
+                        {t('models.card.logs')}
                       </a>
                     </>
                   )}
@@ -836,7 +838,7 @@ const Models = () => {
                       className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-red-500/10 text-red-400 text-xs transition-all"
                     >
                       <XCircle className="w-3.5 h-3.5" />
-                      Delete
+                      {t('models.card.delete')}
                     </button>
                   )}
                 </div>
@@ -848,35 +850,35 @@ const Models = () => {
 
       {/* Info Box */}
       <div className="p-4 rounded-xl bg-brand-500/5 border border-brand-500/20">
-        <h4 className="text-sm font-medium text-brand-400 mb-2">Tipos de Modelo Suportados</h4>
+        <h4 className="text-sm font-medium text-brand-400 mb-2">{t('models.supportedTypes.title')}</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-400">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
-              <span className="font-medium text-gray-300">LLM</span>
+              <span className="font-medium text-gray-300">{t('models.types.llm')}</span>
             </div>
-            <span>Chat & Completion (vLLM)</span>
+            <span>{t('models.supportedTypes.llmDescription')}</span>
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Mic className="w-3.5 h-3.5 text-purple-400" />
-              <span className="font-medium text-gray-300">Speech</span>
+              <span className="font-medium text-gray-300">{t('models.types.speech')}</span>
             </div>
-            <span>Whisper (Transcription)</span>
+            <span>{t('models.supportedTypes.speechDescription')}</span>
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Image className="w-3.5 h-3.5 text-pink-400" />
-              <span className="font-medium text-gray-300">Image</span>
+              <span className="font-medium text-gray-300">{t('models.types.image')}</span>
             </div>
-            <span>SD, FLUX (Diffusers)</span>
+            <span>{t('models.supportedTypes.imageDescription')}</span>
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Search className="w-3.5 h-3.5 text-amber-400" />
-              <span className="font-medium text-gray-300">Embeddings</span>
+              <span className="font-medium text-gray-300">{t('models.types.embeddings')}</span>
             </div>
-            <span>BGE, E5 (Sentence-Transformers)</span>
+            <span>{t('models.supportedTypes.embeddingsDescription')}</span>
           </div>
         </div>
       </div>

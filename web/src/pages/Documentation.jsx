@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { marked } from 'marked';
 import mermaid from 'mermaid';
 
@@ -17,6 +18,7 @@ marked.setOptions({
 mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
 
 const Documentation = () => {
+  const { t } = useTranslation();
   const { docId } = useParams();
   const navigate = useNavigate();
   const [menu, setMenu] = useState([]);
@@ -217,7 +219,7 @@ const Documentation = () => {
                 </div>
                 <h1 className="text-lg font-bold text-white tracking-tight">Dumont Cloud</h1>
               </div>
-              <p className="text-xs text-brand-500/80 mt-1 uppercase tracking-wide bg-brand-500/10 inline-block px-1.5 py-0.5 rounded border border-brand-500/10">Live Docs</p>
+              <p className="text-xs text-brand-500/80 mt-1 uppercase tracking-wide bg-brand-500/10 inline-block px-1.5 py-0.5 rounded border border-brand-500/10">{t('documentation.liveDocs')}</p>
             </div>
 
             {/* Navigation */}
@@ -233,7 +235,7 @@ const Documentation = () => {
                 className="w-full bg-white/5 border-white/10 hover:bg-brand-500/10 hover:text-brand-400 text-gray-400 transition-all font-medium"
                 onClick={() => navigate('/')}
               >
-                ← Voltar para App
+                {t('documentation.backToApp')}
               </Button>
             </div>
           </div>
@@ -253,7 +255,7 @@ const Documentation = () => {
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <Spinner className="text-brand-500" />
-                <span className="ml-3 text-gray-400 animate-pulse">Carregando documentação...</span>
+                <span className="ml-3 text-gray-400 animate-pulse">{t('documentation.loading')}</span>
               </div>
             ) : (
               <div className="rounded-2xl border border-white/5 bg-[#0f1210] p-8 md:p-12 shadow-2xl relative overflow-hidden">
@@ -278,14 +280,14 @@ const Documentation = () => {
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
-                  Copiar Link
+                  {t('documentation.copyLink')}
                 </Button>
               </div>
             )}
 
             {/* Footer */}
             <footer className="mt-20 pt-8 border-t border-gray-200 dark:border-white/5 text-center text-xs text-gray-500">
-              <p>Live Documentation System • Dumont Cloud &copy; 2025</p>
+              <p>{t('documentation.footer')}</p>
             </footer>
           </div>
         </main>

@@ -17,6 +17,8 @@ import sys
 from typing import Dict, Any, List, Optional
 from urllib.parse import urlencode
 
+from ..i18n import _
+
 
 class APICommands:
     """Direct API wrapper with auto-discovery"""
@@ -66,8 +68,8 @@ class APICommands:
         endpoints = self.get_endpoints()
 
         if not endpoints:
-            print("❌ Não foi possível carregar endpoints da API")
-            print(f"   URL: {self.api.base_url}")
+            print(_("❌ Could not load API endpoints"))
+            print(_("   URL: {url}").format(url=self.api.base_url))
             return
 
         # Group by tag
@@ -81,7 +83,7 @@ class APICommands:
                     by_tag[tag] = []
                 by_tag[tag].append((key, info))
 
-        print("\n🚀 Dumont Cloud API Endpoints")
+        print("\n" + _("🚀 Dumont Cloud API Endpoints"))
         print("=" * 70)
 
         for tag in sorted(by_tag.keys()):
@@ -93,7 +95,7 @@ class APICommands:
                 print(f"  {method:6} {path:40} {summary}")
 
         print("\n" + "=" * 70)
-        print("💡 Uso:")
+        print(_("💡 Usage:"))
         print("   dumont api GET /api/v1/health")
         print("   dumont api GET /api/v1/metrics/spot/monitor")
         print("   dumont api POST /api/v1/auth/login email=x password=y")
@@ -116,7 +118,7 @@ class APICommands:
 
         # Check for missing path params
         if path_params:
-            print(f"❌ Parâmetros faltando: {', '.join(path_params)}")
+            print(_("❌ Missing parameters: {params}").format(params=', '.join(path_params)))
             return None
 
         # Parse remaining args as query params or body
@@ -171,7 +173,7 @@ class APICommands:
         if args[0].upper() in ("GET", "POST", "PUT", "DELETE", "PATCH"):
             method = args[0].upper()
             if len(args) < 2:
-                print(f"❌ Uso: dumont api {method} <path> [args...]")
+                print(_("❌ Usage: dumont api {method} <path> [args...]").format(method=method))
                 return
             path = args[1]
             self.call(method, path, args[2:])
@@ -182,11 +184,11 @@ class APICommands:
             self.call("GET", args[0], args[1:])
             return
 
-        print("❌ Formato inválido")
-        print("\n💡 Uso:")
-        print("   dumont api list                    # Listar endpoints")
-        print("   dumont api GET /api/v1/health      # GET request")
-        print("   dumont api POST /path key=value    # POST request")
+        print(_("❌ Invalid format"))
+        print("\n" + _("💡 Usage:"))
+        print("   dumont api list                    # " + _("List endpoints"))
+        print("   dumont api GET /api/v1/health      # " + _("GET request"))
+        print("   dumont api POST /path key=value    # " + _("POST request"))
 
 
 class SmartRouter:
@@ -302,7 +304,7 @@ class SmartRouter:
 
     def help(self):
         """Show available shortcuts"""
-        print("\n🚀 Dumont Cloud CLI - Comandos Disponíveis")
+        print("\n" + _("🚀 Dumont Cloud CLI - Available Commands"))
         print("=" * 60)
 
         # Group by first word
@@ -322,9 +324,9 @@ class SmartRouter:
                 print(f"  {cmd:25} {method:6} {display_path}")
 
         print("\n" + "=" * 60)
-        print("💡 Exemplos:")
+        print(_("💡 Examples:"))
         print("   dumont spot monitor")
         print("   dumont spot predict RTX4090")
         print("   dumont instances list")
         print("   dumont auth login email=x password=y")
-        print("\n   dumont api GET /api/v1/health  # Acesso direto à API")
+        print("\n   dumont api GET /api/v1/health  # " + _("Direct API access"))

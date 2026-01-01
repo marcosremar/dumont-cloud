@@ -10,7 +10,10 @@ Usage:
 """
 import argparse
 import sys
-import os
+
+# Import shared i18n module (must be before other local imports for proper translation)
+from .i18n import _, get_current_language
+_cli_language = get_current_language()
 
 from .utils.api_client import APIClient
 from .commands.config import ConfigManager, ConfigCommands, ensure_configured
@@ -27,11 +30,11 @@ def generate_dynamic_help() -> str:
     lines = []
 
     # Config commands (static - not in SmartRouter)
-    lines.append("Configuração:")
-    lines.append("  config setup                    Configurar API key")
-    lines.append("  config show                     Mostrar configuração")
-    lines.append("  config set-key <key>            Definir API key")
-    lines.append("  config set-url <url>            Definir URL da API")
+    lines.append(_("Configuration:"))
+    lines.append("  config setup                    " + _("Configure API key"))
+    lines.append("  config show                     " + _("Show configuration"))
+    lines.append("  config set-key <key>            " + _("Set API key"))
+    lines.append("  config set-url <url>            " + _("Set API URL"))
     lines.append("")
 
     # Group shortcuts by category, merging singular/plural
@@ -60,18 +63,18 @@ def generate_dynamic_help() -> str:
 
     # Category display names and order
     category_order = [
-        ("auth", "Autenticação"),
-        ("health", "Sistema"),
-        ("instances", "Instâncias"),
-        ("spot", "Mercado (Spot)"),
-        ("savings", "Economia"),
-        ("serverless", "Serverless GPU"),
-        ("warmpool", "Warm Pool"),
-        ("jobs", "Jobs"),
-        ("snapshots", "Snapshots"),
-        ("models", "Modelos"),
-        ("hibernation", "Hibernação"),
-        ("finetune", "Fine-tune"),
+        ("auth", _("Authentication")),
+        ("health", _("System")),
+        ("instances", _("Instances")),
+        ("spot", _("Market (Spot)")),
+        ("savings", _("Savings")),
+        ("serverless", _("Serverless GPU")),
+        ("warmpool", _("Warm Pool")),
+        ("jobs", _("Jobs")),
+        ("snapshots", _("Snapshots")),
+        ("models", _("Models")),
+        ("hibernation", _("Hibernation")),
+        ("finetune", _("Fine-tune")),
     ]
 
     # Print categories in order
@@ -86,15 +89,15 @@ def generate_dynamic_help() -> str:
         lines.append("")
 
     # API direct access
-    lines.append("API Direta:")
-    lines.append("  api list                        Listar todos endpoints")
-    lines.append("  api GET /path                   GET request")
-    lines.append("  api POST /path key=value        POST request")
+    lines.append(_("Direct API:"))
+    lines.append("  api list                        " + _("List all endpoints"))
+    lines.append("  api GET /path                   " + _("GET request"))
+    lines.append("  api POST /path key=value        " + _("POST request"))
     lines.append("")
 
     # Wizard
-    lines.append("Wizard:")
-    lines.append("  wizard deploy [gpu] [options]   Deploy rápido de GPU")
+    lines.append(_("Wizard:"))
+    lines.append("  wizard deploy [gpu] [options]   " + _("Quick GPU deploy"))
 
     return "\n".join(lines)
 
@@ -105,30 +108,37 @@ def main():
 
     parser = argparse.ArgumentParser(
         prog="dumont",
-        description="Dumont Cloud CLI - GPU Cloud Management",
+        description=_("Dumont Cloud CLI - GPU Cloud Management"),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=dynamic_help
     )
 
     parser.add_argument(
         "--api-url",
-        help="URL da API (default: ~/.dumont/config.json ou localhost:8000)"
+        help=_("API URL (default: ~/.dumont/config.json or localhost:8000)")
     )
 
     parser.add_argument(
         "--api-key",
-        help="API Key (default: ~/.dumont/config.json ou DUMONT_API_KEY)"
+        help=_("API Key (default: ~/.dumont/config.json or DUMONT_API_KEY)")
     )
 
     parser.add_argument(
         "--debug",
         action="store_true",
-        help="Modo debug"
+        help=_("Debug mode")
     )
 
-    parser.add_argument("command", nargs="?", help="Comando ou recurso")
-    parser.add_argument("subcommand", nargs="?", help="Subcomando ou ação")
-    parser.add_argument("args", nargs="*", help="Argumentos adicionais")
+    parser.add_argument(
+        "--language", "-l",
+        choices=["en", "es"],
+        default=_cli_language,
+        help=_("Language for CLI output (default: en, or LANGUAGE env var)")
+    )
+
+    parser.add_argument("command", nargs="?", help=_("Command or resource"))
+    parser.add_argument("subcommand", nargs="?", help=_("Subcommand or action"))
+    parser.add_argument("args", nargs="*", help=_("Additional arguments"))
 
     args = parser.parse_args()
 
@@ -149,14 +159,14 @@ def main():
 
         if args.subcommand == "set-key":
             if not args.args:
-                print("❌ Uso: dumont config set-key <api_key>")
+                print(_("❌ Usage: dumont config set-key <api_key>"))
                 sys.exit(1)
             config_cmd.set_key(args.args[0])
             return
 
         if args.subcommand == "set-url":
             if not args.args:
-                print("❌ Uso: dumont config set-url <url>")
+                print(_("❌ Usage: dumont config set-url <url>"))
                 sys.exit(1)
             config_cmd.set_url(args.args[0])
             return
@@ -165,8 +175,8 @@ def main():
             config_cmd.clear()
             return
 
-        print(f"❌ Subcomando desconhecido: {args.subcommand}")
-        print("Disponíveis: setup, show, set-key, set-url, clear")
+        print(_("❌ Unknown subcommand: {subcommand}").format(subcommand=args.subcommand))
+        print(_("Available: setup, show, set-key, set-url, clear"))
         sys.exit(1)
 
     # Handle help
@@ -176,7 +186,7 @@ def main():
 
     # Handle version
     if args.command in ("version", "--version", "-v"):
-        print("Dumont Cloud CLI v1.0.0")
+        print(_("Dumont Cloud CLI v1.0.0"))
         return
 
     # For other commands, ensure configured (will prompt if needed)
@@ -232,15 +242,15 @@ def main():
                         gpu_name = arg
 
             if args.subcommand is None:
-                print("🧙 Wizard Deploy - Quick GPU Provisioning")
+                print(_("🧙 Wizard Deploy - Quick GPU Provisioning"))
                 print("")
-                print("Usage: dumont wizard deploy [gpu] [options]")
+                print(_("Usage: dumont wizard deploy [gpu] [options]"))
                 print("")
-                print("Options:")
-                print("  gpu=<name>       GPU type (e.g., 'RTX 4090', 'A100')")
-                print("  speed=<mode>     fast (default), slow, ultrafast")
-                print("  price=<$>        Max price per hour (default: 2.0)")
-                print("  region=<name>    Region filter (default: global)")
+                print(_("Options:"))
+                print(_("  gpu=<name>       GPU type (e.g., 'RTX 4090', 'A100')"))
+                print(_("  speed=<mode>     fast (default), slow, ultrafast"))
+                print(_("  price=<$>        Max price per hour (default: 2.0)"))
+                print(_("  region=<name>    Region filter (default: global)"))
                 return
 
             wizard.deploy(gpu_name=gpu_name, speed=speed, max_price=max_price, region=region)
@@ -250,7 +260,7 @@ def main():
     if args.command == "model" and args.subcommand == "install":
         model = ModelCommands(api)
         if len(args.args or []) < 2:
-            print("❌ Usage: dumont model install <instance_id> <model_id>")
+            print(_("❌ Usage: dumont model install <instance_id> <model_id>"))
             sys.exit(1)
         model.install(args.args[0], args.args[1])
         return
@@ -269,7 +279,7 @@ def main():
 
         if args.subcommand == "deploy":
             if len(args.args or []) < 2:
-                print("❌ Usage: dumont models deploy <type> <model_id> [options]")
+                print(_("❌ Usage: dumont models deploy <type> <model_id> [options]"))
                 sys.exit(1)
 
             model_type = args.args[0]
@@ -285,7 +295,7 @@ def main():
 
         if args.subcommand in ("get", "stop", "delete", "logs"):
             if not args.args:
-                print(f"❌ Usage: dumont models {args.subcommand} <deployment_id>")
+                print(_("❌ Usage: dumont models {subcommand} <deployment_id>").format(subcommand=args.subcommand))
                 sys.exit(1)
 
             method = getattr(models_cmd, args.subcommand)

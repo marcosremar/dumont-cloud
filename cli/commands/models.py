@@ -5,6 +5,8 @@ import json
 import sys
 import time
 
+from ..i18n import _
+
 
 class ModelsCommands:
     """Deploy and manage model endpoints"""
@@ -14,20 +16,20 @@ class ModelsCommands:
 
     def list(self):
         """List all deployed models"""
-        print("\n📦 Deployed Models\n")
+        print("\n" + _("📦 Deployed Models") + "\n")
         print("=" * 70)
 
         response = self.api.call("GET", "/api/v1/models/", silent=True)
 
         if not response:
-            print("❌ Could not fetch models. Make sure you are logged in.")
+            print(_("❌ Could not fetch models. Make sure you are logged in."))
             sys.exit(1)
 
         models = response.get("models", [])
 
         if not models:
-            print("\n   No models deployed yet.")
-            print("\n💡 Deploy a model:")
+            print("\n" + _("   No models deployed yet."))
+            print("\n" + _("💡 Deploy a model:"))
             print("   dumont models deploy llm meta-llama/Llama-3.1-8B-Instruct")
             print("   dumont models deploy whisper openai/whisper-large-v3")
             print("   dumont models deploy image stabilityai/stable-diffusion-xl-base-1.0")
@@ -44,31 +46,31 @@ class ModelsCommands:
             }.get(model.get("status", "pending"), "⚪")
 
             print(f"\n{status_emoji} {model.get('name', model.get('model_id', 'Unknown'))}")
-            print(f"   ID:     {model.get('id')}")
-            print(f"   Model:  {model.get('model_id')}")
-            print(f"   Type:   {model.get('model_type')}")
-            print(f"   Status: {model.get('status')} ({model.get('status_message', '')})")
+            print(_("   ID:     {id}").format(id=model.get('id')))
+            print(_("   Model:  {model}").format(model=model.get('model_id')))
+            print(_("   Type:   {type}").format(type=model.get('model_type')))
+            print(_("   Status: {status} ({message})").format(status=model.get('status'), message=model.get('status_message', '')))
 
             if model.get("status") == "running":
-                print(f"   URL:    {model.get('endpoint_url')}")
+                print(_("   URL:    {url}").format(url=model.get('endpoint_url')))
                 if model.get("access_type") == "private" and model.get("api_key"):
-                    print(f"   Key:    {model.get('api_key')[:25]}...")
-                print(f"   Cost:   ${model.get('dph_total', 0):.2f}/h")
+                    print(_("   Key:    {key}...").format(key=model.get('api_key')[:25]))
+                print(_("   Cost:   ${cost:.2f}/h").format(cost=model.get('dph_total', 0)))
 
             if model.get("status") in ["deploying", "downloading", "starting"]:
-                print(f"   Progress: {model.get('progress', 0):.0f}%")
+                print(_("   Progress: {progress:.0f}%").format(progress=model.get('progress', 0)))
 
         print("\n" + "=" * 70)
 
     def templates(self):
         """List available templates"""
-        print("\n📋 Available Model Templates\n")
+        print("\n" + _("📋 Available Model Templates") + "\n")
         print("=" * 70)
 
         response = self.api.call("GET", "/api/v1/models/templates", silent=True)
 
         if not response:
-            print("❌ Could not fetch templates.")
+            print(_("❌ Could not fetch templates."))
             sys.exit(1)
 
         templates = response.get("templates", [])
@@ -82,11 +84,11 @@ class ModelsCommands:
             }.get(template.get("type", ""), "📦")
 
             print(f"\n{type_emoji} {template.get('name')}")
-            print(f"   Type:    {template.get('type')}")
-            print(f"   Runtime: {template.get('runtime')}")
-            print(f"   Port:    {template.get('default_port')}")
-            print(f"   GPU:     {template.get('gpu_memory_required')}GB+ required")
-            print("\n   Popular models:")
+            print(_("   Type:    {type}").format(type=template.get('type')))
+            print(_("   Runtime: {runtime}").format(runtime=template.get('runtime')))
+            print(_("   Port:    {port}").format(port=template.get('default_port')))
+            print(_("   GPU:     {memory}GB+ required").format(memory=template.get('gpu_memory_required')))
+            print("\n" + _("   Popular models:"))
             for model in template.get("popular_models", [])[:3]:
                 print(f"     - {model.get('id')} ({model.get('size')})")
 
@@ -94,7 +96,7 @@ class ModelsCommands:
 
     def deploy(self, model_type: str, model_id: str, **kwargs):
         """Deploy a new model"""
-        print(f"\n🚀 Deploying {model_type} model: {model_id}\n")
+        print("\n" + _("🚀 Deploying {type} model: {model}").format(type=model_type, model=model_id) + "\n")
         print("=" * 60)
 
         # Build payload
@@ -117,18 +119,18 @@ class ModelsCommands:
         response = self.api.call("POST", "/api/v1/models/deploy", data=payload, silent=True)
 
         if not response or not response.get("success"):
-            error = response.get("detail", "Unknown error") if response else "Failed to connect"
-            print(f"❌ Deploy failed: {error}")
+            error = response.get("detail", _("Unknown error")) if response else _("Failed to connect")
+            print(_("❌ Deploy failed: {error}").format(error=error))
             sys.exit(1)
 
         deployment_id = response.get("deployment_id")
-        print(f"✅ Deployment started!")
-        print(f"   ID: {deployment_id}")
-        print(f"   Estimated time: ~{response.get('estimated_time_seconds', 180) // 60} minutes")
+        print(_("✅ Deployment started!"))
+        print(_("   ID: {id}").format(id=deployment_id))
+        print(_("   Estimated time: ~{minutes} minutes").format(minutes=response.get('estimated_time_seconds', 180) // 60))
 
         # Wait for deployment
         if kwargs.get("wait", True):
-            print("\n⏳ Waiting for deployment to complete...")
+            print("\n" + _("⏳ Waiting for deployment to complete..."))
             self._wait_for_deployment(deployment_id)
 
         return deployment_id
@@ -142,7 +144,7 @@ class ModelsCommands:
             response = self.api.call("GET", f"/api/v1/models/{deployment_id}", silent=True)
 
             if not response:
-                print("   ⚠ Could not check status")
+                print(_("   ⚠ Could not check status"))
                 time.sleep(5)
                 continue
 
@@ -157,20 +159,20 @@ class ModelsCommands:
                 last_progress = progress
 
             if status == "running":
-                print(f"\n\n✅ Deployment complete!")
-                print(f"   Endpoint: {response.get('endpoint_url')}")
+                print("\n\n" + _("✅ Deployment complete!"))
+                print(_("   Endpoint: {url}").format(url=response.get('endpoint_url')))
                 if response.get("access_type") == "private" and response.get("api_key"):
-                    print(f"   API Key:  {response.get('api_key')}")
-                print(f"   Cost:     ${response.get('dph_total', 0):.2f}/h")
+                    print(_("   API Key:  {key}").format(key=response.get('api_key')))
+                print(_("   Cost:     ${cost:.2f}/h").format(cost=response.get('dph_total', 0)))
                 return True
 
             if status == "error":
-                print(f"\n\n❌ Deployment failed: {message}")
+                print("\n\n" + _("❌ Deployment failed: {message}").format(message=message))
                 return False
 
             time.sleep(5)
 
-        print("\n\n⚠ Timeout waiting for deployment")
+        print("\n\n" + _("⚠ Timeout waiting for deployment"))
         return False
 
     def get(self, deployment_id: str):
@@ -178,16 +180,16 @@ class ModelsCommands:
         response = self.api.call("GET", f"/api/v1/models/{deployment_id}", silent=True)
 
         if not response:
-            print(f"❌ Deployment {deployment_id} not found")
+            print(_("❌ Deployment {id} not found").format(id=deployment_id))
             sys.exit(1)
 
-        print(f"\n📦 Deployment Details\n")
+        print("\n" + _("📦 Deployment Details") + "\n")
         print("=" * 60)
         print(json.dumps(response, indent=2))
 
     def stop(self, deployment_id: str, force: bool = False):
         """Stop a running deployment"""
-        print(f"\n⏹️ Stopping deployment {deployment_id}...")
+        print("\n" + _("⏹️ Stopping deployment {id}...").format(id=deployment_id))
 
         response = self.api.call(
             "POST",
@@ -197,14 +199,14 @@ class ModelsCommands:
         )
 
         if not response:
-            print(f"❌ Failed to stop deployment")
+            print(_("❌ Failed to stop deployment"))
             sys.exit(1)
 
-        print(f"✅ Deployment stopped")
+        print(_("✅ Deployment stopped"))
 
     def delete(self, deployment_id: str):
         """Delete a deployment"""
-        print(f"\n🗑️ Deleting deployment {deployment_id}...")
+        print("\n" + _("🗑️ Deleting deployment {id}...").format(id=deployment_id))
 
         response = self.api.call(
             "DELETE",
@@ -213,16 +215,16 @@ class ModelsCommands:
         )
 
         # DELETE returns 204 No Content, so response may be empty
-        print(f"✅ Deployment deleted")
+        print(_("✅ Deployment deleted"))
 
     def logs(self, deployment_id: str):
         """Get deployment logs"""
         response = self.api.call("GET", f"/api/v1/models/{deployment_id}/logs", silent=True)
 
         if not response:
-            print(f"❌ Could not fetch logs for {deployment_id}")
+            print(_("❌ Could not fetch logs for {id}").format(id=deployment_id))
             sys.exit(1)
 
-        print(f"\n📋 Logs for {deployment_id}\n")
+        print("\n" + _("📋 Logs for {id}").format(id=deployment_id) + "\n")
         print("=" * 60)
-        print(response.get("logs", "No logs available"))
+        print(response.get("logs", _("No logs available")))

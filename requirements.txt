@@ -37,6 +37,9 @@ resend>=0.7.0
 
 # Scheduling
 APScheduler>=3.10.0
+# Internationalization
+Flask-Babel>=4.0.0
+Babel>=2.14.0
 
 # Utilities
 python-dateutil==2.9.0.post0

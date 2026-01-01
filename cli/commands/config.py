@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Optional
 
+from ..i18n import _
+
 
 # Config file location
 CONFIG_DIR = Path.home() / ".dumont"
@@ -85,7 +87,7 @@ class ConfigCommands:
 
     def setup(self, api_key: str = None, api_url: str = None):
         """Interactive setup or direct configuration"""
-        print("🔧 Dumont Cloud CLI Setup")
+        print(_("🔧 Dumont Cloud CLI Setup"))
         print("=" * 40)
 
         config = self.manager.load()
@@ -95,8 +97,8 @@ class ConfigCommands:
             config["api_url"] = api_url
         else:
             current_url = self.manager.get_api_url()
-            print(f"\nAPI URL atual: {current_url}")
-            new_url = input(f"Nova URL (Enter para manter): ").strip()
+            print("\n" + _("Current API URL: {url}").format(url=current_url))
+            new_url = input(_("New URL (Enter to keep): ")).strip()
             if new_url:
                 config["api_url"] = new_url
 
@@ -107,64 +109,64 @@ class ConfigCommands:
             current_key = self.manager.get_api_key()
             if current_key:
                 masked = current_key[:8] + "..." + current_key[-4:] if len(current_key) > 12 else "***"
-                print(f"\nAPI Key atual: {masked}")
+                print("\n" + _("Current API Key: {key}").format(key=masked))
             else:
-                print("\nNenhuma API Key configurada.")
+                print("\n" + _("No API Key configured."))
 
-            print("\nPara obter sua API Key:")
-            print("  1. Acesse https://cloud.dumont.ai/settings")
-            print("  2. Clique em 'Generate API Key'")
-            print("  3. Copie a chave gerada")
+            print("\n" + _("To get your API Key:"))
+            print(_("  1. Go to https://cloud.dumont.ai/settings"))
+            print(_("  2. Click 'Generate API Key'"))
+            print(_("  3. Copy the generated key"))
             print()
 
-            new_key = input("API Key (Enter para manter): ").strip()
+            new_key = input(_("API Key (Enter to keep): ")).strip()
             if new_key:
                 config["api_key"] = new_key
 
         self.manager.save(config)
-        print("\n✅ Configuração salva em ~/.dumont/config.json")
+        print("\n" + _("✅ Configuration saved to ~/.dumont/config.json"))
 
     def show(self):
         """Show current configuration"""
-        print("📋 Configuração Atual")
+        print(_("📋 Current Configuration"))
         print("=" * 40)
 
         api_url = self.manager.get_api_url()
         api_key = self.manager.get_api_key()
 
-        print(f"\nAPI URL: {api_url}")
+        print("\n" + _("API URL: {url}").format(url=api_url))
 
         if api_key:
             masked = api_key[:8] + "..." + api_key[-4:] if len(api_key) > 12 else "***"
-            print(f"API Key: {masked}")
+            print(_("API Key: {key}").format(key=masked))
         else:
-            print("API Key: (não configurada)")
+            print(_("API Key: (not configured)"))
 
-        print(f"\nArquivo: {self.manager.config_file}")
+        print("\n" + _("File: {file}").format(file=self.manager.config_file))
 
         if self.manager.config_file.exists():
-            print("Status: ✅ Configurado")
+            print(_("Status: ✅ Configured"))
         else:
-            print("Status: ❌ Não configurado")
-            print("\nExecute: dumont config setup")
+            print(_("Status: ❌ Not configured"))
+            print("\n" + _("Run: dumont config setup"))
 
     def set_key(self, api_key: str):
         """Set API key directly"""
         self.manager.set("api_key", api_key)
-        print("✅ API Key salva!")
+        print(_("✅ API Key saved!"))
 
     def set_url(self, api_url: str):
         """Set API URL directly"""
         self.manager.set("api_url", api_url)
-        print(f"✅ API URL configurada: {api_url}")
+        print(_("✅ API URL configured: {url}").format(url=api_url))
 
     def clear(self):
         """Clear all configuration"""
         if self.manager.config_file.exists():
             self.manager.config_file.unlink()
-            print("✅ Configuração removida")
+            print(_("✅ Configuration removed"))
         else:
-            print("ℹ️ Nenhuma configuração para remover")
+            print(_("ℹ️ No configuration to remove"))
 
 
 def get_config_manager() -> ConfigManager:
@@ -177,21 +179,21 @@ def ensure_configured() -> ConfigManager:
     manager = ConfigManager()
 
     if not manager.is_configured():
-        print("⚠️  CLI não configurado!")
+        print(_("⚠️  CLI not configured!"))
         print()
-        print("Para usar o Dumont CLI, você precisa configurar sua API Key.")
+        print(_("To use the Dumont CLI, you need to configure your API Key."))
         print()
 
-        response = input("Deseja configurar agora? [S/n]: ").strip().lower()
+        response = input(_("Do you want to configure now? [Y/n]: ")).strip().lower()
         if response in ("", "s", "sim", "y", "yes"):
             cmd = ConfigCommands()
             cmd.setup()
             print()
         else:
-            print("\nVocê pode configurar depois com:")
+            print("\n" + _("You can configure later with:"))
             print("  dumont config setup")
-            print("\nOu defina a variável de ambiente:")
-            print("  export DUMONT_API_KEY=sua_chave_aqui")
+            print("\n" + _("Or set the environment variable:"))
+            print("  export DUMONT_API_KEY=your_key_here")
             print()
             raise SystemExit(1)
 

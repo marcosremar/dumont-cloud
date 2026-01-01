@@ -16,6 +16,7 @@ from .core.config import get_settings
 from .core.constants import API_V1_PREFIX, API_TITLE, API_VERSION, API_DESCRIPTION
 from .core.exceptions import DumontCloudException
 from .api.v1 import api_router
+from .services.template_service import render_template
 from .api.v1.middleware.error_handler import (
     dumont_exception_handler,
     http_exception_handler,
@@ -314,16 +315,30 @@ def create_app() -> FastAPI:
     static_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "web", "build")
     index_path = os.path.join(static_path, "index.html")
 
-    # Marketing Live Docs (Standalone HTML)
+    # Marketing Live Docs (Standalone HTML with i18n support)
     @app.get("/admin/doc/live", response_class=HTMLResponse)
-    async def admin_doc_live():
-        """Serve separate Marketing Live Docs"""
-        template_path = os.path.join(os.path.dirname(__file__), "templates", "marketing_doc.html")
-        if os.path.exists(template_path):
-            with open(template_path, "r", encoding="utf-8") as f:
-                return f.read()
-        from fastapi.responses import Response
-        return Response("<h1>Template not found</h1>", status_code=404, media_type="text/html")
+    async def admin_doc_live(lang: str = "en"):
+        """
+        Serve separate Marketing Live Docs with internationalization.
+
+        Args:
+            lang: Language code (e.g., 'en', 'es'). Defaults to English.
+        """
+        try:
+            # Render template with i18n support
+            html_content = render_template(
+                "marketing_doc.html",
+                context={},
+                locale=lang
+            )
+            return html_content
+        except FileNotFoundError:
+            from fastapi.responses import Response
+            return Response("<h1>Template not found</h1>", status_code=404, media_type="text/html")
+        except Exception as e:
+            logger.error(f"Error rendering marketing doc template: {e}")
+            from fastapi.responses import Response
+            return Response(f"<h1>Error rendering template</h1><p>{str(e)}</p>", status_code=500, media_type="text/html")
 
     # Mount static files (React build) - for JS, CSS, images
     assets_path = os.path.join(static_path, "assets")

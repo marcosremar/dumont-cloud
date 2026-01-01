@@ -186,6 +186,9 @@ test.describe('🔄 CPU Standby e Failover Automático', () => {
     // Fechar modal de boas-vindas se aparecer (usar getByText com .first())
     const skipButton = page.getByText('Pular tudo').first();
     if (await skipButton.isVisible().catch(() => false)) {
+    // Fechar modal de boas-vindas se aparecer (bilingual: PT/EN/ES)
+    const skipButton = page.getByText(/Pular tudo|Skip All|Saltar todo/i).first();
+    if (await skipButton.isVisible({ timeout: 2000 }).catch(() => false)) {
       await skipButton.click({ force: true });
       await page.waitForTimeout(500);
     }
@@ -312,6 +315,33 @@ test.describe('📊 Métricas e Status do CPU Standby', () => {
 // TESTE 3: Relatório de Failover
 // ============================================================
 test.describe('📈 Relatório de Failover', () => {
+
+  // Helper para verificar se a aba de failover está disponível
+  async function goToFailoverTab(page) {
+    await page.goto('/app/settings');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
+
+    // Fechar modal de boas-vindas se aparecer (bilingual: PT/EN/ES)
+    const skipButton = page.getByText(/Pular tudo|Skip All|Saltar todo/i).first();
+    if (await skipButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await skipButton.click({ force: true });
+      await page.waitForTimeout(500);
+    }
+
+    // Verificar se existe aba de Failover (usar getByRole)
+    const failoverTab = page.getByRole('button', { name: /CPU Failover|Failover|Standby/i }).first();
+    const hasTab = await failoverTab.isVisible({ timeout: 5000 }).catch(() => false);
+
+    if (!hasTab) {
+      console.log('⚠️ Aba de CPU Failover não encontrada - feature não disponível');
+      return false;
+    }
+
+    await failoverTab.click({ force: true });
+    await page.waitForTimeout(1000);
+    return true;
+  }
 
   test('Verificar página de relatório de failover', async ({ page }) => {
     await goToFailoverReport(page);

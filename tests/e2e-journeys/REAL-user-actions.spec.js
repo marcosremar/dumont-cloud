@@ -25,7 +25,8 @@ async function goToApp(page) {
   await page.waitForTimeout(1000);
 
   // Fechar modal de boas-vindas se aparecer (usando AI selector)
-  const skipButton = page.getByText('Pular tudo');
+  // Skip welcome modal (bilingual: PT/EN/ES)
+  const skipButton = page.getByText(/Pular tudo|Skip All|Saltar todo/i).first();
   if (await skipButton.isVisible({ timeout: 2000 }).catch(() => false)) {
     await skipButton.click();
     await page.waitForTimeout(500);
@@ -44,8 +45,8 @@ test.describe('🎯 Ações Reais de Usuário', () => {
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000); // Aguardar demo data carregar
 
-    // 2. DEVE ver o título "Minhas Máquinas" (verificar heading level 1)
-    const heading = page.locator('h1:has-text("Minhas Máquinas")');
+    // 2. DEVE ver o título "My Machines" / "Minhas Máquinas" (verificar heading level 1)
+    const heading = page.locator('h1').filter({ hasText: /My Machines|Minhas Máquinas|Mis Máquinas/i }).first();
     await expect(heading).toBeVisible({ timeout: 10000 });
 
     // 3. DEVE ver pelo menos uma máquina
@@ -73,16 +74,16 @@ test.describe('🎯 Ações Reais de Usuário', () => {
     const hasOffline = await page.getByText('Offline').first().isVisible({ timeout: 5000 }).catch(() => false);
 
     if (hasOffline) {
-      // Clicar no botão INICIAR
-      const startButton = page.locator('button:has-text("Iniciar")').first();
+      // Clicar no botão INICIAR/START (bilingual)
+      const startButton = page.locator('button').filter({ hasText: /^Start$|^Iniciar$/i }).first();
       const hasStartButton = await startButton.isVisible({ timeout: 5000 }).catch(() => false);
 
       if (hasStartButton) {
         await startButton.click({ force: true });
         await page.waitForTimeout(3000);
-        console.log('✅ Botão Iniciar clicado');
+        console.log('✅ Botão Start/Iniciar clicado');
       } else {
-        console.log('ℹ️ Botão Iniciar não encontrado');
+        console.log('ℹ️ Botão Start/Iniciar não encontrado');
       }
     } else {
       // Verificar se tem máquinas online
@@ -108,10 +109,10 @@ test.describe('🎯 Ações Reais de Usuário', () => {
     if (hasOnline) {
       console.log('✅ Máquina online encontrada');
 
-      // Verificar se tem opções de ação (Migrar, VS Code, etc.)
-      const migrateButton = page.locator('button:has-text("Migrar p/ CPU")').first();
+      // Verificar se tem opções de ação (Migrar/Migrate, VS Code, Pausar/Pause, etc.)
+      const migrateButton = page.locator('button').filter({ hasText: /Migrar p\/ CPU|Migrate to CPU/i }).first();
       const vscodeButton = page.locator('button:has-text("VS Code")').first();
-      const pauseButton = page.locator('button:has-text("Pausar")').first();
+      const pauseButton = page.locator('button').filter({ hasText: /^Pause$|^Pausar$/i }).first();
 
       const hasMigrate = await migrateButton.isVisible({ timeout: 3000 }).catch(() => false);
       const hasVscode = await vscodeButton.isVisible({ timeout: 3000 }).catch(() => false);
@@ -140,8 +141,8 @@ test.describe('🎯 Ações Reais de Usuário', () => {
     await page.goto('/app');
     await page.waitForLoadState('domcontentloaded');
 
-    // Fechar modal de boas-vindas se aparecer (usando getByText - AI)
-    const skipButton = page.getByText('Pular tudo');
+    // Fechar modal de boas-vindas se aparecer (bilingual: PT/EN/ES)
+    const skipButton = page.getByText(/Pular tudo|Skip All|Saltar todo/i).first();
     if (await skipButton.isVisible({ timeout: 2000 }).catch(() => false)) {
       await skipButton.click();
       await page.waitForTimeout(500);
@@ -186,8 +187,8 @@ test.describe('🎯 Ações Reais de Usuário', () => {
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
 
-    // Verificar que a página carregou (título ou máquinas)
-    const hasTitle = await page.getByText(/Minhas Máquinas/i).first().isVisible({ timeout: 5000 }).catch(() => false);
+    // Verificar que a página carregou (título ou máquinas) - bilingual
+    const hasTitle = await page.getByText(/My Machines|Minhas Máquinas|Mis Máquinas/i).first().isVisible({ timeout: 5000 }).catch(() => false);
     const hasMachines = await page.getByText(/RTX|A100|H100|4090|3090/i).first().isVisible({ timeout: 5000 }).catch(() => false);
     expect(hasTitle || hasMachines).toBeTruthy();
 
@@ -219,8 +220,8 @@ test.describe('🎯 Ações Reais de Usuário', () => {
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
 
-    // Verificar que a página carregou (título ou máquinas)
-    const hasTitle = await page.getByText(/Minhas Máquinas/i).first().isVisible({ timeout: 5000 }).catch(() => false);
+    // Verificar que a página carregou (título ou máquinas) - bilingual
+    const hasTitle = await page.getByText(/My Machines|Minhas Máquinas|Mis Máquinas/i).first().isVisible({ timeout: 5000 }).catch(() => false);
     const hasMachines = await page.getByText(/RTX|A100|H100|4090|3090/i).first().isVisible({ timeout: 5000 }).catch(() => false);
     expect(hasTitle || hasMachines).toBeTruthy();
 
@@ -236,8 +237,8 @@ test.describe('🎯 Ações Reais de Usuário', () => {
         // Clicar para copiar
         await ipButton.click({ force: true });
 
-        // Verificar feedback visual
-        const hasCopied = await page.getByText('Copiado!').first().isVisible({ timeout: 3000 }).catch(() => false);
+        // Verificar feedback visual (bilingual)
+        const hasCopied = await page.getByText(/Copied|Copiado/i).first().isVisible({ timeout: 3000 }).catch(() => false);
         if (hasCopied) {
           console.log('✅ IP copiado com sucesso!');
         } else {
@@ -322,7 +323,7 @@ test.describe('🔄 Fluxos Completos de Usuário', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Fechar modal de boas-vindas se aparecer (usando getByText - AI)
-    const skipButton = page.getByText('Pular tudo');
+    const skipButton = page.getByText(/Pular tudo|Skip All|Saltar todo/i).first();
     if (await skipButton.isVisible({ timeout: 2000 }).catch(() => false)) {
       await skipButton.click({ force: true });
       await page.waitForTimeout(500);
@@ -330,25 +331,25 @@ test.describe('🔄 Fluxos Completos de Usuário', () => {
     console.log('📍 Passo 1: Dashboard carregado');
 
     // 2. Clicar para ir para Machines (usando getByRole - AI)
-    const machinesLink = page.getByRole('link', { name: /Machines/i });
+    const machinesLink = page.getByRole('link', { name: /Machines|Máquinas/i });
     await machinesLink.click({ force: true });
     await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveURL(/\/machines/);
     console.log('📍 Passo 2: Navegou para Machines');
 
-    // 3. Ver lista de máquinas (usando getByText - AI) - usar .first() para evitar strict mode
-    await expect(page.getByText('Minhas Máquinas').first()).toBeVisible();
+    // 3. Ver lista de máquinas (bilingual) - usar .first() para evitar strict mode
+    await expect(page.getByText(/My Machines|Minhas Máquinas|Mis Máquinas/i).first()).toBeVisible();
     const machineCount = await page.getByText(/RTX|A100|H100/).count();
     console.log(`📍 Passo 3: Vê ${machineCount} máquinas`);
 
-    // 4. Tentar iniciar uma máquina offline (usando getByRole - AI)
-    const startButton = page.getByRole('button', { name: 'Iniciar' }).first();
+    // 4. Tentar iniciar uma máquina offline (bilingual)
+    const startButton = page.getByRole('button', { name: /^Start$|^Iniciar$/i }).first();
     const canStart = await startButton.isVisible().catch(() => false);
 
     if (canStart) {
       await startButton.click({ force: true });
       await page.waitForTimeout(3000);
-      console.log('📍 Passo 4: Clicou em Iniciar');
+      console.log('📍 Passo 4: Clicou em Start/Iniciar');
 
       // Verificar feedback (usando getByText - AI)
       const hasToast = await page.getByText(/Iniciando/).first().isVisible().catch(() => false);

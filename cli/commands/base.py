@@ -4,6 +4,8 @@ import json
 import sys
 from typing import Dict, Any, List, Optional
 
+from ..i18n import _
+
 
 class CommandBuilder:
     """Build and execute commands from OpenAPI schema (auto-discovery)"""
@@ -20,9 +22,9 @@ class CommandBuilder:
         schema = self.api.load_openapi_schema()
 
         if not schema:
-            print("\n❌ Não foi possível conectar ao backend.")
-            print(f"   URL: {self.api.base_url}")
-            print("\n💡 Verifique se o backend está rodando:")
+            print("\n" + _("❌ Could not connect to backend."))
+            print(_("   URL: {url}").format(url=self.api.base_url))
+            print("\n" + _("💡 Check if the backend is running:"))
             print("   cd /home/marcos/dumontcloud && python -m src.main")
             print("")
             sys.exit(1)
@@ -84,28 +86,28 @@ class CommandBuilder:
         """Show help for a specific resource"""
         # Resource-specific titles
         resource_titles = {
-            "job": "GPU Job Commands",
-            "finetune": "Fine-Tuning Commands",
-            "instance": "Instance Management",
-            "snapshot": "Snapshot Commands",
-            "warmpool": "Warm Pool Commands",
-            "failover": "Failover Commands",
-            "serverless": "Serverless Mode Commands",
-            "auth": "Authentication Commands",
-            "setting": "Settings Commands",
-            "savings": "Savings & Cost Commands",
-            "history": "History Commands",
-            "spot": "Spot GPU Commands",
+            "job": _("GPU Job Commands"),
+            "finetune": _("Fine-Tuning Commands"),
+            "instance": _("Instance Management"),
+            "snapshot": _("Snapshot Commands"),
+            "warmpool": _("Warm Pool Commands"),
+            "failover": _("Failover Commands"),
+            "serverless": _("Serverless Mode Commands"),
+            "auth": _("Authentication Commands"),
+            "setting": _("Settings Commands"),
+            "savings": _("Savings & Cost Commands"),
+            "history": _("History Commands"),
+            "spot": _("Spot GPU Commands"),
         }
 
-        title = resource_titles.get(resource, f"{resource.title()} Commands")
+        title = resource_titles.get(resource, _("{resource} Commands").format(resource=resource.title()))
 
         if failed_action:
-            print(f"❌ Ação desconhecida '{failed_action}' para {resource}\n")
+            print(_("❌ Unknown action '{action}' for {resource}\n").format(action=failed_action, resource=resource))
 
         print(f"🔧 {title}\n")
-        print(f"Usage: dumont {resource} <action> [options]\n")
-        print("Actions:")
+        print(_("Usage: dumont {resource} <action> [options]\n").format(resource=resource))
+        print(_("Actions:"))
 
         for action_name, info in sorted(actions.items()):
             summary = info.get("summary", "")
@@ -140,7 +142,7 @@ class CommandBuilder:
         }
 
         if resource in examples:
-            print("Examples:")
+            print(_("Examples:"))
             for ex in examples[resource]:
                 print(f"  {ex}")
             print("")
@@ -201,8 +203,8 @@ class CommandBuilder:
 
         total_commands = sum(len(actions) for actions in commands.values())
 
-        print(f"\n🚀 Dumont Cloud CLI - {total_commands} comandos disponíveis\n")
-        print("Usage: dumont <resource> <action> [args...]")
+        print("\n" + _("🚀 Dumont Cloud CLI - {count} commands available\n").format(count=total_commands))
+        print(_("Usage: dumont <resource> <action> [args...]"))
         print("-" * 70)
 
         for resource in sorted(commands.keys()):
@@ -216,7 +218,7 @@ class CommandBuilder:
                 print(f"  {action:25} [{method:6}] {summary}")
 
         print("\n" + "-" * 70)
-        print("💡 Exemplos:")
+        print(_("💡 Examples:"))
         print("   dumont auth login <email> <password>")
         print("   dumont instance list")
         print("   dumont instance get <instance_id>")
@@ -232,8 +234,8 @@ class CommandBuilder:
         commands = self.build_command_tree()
 
         if resource not in commands:
-            print(f"❌ Recurso desconhecido: {resource}")
-            print(f"\n💡 Recursos disponíveis: {', '.join(sorted(commands.keys()))}")
+            print(_("❌ Unknown resource: {resource}").format(resource=resource))
+            print("\n" + _("💡 Available resources: {resources}").format(resources=', '.join(sorted(commands.keys()))))
             sys.exit(1)
 
         # Show help for resource when no action is provided
@@ -255,8 +257,8 @@ class CommandBuilder:
                 if i < len(args):
                     path = path.replace(f"{{{param_name}}}", args[i])
                 else:
-                    print(f"❌ Parâmetro obrigatório faltando: {param_name}")
-                    print(f"\n💡 Uso: dumont {resource} {action} <{param_name}>")
+                    print(_("❌ Required parameter missing: {param}").format(param=param_name))
+                    print("\n" + _("💡 Usage: dumont {resource} {action} <{param}>").format(resource=resource, action=action, param=param_name))
                     sys.exit(1)
             args = args[len(path_params):]
 
@@ -268,7 +270,7 @@ class CommandBuilder:
                 try:
                     data = json.loads(args[0])
                 except json.JSONDecodeError as e:
-                    print(f"❌ JSON inválido: {e}")
+                    print(_("❌ Invalid JSON: {error}").format(error=e))
                     sys.exit(1)
             else:
                 # Special handling for login
@@ -276,7 +278,7 @@ class CommandBuilder:
                     if len(args) >= 2:
                         data = {"username": args[0], "password": args[1]}
                     else:
-                        print("❌ Uso: dumont auth login <email> <password>")
+                        print(_("❌ Usage: dumont auth login <email> <password>"))
                         sys.exit(1)
                 else:
                     # Parse key=value pairs

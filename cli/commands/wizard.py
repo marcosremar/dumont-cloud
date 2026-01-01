@@ -4,6 +4,8 @@ import sys
 import time
 from typing import Optional
 
+from ..i18n import _
+
 
 class WizardCommands:
     """Deploy wizard for GPU instances"""
@@ -45,12 +47,12 @@ class WizardCommands:
         4. If none ready, try another batch (up to 3 batches)
         5. First machine with SSH ready wins, others are destroyed
         """
-        print(f"\n🚀 Wizard Deploy Starting\n")
+        print("\n" + _("🚀 Wizard Deploy Starting") + "\n")
         print("=" * 60)
-        print(f"   GPU:       {gpu_name or 'Any'}")
-        print(f"   Speed:     {speed}")
-        print(f"   Max Price: ${max_price}/hr")
-        print(f"   Region:    {region}")
+        print(_("   GPU:       {gpu}").format(gpu=gpu_name or _("Any")))
+        print(_("   Speed:     {speed}").format(speed=speed))
+        print(_("   Max Price: ${price}/hr").format(price=max_price))
+        print(_("   Region:    {region}").format(region=region))
         print("=" * 60)
 
         # Import the wizard service
@@ -64,18 +66,18 @@ class WizardCommands:
                 BATCH_TIMEOUT
             )
         except ImportError as e:
-            print(f"❌ Could not import wizard service: {e}")
-            print("   Make sure you're running from the dumontcloud directory")
+            print(_("❌ Could not import wizard service: {error}").format(error=e))
+            print(_("   Make sure you're running from the dumontcloud directory"))
             sys.exit(1)
 
         # Get API key
         api_key = self.get_vast_api_key()
         if not api_key:
-            print("❌ No Vast.ai API key found")
-            print("   Set VAST_API_KEY environment variable or configure via settings")
+            print(_("❌ No Vast.ai API key found"))
+            print(_("   Set VAST_API_KEY environment variable or configure via settings"))
             sys.exit(1)
 
-        print(f"\n📡 Step 1: Searching for offers...")
+        print("\n" + _("📡 Step 1: Searching for offers..."))
 
         # Create wizard service
         wizard = DeployWizardService(api_key)
@@ -94,11 +96,11 @@ class WizardCommands:
         offers = wizard.get_offers(config)
 
         if not offers:
-            print("❌ No offers found matching criteria")
-            print("💡 Try relaxing filters (higher price, different GPU, different region)")
+            print(_("❌ No offers found matching criteria"))
+            print(_("💡 Try relaxing filters (higher price, different GPU, different region)"))
             sys.exit(1)
 
-        print(f"   ✓ Found {len(offers)} offers")
+        print(_("   ✓ Found {count} offers").format(count=len(offers)))
 
         # Show top 5 offers
 #         print("\n   Top offers:")
@@ -106,9 +108,9 @@ class WizardCommands:
 #             print(f"   {i+1}. {offer.get('gpu_name')} - ${offer.get('dph_total', 0):.3f}/hr - {offer.get('inet_down', 0):.0f} Mbps")
 
         # Start deploy
-        print(f"\n🔄 Step 2: Starting multi-start deployment...")
-        print(f"   Strategy: Create {BATCH_SIZE} machines per batch, up to {MAX_BATCHES} batches")
-        print(f"   Timeout: {BATCH_TIMEOUT}s per batch")
+        print("\n" + _("🔄 Step 2: Starting multi-start deployment..."))
+        print(_("   Strategy: Create {batch_size} machines per batch, up to {max_batches} batches").format(batch_size=BATCH_SIZE, max_batches=MAX_BATCHES))
+        print(_("   Timeout: {timeout}s per batch").format(timeout=BATCH_TIMEOUT))
 
         job = wizard.start_deploy(config)
 
@@ -121,13 +123,13 @@ class WizardCommands:
 
             if job.status != last_status:
                 elapsed = int(time.time() - start_time)
-                print(f"\n   [{elapsed}s] Status: {job.status}")
+                print("\n" + _("   [{elapsed}s] Status: {status}").format(elapsed=elapsed, status=job.status))
                 print(f"   {job.message}")
 
                 if job.status == 'creating':
-                    print(f"   Batch {job.batch}/{MAX_BATCHES} - Machines created: {len(job.machines_created)}")
+                    print(_("   Batch {batch}/{max_batches} - Machines created: {count}").format(batch=job.batch, max_batches=MAX_BATCHES, count=len(job.machines_created)))
                 elif job.status == 'waiting':
-                    print(f"   Machines created: {job.machines_created}")
+                    print(_("   Machines created: {machines}").format(machines=job.machines_created))
 
                 last_status = job.status
 
@@ -140,32 +142,32 @@ class WizardCommands:
         print("\n" + "=" * 60)
 
         if job.status == 'failed':
-            print(f"❌ Deploy failed: {job.error}")
-            print(f"\n   Machines tried: {job.machines_tried}")
-            print(f"   Machines created: {len(job.machines_created)}")
-            print(f"   Machines destroyed: {len(job.machines_destroyed)}")
+            print(_("❌ Deploy failed: {error}").format(error=job.error))
+            print("\n" + _("   Machines tried: {count}").format(count=job.machines_tried))
+            print(_("   Machines created: {count}").format(count=len(job.machines_created)))
+            print(_("   Machines destroyed: {count}").format(count=len(job.machines_destroyed)))
             sys.exit(1)
 
         result = job.result
-        print(f"\n✅ Deploy Complete!\n")
-        print(f"📋 Instance Details:")
+        print("\n" + _("✅ Deploy Complete!") + "\n")
+        print(_("📋 Instance Details:"))
         print("-" * 40)
-        print(f"   Instance ID: {result['instance_id']}")
-        print(f"   GPU:         {result.get('gpu_name', 'Unknown')}")
-        print(f"   IP:          {result['public_ip']}")
-        print(f"   SSH Port:    {result['ssh_port']}")
-        print(f"   Price:       ${result.get('dph_total', 0):.3f}/hr")
-        print(f"   Speed:       {result.get('inet_down', 0):.0f} Mbps")
-        print(f"   Ready in:    {result.get('ready_time', 0):.1f}s")
+        print(_("   Instance ID: {id}").format(id=result['instance_id']))
+        print(_("   GPU:         {gpu}").format(gpu=result.get('gpu_name', _('Unknown'))))
+        print(_("   IP:          {ip}").format(ip=result['public_ip']))
+        print(_("   SSH Port:    {port}").format(port=result['ssh_port']))
+        print(_("   Price:       ${price:.3f}/hr").format(price=result.get('dph_total', 0)))
+        print(_("   Speed:       {speed:.0f} Mbps").format(speed=result.get('inet_down', 0)))
+        print(_("   Ready in:    {time:.1f}s").format(time=result.get('ready_time', 0)))
         print("-" * 40)
-        print(f"\n🔗 SSH Command:")
+        print("\n" + _("🔗 SSH Command:"))
         print(f"   {result['ssh_command']}")
 
         if result.get('codeserver_port'):
-            print(f"\n💻 Code Server:")
+            print("\n" + _("💻 Code Server:"))
             print(f"   http://{result['public_ip']}:{result['codeserver_port']}")
 
         # Save instance ID for later use
-        print(f"\n💾 Instance ID saved: {result['instance_id']}")
+        print("\n" + _("💾 Instance ID saved: {id}").format(id=result['instance_id']))
 
         return result

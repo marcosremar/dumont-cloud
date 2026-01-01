@@ -9,7 +9,8 @@ import tempfile
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from pathlib import Path
-from jinja2 import Template
+
+from ...services.template_service import get_cached_environment
 
 from ..models.finetune_job import (
     FineTuneJob,
@@ -414,23 +415,20 @@ class FineTuningService:
         """Get list of supported models for fine-tuning"""
         return SUPPORTED_MODELS
 
-    def _generate_task_yaml(self, job: FineTuneJob) -> str:
+    def _generate_task_yaml(self, job: FineTuneJob, locale: str = "en") -> str:
         """
         Generate SkyPilot task YAML from template.
 
         Args:
             job: FineTuneJob
+            locale: Language code for i18n (e.g., 'en', 'es')
 
         Returns:
             Path to generated YAML file
         """
-        template_file = self.template_dir / "finetune_task.yaml.j2"
-
-        if not template_file.exists():
-            raise FileNotFoundError(f"Template not found: {template_file}")
-
-        with open(template_file, 'r') as f:
-            template = Template(f.read())
+        # Use i18n-enabled Jinja2 environment
+        env = get_cached_environment(locale)
+        template = env.get_template("finetune_task.yaml.j2")
 
         # Map GPU type
         gpu_accelerator = self.skypilot.map_gpu_type(job.gpu_type)
