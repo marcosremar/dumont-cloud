@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { TrendingUp, TrendingDown, Calendar, DollarSign, Target, AlertCircle } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { TrendingUp, TrendingDown, Calendar, DollarSign, Target, AlertCircle, RefreshCw, Link2Off } from 'lucide-react'
 import { Line } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -30,6 +30,9 @@ export default function CostForecastDashboard({ getAuthHeaders, selectedGPU = 'R
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [calendarEvents, setCalendarEvents] = useState([])
+  const [calendarStatus, setCalendarStatus] = useState(null)
+  const [showCalendarEvents, setShowCalendarEvents] = useState(true)
 
   const loadData = async () => {
     setLoading(true)
@@ -58,12 +61,121 @@ export default function CostForecastDashboard({ getAuthHeaders, selectedGPU = 'R
     setLoading(false)
   }
 
+  const loadCalendarData = async () => {
+    try {
+      const headers = getAuthHeaders ? getAuthHeaders() : {}
+
+      // Fetch calendar status first
+      const statusRes = await fetch(
+        `${API_BASE}/api/v1/metrics/spot/calendar-status`,
+        { credentials: 'include', headers }
+      )
+
+      if (statusRes.ok) {
+        const statusData = await statusRes.json()
+        setCalendarStatus(statusData)
+
+        // Only fetch events if connected
+        if (statusData.connected) {
+          const eventsRes = await fetch(
+            `${API_BASE}/api/v1/metrics/spot/calendar-events?days=7`,
+            { credentials: 'include', headers }
+          )
+
+          if (eventsRes.ok) {
+            const eventsData = await eventsRes.json()
+            setCalendarEvents(eventsData.events || [])
+          }
+        }
+      }
+    } catch (err) {
+      // Silently fail - calendar is optional
+      setCalendarStatus({ connected: false, needs_reauthorization: false })
+    }
+  }
+
+  const handleReconnectCalendar = () => {
+    if (calendarStatus?.authorization_url) {
+      window.open(calendarStatus.authorization_url, '_blank', 'width=600,height=700')
+    }
+  }
+
   useEffect(() => {
     loadData()
+    loadCalendarData()
   }, [selectedGPU])
 
   const formatPrice = (price) => `$${price?.toFixed(2) || '0.00'}`
   const formatPercent = (value) => `${((value || 0) * 100).toFixed(0)}%`
+
+  // Map calendar events to chart x-axis indices
+  const getCalendarEventIndices = () => {
+    if (!data?.daily_forecasts || !calendarEvents.length) return []
+
+    const forecastDates = data.daily_forecasts.map(d => new Date(d.date).toDateString())
+
+    return calendarEvents
+      .map(event => {
+        const eventDate = new Date(event.start_time).toDateString()
+        const index = forecastDates.indexOf(eventDate)
+        if (index === -1) return null
+        return {
+          index,
+          title: event.title,
+          start_time: event.start_time,
+          is_compute_intensive: event.is_compute_intensive,
+          duration_hours: event.duration_hours
+        }
+      })
+      .filter(Boolean)
+  }
+
+  // Custom Chart.js plugin to draw calendar event vertical lines
+  const calendarEventPlugin = useMemo(() => ({
+    id: 'calendarEvents',
+    afterDatasetsDraw: (chart) => {
+      if (!showCalendarEvents) return
+
+      const eventIndices = getCalendarEventIndices()
+      if (!eventIndices.length) return
+
+      const { ctx, chartArea, scales } = chart
+      const { left, right, top, bottom } = chartArea
+
+      eventIndices.forEach(event => {
+        const x = scales.x.getPixelForValue(event.index)
+
+        // Skip if outside chart area
+        if (x < left || x > right) return
+
+        // Draw vertical dashed line
+        ctx.save()
+        ctx.beginPath()
+        ctx.setLineDash([5, 5])
+        ctx.strokeStyle = event.is_compute_intensive ? '#f59e0b' : '#3b82f6'
+        ctx.lineWidth = 2
+        ctx.moveTo(x, top)
+        ctx.lineTo(x, bottom)
+        ctx.stroke()
+
+        // Draw event marker circle at top
+        ctx.beginPath()
+        ctx.setLineDash([])
+        ctx.fillStyle = event.is_compute_intensive ? '#f59e0b' : '#3b82f6'
+        ctx.arc(x, top + 10, 6, 0, Math.PI * 2)
+        ctx.fill()
+
+        // Draw calendar icon in circle
+        ctx.fillStyle = '#fff'
+        ctx.font = '8px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText('📅', x, top + 10)
+
+        ctx.restore()
+      })
+    }
+  }), [showCalendarEvents, calendarEvents, data])
 
   const getChartData = () => {
     if (!data?.daily_forecasts) return null
@@ -131,6 +243,14 @@ export default function CostForecastDashboard({ getAuthHeaders, selectedGPU = 'R
         mode: 'index',
         intersect: false,
         callbacks: {
+          afterTitle: (ctx) => {
+            // Show calendar events for this day
+            if (!showCalendarEvents) return null
+            const eventIndices = getCalendarEventIndices()
+            const dayEvents = eventIndices.filter(e => e.index === ctx[0]?.dataIndex)
+            if (!dayEvents.length) return null
+            return dayEvents.map(e => `📅 ${e.title}${e.is_compute_intensive ? ' (GPU)' : ''}`).join('\n')
+          },
           label: (ctx) => {
             if (ctx.dataset.label === 'Forecasted Cost') {
               return `Cost: $${ctx.parsed.y.toFixed(2)}`
@@ -284,7 +404,104 @@ export default function CostForecastDashboard({ getAuthHeaders, selectedGPU = 'R
 
         {chartData && (
           <div className="h-[220px] my-4 p-3 bg-white/[0.02] rounded-xl border border-white/5">
-            <Line data={chartData} options={chartOptions} />
+            <Line data={chartData} options={chartOptions} plugins={[calendarEventPlugin]} />
+          </div>
+        )}
+
+        {/* Calendar Integration Section */}
+        {calendarStatus && (
+          <div className="mt-4 p-3 rounded-lg border border-white/10 bg-white/[0.02]">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Calendar size={16} className={calendarStatus.connected ? 'text-brand-400' : 'text-gray-500'} />
+                <span className="text-sm font-medium text-gray-300">Calendar Events</span>
+                {calendarStatus.connected && calendarEvents.length > 0 && (
+                  <span className="text-xs bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded-full">
+                    {calendarEvents.length} events
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {calendarStatus.connected && (
+                  <button
+                    onClick={() => setShowCalendarEvents(!showCalendarEvents)}
+                    className={`text-xs px-2 py-1 rounded transition-colors ${
+                      showCalendarEvents
+                        ? 'bg-brand-500/20 text-brand-400'
+                        : 'bg-gray-700 text-gray-400'
+                    }`}
+                  >
+                    {showCalendarEvents ? 'Hide' : 'Show'}
+                  </button>
+                )}
+                {calendarStatus.needs_reauthorization && (
+                  <button
+                    onClick={handleReconnectCalendar}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-lg transition-colors"
+                  >
+                    <RefreshCw size={12} />
+                    Reconnect Calendar
+                  </button>
+                )}
+                {!calendarStatus.connected && !calendarStatus.needs_reauthorization && calendarStatus.authorization_url && (
+                  <button
+                    onClick={handleReconnectCalendar}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-colors"
+                  >
+                    <Calendar size={12} />
+                    Connect Calendar
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {calendarStatus.connected && calendarEvents.length > 0 && showCalendarEvents && (
+              <div className="mt-3 space-y-2 max-h-[120px] overflow-y-auto">
+                {calendarEvents.slice(0, 5).map((event, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex items-center justify-between p-2 rounded-lg text-xs ${
+                      event.is_compute_intensive
+                        ? 'bg-amber-500/10 border border-amber-500/20'
+                        : 'bg-blue-500/10 border border-blue-500/20'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={event.is_compute_intensive ? 'text-amber-400' : 'text-blue-400'}>
+                        📅
+                      </span>
+                      <span className="text-gray-300 truncate max-w-[200px]">{event.title}</span>
+                      {event.is_compute_intensive && (
+                        <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">GPU</span>
+                      )}
+                    </div>
+                    <span className="text-gray-500">
+                      {new Date(event.start_time).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                ))}
+                {calendarEvents.length > 5 && (
+                  <p className="text-xs text-gray-500 text-center">
+                    +{calendarEvents.length - 5} more events
+                  </p>
+                )}
+              </div>
+            )}
+
+            {calendarStatus.connected && calendarEvents.length === 0 && (
+              <p className="text-xs text-gray-500 mt-2">No scheduled events in the next 7 days</p>
+            )}
+
+            {!calendarStatus.connected && (
+              <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                <Link2Off size={12} />
+                <span>Connect your Google Calendar to see scheduled events on the forecast</span>
+              </div>
+            )}
           </div>
         )}
 
