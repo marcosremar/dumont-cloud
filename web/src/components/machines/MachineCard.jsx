@@ -846,13 +846,13 @@ export default function MachineCard({
               <Settings className="w-3.5 h-3.5 mr-2" />
               Auto-Hibernation
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={copySSHConfig}>
+            <DropdownMenuItem onClick={copySSHConfig} aria-label="Copiar configuração SSH para o arquivo de config">
               {copiedField === 'ssh' ? (
                 <Check className="w-3.5 h-3.5 mr-2 text-green-400" />
               ) : (
                 <Copy className="w-3.5 h-3.5 mr-2" />
               )}
-              {copiedField === 'ssh' ? 'Copiado!' : 'Copiar SSH Config'}
+              <span>{copiedField === 'ssh' ? 'Copiado!' : 'Copiar SSH Config'}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onDestroy(machine.id)} className="text-red-400 focus:text-red-400">
@@ -873,6 +873,7 @@ export default function MachineCard({
               : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
               }`}
             title="Clique para copiar IP"
+            aria-label="Copiar endereço IP"
           >
             {copiedField === 'ip' ? 'Copiado!' : machine.public_ipaddr}
           </button>
@@ -915,6 +916,7 @@ export default function MachineCard({
               : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
               }`}
             title={`SSH: root@${machine.ssh_host}:${machine.ssh_port || 22} (clique para copiar)`}
+            aria-label="Copiar comando SSH"
           >
             {copiedField === 'ssh' ? 'Copiado!' : `SSH :${machine.ssh_port || 22}`}
           </button>
