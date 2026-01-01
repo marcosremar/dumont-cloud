@@ -25,14 +25,16 @@ test.describe('Debug Props Flow', () => {
       const cards = Array.from(document.querySelectorAll('[class*="flex flex-col p-3"]'));
 
       const results = cards.map((card, index) => {
-        // Find Iniciar button
+        // Find Start/Iniciar button (bilingual)
         const buttons = Array.from(card.querySelectorAll('button'));
-        const iniciarBtn = buttons.find(btn => btn.textContent?.includes('Iniciar'));
+        const iniciarBtn = buttons.find(btn =>
+          btn.textContent?.includes('Iniciar') || btn.textContent?.includes('Start')
+        );
 
         if (!iniciarBtn) {
           return {
             index,
-            hasIniciarButton: false,
+            hasStartButton: false,
             machineName: card.querySelector('span.text-white.font-semibold')?.textContent || 'Unknown'
           };
         }
@@ -65,7 +67,7 @@ test.describe('Debug Props Flow', () => {
           index,
           machineName: card.querySelector('span.text-white.font-semibold')?.textContent || 'Unknown',
           status: card.querySelector('[class*="StatusBadge"]')?.textContent || 'Unknown',
-          hasIniciarButton: true,
+          hasStartButton: true,
           hasOnClick,
           onClickSource,
           buttonText: iniciarBtn.textContent,
@@ -84,8 +86,8 @@ test.describe('Debug Props Flow', () => {
     debugInfo.forEach(info => {
       console.log(`\nMachine ${info.index}: ${info.machineName}`);
       console.log(`  Status: ${info.status}`);
-      console.log(`  Has Iniciar Button: ${info.hasIniciarButton}`);
-      if (info.hasIniciarButton) {
+      console.log(`  Has Start/Iniciar Button: ${info.hasStartButton}`);
+      if (info.hasStartButton) {
         console.log(`  Has onClick Handler: ${info.hasOnClick}`);
         console.log(`  onClick Source: ${info.onClickSource}`);
         console.log(`  Button Text: ${info.buttonText}`);

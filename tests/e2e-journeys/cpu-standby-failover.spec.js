@@ -164,8 +164,8 @@ test.describe('🔄 CPU Standby e Failover Automático', () => {
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000);
 
-    // Fechar modal de boas-vindas se aparecer (usar getByText com .first())
-    const skipButton = page.getByText('Pular tudo').first();
+    // Fechar modal de boas-vindas se aparecer (bilingual: PT/EN/ES)
+    const skipButton = page.getByText(/Pular tudo|Skip All|Saltar todo/i).first();
     if (await skipButton.isVisible({ timeout: 2000 }).catch(() => false)) {
       await skipButton.click({ force: true });
       await page.waitForTimeout(500);
@@ -300,8 +300,8 @@ test.describe('📈 Relatório de Failover', () => {
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000);
 
-    // Fechar modal de boas-vindas se aparecer (usar getByText)
-    const skipButton = page.getByText('Pular tudo').first();
+    // Fechar modal de boas-vindas se aparecer (bilingual: PT/EN/ES)
+    const skipButton = page.getByText(/Pular tudo|Skip All|Saltar todo/i).first();
     if (await skipButton.isVisible({ timeout: 2000 }).catch(() => false)) {
       await skipButton.click({ force: true });
       await page.waitForTimeout(500);

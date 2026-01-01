@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-test.describe('Debug Iniciar Button', () => {
+test.describe('Debug Start/Iniciar Button', () => {
   test.beforeEach(async ({ page }) => {
     // Use demo mode directly
     await page.goto('http://localhost:5173/app/machines');
@@ -8,8 +8,8 @@ test.describe('Debug Iniciar Button', () => {
     await page.waitForTimeout(1000);
   });
 
-  test('Debug Iniciar button on stopped machine', async ({ page }) => {
-    console.log('=== DEBUGGING INICIAR BUTTON ===');
+  test('Debug Start/Iniciar button on stopped machine', async ({ page }) => {
+    console.log('=== DEBUGGING START/INICIAR BUTTON ===');
 
     // Take screenshot before
     console.log('1. Taking screenshot before...');
@@ -24,13 +24,13 @@ test.describe('Debug Iniciar Button', () => {
     // Find all machines
     console.log('2. Finding machines...');
 
-    // Wait for machines to appear
-    await expect(page.getByRole('heading', { name: 'Minhas Máquinas' })).toBeVisible();
+    // Wait for machines to appear (bilingual)
+    await expect(page.getByRole('heading', { name: /My Machines|Minhas Máquinas|Mis Máquinas/i })).toBeVisible();
 
-    // Find offline machines (they have "Iniciar" button)
-    const iniciarButtons = page.locator('button:has-text("Iniciar")');
+    // Find offline machines (they have "Start/Iniciar" button) - bilingual
+    const iniciarButtons = page.locator('button').filter({ hasText: /^Start$|^Iniciar$/i });
     const buttonCount = await iniciarButtons.count();
-    console.log(`Found ${buttonCount} Iniciar buttons (offline machines)`);
+    console.log(`Found ${buttonCount} Start/Iniciar buttons (offline machines)`);
 
     if (buttonCount === 0) {
       console.log('No offline machines available to test');
@@ -38,8 +38,8 @@ test.describe('Debug Iniciar Button', () => {
       return;
     }
 
-    // Click the first Iniciar button
-    console.log('3. Clicking first Iniciar button...');
+    // Click the first Start/Iniciar button
+    console.log('3. Clicking first Start/Iniciar button...');
     await iniciarButtons.first().click();
 
     // Wait for action
