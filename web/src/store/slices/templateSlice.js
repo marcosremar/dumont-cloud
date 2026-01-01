@@ -82,7 +82,7 @@ export const deployTemplate = createAsyncThunk(
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${getToken()}`,
         },
-        body: JSON.stringify({ gpu_id: gpuId, ...options }),
+        body: JSON.stringify({ offer_id: gpuId, ...options }),
       })
       const data = await res.json()
       if (!res.ok) {
