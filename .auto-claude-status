@@ -3,23 +3,23 @@
   "spec": "023-add-aria-labels-and-keyboard-navigation-to-machine",
   "state": "building",
   "subtasks": {
-    "completed": 6,
+    "completed": 10,
     "total": 17,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Add ARIA attributes to backup info popup",
+    "current": "Add ARIA attributes to copy buttons and specs",
     "id": null,
-    "total": 3
+    "total": 2
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 8,
+    "number": 12,
     "started_at": "2026-01-01T07:00:18.670154"
   },
-  "last_update": "2026-01-01T07:19:37.225728"
+  "last_update": "2026-01-01T07:28:29.347889"
 }

@@ -106,6 +106,7 @@ export default function MachineCard({
   const [alertDialog, setAlertDialog] = useState({ open: false, title: '', description: '', action: null })
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false)
   const [copiedField, setCopiedField] = useState(null)
+  const [copyAnnouncement, setCopyAnnouncement] = useState('')
   const [showBackupInfo, setShowBackupInfo] = useState(false)
   const [showFailoverMigration, setShowFailoverMigration] = useState(false)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
@@ -359,17 +360,28 @@ export default function MachineCard({
   const copySSHConfig = () => {
     navigator.clipboard.writeText(generateSSHConfig())
     setCopiedField('ssh')
+    setCopyAnnouncement('Configuração SSH copiada!')
     setShowSSHInstructions(true)
     setTimeout(() => {
       setShowSSHInstructions(false)
       setCopiedField(null)
+      setCopyAnnouncement('')
     }, 2000)
   }
 
   const copyToClipboard = (text, fieldName) => {
     navigator.clipboard.writeText(text)
     setCopiedField(fieldName)
-    setTimeout(() => setCopiedField(null), 1500)
+    // Set contextual announcement for screen readers
+    const announcements = {
+      ip: 'Endereço IP copiado!',
+      ssh: 'Comando SSH copiado!',
+    }
+    setCopyAnnouncement(announcements[fieldName] || 'Copiado!')
+    setTimeout(() => {
+      setCopiedField(null)
+      setCopyAnnouncement('')
+    }, 1500)
   }
 
   const openIDE = (ideName, protocol) => {
@@ -1174,6 +1186,17 @@ export default function MachineCard({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Aria-live region for copy announcements */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+        data-testid="copy-announcement"
+      >
+        {copyAnnouncement}
+      </div>
     </Card>
   )
 }

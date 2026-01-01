@@ -1,14 +1,14 @@
 {
   "discovered_files": {
     "web/src/components/machines/MachineCard.jsx": {
-      "description": "Failover dropdown now has full keyboard navigation: useRef for trigger/menu/buttons, useCallback for keydown handler, focus trapping with Tab, Arrow Up/Down navigation, Enter/Space selection, Escape to close with focus return, Home/End keys, and click-outside detection.",
+      "description": "Copy buttons now have aria-labels for accessibility: IP copy button (Copiar endere\u00e7o IP), SSH copy button (Copiar comando SSH), and SSH Config menu item (Copiar configura\u00e7\u00e3o SSH para o arquivo de config).",
       "category": "accessibility",
-      "discovered_at": "2026-01-01T06:18:57.567439+00:00"
+      "discovered_at": "2026-01-01T06:28:09.529811+00:00"
     },
     "web/src/components/tailadmin-ui/index.jsx": {
-      "description": "DropdownMenu component uses React Context for state (isOpen, setIsOpen). It has basic click-outside detection but no keyboard navigation or ARIA attributes. Needs aria-expanded, aria-haspopup on trigger, and role='menu'/role='menuitem' on content/items.",
-      "category": "accessibility",
-      "discovered_at": "2026-01-01T06:03:12.890064+00:00"
+      "description": "Badge component now uses forwardRef and spreads additional props. Supports ref, tabIndex, onClick, onKeyDown, role, aria-* attributes for accessibility. Follow this pattern for other presentational components that need interactivity.",
+      "category": "pattern",
+      "discovered_at": "2026-01-01T06:26:10.712139+00:00"
     },
     "web/src/components/Tooltip.jsx": {
       "description": "Tooltip.jsx already has good accessibility patterns: uses role='tooltip', has aria-label on HelpTooltip component, and handles focus/blur events. Can use as reference for accessibility patterns.",
@@ -16,5 +16,5 @@
       "discovered_at": "2026-01-01T06:03:12.930112+00:00"
     }
   },
-  "last_updated": "2026-01-01T06:18:57.567467+00:00"
+  "last_updated": "2026-01-01T06:28:09.529825+00:00"
 }

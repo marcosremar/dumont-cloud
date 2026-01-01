@@ -135,7 +135,7 @@
           "id": "3.1",
           "title": "Add aria-expanded and aria-label to backup badge",
           "description": "Add aria-expanded and aria-label to the Backup/Sem backup badge that opens the info popup.",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/machines/MachineCard.jsx"
           ],
@@ -143,32 +143,38 @@
             "Badge has role='button'",
             "Badge has aria-expanded bound to showBackupInfo state",
             "Badge has aria-label 'Informa\u00e7\u00f5es de backup: {status}'"
-          ]
+          ],
+          "notes": "Added ARIA attributes to the Backup/Sem backup badge: role=\"button\", aria-expanded bound to showBackupInfo state, and aria-label with descriptive text (\"Informa\u00e7\u00f5es de backup: Backup ativo\" or \"Informa\u00e7\u00f5es de backup: Sem backup\").",
+          "updated_at": "2026-01-01T06:20:48.033570+00:00"
         },
         {
           "id": "3.2",
           "title": "Add aria-label to backup popup close button",
           "description": "Add aria-label to the close button in the backup info popup.",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/machines/MachineCard.jsx"
           ],
           "acceptance_criteria": [
             "Close button has aria-label='Fechar informa\u00e7\u00f5es de backup'"
-          ]
+          ],
+          "notes": "Added aria-label=\"Fechar informa\u00e7\u00f5es de backup\" to the close button in the backup info popup for screen reader accessibility.",
+          "updated_at": "2026-01-01T06:22:37.593003+00:00"
         },
         {
           "id": "3.3",
           "title": "Add keyboard support to backup popup",
           "description": "Add Escape key to close the backup info popup.",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/machines/MachineCard.jsx"
           ],
           "acceptance_criteria": [
             "Escape key closes the popup",
             "Focus returns to trigger badge after closing"
-          ]
+          ],
+          "notes": "Added keyboard support to backup info popup: Escape key closes popup and returns focus to trigger badge. Also added Enter/Space key support to open popup from badge. Updated Badge component with forwardRef to support ref forwarding and additional props. Added click-outside detection and focus ring styling for keyboard visibility.",
+          "updated_at": "2026-01-01T06:26:04.362492+00:00"
         }
       ]
     },
@@ -181,7 +187,7 @@
           "id": "4.1",
           "title": "Add aria-labels to copy buttons",
           "description": "Add aria-labels to the IP copy button, SSH copy button, and SSH config copy button in the dropdown menu.",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/machines/MachineCard.jsx"
           ],
@@ -189,7 +195,9 @@
             "IP copy button has aria-label 'Copiar endere\u00e7o IP'",
             "SSH copy button has aria-label 'Copiar comando SSH'",
             "SSH Config menu item has descriptive text for screen readers"
-          ]
+          ],
+          "notes": "Added aria-labels to all copy buttons: IP copy button has aria-label=\"Copiar endere\u00e7o IP\", SSH copy button has aria-label=\"Copiar comando SSH\", and SSH Config menu item has aria-label=\"Copiar configura\u00e7\u00e3o SSH para o arquivo de config\". Also wrapped SSH Config text in span for better screen reader support.",
+          "updated_at": "2026-01-01T06:28:04.482153+00:00"
         },
         {
           "id": "4.2",
@@ -325,5 +333,5 @@
     "issues": "",
     "tests_passed": ""
   },
-  "last_updated": "2026-01-01T06:18:54.665544+00:00"
+  "last_updated": "2026-01-01T06:28:04.482175+00:00"
 }

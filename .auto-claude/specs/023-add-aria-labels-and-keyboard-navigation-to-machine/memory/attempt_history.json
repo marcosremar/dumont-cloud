@@ -71,11 +71,59 @@
         }
       ],
       "status": "completed"
+    },
+    "3.1": {
+      "attempts": [
+        {
+          "session": 8,
+          "timestamp": "2026-01-01T07:21:02.475392",
+          "approach": "Implemented: Add aria-expanded and aria-label to the Backup/Sem backup badge that opens the info popup.",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "3.2": {
+      "attempts": [
+        {
+          "session": 9,
+          "timestamp": "2026-01-01T07:22:49.107254",
+          "approach": "Implemented: Add aria-label to the close button in the backup info popup.",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "3.3": {
+      "attempts": [
+        {
+          "session": 10,
+          "timestamp": "2026-01-01T07:26:20.313763",
+          "approach": "Implemented: Add Escape key to close the backup info popup.",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "4.1": {
+      "attempts": [
+        {
+          "session": 11,
+          "timestamp": "2026-01-01T07:28:17.596679",
+          "approach": "Implemented: Add aria-labels to the IP copy button, SSH copy button, and SSH config copy button in the dropdown m",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-01T07:00:18.575852",
-    "last_updated": "2026-01-01T07:19:16.521389"
+    "last_updated": "2026-01-01T07:28:17.596688"
   }
 }
