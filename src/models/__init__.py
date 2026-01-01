@@ -4,6 +4,7 @@ from .price_history import PriceHistory, PriceAlert
 from .instance_status import InstanceStatus, HibernationEvent
 from .metrics import MarketSnapshot, ProviderReliability, PricePrediction, CostEfficiencyRanking
 from .machine_history import MachineAttempt, MachineBlacklist, MachineStats
+from .economy import SavingsHistory, ProviderPricing
 
 __all__ = [
     'PriceHistory',
@@ -19,4 +20,7 @@ __all__ = [
     'MachineAttempt',
     'MachineBlacklist',
     'MachineStats',
+    # Economy widget models
+    'SavingsHistory',
+    'ProviderPricing',
 ]
