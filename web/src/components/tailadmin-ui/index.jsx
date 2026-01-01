@@ -616,10 +616,15 @@ export function DropdownMenuTrigger({ children, asChild, ...props }) {
     setIsOpen(!isOpen);
   };
 
+  const ariaProps = {
+    'aria-expanded': isOpen,
+    'aria-haspopup': 'menu',
+  };
+
   if (asChild) {
-    return React.cloneElement(children, { onClick: handleClick });
+    return React.cloneElement(children, { onClick: handleClick, ...ariaProps });
   }
-  return <button onClick={handleClick} {...props}>{children}</button>;
+  return <button onClick={handleClick} aria-expanded={isOpen} aria-haspopup="menu" {...props}>{children}</button>;
 }
 
 export function DropdownMenuContent({ children, align = 'end', className = '' }) {
@@ -629,7 +634,11 @@ export function DropdownMenuContent({ children, align = 'end', className = '' })
 
   const alignClass = align === 'end' ? 'right-0' : 'left-0';
   return (
-    <div className={`absolute ${alignClass} mt-2 w-56 rounded-lg bg-dark-surface-card border border-white/10 shadow-lg z-50 py-1 ${className}`}>
+    <div
+      role="menu"
+      aria-orientation="vertical"
+      className={`absolute ${alignClass} mt-2 w-56 rounded-lg bg-dark-surface-card border border-white/10 shadow-lg z-50 py-1 ${className}`}
+    >
       {children}
     </div>
   );
@@ -646,8 +655,10 @@ export function DropdownMenuItem({ children, onClick, className = '', disabled }
 
   return (
     <button
+      role="menuitem"
       onClick={handleClick}
       disabled={disabled}
+      aria-disabled={disabled}
       className={`w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >
       {children}
