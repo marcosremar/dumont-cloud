@@ -25,6 +25,7 @@ import ButtonShowcase from './pages/ButtonShowcase'
 import ForgotPassword from './pages/ForgotPassword'
 import TeamsPage from './pages/TeamsPage'
 import TeamDetailsPage from './pages/TeamDetailsPage'
+import CreateRolePage from './pages/CreateRolePage'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import './styles/landing.css'
@@ -348,6 +349,13 @@ export default function App() {
                 </AppLayout>
               </ProtectedRoute>
             } />
+            <Route path="/app/teams/:teamId/roles/new" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <CreateRolePage />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
             <Route path="/app/failover-report" element={
               <ProtectedRoute user={user}>
                 <AppLayout user={user} onLogout={handleLogout}>
@@ -464,6 +472,13 @@ export default function App() {
               <DemoRoute>
                 <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
                   <TeamDetailsPage />
+                </AppLayout>
+              </DemoRoute>
+            } />
+            <Route path="/demo-app/teams/:teamId/roles/new" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <CreateRolePage />
                 </AppLayout>
               </DemoRoute>
             } />
