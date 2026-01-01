@@ -68,6 +68,18 @@
     "current": "Add accessible status indicators",
     "id": null,
     "total": 2
+  "spec": "024-add-aria-labels-and-keyboard-navigation-to-machine",
+  "state": "complete",
+  "subtasks": {
+    "completed": 13,
+    "total": 13,
+    "in_progress": 0,
+    "failed": 0
+  },
+  "phase": {
+    "current": "",
+    "id": 0,
+    "total": 0
   },
   "workers": {
     "active": 0,
@@ -106,4 +118,8 @@
     "started_at": "2026-01-01T07:00:18.670154"
   },
   "last_update": "2026-01-01T07:38:17.856535"
+    "number": 14,
+    "started_at": "2026-01-01T07:00:16.514572"
+  },
+  "last_update": "2026-01-01T07:35:08.610386"
 }

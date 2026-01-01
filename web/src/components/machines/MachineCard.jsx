@@ -257,9 +257,121 @@ export default function MachineCard({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showBackupInfo])
+  const [focusedStrategyIndex, setFocusedStrategyIndex] = useState(-1)
+  const strategyMenuRef = useRef(null)
+  const strategyItemRefs = useRef([])
+  const backupInfoTriggerRef = useRef(null)
+  const backupInfoCloseRef = useRef(null)
 
   // Get current failover strategy and calculate real costs
   const currentStrategy = machine.failover_strategy || (machine.cpu_standby?.enabled ? 'cpu_standby' : 'disabled')
+
+  // Strategy keys for keyboard navigation
+  const strategyKeys = Object.keys(FAILOVER_STRATEGIES_BASE)
+
+  // Handle keyboard navigation for failover strategy dropdown
+  const handleStrategyMenuKeyDown = useCallback((e) => {
+    if (!showStrategyMenu) return
+
+    const itemCount = strategyKeys.length
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setFocusedStrategyIndex(prev => {
+          const next = prev < itemCount - 1 ? prev + 1 : 0
+          return next
+        })
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setFocusedStrategyIndex(prev => {
+          const next = prev > 0 ? prev - 1 : itemCount - 1
+          return next
+        })
+        break
+      case 'Enter':
+      case ' ':
+        e.preventDefault()
+        if (focusedStrategyIndex >= 0 && focusedStrategyIndex < itemCount) {
+          // Select the focused strategy
+          // TODO: Call API to change strategy
+          setShowStrategyMenu(false)
+          setFocusedStrategyIndex(-1)
+        }
+        break
+      case 'Escape':
+        e.preventDefault()
+        setShowStrategyMenu(false)
+        setFocusedStrategyIndex(-1)
+        break
+      case 'Tab':
+        // Close menu and allow normal tab behavior
+        setShowStrategyMenu(false)
+        setFocusedStrategyIndex(-1)
+        break
+      case 'Home':
+        e.preventDefault()
+        setFocusedStrategyIndex(0)
+        break
+      case 'End':
+        e.preventDefault()
+        setFocusedStrategyIndex(itemCount - 1)
+        break
+      default:
+        break
+    }
+  }, [showStrategyMenu, focusedStrategyIndex, strategyKeys.length])
+
+  // Focus the appropriate item when focusedStrategyIndex changes
+  useEffect(() => {
+    if (showStrategyMenu && focusedStrategyIndex >= 0 && strategyItemRefs.current[focusedStrategyIndex]) {
+      strategyItemRefs.current[focusedStrategyIndex].focus()
+    }
+  }, [focusedStrategyIndex, showStrategyMenu])
+
+  // Set initial focus when menu opens
+  useEffect(() => {
+    if (showStrategyMenu) {
+      // Find the index of the current strategy
+      const currentIndex = strategyKeys.indexOf(currentStrategy)
+      setFocusedStrategyIndex(currentIndex >= 0 ? currentIndex : 0)
+    } else {
+      setFocusedStrategyIndex(-1)
+    }
+  }, [showStrategyMenu, currentStrategy, strategyKeys])
+
+  // Close backup info popup and return focus to trigger
+  const closeBackupInfo = useCallback(() => {
+    setShowBackupInfo(false)
+    // Return focus to the trigger element
+    if (backupInfoTriggerRef.current) {
+      backupInfoTriggerRef.current.focus()
+    }
+  }, [])
+
+  // Focus close button when backup info popup opens
+  useEffect(() => {
+    if (showBackupInfo && backupInfoCloseRef.current) {
+      backupInfoCloseRef.current.focus()
+    }
+  }, [showBackupInfo])
+
+  // Handle Escape key to close backup info popup
+  useEffect(() => {
+    if (!showBackupInfo) return
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        closeBackupInfo()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [showBackupInfo, closeBackupInfo])
+
   const strategyCosts = calculateStrategyCosts(machine)
   const strategyInfo = FAILOVER_STRATEGIES_BASE[currentStrategy] || FAILOVER_STRATEGIES_BASE.disabled
   const currentStrategyCost = strategyCosts[currentStrategy] || 0
@@ -678,8 +790,14 @@ export default function MachineCard({
               <button
                 ref={strategyTriggerRef}
                 type="button"
+                id={`failover-trigger-${machine.id}`}
                 data-testid="failover-selector"
                 className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-brand-500 ${
+                aria-label={`Failover strategy: ${strategyInfo.label}. Click to change strategy`}
+                aria-expanded={showStrategyMenu}
+                aria-haspopup="menu"
+                aria-controls={showStrategyMenu ? `failover-menu-${machine.id}` : undefined}
+                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 ${
                   currentStrategy === 'disabled' ? 'bg-gray-500/20 text-gray-400' :
                   currentStrategy === 'warm_pool' ? 'bg-green-500/20 text-green-400' :
                   'bg-brand-500/20 text-brand-400'
@@ -714,9 +832,17 @@ export default function MachineCard({
                   role="menu"
                   aria-label="Opções de estratégia de failover"
                   onKeyDown={handleStrategyKeyDown}
+                  id={`failover-menu-${machine.id}`}
+                  ref={strategyMenuRef}
+                  role="menu"
+                  aria-labelledby={`failover-menu-label-${machine.id}`}
+                  aria-activedescendant={focusedStrategyIndex >= 0 ? `failover-option-${machine.id}-${strategyKeys[focusedStrategyIndex]}` : undefined}
+                  className="absolute top-full left-0 mt-1 z-50 w-64 p-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl"
+                  data-testid="failover-dropdown-menu"
+                  onKeyDown={handleStrategyMenuKeyDown}
                 >
                   <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-700">
-                    <span className="text-[10px] font-semibold text-gray-300">Estratégia de Failover</span>
+                    <span id={`failover-menu-label-${machine.id}`} className="text-[10px] font-semibold text-gray-300">Estratégia de Failover</span>
                     <button
                       onClick={() => {
                         setShowStrategyMenu(false)
@@ -734,6 +860,7 @@ export default function MachineCard({
                       className="p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
                       data-testid="failover-dropdown-close"
                       aria-label="Fechar menu de failover"
+                      aria-label="Close failover strategy menu"
                       tabIndex={-1}
                     >
                       <X className="w-3 h-3" />
@@ -742,11 +869,17 @@ export default function MachineCard({
                   <div className="space-y-1" data-testid="failover-options-list">
                     {Object.entries(FAILOVER_STRATEGIES_BASE).map(([key, strategy], index) => {
                       const cost = strategyCosts[key] || 0
+                      const isFocused = focusedStrategyIndex === index
                       return (
                         <button
                           key={key}
                           ref={(el) => (strategyButtonRefs.current[index] = el)}
+                          ref={(el) => { strategyItemRefs.current[index] = el }}
+                          id={`failover-option-${machine.id}-${key}`}
+                          role="menuitem"
+                          tabIndex={isFocused ? 0 : -1}
                           data-testid={`failover-option-${key}`}
+                          aria-current={currentStrategy === key ? 'true' : undefined}
                           onClick={() => {
                             // TODO: Call API to change strategy
                             setShowStrategyMenu(false)
@@ -761,6 +894,14 @@ export default function MachineCard({
                           role="menuitem"
                           tabIndex={focusedStrategyIndex === index ? 0 : -1}
                           aria-selected={currentStrategy === key}
+                            setFocusedStrategyIndex(-1)
+                          }}
+                          onKeyDown={handleStrategyMenuKeyDown}
+                          className={`w-full flex items-center justify-between p-1.5 rounded text-left transition-colors ${
+                            currentStrategy === key
+                              ? 'bg-brand-500/20 border border-brand-500/30'
+                              : 'hover:bg-gray-800 border border-transparent'
+                          } ${isFocused ? 'ring-2 ring-brand-400 ring-offset-1 ring-offset-gray-900' : ''}`}
                         >
                           <div className="flex items-center gap-1.5">
                             <Shield className={`w-3 h-3 ${
@@ -796,6 +937,7 @@ export default function MachineCard({
             <div className="relative">
               <Badge
                 ref={backupBadgeRef}
+                ref={backupInfoTriggerRef}
                 variant={hasCpuStandby ? 'primary' : 'gray'}
                 className="cursor-pointer hover:opacity-80 text-[9px] focus:outline-none focus:ring-2 focus:ring-brand-500"
                 onClick={() => setShowBackupInfo(!showBackupInfo)}
@@ -812,6 +954,10 @@ export default function MachineCard({
                 tabIndex={0}
                 aria-expanded={showBackupInfo}
                 aria-label={`Informações de backup: ${hasCpuStandby ? 'Backup ativo' : 'Sem backup'}`}
+                aria-label={hasCpuStandby ? 'View CPU backup details' : 'No backup configured. Click for details'}
+                aria-expanded={showBackupInfo}
+                aria-haspopup="dialog"
+                aria-controls={showBackupInfo ? `backup-info-dialog-${machine.id}` : undefined}
               >
                 <Layers className="w-2.5 h-2.5 mr-0.5" />
                 {hasCpuStandby ? 'Backup' : 'Sem backup'}
@@ -822,9 +968,13 @@ export default function MachineCard({
                 ref={backupPopupRef}
                 className="absolute top-full left-0 mt-2 z-50 w-72 p-4 bg-[#131713] border border-white/10 rounded-xl shadow-xl"
                 onKeyDown={handleBackupPopupKeyDown}
+                id={`backup-info-dialog-${machine.id}`}
+                role="dialog"
+                aria-labelledby={`backup-info-title-${machine.id}`}
+                className="absolute top-full left-0 mt-2 z-50 w-72 p-4 bg-[#131713] border border-white/10 rounded-xl shadow-xl"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-white flex items-center gap-2">
+                  <span id={`backup-info-title-${machine.id}`} className="text-sm font-semibold text-white flex items-center gap-2">
                     <Layers className="w-4 h-4 text-brand-400" />
                     CPU Backup (Espelho)
                   </span>
@@ -835,6 +985,10 @@ export default function MachineCard({
                     }}
                     className="p-1 rounded-lg hover:bg-white/10 text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
                     aria-label="Fechar informações de backup"
+                    ref={backupInfoCloseRef}
+                    onClick={closeBackupInfo}
+                    className="p-1 rounded-lg hover:bg-white/10 text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-1 focus:ring-offset-gray-900"
+                    aria-label="Close backup info popup"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -909,6 +1063,10 @@ export default function MachineCard({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-1.5 rounded-lg hover:bg-gray-800/50 text-gray-500 hover:text-gray-300 flex-shrink-0" aria-label="Menu de opções da máquina" aria-haspopup="menu">
+            <button
+              className="p-1.5 rounded-lg hover:bg-gray-800/50 text-gray-500 hover:text-gray-300 flex-shrink-0"
+              aria-label="More options menu"
+            >
               <MoreVertical className="w-4 h-4" />
             </button>
           </DropdownMenuTrigger>
@@ -969,6 +1127,7 @@ export default function MachineCard({
               }`}
             title="Clique para copiar IP"
             aria-label="Copiar endereço IP"
+            aria-label={copiedField === 'ip' ? 'IP copiado para a área de transferência' : `Copiar endereço IP ${machine.public_ipaddr}`}
           >
             {copiedField === 'ip' ? 'Copiado!' : machine.public_ipaddr}
           </button>
@@ -1012,6 +1171,7 @@ export default function MachineCard({
               }`}
             title={`SSH: root@${machine.ssh_host}:${machine.ssh_port || 22} (clique para copiar)`}
             aria-label="Copiar comando SSH"
+            aria-label={copiedField === 'ssh' ? 'Comando SSH copiado para a área de transferência' : `Copiar comando SSH para conectar na porta ${machine.ssh_port || 22}`}
           >
             {copiedField === 'ssh' ? 'Copiado!' : `SSH :${machine.ssh_port || 22}`}
           </button>
@@ -1070,6 +1230,7 @@ export default function MachineCard({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" icon={Code} aria-label="Abrir VS Code" aria-haspopup="menu">
+                <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" icon={Code} aria-label="Open VS Code IDE. Choose between web browser or desktop application via SSH">
                   VS Code
                   <ChevronDown className="w-2.5 h-2.5 opacity-50 ml-0.5" />
                 </Button>
@@ -1083,6 +1244,10 @@ export default function MachineCard({
               Cursor
             </Button>
             <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" onClick={() => openIDE('Windsurf', 'windsurf')} aria-label="Abrir Windsurf IDE">
+            <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" onClick={() => openIDE('Cursor', 'cursor')} aria-label="Open machine in Cursor IDE via SSH remote connection">
+              Cursor
+            </Button>
+            <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" onClick={() => openIDE('Windsurf', 'windsurf')} aria-label="Open machine in Windsurf IDE via SSH remote connection">
               Windsurf
             </Button>
           </div>
@@ -1098,6 +1263,7 @@ export default function MachineCard({
                 onClick={() => setShowFailoverMigration(true)}
                 title="Migrar para outro tipo de failover"
                 aria-label="Configurar failover"
+                aria-label="Open failover migration options for this machine"
               >
                 Failover
               </Button>
@@ -1110,6 +1276,7 @@ export default function MachineCard({
                   onClick={() => onSimulateFailover(machine)}
                   title="Simular roubo de GPU e failover automático"
                   aria-label="Simular failover"
+                  aria-label="Test failover by simulating GPU interruption"
                 >
                   Testar
                 </Button>
@@ -1126,6 +1293,7 @@ export default function MachineCard({
               className="flex-1 text-[10px] h-7"
               onClick={() => onMigrate && onMigrate(machine)}
               aria-label="Migrar para CPU"
+              aria-label="Migrate this machine from GPU to CPU instance"
             >
               CPU
             </Button>
@@ -1133,6 +1301,7 @@ export default function MachineCard({
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline" size="xs" icon={Pause} className="flex-1 text-[10px] h-7" aria-label={`Pausar máquina ${gpuName}`}>
+                <Button variant="outline" size="xs" icon={Pause} className="flex-1 text-[10px] h-7" aria-label="Pause this machine. Running processes will be interrupted">
                   Pausar
                 </Button>
               </AlertDialogTrigger>
@@ -1208,6 +1377,7 @@ export default function MachineCard({
                     className="flex-1 text-[10px] h-7"
                     onClick={() => onMigrate && onMigrate(machine)}
                     aria-label="Migrar para GPU"
+                    aria-label="Migrate this machine from CPU to GPU instance"
                   >
                     GPU
                   </Button>
@@ -1220,6 +1390,7 @@ export default function MachineCard({
                   className={`text-[10px] h-7 ${machine.num_gpus === 0 ? 'flex-1' : 'w-full'}`}
                   onClick={() => onStart && onStart(machine.id)}
                   aria-label={`Iniciar máquina ${gpuName}`}
+                  aria-label={`Start ${gpuName} machine`}
                 >
                   Iniciar
                 </Button>
