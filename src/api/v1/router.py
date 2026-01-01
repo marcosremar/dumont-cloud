@@ -14,6 +14,7 @@ from .endpoints import market, hosts, webhooks
 from .endpoints import market, hosts, currency
 from .endpoints import market, hosts, teams, roles, users
 from . import audit
+from .endpoints import market, hosts, reservations
 from .endpoints.settings import balance_router
 from .endpoints.spot import router as spot_router
 from .endpoints.metrics import reliability_router
@@ -104,3 +105,5 @@ api_router.include_router(audit.router, tags=["Audit Logs"])
 
 # Users - User profile and team context switching
 api_router.include_router(users.router, tags=["Users"])
+# GPU Reservations - Reserve GPU capacity with guaranteed availability
+api_router.include_router(reservations.router, tags=["Reservations"])

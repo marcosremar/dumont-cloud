@@ -30,6 +30,11 @@
   "subtasks": {
     "completed": 19,
     "total": 22,
+  "spec": "021-gpu-reservation-system",
+  "state": "building",
+  "subtasks": {
+    "completed": 21,
+    "total": 26,
     "in_progress": 1,
     "failed": 0
   },
@@ -52,6 +57,9 @@
     "current": "Frontend Cost Forecast Dashboard",
     "id": null,
     "total": 6
+    "current": "End-to-End Integration",
+    "id": null,
+    "total": 3
   },
   "workers": {
     "active": 0,
@@ -82,4 +90,8 @@
     "started_at": "2025-12-31T23:15:09.248371"
   },
   "last_update": "2026-01-01T03:32:37.420346"
+    "number": 15,
+    "started_at": "2026-01-01T07:07:18.348510"
+  },
+  "last_update": "2026-01-01T07:51:11.418718"
 }

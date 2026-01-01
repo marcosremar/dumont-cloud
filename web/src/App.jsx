@@ -34,6 +34,7 @@ import AffiliateDashboard from './components/affiliate/AffiliateDashboard'
 import TeamsPage from './pages/TeamsPage'
 import TeamDetailsPage from './pages/TeamDetailsPage'
 import CreateRolePage from './pages/CreateRolePage'
+import Reservations from './pages/Reservations'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import NPSSurvey from './components/NPSSurvey'
@@ -515,6 +516,10 @@ export default function App() {
               <ProtectedRoute user={user}>
                 <AppLayout user={user} onLogout={handleLogout}>
                   <AffiliateDashboard />
+            <Route path="/app/reservations" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <Reservations />
                 </AppLayout>
               </ProtectedRoute>
             } />
@@ -679,6 +684,10 @@ export default function App() {
               <DemoRoute>
                 <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
                   <AffiliateDashboard />
+            <Route path="/demo-app/reservations" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <Reservations />
                 </AppLayout>
               </DemoRoute>
             } />

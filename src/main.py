@@ -183,6 +183,26 @@ async def lifespan(app: FastAPI):
             logger.info("✓ Exchange rate scheduler started (daily at 00:00 UTC)")
         except Exception as e:
             logger.warning(f"⚠ Exchange rate scheduler not started: {e}")
+        # Initialize GPU Reservation Scheduler (Credit Expiration & Reservation Jobs)
+        try:
+            from .services.scheduler_service import (
+                init_scheduler,
+                start_scheduler,
+                setup_reservation_jobs
+            )
+            from .config.database import SessionLocal
+
+            # Initialize and start the scheduler
+            init_scheduler(timezone="UTC")
+            start_scheduler()
+
+            # Set up reservation-related scheduled jobs (credit expiration at midnight UTC)
+            setup_reservation_jobs(SessionLocal)
+
+            agents_started.append("ReservationScheduler")
+            logger.info("✓ GPU Reservation Scheduler started (credit expiration at midnight UTC)")
+        except Exception as e:
+            logger.warning(f"⚠ GPU Reservation Scheduler not started: {e}")
 
         logger.info(f"   Started agents: {', '.join(agents_started) if agents_started else 'None'}")
         
@@ -211,6 +231,13 @@ async def lifespan(app: FastAPI):
         logger.info("✓ Exchange rate scheduler stopped")
     except Exception as e:
         logger.error(f"Error stopping exchange rate scheduler: {e}")
+    # Stop GPU Reservation Scheduler
+    try:
+        from .services.scheduler_service import stop_scheduler
+        stop_scheduler(wait=True)
+        logger.info("✓ GPU Reservation Scheduler stopped")
+    except Exception as e:
+        logger.error(f"Error stopping Reservation Scheduler: {e}")
 
 
 
@@ -315,7 +342,7 @@ def create_app() -> FastAPI:
 
         raise HTTPException(status_code=404, detail="Document not found")
 
-    # Include API v1 router
+    # Include API v1 router (includes all endpoint routers: auth, instances, reservations, etc.)
     app.include_router(api_router, prefix=API_V1_PREFIX)
 
     # Compatibility: also mount at /api (without v1) for frontend

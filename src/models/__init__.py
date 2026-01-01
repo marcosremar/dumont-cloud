@@ -27,6 +27,8 @@ from .rbac import (
     PERMISSIONS,
     ROLE_PERMISSIONS,
 )
+from .reservation import Reservation, ReservationStatus
+from .reservation_credit import ReservationCredit, CreditStatus, CreditTransactionType
 
 __all__ = [
     'PriceHistory',
@@ -82,4 +84,10 @@ __all__ = [
     'SYSTEM_ROLES',
     'PERMISSIONS',
     'ROLE_PERMISSIONS',
+    # Reservation system models
+    'Reservation',
+    'ReservationStatus',
+    'ReservationCredit',
+    'CreditStatus',
+    'CreditTransactionType',
 ]

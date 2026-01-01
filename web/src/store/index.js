@@ -15,6 +15,7 @@ import webhooksSlice from './slices/webhooksSlice'
 import referralSlice from './slices/referralSlice'
 import affiliateSlice from './slices/affiliateSlice'
 import currencySlice from './slices/currencySlice'
+import reservationSlice from './reservationSlice'
 
 export const store = configureStore({
   reducer: {
@@ -30,6 +31,7 @@ export const store = configureStore({
     referral: referralSlice,
     affiliate: affiliateSlice,
     currency: currencySlice,
+    reservations: reservationSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
