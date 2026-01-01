@@ -1,0 +1,254 @@
+{
+  "feature": "Add focus trapping and role attributes to AlertDialog modal components",
+  "description": "Implement proper focus management in AlertDialog components including focus trapping, role=\"dialog\", aria-modal=\"true\", and automatic focus return to trigger element on close.",
+  "created_at": "2025-12-31T21:16:39.151Z",
+  "updated_at": "2026-01-01T00:00:00.000Z",
+  "status": "in_progress",
+  "planStatus": "approved",
+  "phases": [
+    {
+      "phase": 1,
+      "title": "Create useFocusTrap Hook",
+      "description": "Create a reusable React hook that implements focus trapping, Escape key handling, and focus restoration for modal components.",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "1.1",
+          "title": "Create useFocusTrap hook file",
+          "description": "Create a new hook at web/src/hooks/useFocusTrap.js that implements focus trapping logic. The hook should: 1) Store the previously focused element on mount, 2) Find all focusable elements within the container, 3) Handle Tab/Shift+Tab to cycle through focusable elements, 4) Trap focus within the container, 5) Return focus to the trigger element on cleanup.",
+          "status": "completed",
+          "acceptance_criteria": [
+            "Hook accepts a ref to the container element and an isActive boolean",
+            "Hook stores the previously focused element when activated",
+            "Hook finds all focusable elements (buttons, inputs, links, etc.) within container",
+            "Tab key cycles forward through focusable elements",
+            "Shift+Tab cycles backward through focusable elements",
+            "Focus wraps from last to first element and vice versa",
+            "Focus returns to previously focused element on cleanup"
+          ],
+          "notes": "Created useFocusTrap hook at web/src/hooks/useFocusTrap.ts with all required functionality: stores previously focused element, finds focusable elements, handles Tab/Shift+Tab cycling, traps focus within container, and returns focus on cleanup. Also includes FOCUSABLE_SELECTOR constant.",
+          "updated_at": "2026-01-01T06:04:42.769532+00:00"
+        },
+        {
+          "id": "1.2",
+          "title": "Add FOCUSABLE_SELECTOR constant",
+          "description": "Define a constant with CSS selectors for all focusable elements: buttons, inputs, selects, textareas, anchors with href, elements with tabindex >= 0, and custom focusable elements.",
+          "status": "completed",
+          "acceptance_criteria": [
+            "Selector includes button:not([disabled])",
+            "Selector includes input:not([disabled])",
+            "Selector includes select:not([disabled])",
+            "Selector includes textarea:not([disabled])",
+            "Selector includes a[href]",
+            "Selector includes [tabindex]:not([tabindex='-1'])"
+          ],
+          "notes": "FOCUSABLE_SELECTOR constant was already defined in web/src/hooks/useFocusTrap.ts as part of subtask 1.1. The constant includes all required selectors: button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], and [tabindex]:not([tabindex='-1']). Already committed in 31cf44f.",
+          "updated_at": "2026-01-01T06:05:49.139387+00:00"
+        },
+        {
+          "id": "1.3",
+          "title": "Export hook from hooks index",
+          "description": "Create or update web/src/hooks/index.js to export the useFocusTrap hook for easy importing throughout the project.",
+          "status": "completed",
+          "acceptance_criteria": [
+            "Hook is exported from index file",
+            "Can be imported as: import { useFocusTrap } from '@/hooks' or '../hooks'"
+          ],
+          "notes": "Created web/src/hooks/index.ts barrel export file that exports useFocusTrap, FOCUSABLE_SELECTOR, useModal, and useGoBack hooks. The hook can now be imported as: import { useFocusTrap } from '@/hooks'. Committed in 4f74524.",
+          "updated_at": "2026-01-01T06:07:21.429290+00:00"
+        }
+      ]
+    },
+    {
+      "phase": 2,
+      "title": "Update tailadmin-ui AlertDialog",
+      "description": "Add accessibility attributes and focus management to the custom AlertDialog component in tailadmin-ui/index.jsx.",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "2.1",
+          "title": "Add ARIA attributes to AlertDialogContent",
+          "description": "Update the AlertDialogContent component to include role='alertdialog', aria-modal='true', aria-labelledby pointing to the title, and aria-describedby pointing to the description.",
+          "status": "completed",
+          "acceptance_criteria": [
+            "AlertDialogContent has role='alertdialog'",
+            "AlertDialogContent has aria-modal='true'",
+            "AlertDialogContent generates unique IDs for title and description",
+            "AlertDialogContent has aria-labelledby pointing to title ID",
+            "AlertDialogContent has aria-describedby pointing to description ID"
+          ],
+          "notes": "Added ARIA attributes to AlertDialogContent: role='alertdialog', aria-modal='true', aria-labelledby, and aria-describedby. Created AlertDialogContext with useId() to generate unique IDs for title and description. Exported useAlertDialogContext hook for child components to consume. Committed in 573f711.",
+          "updated_at": "2026-01-01T06:11:35.282273+00:00"
+        },
+        {
+          "id": "2.2",
+          "title": "Integrate useFocusTrap in AlertDialog",
+          "description": "Wrap AlertDialog in a provider that manages focus trap state and integrate the useFocusTrap hook to trap focus when the dialog is open.",
+          "status": "pending",
+          "acceptance_criteria": [
+            "AlertDialog uses useFocusTrap hook when open",
+            "Focus moves to first focusable element when dialog opens",
+            "Focus is trapped within the dialog while open",
+            "Focus returns to trigger element when dialog closes"
+          ]
+        },
+        {
+          "id": "2.3",
+          "title": "Add keyboard handling for Escape key",
+          "description": "Ensure pressing Escape key closes the AlertDialog (may already be handled by overlay click, but should also work via keyboard).",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Pressing Escape key closes the dialog",
+            "onOpenChange is called with false when Escape is pressed",
+            "Focus returns to trigger after Escape closes dialog"
+          ]
+        },
+        {
+          "id": "2.4",
+          "title": "Update AlertDialogTitle with ID",
+          "description": "Modify AlertDialogTitle to accept and apply an id prop for aria-labelledby reference.",
+          "status": "pending",
+          "acceptance_criteria": [
+            "AlertDialogTitle accepts id prop",
+            "AlertDialogTitle renders with the provided id attribute"
+          ]
+        },
+        {
+          "id": "2.5",
+          "title": "Update AlertDialogDescription with ID",
+          "description": "Modify AlertDialogDescription to accept and apply an id prop for aria-describedby reference.",
+          "status": "pending",
+          "acceptance_criteria": [
+            "AlertDialogDescription accepts id prop",
+            "AlertDialogDescription renders with the provided id attribute"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "title": "Update tailadmin Modal Component",
+      "description": "Add accessibility attributes and focus management to the Modal component in tailadmin/ui/modal/index.tsx.",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "3.1",
+          "title": "Add ARIA attributes to Modal",
+          "description": "Update the Modal component to include role='dialog', aria-modal='true', and proper ARIA labeling.",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Modal container has role='dialog'",
+            "Modal container has aria-modal='true'",
+            "Modal supports aria-labelledby and aria-describedby props"
+          ]
+        },
+        {
+          "id": "3.2",
+          "title": "Integrate useFocusTrap in Modal",
+          "description": "Integrate the useFocusTrap hook to trap focus within the Modal when it is open.",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Modal uses useFocusTrap hook when isOpen is true",
+            "Focus moves to first focusable element when modal opens",
+            "Focus is trapped within the modal while open",
+            "Focus returns to trigger element when modal closes"
+          ]
+        },
+        {
+          "id": "3.3",
+          "title": "Ensure consistent Escape key behavior",
+          "description": "Verify Escape key handler works correctly with the focus trap and properly returns focus.",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Escape key closes the modal (already implemented)",
+            "Focus properly returns to trigger element after Escape",
+            "No duplicate event handlers or conflicts"
+          ]
+        }
+      ]
+    },
+    {
+      "phase": 4,
+      "title": "Testing and Verification",
+      "description": "Create tests and manually verify accessibility improvements across all modal components.",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "4.1",
+          "title": "Add accessibility tests for useFocusTrap",
+          "description": "Create unit tests for the useFocusTrap hook to verify focus trapping behavior.",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Test verifies focus moves to container on mount",
+            "Test verifies Tab cycles through focusable elements",
+            "Test verifies Shift+Tab cycles backward",
+            "Test verifies focus wraps correctly",
+            "Test verifies focus returns on cleanup"
+          ]
+        },
+        {
+          "id": "4.2",
+          "title": "Add E2E accessibility tests for AlertDialog",
+          "description": "Create Playwright E2E tests to verify keyboard navigation and ARIA attributes in AlertDialog.",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Test verifies role='alertdialog' is present",
+            "Test verifies aria-modal='true' is present",
+            "Test verifies Tab key navigation works",
+            "Test verifies Escape key closes dialog",
+            "Test verifies focus returns to trigger"
+          ]
+        },
+        {
+          "id": "4.3",
+          "title": "Manual screen reader testing",
+          "description": "Document manual testing steps and perform screen reader testing with VoiceOver/NVDA to ensure proper announcements.",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Document testing steps in build-progress.txt",
+            "Screen reader announces dialog title when opened",
+            "Screen reader announces dialog description",
+            "Screen reader indicates modal state",
+            "All interactive elements are properly labeled"
+          ]
+        },
+        {
+          "id": "4.4",
+          "title": "Verify no regressions in existing modals",
+          "description": "Test all existing modal usages (MachineCard, CreateServerlessModal, FailoverMigrationModal, etc.) to ensure no visual or functional regressions.",
+          "status": "pending",
+          "acceptance_criteria": [
+            "MachineCard AlertDialogs work correctly",
+            "CreateServerlessModal works correctly",
+            "FailoverMigrationModal works correctly",
+            "InstanceDetailsModal works correctly",
+            "All modals open, close, and submit as expected"
+          ]
+        }
+      ]
+    }
+  ],
+  "workflow_type": "development",
+  "services_involved": [
+    "web/src/hooks/useFocusTrap.js",
+    "web/src/components/tailadmin-ui/index.jsx",
+    "web/src/components/tailadmin/ui/modal/index.tsx"
+  ],
+  "final_acceptance": [
+    "All modal components have role='dialog' or role='alertdialog'",
+    "All modal components have aria-modal='true'",
+    "Focus is trapped within modals when open",
+    "Focus returns to trigger element when modals close",
+    "Escape key closes modals and returns focus",
+    "WCAG 2.4.3 Focus Order compliance verified",
+    "No visual or functional regressions in existing modal usages"
+  ],
+  "spec_file": "spec.md",
+  "notes": [
+    "Radix-based components (ui/alert-dialog.jsx, ui/dialog.jsx) already have focus trapping - no changes needed",
+    "Custom tailadmin-ui AlertDialog (lines 667-729) needs full accessibility implementation",
+    "Custom tailadmin Modal (modal/index.tsx) needs full accessibility implementation",
+    "useFocusTrap hook should be reusable for any future modal components"
+  ],
+  "last_updated": "2026-01-01T06:11:35.289221+00:00"
+}

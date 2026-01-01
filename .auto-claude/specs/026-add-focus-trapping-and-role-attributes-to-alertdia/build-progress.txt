@@ -1,0 +1,61 @@
+# Build Progress: Add focus trapping and role attributes to AlertDialog modal components
+
+## Overview
+Implementing proper focus management for modal components to comply with WCAG 2.4.3 Focus Order.
+
+## Analysis Summary (2026-01-01)
+
+### Components Identified
+
+**Already Accessible (Radix-based - No changes needed):**
+- `web/src/components/ui/alert-dialog.jsx` - Uses @radix-ui/react-alert-dialog (built-in focus trap)
+- `web/src/components/ui/dialog.jsx` - Uses @radix-ui/react-dialog (built-in focus trap)
+
+**Need Accessibility Improvements (Custom implementations):**
+1. `web/src/components/tailadmin-ui/index.jsx` - AlertDialog (lines 667-729)
+   - Custom implementation using createPortal
+   - Missing: role, aria-modal, focus trapping, focus return
+   - Used by: MachineCard, FailoverMigrationModal, CreateServerlessModal
+
+2. `web/src/components/tailadmin/ui/modal/index.tsx` - Modal component
+   - Custom implementation
+   - Has Escape key handling (good)
+   - Missing: role, aria-modal, focus trapping, focus return
+   - Used by: Various pages
+
+### Files Using tailadmin-ui AlertDialog:
+- web/src/components/machines/MachineCard.jsx
+- web/src/components/serverless/CreateServerlessModal.jsx
+- web/src/components/FailoverMigrationModal.jsx
+
+### Files Using tailadmin Modal:
+- Multiple modal components in the codebase
+
+## Implementation Plan
+
+### Phase 1: Create useFocusTrap Hook
+- Create reusable hook for focus management
+- Handle Tab/Shift+Tab cycling
+- Store and restore focus on mount/unmount
+
+### Phase 2: Update tailadmin-ui AlertDialog
+- Add role="alertdialog" and aria-modal="true"
+- Integrate useFocusTrap hook
+- Add aria-labelledby/aria-describedby support
+- Ensure Escape key handling
+
+### Phase 3: Update tailadmin Modal
+- Add role="dialog" and aria-modal="true"
+- Integrate useFocusTrap hook
+- Verify Escape key behavior
+
+### Phase 4: Testing
+- Unit tests for useFocusTrap
+- E2E accessibility tests
+- Manual screen reader testing
+- Regression testing
+
+## Progress Log
+
+[2026-01-01] Created implementation plan with 4 phases and 15 subtasks
+[2026-01-01] Analyzed codebase - identified 2 custom modal components needing updates

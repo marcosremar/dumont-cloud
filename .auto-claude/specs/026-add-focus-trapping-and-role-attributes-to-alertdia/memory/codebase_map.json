@@ -1,0 +1,20 @@
+{
+  "discovered_files": {
+    "web/src/components/tailadmin-ui/index.jsx": {
+      "description": "AlertDialogContent now has ARIA accessibility attributes (role='alertdialog', aria-modal='true', aria-labelledby, aria-describedby). Uses AlertDialogContext with useId() to generate unique IDs shared via useAlertDialogContext() hook for AlertDialogTitle and AlertDialogDescription components.",
+      "category": "accessibility",
+      "discovered_at": "2026-01-01T06:11:48.619408+00:00"
+    },
+    "web/src/components/tailadmin/ui/modal/index.tsx": {
+      "description": "Custom Modal component has Escape key handling and body scroll lock, but lacks role=\"dialog\", aria-modal=\"true\", and focus trapping. TypeScript component that needs JSX hook integration.",
+      "category": "accessibility",
+      "discovered_at": "2026-01-01T06:02:41.825403+00:00"
+    },
+    "web/src/hooks/useFocusTrap.ts": {
+      "description": "New useFocusTrap hook implements focus trapping for modal components. Accepts containerRef and isActive boolean. Exports FOCUSABLE_SELECTOR constant. Stores previously focused element, traps Tab/Shift+Tab, and returns focus on cleanup.",
+      "category": "hooks",
+      "discovered_at": "2026-01-01T06:04:48.089530+00:00"
+    }
+  },
+  "last_updated": "2026-01-01T06:11:48.619905+00:00"
+}

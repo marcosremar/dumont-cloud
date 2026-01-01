@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useId, createContext, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
+import { useFocusTrap } from '../../hooks';
 import { Link } from 'react-router-dom';
 
 // Page Header with Breadcrumb
@@ -664,21 +665,21 @@ export function DropdownMenuLabel({ children, className = '' }) {
 }
 
 // Alert Dialog Components (usando Portal)
-// AlertDialog Context for sharing IDs between components
+// AlertDialog Context for sharing IDs and state between components
 const AlertDialogContext = createContext(null);
 
 export function AlertDialog({ children, open, onOpenChange }) {
   if (!open) return null;
 
   const modalContent = (
-    <>
+    <AlertDialogContext.Provider value={{ open, onOpenChange }}>
       <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm" onClick={() => onOpenChange?.(false)} />
       <div className="fixed inset-0 z-[1000] flex items-center justify-center pointer-events-none p-4">
-        <div className="pointer-events-auto relative" data-open={open} data-onOpenChange={onOpenChange}>
+        <div className="pointer-events-auto relative">
           {children}
         </div>
       </div>
-    </>
+    </AlertDialogContext.Provider>
   );
 
   return createPortal(modalContent, document.body);
@@ -692,13 +693,20 @@ export function AlertDialogTrigger({ children, asChild, ...props }) {
 }
 
 export function AlertDialogContent({ children, className = '' }) {
+  const context = useContext(AlertDialogContext);
+  const { open, onOpenChange } = context || {};
   const baseId = useId();
   const titleId = `${baseId}-title`;
   const descriptionId = `${baseId}-description`;
+  const contentRef = useRef(null);
+
+  // Trap focus within the dialog when it's open
+  useFocusTrap(contentRef, !!open);
 
   return (
-    <AlertDialogContext.Provider value={{ titleId, descriptionId }}>
+    <AlertDialogContext.Provider value={{ titleId, descriptionId, open, onOpenChange }}>
       <div
+        ref={contentRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
