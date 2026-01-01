@@ -35,6 +35,11 @@
   "subtasks": {
     "completed": 21,
     "total": 26,
+  "spec": "023-add-aria-labels-and-keyboard-navigation-to-machine",
+  "state": "building",
+  "subtasks": {
+    "completed": 14,
+    "total": 17,
     "in_progress": 1,
     "failed": 0
   },
@@ -60,6 +65,9 @@
     "current": "End-to-End Integration",
     "id": null,
     "total": 3
+    "current": "Add accessible status indicators",
+    "id": null,
+    "total": 2
   },
   "workers": {
     "active": 0,
@@ -94,4 +102,8 @@
     "started_at": "2026-01-01T07:07:18.348510"
   },
   "last_update": "2026-01-01T07:51:11.418718"
+    "number": 16,
+    "started_at": "2026-01-01T07:00:18.670154"
+  },
+  "last_update": "2026-01-01T07:38:17.856535"
 }
