@@ -7,7 +7,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel, Field
 
 from ..schemas.request import CreateSnapshotRequest, RestoreSnapshotRequest, DeleteSnapshotRequest, SetKeepForeverRequest, UpdateRetentionPolicyRequest
@@ -31,6 +31,7 @@ from ....config.snapshot_lifecycle_config import (
     InstanceSnapshotConfig,
 )
 from ....services.snapshot_cleanup_agent import SnapshotCleanupAgent
+from ....services.snapshot_cleanup_metrics import CleanupMetrics, get_cleanup_metrics
 
 
 # ============================================================================
@@ -54,6 +55,20 @@ class CleanupResponse(BaseModel):
     started_at: Optional[str] = Field(None, description="Cleanup start timestamp")
     completed_at: Optional[str] = Field(None, description="Cleanup completion timestamp")
     message: str = Field(..., description="Summary message")
+
+
+class CleanupMetricsResponse(BaseModel):
+    """Response for cleanup metrics query"""
+    total_storage_freed: int = Field(..., description="Total storage freed in bytes for the period")
+    total_storage_freed_all_time: int = Field(..., description="Total storage freed in bytes all time")
+    total_storage_freed_mb: float = Field(..., description="Total storage freed in MB for the period")
+    total_snapshots_deleted: int = Field(..., description="Total snapshots deleted in the period")
+    total_cleanup_runs: int = Field(..., description="Number of cleanup runs in the period")
+    success_rate: float = Field(..., description="Success rate of cleanup operations (0.0-1.0)")
+    storage_freed_today: int = Field(..., description="Bytes of storage freed today")
+    storage_freed_today_mb: float = Field(..., description="MB of storage freed today")
+    snapshots_deleted_today: int = Field(..., description="Snapshots deleted today")
+    period_days: int = Field(..., description="Number of days included in period metrics")
 
 
 # ============================================================================
@@ -593,4 +608,48 @@ async def trigger_cleanup(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to trigger cleanup: {str(e)}",
+        )
+
+
+@router.get("/cleanup/metrics", response_model=CleanupMetricsResponse)
+async def get_cleanup_metrics_endpoint(
+    days: int = Query(30, ge=1, le=365, description="Number of days to include in metrics"),
+    metrics: CleanupMetrics = Depends(get_cleanup_metrics),
+):
+    """
+    Get cleanup metrics and statistics
+
+    Returns aggregate metrics about snapshot cleanup operations including:
+    - Total storage freed (for period and all time)
+    - Total snapshots deleted
+    - Success rate of cleanup operations
+    - Today's cleanup statistics
+
+    The period_days parameter controls how many days of history to include
+    in the aggregate metrics (default: 30 days).
+    """
+    try:
+        summary = metrics.get_summary(days=days)
+
+        # Calculate MB values for convenience
+        total_storage_freed_mb = summary['total_storage_freed'] / (1024 * 1024)
+        storage_freed_today_mb = summary['storage_freed_today'] / (1024 * 1024)
+
+        return CleanupMetricsResponse(
+            total_storage_freed=summary['total_storage_freed'],
+            total_storage_freed_all_time=summary['total_storage_freed_all_time'],
+            total_storage_freed_mb=round(total_storage_freed_mb, 2),
+            total_snapshots_deleted=summary['total_snapshots_deleted'],
+            total_cleanup_runs=summary['total_cleanup_runs'],
+            success_rate=round(summary['success_rate'], 4),
+            storage_freed_today=summary['storage_freed_today'],
+            storage_freed_today_mb=round(storage_freed_today_mb, 2),
+            snapshots_deleted_today=summary['snapshots_deleted_today'],
+            period_days=summary['period_days'],
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get cleanup metrics: {str(e)}",
         )
