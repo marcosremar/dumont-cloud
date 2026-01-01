@@ -14,6 +14,7 @@ from . import failover
 from . import serverless
 from . import machine_history
 from . import teams
+from . import roles
 
 __all__ = [
     'auth',
@@ -29,5 +30,6 @@ __all__ = [
     'serverless',
     'machine_history',
     'teams',
+    'roles',
 ]
 
