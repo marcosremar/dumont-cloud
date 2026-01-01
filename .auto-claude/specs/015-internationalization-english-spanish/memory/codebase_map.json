@@ -19,7 +19,17 @@
       "description": "Live Docs HTML template with 17 translatable strings wrapped using {{ _() }} syntax. Includes both static HTML content and JavaScript strings that are rendered server-side before serving to client.",
       "category": "templates",
       "discovered_at": "2026-01-01T02:44:25.827351+00:00"
+    },
+    "src/services/template_service.py": {
+      "description": "Created Jinja2 template service with i18n extension. Provides get_template_environment(locale), render_template(template_name, context, locale), and get_cached_environment(locale). Uses gettext translations from cli/translations/ directory. Templates can use {{ _('string') }} or {% trans %}...{% endtrans %} syntax for internationalization.",
+      "category": "i18n",
+      "discovered_at": "2026-01-01T02:58:21.286076+00:00"
+    },
+    "docs/es/README.md": {
+      "description": "Spanish translation of main documentation. Follows same structure as root README.md. Preserves technical terms (API, GPU, CLI, Vast.ai, etc.) as-is. Mermaid diagrams have Spanish labels. Created as part of i18n feature.",
+      "category": "documentation",
+      "discovered_at": "2026-01-01T03:01:55.060813+00:00"
     }
   },
-  "last_updated": "2026-01-01T02:44:25.827369+00:00"
+  "last_updated": "2026-01-01T03:01:55.060829+00:00"
 }

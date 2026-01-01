@@ -564,8 +564,9 @@
             "command": "pybabel extract -F cli/babel.cfg -o cli/messages.pot . && pybabel update -i cli/messages.pot -d cli/translations && echo 'OK'",
             "expected": "OK"
           },
-          "status": "pending",
-          "notes": "Extract from root to include src/templates/, update existing .po files"
+          "status": "completed",
+          "notes": "Re-extracted translations to include template strings from marketing_doc.html and finetune_task.yaml.j2. Fixed babel.cfg by removing deprecated jinja2.ext.autoescape and jinja2.ext.with_ extensions. Added Spanish translations for 17+ new template strings including Live Docs UI elements and fine-tuning job messages.",
+          "updated_at": "2026-01-01T02:49:08.778227+00:00"
         },
         {
           "id": "subtask-4-5",
@@ -581,8 +582,9 @@
             "command": "pybabel compile -d cli/translations && test -f cli/translations/es/LC_MESSAGES/messages.mo && echo 'OK'",
             "expected": "OK"
           },
-          "status": "pending",
-          "notes": "Edit .po file to add Spanish translations for new template strings, then compile"
+          "status": "completed",
+          "notes": "Verified all Spanish translations are present in messages.po. All template strings from finetune_task.yaml.j2 and marketing_doc.html are already translated. Recompiled messages.mo files successfully.",
+          "updated_at": "2026-01-01T02:50:32.623529+00:00"
         },
         {
           "id": "subtask-4-6",
@@ -595,8 +597,9 @@
             "type": "manual",
             "instructions": "Search for Jinja2 Environment initialization, add env.add_extension('jinja2.ext.i18n') and env.install_gettext_translations()"
           },
-          "status": "pending",
-          "notes": "Need to locate where templates are rendered (likely in a service or API handler)"
+          "status": "completed",
+          "notes": "Created src/services/template_service.py with Jinja2 i18n support:\n- get_template_environment(locale) creates Environment with jinja2.ext.i18n extension\n- get_translations(locale) loads gettext translations from cli/translations/\n- render_template(template_name, context, locale) for easy template rendering\n- get_cached_environment(locale) for efficient repeated rendering\n\nUpdated src/domain/services/finetune_service.py:\n- Replaced Template(f.read()) with env.get_template() from cached i18n environment\n- Added locale parameter to _generate_task_yaml() method\n\nUpdated src/main.py:\n- Import render_template from template_service\n- admin_doc_live endpoint now uses render_template with locale\n- Added lang query parameter (?lang=es) for language selection\n\nVerified all templates render correctly with Spanish translations.",
+          "updated_at": "2026-01-01T02:58:14.490379+00:00"
         }
       ]
     },
@@ -624,7 +627,9 @@
             "command": "test -d docs/es && echo 'OK'",
             "expected": "OK"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Created docs/es/.gitkeep file to establish Spanish documentation directory structure. Verification passed.",
+          "updated_at": "2026-01-01T02:59:16.543316+00:00"
         },
         {
           "id": "subtask-5-2",
@@ -641,8 +646,9 @@
             "type": "manual",
             "instructions": "Review docs/es/ directory - Spanish versions of main documentation files exist"
           },
-          "status": "pending",
-          "notes": "Copy docs/*.md to docs/es/ and translate content to Spanish. Start with most important user-facing docs."
+          "status": "completed",
+          "notes": "Created Spanish translation of README.md in docs/es/. Translated all user-facing text while preserving technical terms, Mermaid diagrams, and code examples.",
+          "updated_at": "2026-01-01T03:01:54.998227+00:00"
         }
       ]
     },
@@ -923,5 +929,5 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2026-01-01T02:45:24.202766+00:00"
+  "last_updated": "2026-01-01T03:01:54.998235+00:00"
 }
