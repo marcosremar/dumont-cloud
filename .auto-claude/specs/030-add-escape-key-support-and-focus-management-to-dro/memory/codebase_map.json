@@ -1,0 +1,15 @@
+{
+  "discovered_files": {
+    "web/src/components/tailadmin-ui/index.jsx": {
+      "description": "DropdownContext now includes ref system for keyboard navigation: registerMenuItem, unregisterMenuItem, getMenuItems functions, plus focusedIndex state. Menu items register themselves on mount (if not disabled) and unregister on unmount. The menuItemsRef array is reset when dropdown closes.",
+      "category": "architecture",
+      "discovered_at": "2025-12-31T21:28:26.296863+00:00"
+    },
+    "web/src/components/machines/MachineCard.jsx": {
+      "description": "MachineCard uses TailAdmin DropdownMenu for the action menu (lines 621-665). This is the primary use case that needs keyboard accessibility.",
+      "category": "usage",
+      "discovered_at": "2025-12-31T21:22:43.369095+00:00"
+    }
+  },
+  "last_updated": "2025-12-31T21:28:26.296887+00:00"
+}

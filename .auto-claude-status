@@ -65,6 +65,11 @@
   "subtasks": {
     "completed": 5,
     "total": 9,
+  "spec": "030-add-escape-key-support-and-focus-management-to-dro",
+  "state": "building",
+  "subtasks": {
+    "completed": 2,
+    "total": 8,
     "in_progress": 1,
     "failed": 0
   },
@@ -120,6 +125,9 @@
     "current": "Focus Management",
     "id": null,
     "total": 3
+    "current": "",
+    "id": 0,
+    "total": 0
   },
   "workers": {
     "active": 0,
@@ -181,4 +189,8 @@
     "started_at": "2025-12-31T22:20:01.887863"
   },
   "last_update": "2025-12-31T22:37:13.003534"
+    "number": 4,
+    "started_at": "2025-12-31T22:20:01.875038"
+  },
+  "last_update": "2025-12-31T22:26:40.600906"
 }

@@ -1,0 +1,175 @@
+{
+  "feature": "Add Escape key support and focus management to DropdownMenu",
+  "description": "Implement keyboard support for DropdownMenu including Escape to close, Arrow keys for navigation, Enter/Space to select, and proper focus management when opening/closing.",
+  "created_at": "2025-12-31T21:16:48.782Z",
+  "updated_at": "2025-12-31T21:16:48.783Z",
+  "status": "in_progress",
+  "planStatus": "approved",
+  "workflow_type": "development",
+  "spec_file": "spec.md",
+  "services_involved": [
+    "web"
+  ],
+  "files_to_modify": [
+    "web/src/components/tailadmin-ui/index.jsx"
+  ],
+  "files_to_create": [
+    "web/src/components/tailadmin-ui/__tests__/DropdownMenu.test.jsx"
+  ],
+  "wcag_compliance": {
+    "criteria": "2.1.1 Keyboard",
+    "level": "A",
+    "description": "All functionality is operable through keyboard interface"
+  },
+  "phases": [
+    {
+      "phase_number": 1,
+      "title": "Core Keyboard Event Handling",
+      "description": "Add Escape key to close dropdown and basic keyboard event infrastructure",
+      "subtasks": [
+        {
+          "id": "1.1",
+          "title": "Add Escape key handler to DropdownMenu",
+          "description": "Add keydown event listener in DropdownMenu useEffect that closes dropdown when Escape is pressed while menu is open",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "estimated_lines": 15,
+          "status": "completed",
+          "acceptance_criteria": [
+            "Pressing Escape when dropdown is open closes the dropdown",
+            "Escape key handler is properly cleaned up when component unmounts",
+            "Escape key handler only fires when dropdown is open"
+          ],
+          "notes": "Added Escape key handler to DropdownMenu using same pattern as click-outside handler. Handler is properly cleaned up and only fires when dropdown is open.",
+          "updated_at": "2025-12-31T21:24:19.973731+00:00"
+        },
+        {
+          "id": "1.2",
+          "title": "Add keyboard support to DropdownMenuTrigger",
+          "description": "Enable Enter and Space keys to toggle dropdown open/closed state on trigger button",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "estimated_lines": 10,
+          "status": "completed",
+          "acceptance_criteria": [
+            "Pressing Enter on focused trigger opens dropdown",
+            "Pressing Space on focused trigger opens dropdown",
+            "Keys toggle dropdown state (open if closed, close if open)"
+          ],
+          "notes": "Added handleKeyDown handler to DropdownMenuTrigger that handles Enter and Space keys. Handler uses preventDefault to prevent scrolling and toggles the dropdown state. Works for both direct button rendering and asChild mode with cloned elements.",
+          "updated_at": "2025-12-31T21:26:14.733379+00:00"
+        }
+      ]
+    },
+    {
+      "phase_number": 2,
+      "title": "Arrow Key Navigation",
+      "description": "Implement arrow key navigation between menu items",
+      "subtasks": [
+        {
+          "id": "2.1",
+          "title": "Add item refs collection for navigation",
+          "description": "Create ref system to track menu items for keyboard navigation using DropdownContext",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "estimated_lines": 20,
+          "status": "pending",
+          "acceptance_criteria": [
+            "Menu items can register themselves with parent dropdown",
+            "Refs are properly cleaned up when items unmount",
+            "Context provides mechanism to get all focusable items"
+          ]
+        },
+        {
+          "id": "2.2",
+          "title": "Implement ArrowDown/ArrowUp navigation",
+          "description": "Add keydown handlers to move focus between items with arrow keys",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "estimated_lines": 25,
+          "status": "pending",
+          "acceptance_criteria": [
+            "ArrowDown moves focus to next item (wraps to first at end)",
+            "ArrowUp moves focus to previous item (wraps to last at beginning)",
+            "Navigation skips disabled items",
+            "Focus is visually indicated on current item"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_number": 3,
+      "title": "Focus Management and Polish",
+      "description": "Proper focus management when opening/closing and item selection with Enter/Space",
+      "subtasks": [
+        {
+          "id": "3.1",
+          "title": "Focus first item when dropdown opens",
+          "description": "Automatically move focus to first menu item when dropdown opens via keyboard",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "estimated_lines": 15,
+          "status": "pending",
+          "acceptance_criteria": [
+            "When dropdown opens, first non-disabled item receives focus",
+            "Focus is visible (uses existing focus styles)",
+            "Works for both keyboard and mouse triggered opens"
+          ]
+        },
+        {
+          "id": "3.2",
+          "title": "Return focus to trigger on close",
+          "description": "Store trigger ref and restore focus when dropdown closes",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "estimated_lines": 15,
+          "status": "pending",
+          "acceptance_criteria": [
+            "Focus returns to trigger button when Escape closes dropdown",
+            "Focus returns to trigger when clicking outside closes dropdown",
+            "Focus returns to trigger when item is selected"
+          ]
+        },
+        {
+          "id": "3.3",
+          "title": "Add Enter/Space to select menu item",
+          "description": "Enable Enter and Space keys to activate the currently focused menu item",
+          "file": "web/src/components/tailadmin-ui/index.jsx",
+          "estimated_lines": 10,
+          "status": "pending",
+          "acceptance_criteria": [
+            "Pressing Enter on focused item triggers its onClick",
+            "Pressing Space on focused item triggers its onClick",
+            "Item selection closes the dropdown",
+            "Disabled items cannot be selected"
+          ]
+        },
+        {
+          "id": "3.4",
+          "title": "Add comprehensive keyboard tests",
+          "description": "Write tests to verify all keyboard interactions work correctly",
+          "file": "web/src/components/tailadmin-ui/__tests__/DropdownMenu.test.jsx",
+          "estimated_lines": 100,
+          "status": "pending",
+          "acceptance_criteria": [
+            "Tests cover Escape to close",
+            "Tests cover Arrow key navigation",
+            "Tests cover Enter/Space to select",
+            "Tests verify focus management (open/close)",
+            "Tests verify disabled items are skipped"
+          ]
+        }
+      ]
+    }
+  ],
+  "testing_strategy": {
+    "unit_tests": "Test keyboard interactions with React Testing Library",
+    "manual_testing": "Verify keyboard navigation in MachineCard dropdown menus"
+  },
+  "final_acceptance": [
+    "All keyboard interactions work as specified in WCAG 2.1.1",
+    "Focus management is correct on open/close",
+    "Tests pass for all keyboard scenarios",
+    "No regressions in existing mouse-based functionality"
+  ],
+  "qa_signoff": {
+    "status": "pending",
+    "tests_passed": "",
+    "issues": ""
+  },
+  "last_updated": "2025-12-31T21:26:14.733391+00:00"
+}
