@@ -84,44 +84,52 @@
           "id": "2.2",
           "title": "Integrate useFocusTrap in AlertDialog",
           "description": "Wrap AlertDialog in a provider that manages focus trap state and integrate the useFocusTrap hook to trap focus when the dialog is open.",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "AlertDialog uses useFocusTrap hook when open",
             "Focus moves to first focusable element when dialog opens",
             "Focus is trapped within the dialog while open",
             "Focus returns to trigger element when dialog closes"
-          ]
+          ],
+          "notes": "Integrated useFocusTrap hook in AlertDialog. Added useFocusTrap import from hooks barrel export. Updated AlertDialog to pass open/onOpenChange state through AlertDialogContext. Added contentRef to AlertDialogContent and integrated useFocusTrap(contentRef, !!open) to trap focus when dialog is open. Focus moves to first focusable element when dialog opens, is trapped within the dialog while open, and returns to trigger element when dialog closes. Committed in 72bc921.",
+          "updated_at": "2026-01-01T06:15:37.991125+00:00"
         },
         {
           "id": "2.3",
           "title": "Add keyboard handling for Escape key",
           "description": "Ensure pressing Escape key closes the AlertDialog (may already be handled by overlay click, but should also work via keyboard).",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "Pressing Escape key closes the dialog",
             "onOpenChange is called with false when Escape is pressed",
             "Focus returns to trigger after Escape closes dialog"
-          ]
+          ],
+          "notes": "Added useEffect hook in AlertDialogContent to listen for Escape key. When Escape is pressed, onOpenChange(false) is called to close the dialog. Event listener is properly cleaned up on unmount. Focus returns to trigger element via existing useFocusTrap cleanup. Committed in 0daad52.",
+          "updated_at": "2026-01-01T06:17:23.838670+00:00"
         },
         {
           "id": "2.4",
           "title": "Update AlertDialogTitle with ID",
           "description": "Modify AlertDialogTitle to accept and apply an id prop for aria-labelledby reference.",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "AlertDialogTitle accepts id prop",
             "AlertDialogTitle renders with the provided id attribute"
-          ]
+          ],
+          "notes": "Modified AlertDialogTitle to get titleId from AlertDialogContext using useAlertDialogContext() hook and apply it as the id attribute on the h2 element. This connects the title to the aria-labelledby attribute in AlertDialogContent for proper screen reader announcement. Committed in d2f97d5.",
+          "updated_at": "2026-01-01T06:19:58.766876+00:00"
         },
         {
           "id": "2.5",
           "title": "Update AlertDialogDescription with ID",
           "description": "Modify AlertDialogDescription to accept and apply an id prop for aria-describedby reference.",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "AlertDialogDescription accepts id prop",
             "AlertDialogDescription renders with the provided id attribute"
-          ]
+          ],
+          "notes": "Modified AlertDialogDescription to get descriptionId from AlertDialogContext using useAlertDialogContext() hook and apply it as the id attribute on the <p> element. This connects the description to the aria-describedby attribute in AlertDialogContent for proper screen reader announcement. Committed in 8360ed3.",
+          "updated_at": "2026-01-01T06:21:33.676949+00:00"
         }
       ]
     },
@@ -135,12 +143,14 @@
           "id": "3.1",
           "title": "Add ARIA attributes to Modal",
           "description": "Update the Modal component to include role='dialog', aria-modal='true', and proper ARIA labeling.",
-          "status": "pending",
+          "status": "completed",
           "acceptance_criteria": [
             "Modal container has role='dialog'",
             "Modal container has aria-modal='true'",
             "Modal supports aria-labelledby and aria-describedby props"
-          ]
+          ],
+          "notes": "Added ARIA attributes to Modal component: role='dialog', aria-modal='true', aria-labelledby and aria-describedby optional props. Also added aria-label='Close modal' to the close button for screen reader accessibility. Committed in 267fa94.",
+          "updated_at": "2026-01-01T06:23:42.751633+00:00"
         },
         {
           "id": "3.2",
@@ -250,5 +260,5 @@
     "Custom tailadmin Modal (modal/index.tsx) needs full accessibility implementation",
     "useFocusTrap hook should be reusable for any future modal components"
   ],
-  "last_updated": "2026-01-01T06:11:35.289221+00:00"
+  "last_updated": "2026-01-01T06:23:42.751643+00:00"
 }

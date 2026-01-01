@@ -1,4 +1,5 @@
 import { useRef, useEffect } from "react";
+import { useFocusTrap } from "@/hooks";
 
 interface ModalProps {
   isOpen: boolean;
@@ -24,6 +25,9 @@ export const Modal: React.FC<ModalProps> = ({
   "aria-describedby": ariaDescribedBy,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Trap focus within the modal when open
+  useFocusTrap(modalRef, isOpen);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
