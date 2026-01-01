@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive } from 'lucide-react'
+import { useSearchParams, Link } from 'react-router-dom'
+import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive, Mail } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import StandbyConfig from '../components/StandbyConfig'
 import FailoverReport from '../components/FailoverReport'
@@ -236,6 +236,7 @@ const SETTINGS_MENU = [
   { id: 'cloudstorage', label: 'Cloud Storage Failover', icon: Cloud, color: 'purple' },
   { id: 'agent', label: 'Agent Sync', icon: Server, color: 'cyan' },
   { id: 'notifications', label: 'Notificações', icon: AlertCircle, color: 'yellow' },
+  { id: 'email', label: 'Relatórios por Email', icon: Mail, color: 'cyan', href: '/app/settings/email-preferences' },
   { id: 'failover', label: 'CPU Failover', icon: Shield, color: 'red' },
 ]
 
@@ -571,20 +572,41 @@ export default function Settings() {
                 }
                 const isActive = activeTab === item.id
 
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left mb-1 ${
-                      isActive
-                        ? 'bg-brand-500/10 text-brand-400'
-                        : 'text-gray-400 hover:bg-white/10 hover:text-gray-200'
-                    }`}
-                  >
+                const menuItemContent = (
+                  <>
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconColorClasses[item.color]}`}>
                       <MenuIcon className="w-4 h-4" />
                     </div>
                     <span className="text-sm font-medium">{item.label}</span>
+                  </>
+                )
+
+                const menuItemClasses = `w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left mb-1 ${
+                  isActive
+                    ? 'bg-brand-500/10 text-brand-400'
+                    : 'text-gray-400 hover:bg-white/10 hover:text-gray-200'
+                }`
+
+                // If item has href, render as Link for navigation
+                if (item.href) {
+                  return (
+                    <Link
+                      key={item.id}
+                      to={item.href}
+                      className={menuItemClasses}
+                    >
+                      {menuItemContent}
+                    </Link>
+                  )
+                }
+
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={menuItemClasses}
+                  >
+                    {menuItemContent}
                   </button>
                 )
               })}
