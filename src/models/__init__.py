@@ -13,6 +13,7 @@ from .email_preferences import EmailPreference
 from .email_delivery_log import EmailDeliveryLog
 from .shareable_report import ShareableReport
 from .webhook_config import WebhookConfig, WebhookLog
+from .cost_optimization import UsageMetrics
 
 __all__ = [
     'PriceHistory',
@@ -49,4 +50,6 @@ __all__ = [
     # Webhook integrations
     'WebhookConfig',
     'WebhookLog',
+    # Cost optimization models
+    'UsageMetrics',
 ]

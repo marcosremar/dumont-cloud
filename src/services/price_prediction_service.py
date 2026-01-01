@@ -417,6 +417,137 @@ class PricePredictionService:
         finally:
             db.close()
 
+    def get_spot_timing_recommendation(
+        self,
+        gpu_name: str,
+        days_ahead: int = 7,
+    ) -> Optional[Dict]:
+        """
+        Retorna recomendação de timing para instâncias spot/interruptible.
+
+        Analisa previsões de preço para encontrar o melhor momento
+        para lançar instâncias spot, considerando padrões históricos.
+
+        Args:
+            gpu_name: Nome da GPU
+            days_ahead: Quantos dias à frente considerar
+
+        Returns:
+            Dict com recomendação de timing ou None se dados insuficientes
+        """
+        try:
+            # Buscar previsão para instâncias interruptible (spot)
+            prediction = self.get_latest_prediction(gpu_name, "interruptible")
+
+            # Se não houver previsão salva, gerar uma nova
+            if not prediction:
+                prediction = self.predict(gpu_name, "interruptible")
+
+            if not prediction:
+                logger.warning(f"Dados insuficientes para recomendação spot de {gpu_name}")
+                return None
+
+            # Buscar previsão on-demand para comparação de economia
+            on_demand_prediction = self.get_latest_prediction(gpu_name, "on-demand")
+            if not on_demand_prediction:
+                on_demand_prediction = self.predict(gpu_name, "on-demand")
+
+            # Calcular economia potencial
+            savings_percent = 0.0
+            if on_demand_prediction and on_demand_prediction.get('predicted_min_price', 0) > 0:
+                spot_price = prediction.get('predicted_min_price', 0)
+                on_demand_price = on_demand_prediction.get('predicted_min_price', 0)
+                if on_demand_price > 0:
+                    savings_percent = round((1 - spot_price / on_demand_price) * 100, 1)
+
+            # Encontrar melhores horários nos próximos dias
+            now = datetime.utcnow()
+            best_windows = []
+            hourly = prediction.get('hourly_predictions', {})
+            daily = prediction.get('daily_predictions', {})
+
+            day_names = ['monday', 'tuesday', 'wednesday', 'thursday',
+                         'friday', 'saturday', 'sunday']
+
+            for day_offset in range(min(days_ahead, 7)):
+                target_date = now + timedelta(days=day_offset)
+                day_name = day_names[target_date.weekday()]
+                day_avg = daily.get(day_name, 0)
+
+                # Encontrar melhor hora desse dia
+                best_hour_price = float('inf')
+                best_hour = 0
+                for hour_str, price in hourly.items():
+                    try:
+                        hour = int(hour_str)
+                        if price < best_hour_price:
+                            best_hour_price = price
+                            best_hour = hour
+                    except (ValueError, TypeError):
+                        continue
+
+                best_windows.append({
+                    'date': target_date.strftime('%Y-%m-%d'),
+                    'day_of_week': day_name,
+                    'best_hour_utc': best_hour,
+                    'predicted_price': round(best_hour_price, 4) if best_hour_price != float('inf') else None,
+                    'day_average': round(day_avg, 4) if day_avg else None,
+                })
+
+            # Ordenar por preço previsto
+            best_windows.sort(key=lambda x: x.get('predicted_price') or float('inf'))
+
+            return {
+                'gpu_name': gpu_name,
+                'machine_type': 'interruptible',
+                'best_hour_utc': prediction.get('best_hour_utc'),
+                'best_day': prediction.get('best_day'),
+                'predicted_min_price': prediction.get('predicted_min_price'),
+                'savings_vs_on_demand_percent': savings_percent,
+                'model_confidence': prediction.get('model_confidence', 0.5),
+                'best_windows': best_windows[:3],  # Top 3 melhores janelas
+                'recommendation': self._generate_spot_recommendation(
+                    prediction.get('best_hour_utc'),
+                    prediction.get('best_day'),
+                    savings_percent,
+                    prediction.get('model_confidence', 0.5),
+                ),
+                'valid_until': prediction.get('valid_until'),
+                'created_at': datetime.utcnow().isoformat(),
+            }
+
+        except Exception as e:
+            logger.error(f"Erro ao gerar recomendação spot para {gpu_name}: {e}")
+            return None
+
+    def _generate_spot_recommendation(
+        self,
+        best_hour: Optional[int],
+        best_day: Optional[str],
+        savings_percent: float,
+        confidence: float,
+    ) -> str:
+        """Gera texto de recomendação baseado nos dados."""
+        if confidence < 0.4:
+            return "Dados históricos insuficientes para recomendação precisa."
+
+        parts = []
+
+        if savings_percent > 50:
+            parts.append(f"Economia potencial alta ({savings_percent:.0f}%).")
+        elif savings_percent > 20:
+            parts.append(f"Economia moderada ({savings_percent:.0f}%) com spot.")
+
+        if best_hour is not None and best_day:
+            parts.append(f"Melhor janela: {best_day}s às {best_hour:02d}:00 UTC.")
+
+        if confidence >= 0.7:
+            parts.append("Alta confiança na previsão.")
+        elif confidence >= 0.5:
+            parts.append("Confiança moderada.")
+
+        return " ".join(parts) if parts else "Recomendação spot disponível."
+
     def generate_all_predictions(
         self,
         gpus: List[str],
