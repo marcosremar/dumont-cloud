@@ -1,0 +1,15 @@
+{
+  "discovered_files": {
+    "web/src/components/machines/ReliabilityDetailsModal.jsx": {
+      "description": "ReliabilityDetailsModal component for displaying machine reliability scores, 30-day uptime history chart, and user rating submission. Follows InstanceDetailsModal pattern with AlertDialog from tailadmin-ui. Uses Redux for rating submission (submitMachineRating thunk). Fetches history from /api/v1/reliability/machines/{id}/history endpoint.",
+      "category": "frontend_component",
+      "discovered_at": "2026-01-01T06:13:05.007730+00:00"
+    },
+    "web/src/pages/Machines.jsx": {
+      "description": "Machines page now has reliability sort and filter controls in the header: sort by reliability toggle (Switch), threshold slider (0-100), auto-exclude checkbox, and show all machines toggle that appears when auto-exclude is enabled. Uses local state for sortByReliability, reliabilityThreshold, autoExcludeBelowThreshold, showAllMachines, and reliabilityData.",
+      "category": "feature",
+      "discovered_at": "2026-01-01T06:17:28.220341+00:00"
+    }
+  },
+  "last_updated": "2026-01-01T06:17:28.220363+00:00"
+}
