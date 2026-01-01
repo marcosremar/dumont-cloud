@@ -9,19 +9,26 @@ from typing import Dict, Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from ..schemas.request import CreateSnapshotRequest, RestoreSnapshotRequest, DeleteSnapshotRequest, SetKeepForeverRequest
+from ..schemas.request import CreateSnapshotRequest, RestoreSnapshotRequest, DeleteSnapshotRequest, SetKeepForeverRequest, UpdateRetentionPolicyRequest
 from ..schemas.response import (
     ListSnapshotsResponse,
     SnapshotResponse,
     CreateSnapshotResponse,
     RestoreSnapshotResponse,
     SuccessResponse,
+    RetentionPolicyResponse,
 )
 from ....domain.services import SnapshotService, InstanceService
 from ....core.exceptions import SnapshotException, NotFoundException
 from ..dependencies import get_snapshot_service, get_instance_service, require_auth, get_current_user_email
 from ....models.snapshot_metadata import SnapshotMetadata, SnapshotStatus
 from ....services.snapshot_audit_logger import get_snapshot_audit_logger
+from ....config.snapshot_lifecycle_config import (
+    get_snapshot_lifecycle_manager,
+    SnapshotLifecycleConfig,
+    RetentionPolicyConfig,
+    InstanceSnapshotConfig,
+)
 
 
 class SnapshotMetadataStore:
@@ -341,4 +348,133 @@ async def set_keep_forever(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update snapshot {snapshot_id}: {str(e)}",
+        )
+
+
+@router.get("/retention-policy", response_model=RetentionPolicyResponse)
+async def get_retention_policy(
+    instance_id: Optional[str] = None,
+    user_email: str = Depends(get_current_user_email),
+):
+    """
+    Get retention policy configuration
+
+    Returns the current retention policy. If instance_id is provided,
+    returns the instance-specific policy; otherwise returns the global policy.
+    """
+    try:
+        lifecycle_manager = get_snapshot_lifecycle_manager()
+
+        if instance_id:
+            # Get instance-specific policy
+            instance_config = lifecycle_manager.get_instance_config(instance_id)
+            global_config = lifecycle_manager.get_global_config()
+
+            return RetentionPolicyResponse(
+                retention_days=instance_config.get_effective_retention_days(global_config),
+                min_snapshots_to_keep=global_config.retention.min_snapshots_to_keep,
+                max_snapshots_per_instance=global_config.retention.max_snapshots_per_instance,
+                cleanup_enabled=instance_config.is_cleanup_enabled(global_config),
+                instance_id=instance_id,
+                is_instance_policy=not instance_config.use_global_settings,
+            )
+        else:
+            # Get global policy
+            global_config = lifecycle_manager.get_global_config()
+
+            return RetentionPolicyResponse(
+                retention_days=global_config.default_retention_days,
+                min_snapshots_to_keep=global_config.retention.min_snapshots_to_keep,
+                max_snapshots_per_instance=global_config.retention.max_snapshots_per_instance,
+                cleanup_enabled=global_config.is_cleanup_enabled(),
+                instance_id=None,
+                is_instance_policy=False,
+            )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get retention policy: {str(e)}",
+        )
+
+
+@router.put("/retention-policy", response_model=SuccessResponse)
+async def update_retention_policy(
+    request: UpdateRetentionPolicyRequest,
+    user_email: str = Depends(get_current_user_email),
+):
+    """
+    Update retention policy configuration
+
+    Updates the retention policy settings. If instance_id is provided in the request,
+    updates the instance-specific policy; otherwise updates the global policy.
+    """
+    try:
+        lifecycle_manager = get_snapshot_lifecycle_manager()
+        audit_logger = get_snapshot_audit_logger()
+
+        if request.instance_id:
+            # Update instance-specific policy
+            instance_config = lifecycle_manager.get_instance_config(request.instance_id)
+
+            # Mark as using custom settings
+            instance_config.use_global_settings = False
+
+            if request.retention_days is not None:
+                old_retention = instance_config.retention_days
+                instance_config.retention_days = request.retention_days
+                # Log retention change
+                audit_logger.log_retention_changed(
+                    instance_id=request.instance_id,
+                    user_id=user_email,
+                    old_retention_days=old_retention if old_retention else 0,
+                    new_retention_days=request.retention_days,
+                )
+
+            if request.cleanup_enabled is not None:
+                instance_config.cleanup_enabled = request.cleanup_enabled
+
+            lifecycle_manager.update_instance_config(instance_config)
+
+            return SuccessResponse(
+                success=True,
+                message=f"Retention policy updated for instance {request.instance_id}",
+            )
+        else:
+            # Update global policy
+            global_config = lifecycle_manager.get_global_config()
+
+            if request.retention_days is not None:
+                old_retention = global_config.default_retention_days
+                global_config.default_retention_days = request.retention_days
+                global_config.retention.retention_days = request.retention_days
+                # Log retention change
+                audit_logger.log_retention_changed(
+                    instance_id="global",
+                    user_id=user_email,
+                    old_retention_days=old_retention,
+                    new_retention_days=request.retention_days,
+                )
+
+            if request.min_snapshots_to_keep is not None:
+                global_config.retention.min_snapshots_to_keep = request.min_snapshots_to_keep
+
+            if request.max_snapshots_per_instance is not None:
+                global_config.retention.max_snapshots_per_instance = request.max_snapshots_per_instance
+
+            if request.cleanup_enabled is not None:
+                global_config.retention.enabled = request.cleanup_enabled
+                global_config.cleanup_schedule.enabled = request.cleanup_enabled
+
+            lifecycle_manager.update_global_config(global_config)
+
+            return SuccessResponse(
+                success=True,
+                message="Global retention policy updated successfully",
+            )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update retention policy: {str(e)}",
         )
