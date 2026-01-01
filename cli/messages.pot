@@ -1,0 +1,998 @@
+# Translations template for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-01-01 03:29+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: cli/__main__.py:33
+msgid "Configuration:"
+msgstr ""
+
+#: cli/__main__.py:34
+msgid "Configure API key"
+msgstr ""
+
+#: cli/__main__.py:35
+msgid "Show configuration"
+msgstr ""
+
+#: cli/__main__.py:36
+msgid "Set API key"
+msgstr ""
+
+#: cli/__main__.py:37
+msgid "Set API URL"
+msgstr ""
+
+#: cli/__main__.py:66
+msgid "Authentication"
+msgstr ""
+
+#: cli/__main__.py:67
+msgid "System"
+msgstr ""
+
+#: cli/__main__.py:68
+msgid "Instances"
+msgstr ""
+
+#: cli/__main__.py:69
+msgid "Market (Spot)"
+msgstr ""
+
+#: cli/__main__.py:70
+msgid "Savings"
+msgstr ""
+
+#: cli/__main__.py:71
+msgid "Serverless GPU"
+msgstr ""
+
+#: cli/__main__.py:72
+msgid "Warm Pool"
+msgstr ""
+
+#: cli/__main__.py:73
+msgid "Jobs"
+msgstr ""
+
+#: cli/__main__.py:74
+msgid "Snapshots"
+msgstr ""
+
+#: cli/__main__.py:75
+msgid "Models"
+msgstr ""
+
+#: cli/__main__.py:76
+msgid "Hibernation"
+msgstr ""
+
+#: cli/__main__.py:77
+msgid "Fine-tune"
+msgstr ""
+
+#: cli/__main__.py:92
+msgid "Direct API:"
+msgstr ""
+
+#: cli/__main__.py:93
+msgid "List all endpoints"
+msgstr ""
+
+#: cli/__main__.py:94 cli/commands/api.py:190
+msgid "GET request"
+msgstr ""
+
+#: cli/__main__.py:95 cli/commands/api.py:191
+msgid "POST request"
+msgstr ""
+
+#: cli/__main__.py:99
+msgid "Wizard:"
+msgstr ""
+
+#: cli/__main__.py:100
+msgid "Quick GPU deploy"
+msgstr ""
+
+#: cli/__main__.py:111
+msgid "Dumont Cloud CLI - GPU Cloud Management"
+msgstr ""
+
+#: cli/__main__.py:118
+msgid "API URL (default: ~/.dumont/config.json or localhost:8000)"
+msgstr ""
+
+#: cli/__main__.py:123
+msgid "API Key (default: ~/.dumont/config.json or DUMONT_API_KEY)"
+msgstr ""
+
+#: cli/__main__.py:129
+msgid "Debug mode"
+msgstr ""
+
+#: cli/__main__.py:136
+msgid "Language for CLI output (default: en, or LANGUAGE env var)"
+msgstr ""
+
+#: cli/__main__.py:139
+msgid "Command or resource"
+msgstr ""
+
+#: cli/__main__.py:140
+msgid "Subcommand or action"
+msgstr ""
+
+#: cli/__main__.py:141
+msgid "Additional arguments"
+msgstr ""
+
+#: cli/__main__.py:162
+msgid "❌ Usage: dumont config set-key <api_key>"
+msgstr ""
+
+#: cli/__main__.py:169
+msgid "❌ Usage: dumont config set-url <url>"
+msgstr ""
+
+#: cli/__main__.py:178
+#, python-brace-format
+msgid "❌ Unknown subcommand: {subcommand}"
+msgstr ""
+
+#: cli/__main__.py:179
+msgid "Available: setup, show, set-key, set-url, clear"
+msgstr ""
+
+#: cli/__main__.py:189
+msgid "Dumont Cloud CLI v1.0.0"
+msgstr ""
+
+#: cli/__main__.py:245
+msgid "🧙 Wizard Deploy - Quick GPU Provisioning"
+msgstr ""
+
+#: cli/__main__.py:247
+msgid "Usage: dumont wizard deploy [gpu] [options]"
+msgstr ""
+
+#: cli/__main__.py:249
+msgid "Options:"
+msgstr ""
+
+#: cli/__main__.py:250
+msgid "  gpu=<name>       GPU type (e.g., 'RTX 4090', 'A100')"
+msgstr ""
+
+#: cli/__main__.py:251
+msgid "  speed=<mode>     fast (default), slow, ultrafast"
+msgstr ""
+
+#: cli/__main__.py:252
+msgid "  price=<$>        Max price per hour (default: 2.0)"
+msgstr ""
+
+#: cli/__main__.py:253
+msgid "  region=<name>    Region filter (default: global)"
+msgstr ""
+
+#: cli/__main__.py:263
+msgid "❌ Usage: dumont model install <instance_id> <model_id>"
+msgstr ""
+
+#: cli/__main__.py:282
+msgid "❌ Usage: dumont models deploy <type> <model_id> [options]"
+msgstr ""
+
+#: cli/__main__.py:298
+#, python-brace-format
+msgid "❌ Usage: dumont models {subcommand} <deployment_id>"
+msgstr ""
+
+#: cli/commands/api.py:71
+msgid "❌ Could not load API endpoints"
+msgstr ""
+
+#: cli/commands/api.py:72 cli/commands/base.py:26
+#, python-brace-format
+msgid "   URL: {url}"
+msgstr ""
+
+#: cli/commands/api.py:86
+msgid "🚀 Dumont Cloud API Endpoints"
+msgstr ""
+
+#: cli/commands/api.py:98 cli/commands/api.py:188
+msgid "💡 Usage:"
+msgstr ""
+
+#: cli/commands/api.py:121
+#, python-brace-format
+msgid "❌ Missing parameters: {params}"
+msgstr ""
+
+#: cli/commands/api.py:176
+#, python-brace-format
+msgid "❌ Usage: dumont api {method} <path> [args...]"
+msgstr ""
+
+#: cli/commands/api.py:187
+msgid "❌ Invalid format"
+msgstr ""
+
+#: cli/commands/api.py:189
+msgid "List endpoints"
+msgstr ""
+
+#: cli/commands/api.py:307
+msgid "🚀 Dumont Cloud CLI - Available Commands"
+msgstr ""
+
+#: cli/commands/api.py:327 cli/commands/base.py:221
+msgid "💡 Examples:"
+msgstr ""
+
+#: cli/commands/api.py:332
+msgid "Direct API access"
+msgstr ""
+
+#: cli/commands/base.py:25
+msgid "❌ Could not connect to backend."
+msgstr ""
+
+#: cli/commands/base.py:27
+msgid "💡 Check if the backend is running:"
+msgstr ""
+
+#: cli/commands/base.py:89
+msgid "GPU Job Commands"
+msgstr ""
+
+#: cli/commands/base.py:90
+msgid "Fine-Tuning Commands"
+msgstr ""
+
+#: cli/commands/base.py:91
+msgid "Instance Management"
+msgstr ""
+
+#: cli/commands/base.py:92
+msgid "Snapshot Commands"
+msgstr ""
+
+#: cli/commands/base.py:93
+msgid "Warm Pool Commands"
+msgstr ""
+
+#: cli/commands/base.py:94
+msgid "Failover Commands"
+msgstr ""
+
+#: cli/commands/base.py:95
+msgid "Serverless Mode Commands"
+msgstr ""
+
+#: cli/commands/base.py:96
+msgid "Authentication Commands"
+msgstr ""
+
+#: cli/commands/base.py:97
+msgid "Settings Commands"
+msgstr ""
+
+#: cli/commands/base.py:98
+msgid "Savings & Cost Commands"
+msgstr ""
+
+#: cli/commands/base.py:99
+msgid "History Commands"
+msgstr ""
+
+#: cli/commands/base.py:100
+msgid "Spot GPU Commands"
+msgstr ""
+
+#: cli/commands/base.py:103
+#, python-brace-format
+msgid "{resource} Commands"
+msgstr ""
+
+#: cli/commands/base.py:106
+#, python-brace-format
+msgid "❌ Unknown action '{action}' for {resource}\n"
+msgstr ""
+
+#: cli/commands/base.py:109
+#, python-brace-format
+msgid "Usage: dumont {resource} <action> [options]\n"
+msgstr ""
+
+#: cli/commands/base.py:110
+msgid "Actions:"
+msgstr ""
+
+#: cli/commands/base.py:145
+msgid "Examples:"
+msgstr ""
+
+#: cli/commands/base.py:206
+#, python-brace-format
+msgid "🚀 Dumont Cloud CLI - {count} commands available\n"
+msgstr ""
+
+#: cli/commands/base.py:207
+msgid "Usage: dumont <resource> <action> [args...]"
+msgstr ""
+
+#: cli/commands/base.py:237
+#, python-brace-format
+msgid "❌ Unknown resource: {resource}"
+msgstr ""
+
+#: cli/commands/base.py:238
+#, python-brace-format
+msgid "💡 Available resources: {resources}"
+msgstr ""
+
+#: cli/commands/base.py:260
+#, python-brace-format
+msgid "❌ Required parameter missing: {param}"
+msgstr ""
+
+#: cli/commands/base.py:261
+#, python-brace-format
+msgid "💡 Usage: dumont {resource} {action} <{param}>"
+msgstr ""
+
+#: cli/commands/base.py:273
+#, python-brace-format
+msgid "❌ Invalid JSON: {error}"
+msgstr ""
+
+#: cli/commands/base.py:281
+msgid "❌ Usage: dumont auth login <email> <password>"
+msgstr ""
+
+#: cli/commands/config.py:90
+msgid "🔧 Dumont Cloud CLI Setup"
+msgstr ""
+
+#: cli/commands/config.py:100
+#, python-brace-format
+msgid "Current API URL: {url}"
+msgstr ""
+
+#: cli/commands/config.py:101
+msgid "New URL (Enter to keep): "
+msgstr ""
+
+#: cli/commands/config.py:112
+#, python-brace-format
+msgid "Current API Key: {key}"
+msgstr ""
+
+#: cli/commands/config.py:114
+msgid "No API Key configured."
+msgstr ""
+
+#: cli/commands/config.py:116
+msgid "To get your API Key:"
+msgstr ""
+
+#: cli/commands/config.py:117
+msgid "  1. Go to https://cloud.dumont.ai/settings"
+msgstr ""
+
+#: cli/commands/config.py:118
+msgid "  2. Click 'Generate API Key'"
+msgstr ""
+
+#: cli/commands/config.py:119
+msgid "  3. Copy the generated key"
+msgstr ""
+
+#: cli/commands/config.py:122
+msgid "API Key (Enter to keep): "
+msgstr ""
+
+#: cli/commands/config.py:127
+msgid "✅ Configuration saved to ~/.dumont/config.json"
+msgstr ""
+
+#: cli/commands/config.py:131
+msgid "📋 Current Configuration"
+msgstr ""
+
+#: cli/commands/config.py:137
+#, python-brace-format
+msgid "API URL: {url}"
+msgstr ""
+
+#: cli/commands/config.py:141
+#, python-brace-format
+msgid "API Key: {key}"
+msgstr ""
+
+#: cli/commands/config.py:143
+msgid "API Key: (not configured)"
+msgstr ""
+
+#: cli/commands/config.py:145
+#, python-brace-format
+msgid "File: {file}"
+msgstr ""
+
+#: cli/commands/config.py:148
+msgid "Status: ✅ Configured"
+msgstr ""
+
+#: cli/commands/config.py:150
+msgid "Status: ❌ Not configured"
+msgstr ""
+
+#: cli/commands/config.py:151
+msgid "Run: dumont config setup"
+msgstr ""
+
+#: cli/commands/config.py:156
+msgid "✅ API Key saved!"
+msgstr ""
+
+#: cli/commands/config.py:161
+#, python-brace-format
+msgid "✅ API URL configured: {url}"
+msgstr ""
+
+#: cli/commands/config.py:167
+msgid "✅ Configuration removed"
+msgstr ""
+
+#: cli/commands/config.py:169
+msgid "ℹ️ No configuration to remove"
+msgstr ""
+
+#: cli/commands/config.py:182
+msgid "⚠️  CLI not configured!"
+msgstr ""
+
+#: cli/commands/config.py:184
+msgid "To use the Dumont CLI, you need to configure your API Key."
+msgstr ""
+
+#: cli/commands/config.py:187
+msgid "Do you want to configure now? [Y/n]: "
+msgstr ""
+
+#: cli/commands/config.py:193
+msgid "You can configure later with:"
+msgstr ""
+
+#: cli/commands/config.py:195
+msgid "Or set the environment variable:"
+msgstr ""
+
+#: cli/commands/model.py:17
+#, python-brace-format
+msgid "🚀 Installing model '{model}' on instance {instance}"
+msgstr ""
+
+#: cli/commands/model.py:21
+msgid "📡 Step 1: Getting instance information..."
+msgstr ""
+
+#: cli/commands/model.py:25
+msgid "❌ Could not fetch instances. Make sure you are logged in."
+msgstr ""
+
+#: cli/commands/model.py:38
+#, python-brace-format
+msgid "❌ Instance {id} not found"
+msgstr ""
+
+#: cli/commands/model.py:39
+#, python-brace-format
+msgid "💡 Available instances: {instances}"
+msgstr ""
+
+#: cli/commands/model.py:45
+#, python-brace-format
+msgid "❌ Instance is not running (status: {status})"
+msgstr ""
+
+#: cli/commands/model.py:46
+#, python-brace-format
+msgid "💡 Start the instance first: dumont instance resume {id}"
+msgstr ""
+
+#: cli/commands/model.py:61
+msgid "❌ Could not get SSH connection info"
+msgstr ""
+
+#: cli/commands/model.py:62
+#, python-brace-format
+msgid "   IP: {ip}, Port: {port}"
+msgstr ""
+
+#: cli/commands/model.py:65
+#, python-brace-format
+msgid "   ✓ Instance found: {gpu} @ {ip}:{port}"
+msgstr ""
+
+#: cli/commands/model.py:71
+msgid "📦 Step 2: Installing Ollama..."
+msgstr ""
+
+#: cli/commands/model.py:107
+msgid "   ✓ Ollama already installed"
+msgstr ""
+
+#: cli/commands/model.py:109
+msgid "   ✓ Ollama installed successfully"
+msgstr ""
+
+#: cli/commands/model.py:112
+msgid "   ✓ Ollama service running"
+msgstr ""
+
+#: cli/commands/model.py:114
+msgid "   ⚠ Ollama service may not be running"
+msgstr ""
+
+#: cli/commands/model.py:116
+#, python-brace-format
+msgid "   ⚠ Installation output: {output}"
+msgstr ""
+
+#: cli/commands/model.py:118
+#, python-brace-format
+msgid "   ⚠ Errors: {errors}"
+msgstr ""
+
+#: cli/commands/model.py:121
+#, python-brace-format
+msgid "🤖 Step 3: Pulling model '{model}'..."
+msgstr ""
+
+#: cli/commands/model.py:122
+msgid "   (This may take a while depending on model size)"
+msgstr ""
+
+#: cli/commands/model.py:152
+#, python-brace-format
+msgid "   ✓ Model '{model}' pulled successfully"
+msgstr ""
+
+#: cli/commands/model.py:154
+msgid "   ❌ Failed to pull model"
+msgstr ""
+
+#: cli/commands/model.py:155
+#, python-brace-format
+msgid "   Output: {output}"
+msgstr ""
+
+#: cli/commands/model.py:157
+#, python-brace-format
+msgid "   Errors: {errors}"
+msgstr ""
+
+#: cli/commands/model.py:162
+msgid "✅ Installation Complete!"
+msgstr ""
+
+#: cli/commands/model.py:177
+msgid "📋 Connection Details:"
+msgstr ""
+
+#: cli/commands/model.py:179
+#, python-brace-format
+msgid "   Model:      {model}"
+msgstr ""
+
+#: cli/commands/model.py:180
+#, python-brace-format
+msgid "   GPU:        {gpu}"
+msgstr ""
+
+#: cli/commands/model.py:181
+#, python-brace-format
+msgid "   Host:       {host}"
+msgstr ""
+
+#: cli/commands/model.py:182
+#, python-brace-format
+msgid "   SSH:        {ssh}"
+msgstr ""
+
+#: cli/commands/model.py:183
+#, python-brace-format
+msgid "   Ollama API: {url}"
+msgstr ""
+
+#: cli/commands/model.py:186
+msgid "🔧 Quick Test Commands:"
+msgstr ""
+
+#: cli/commands/models.py:19
+msgid "📦 Deployed Models"
+msgstr ""
+
+#: cli/commands/models.py:25
+msgid "❌ Could not fetch models. Make sure you are logged in."
+msgstr ""
+
+#: cli/commands/models.py:31
+msgid "   No models deployed yet."
+msgstr ""
+
+#: cli/commands/models.py:32
+msgid "💡 Deploy a model:"
+msgstr ""
+
+#: cli/commands/models.py:49
+#, python-brace-format
+msgid "   ID:     {id}"
+msgstr ""
+
+#: cli/commands/models.py:50
+#, python-brace-format
+msgid "   Model:  {model}"
+msgstr ""
+
+#: cli/commands/models.py:51
+#, python-brace-format
+msgid "   Type:   {type}"
+msgstr ""
+
+#: cli/commands/models.py:52
+#, python-brace-format
+msgid "   Status: {status} ({message})"
+msgstr ""
+
+#: cli/commands/models.py:55
+#, python-brace-format
+msgid "   URL:    {url}"
+msgstr ""
+
+#: cli/commands/models.py:57
+#, python-brace-format
+msgid "   Key:    {key}..."
+msgstr ""
+
+#: cli/commands/models.py:58
+#, python-brace-format
+msgid "   Cost:   ${cost:.2f}/h"
+msgstr ""
+
+#: cli/commands/models.py:61
+#, python-brace-format
+msgid "   Progress: {progress:.0f}%"
+msgstr ""
+
+#: cli/commands/models.py:67
+msgid "📋 Available Model Templates"
+msgstr ""
+
+#: cli/commands/models.py:73
+msgid "❌ Could not fetch templates."
+msgstr ""
+
+#: cli/commands/models.py:87
+#, python-brace-format
+msgid "   Type:    {type}"
+msgstr ""
+
+#: cli/commands/models.py:88
+#, python-brace-format
+msgid "   Runtime: {runtime}"
+msgstr ""
+
+#: cli/commands/models.py:89
+#, python-brace-format
+msgid "   Port:    {port}"
+msgstr ""
+
+#: cli/commands/models.py:90
+#, python-brace-format
+msgid "   GPU:     {memory}GB+ required"
+msgstr ""
+
+#: cli/commands/models.py:91
+msgid "   Popular models:"
+msgstr ""
+
+#: cli/commands/models.py:99
+#, python-brace-format
+msgid "🚀 Deploying {type} model: {model}"
+msgstr ""
+
+#: cli/commands/models.py:122
+msgid "Unknown error"
+msgstr ""
+
+#: cli/commands/models.py:122
+msgid "Failed to connect"
+msgstr ""
+
+#: cli/commands/models.py:123 cli/commands/wizard.py:145
+#, python-brace-format
+msgid "❌ Deploy failed: {error}"
+msgstr ""
+
+#: cli/commands/models.py:127
+msgid "✅ Deployment started!"
+msgstr ""
+
+#: cli/commands/models.py:128
+#, python-brace-format
+msgid "   ID: {id}"
+msgstr ""
+
+#: cli/commands/models.py:129
+#, python-brace-format
+msgid "   Estimated time: ~{minutes} minutes"
+msgstr ""
+
+#: cli/commands/models.py:133
+msgid "⏳ Waiting for deployment to complete..."
+msgstr ""
+
+#: cli/commands/models.py:147
+msgid "   ⚠ Could not check status"
+msgstr ""
+
+#: cli/commands/models.py:162
+msgid "✅ Deployment complete!"
+msgstr ""
+
+#: cli/commands/models.py:163
+#, python-brace-format
+msgid "   Endpoint: {url}"
+msgstr ""
+
+#: cli/commands/models.py:165
+#, python-brace-format
+msgid "   API Key:  {key}"
+msgstr ""
+
+#: cli/commands/models.py:166
+#, python-brace-format
+msgid "   Cost:     ${cost:.2f}/h"
+msgstr ""
+
+#: cli/commands/models.py:170
+#, python-brace-format
+msgid "❌ Deployment failed: {message}"
+msgstr ""
+
+#: cli/commands/models.py:175
+msgid "⚠ Timeout waiting for deployment"
+msgstr ""
+
+#: cli/commands/models.py:183
+#, python-brace-format
+msgid "❌ Deployment {id} not found"
+msgstr ""
+
+#: cli/commands/models.py:186
+msgid "📦 Deployment Details"
+msgstr ""
+
+#: cli/commands/models.py:192
+#, python-brace-format
+msgid "⏹️ Stopping deployment {id}..."
+msgstr ""
+
+#: cli/commands/models.py:202
+msgid "❌ Failed to stop deployment"
+msgstr ""
+
+#: cli/commands/models.py:205
+msgid "✅ Deployment stopped"
+msgstr ""
+
+#: cli/commands/models.py:209
+#, python-brace-format
+msgid "🗑️ Deleting deployment {id}..."
+msgstr ""
+
+#: cli/commands/models.py:218
+msgid "✅ Deployment deleted"
+msgstr ""
+
+#: cli/commands/models.py:225
+#, python-brace-format
+msgid "❌ Could not fetch logs for {id}"
+msgstr ""
+
+#: cli/commands/models.py:228
+#, python-brace-format
+msgid "📋 Logs for {id}"
+msgstr ""
+
+#: cli/commands/models.py:230
+msgid "No logs available"
+msgstr ""
+
+#: cli/commands/wizard.py:50
+msgid "🚀 Wizard Deploy Starting"
+msgstr ""
+
+#: cli/commands/wizard.py:52
+#, python-brace-format
+msgid "   GPU:       {gpu}"
+msgstr ""
+
+#: cli/commands/wizard.py:52
+msgid "Any"
+msgstr ""
+
+#: cli/commands/wizard.py:53
+#, python-brace-format
+msgid "   Speed:     {speed}"
+msgstr ""
+
+#: cli/commands/wizard.py:54
+#, python-brace-format
+msgid "   Max Price: ${price}/hr"
+msgstr ""
+
+#: cli/commands/wizard.py:55
+#, python-brace-format
+msgid "   Region:    {region}"
+msgstr ""
+
+#: cli/commands/wizard.py:69
+#, python-brace-format
+msgid "❌ Could not import wizard service: {error}"
+msgstr ""
+
+#: cli/commands/wizard.py:70
+msgid "   Make sure you're running from the dumontcloud directory"
+msgstr ""
+
+#: cli/commands/wizard.py:76
+msgid "❌ No Vast.ai API key found"
+msgstr ""
+
+#: cli/commands/wizard.py:77
+msgid "   Set VAST_API_KEY environment variable or configure via settings"
+msgstr ""
+
+#: cli/commands/wizard.py:80
+msgid "📡 Step 1: Searching for offers..."
+msgstr ""
+
+#: cli/commands/wizard.py:99
+msgid "❌ No offers found matching criteria"
+msgstr ""
+
+#: cli/commands/wizard.py:100
+msgid "💡 Try relaxing filters (higher price, different GPU, different region)"
+msgstr ""
+
+#: cli/commands/wizard.py:103
+#, python-brace-format
+msgid "   ✓ Found {count} offers"
+msgstr ""
+
+#: cli/commands/wizard.py:111
+msgid "🔄 Step 2: Starting multi-start deployment..."
+msgstr ""
+
+#: cli/commands/wizard.py:112
+#, python-brace-format
+msgid ""
+"   Strategy: Create {batch_size} machines per batch, up to {max_batches} "
+"batches"
+msgstr ""
+
+#: cli/commands/wizard.py:113
+#, python-brace-format
+msgid "   Timeout: {timeout}s per batch"
+msgstr ""
+
+#: cli/commands/wizard.py:126
+#, python-brace-format
+msgid "   [{elapsed}s] Status: {status}"
+msgstr ""
+
+#: cli/commands/wizard.py:130
+#, python-brace-format
+msgid "   Batch {batch}/{max_batches} - Machines created: {count}"
+msgstr ""
+
+#: cli/commands/wizard.py:132
+#, python-brace-format
+msgid "   Machines created: {machines}"
+msgstr ""
+
+#: cli/commands/wizard.py:146
+#, python-brace-format
+msgid "   Machines tried: {count}"
+msgstr ""
+
+#: cli/commands/wizard.py:147
+#, python-brace-format
+msgid "   Machines created: {count}"
+msgstr ""
+
+#: cli/commands/wizard.py:148
+#, python-brace-format
+msgid "   Machines destroyed: {count}"
+msgstr ""
+
+#: cli/commands/wizard.py:152
+msgid "✅ Deploy Complete!"
+msgstr ""
+
+#: cli/commands/wizard.py:153
+msgid "📋 Instance Details:"
+msgstr ""
+
+#: cli/commands/wizard.py:155
+#, python-brace-format
+msgid "   Instance ID: {id}"
+msgstr ""
+
+#: cli/commands/wizard.py:156
+#, python-brace-format
+msgid "   GPU:         {gpu}"
+msgstr ""
+
+#: cli/commands/wizard.py:156
+msgid "Unknown"
+msgstr ""
+
+#: cli/commands/wizard.py:157
+#, python-brace-format
+msgid "   IP:          {ip}"
+msgstr ""
+
+#: cli/commands/wizard.py:158
+#, python-brace-format
+msgid "   SSH Port:    {port}"
+msgstr ""
+
+#: cli/commands/wizard.py:159
+#, python-brace-format
+msgid "   Price:       ${price:.3f}/hr"
+msgstr ""
+
+#: cli/commands/wizard.py:160
+#, python-brace-format
+msgid "   Speed:       {speed:.0f} Mbps"
+msgstr ""
+
+#: cli/commands/wizard.py:161
+#, python-brace-format
+msgid "   Ready in:    {time:.1f}s"
+msgstr ""
+
+#: cli/commands/wizard.py:163
+msgid "🔗 SSH Command:"
+msgstr ""
+
+#: cli/commands/wizard.py:167
+msgid "💻 Code Server:"
+msgstr ""
+
+#: cli/commands/wizard.py:171
+#, python-brace-format
+msgid "💾 Instance ID saved: {id}"
+msgstr ""
+
