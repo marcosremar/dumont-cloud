@@ -680,6 +680,7 @@ export default function MachineCard({
               : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
               }`}
             title="Clique para copiar IP"
+            aria-label={copiedField === 'ip' ? 'IP copiado para a área de transferência' : `Copiar endereço IP ${machine.public_ipaddr}`}
           >
             {copiedField === 'ip' ? 'Copiado!' : machine.public_ipaddr}
           </button>
@@ -722,6 +723,7 @@ export default function MachineCard({
               : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
               }`}
             title={`SSH: root@${machine.ssh_host}:${machine.ssh_port || 22} (clique para copiar)`}
+            aria-label={copiedField === 'ssh' ? 'Comando SSH copiado para a área de transferência' : `Copiar comando SSH para conectar na porta ${machine.ssh_port || 22}`}
           >
             {copiedField === 'ssh' ? 'Copiado!' : `SSH :${machine.ssh_port || 22}`}
           </button>

@@ -1,0 +1,15 @@
+{
+  "discovered_files": {
+    "web/src/components/machines/MachineCard.jsx": {
+      "description": "Added aria-labels to header buttons: failover selector uses dynamic label with strategyInfo.label, backup badge uses conditional label based on hasCpuStandby, more options button has static aria-label. Badge component supports aria-label prop.",
+      "category": "accessibility",
+      "discovered_at": "2026-01-01T06:04:27.215543+00:00"
+    },
+    "web/src/components/tailadmin-ui/index.jsx": {
+      "description": "DropdownMenu component (lines 577-664) is custom implementation lacking ARIA attributes. Used for main options menu and VS Code IDE dropdown. Needs aria-expanded, aria-haspopup, role='menu', role='menuitem', and keyboard navigation.",
+      "category": "accessibility",
+      "discovered_at": "2026-01-01T06:02:42.275880+00:00"
+    }
+  },
+  "last_updated": "2026-01-01T06:04:27.215559+00:00"
+}

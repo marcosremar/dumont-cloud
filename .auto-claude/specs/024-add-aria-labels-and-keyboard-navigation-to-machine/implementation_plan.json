@@ -1,0 +1,188 @@
+{
+  "feature": "Add ARIA labels and keyboard navigation to MachineCard interactive elements",
+  "description": "Add proper accessibility attributes (aria-label, aria-expanded, aria-haspopup) to all interactive elements in MachineCard including failover dropdown, backup info popup, and action buttons. Implement keyboard navigation support for nested dropdown menus.",
+  "created_at": "2025-12-31T21:16:32.332Z",
+  "updated_at": "2026-01-01T00:00:00.000Z",
+  "status": "in_progress",
+  "planStatus": "approved",
+  "workflow_type": "development",
+  "services_involved": [
+    "web"
+  ],
+  "spec_file": "spec.md",
+  "phases": [
+    {
+      "id": "phase-1",
+      "title": "Add ARIA labels to action buttons and interactive elements",
+      "description": "Add descriptive aria-label attributes to all buttons and interactive elements in MachineCard",
+      "subtasks": [
+        {
+          "id": "1.1",
+          "title": "Add aria-labels to card header buttons",
+          "description": "Add aria-label to the failover strategy selector button, backup info badge button, and more options menu trigger (MoreVertical button)",
+          "status": "completed",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "notes": "Added aria-labels to: failover strategy selector (dynamic label with current strategy), backup info badge (context-aware based on backup status), and more options menu trigger. Committed as 0ec29b4.",
+          "updated_at": "2026-01-01T06:04:21.100815+00:00"
+        },
+        {
+          "id": "1.2",
+          "title": "Add aria-labels to specs row copy buttons",
+          "description": "Add aria-label to the copy IP button and copy SSH button with descriptive text explaining the action",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "notes": "Copy IP button (lines 671-681), Copy SSH button (lines 713-723)"
+        },
+        {
+          "id": "1.3",
+          "title": "Add aria-labels to IDE buttons",
+          "description": "Add aria-label to VS Code dropdown trigger, Cursor button, and Windsurf button",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "notes": "IDE buttons (lines 775-792)"
+        },
+        {
+          "id": "1.4",
+          "title": "Add aria-labels to action buttons",
+          "description": "Add aria-label to Failover button, Test (Testar) button, CPU Migration button, Pause button, Start button, and GPU Migration button",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "notes": "Action buttons in running state (lines 798-857) and stopped state (lines 906-926)"
+        },
+        {
+          "id": "1.5",
+          "title": "Add aria-labels to dropdown close buttons",
+          "description": "Add aria-label to the close buttons in failover dropdown and backup info popup",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "notes": "Close buttons at failover dropdown (lines 474-479) and backup popup (lines 547-552)"
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "title": "Add ARIA state and role attributes to dropdowns and popups",
+      "description": "Add aria-expanded, aria-haspopup, role attributes to dropdown triggers and menus",
+      "subtasks": [
+        {
+          "id": "2.1",
+          "title": "Add ARIA attributes to failover strategy dropdown",
+          "description": "Add aria-expanded, aria-haspopup='menu' to trigger button, role='menu' to dropdown container, role='menuitem' to each option, aria-labelledby connections, and id attributes for proper labeling",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "notes": "Custom dropdown at lines 449-527. Needs proper ARIA menu structure."
+        },
+        {
+          "id": "2.2",
+          "title": "Add ARIA attributes to backup info popup",
+          "description": "Add aria-expanded, aria-haspopup='dialog' to trigger badge, role='dialog' and aria-labelledby to popup container",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "notes": "Custom popup at lines 529-618. Should behave as dialog."
+        },
+        {
+          "id": "2.3",
+          "title": "Add ARIA attributes to tailadmin-ui DropdownMenu component",
+          "description": "Update DropdownMenuTrigger with aria-expanded and aria-haspopup, DropdownMenuContent with role='menu', DropdownMenuItem with role='menuitem'",
+          "status": "pending",
+          "files": [
+            "web/src/components/tailadmin-ui/index.jsx"
+          ],
+          "notes": "Component used for main options menu and VS Code dropdown (lines 577-664)"
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "title": "Implement keyboard navigation for custom dropdowns",
+      "description": "Add keyboard support (arrow keys, Enter, Escape) to custom dropdown menus in MachineCard",
+      "subtasks": [
+        {
+          "id": "3.1",
+          "title": "Add keyboard navigation to failover strategy dropdown",
+          "description": "Implement arrow key navigation between options, Enter to select, Escape to close. Use useRef for menu items, add tabIndex and onKeyDown handlers.",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "notes": "Need to track focused index, use refs for each option, handle keydown events"
+        },
+        {
+          "id": "3.2",
+          "title": "Add keyboard support to backup info popup",
+          "description": "Implement Escape to close popup, auto-focus close button when opened, return focus to trigger on close",
+          "status": "pending",
+          "files": [
+            "web/src/components/machines/MachineCard.jsx"
+          ],
+          "notes": "Simpler keyboard support - mainly Escape and focus management"
+        },
+        {
+          "id": "3.3",
+          "title": "Add keyboard navigation to tailadmin-ui DropdownMenu",
+          "description": "Implement arrow key navigation between menu items, Enter to select, Escape to close, proper focus management when menu opens/closes",
+          "status": "pending",
+          "files": [
+            "web/src/components/tailadmin-ui/index.jsx"
+          ],
+          "notes": "Will benefit all DropdownMenu usages across the app. Need refs for items."
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "title": "Testing and verification",
+      "description": "Verify accessibility improvements work correctly",
+      "subtasks": [
+        {
+          "id": "4.1",
+          "title": "Manual accessibility testing",
+          "description": "Test with keyboard-only navigation (Tab, Arrow keys, Enter, Escape), verify all interactive elements are reachable and activatable",
+          "status": "pending",
+          "files": [],
+          "notes": "Test focus indicators, tab order, and screen reader announcements"
+        },
+        {
+          "id": "4.2",
+          "title": "Update build-progress.txt with results",
+          "description": "Document all accessibility improvements made and testing results",
+          "status": "pending",
+          "files": [
+            ".auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/build-progress.txt"
+          ],
+          "notes": "Final documentation of work completed"
+        }
+      ]
+    }
+  ],
+  "final_acceptance": [
+    "All interactive elements have descriptive aria-label attributes",
+    "Dropdown triggers have aria-expanded and aria-haspopup attributes",
+    "Menus have proper role='menu' and role='menuitem' structure",
+    "Dialogs/popups have role='dialog' with aria-labelledby",
+    "Failover dropdown supports arrow key navigation",
+    "All dropdowns/popups close on Escape key",
+    "Focus is properly managed (trapped in menus, returned on close)",
+    "All elements accessible via keyboard-only navigation"
+  ],
+  "qa_signoff": {
+    "status": "pending",
+    "issues": "",
+    "tests_passed": ""
+  },
+  "last_updated": "2026-01-01T06:04:21.100833+00:00"
+}
