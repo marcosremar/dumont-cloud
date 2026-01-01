@@ -35,11 +35,95 @@
         }
       ],
       "status": "completed"
+    },
+    "subtask-2-3": {
+      "attempts": [
+        {
+          "session": 4,
+          "timestamp": "2025-12-31T23:01:24.121770",
+          "approach": "Implemented: Executar testes failover-complete-journeys.spec.js e documentar status",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-2-4": {
+      "attempts": [
+        {
+          "session": 5,
+          "timestamp": "2025-12-31T23:11:44.816658",
+          "approach": "Implemented: Gerar relat\u00f3rio HTML completo e documentar todos os problemas encontrados",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-3-1": {
+      "attempts": [
+        {
+          "session": 6,
+          "timestamp": "2025-12-31T23:20:34.625823",
+          "approach": "Implemented: Corrigir seletores Playwright quebrados em cpu-standby-failover.spec.js",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-3-2": {
+      "attempts": [
+        {
+          "session": 7,
+          "timestamp": "2025-12-31T23:29:59.497615",
+          "approach": "Implemented: Corrigir seletores em failover-complete-journeys.spec.js se necess\u00e1rio",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-3-3": {
+      "attempts": [
+        {
+          "session": 8,
+          "timestamp": "2025-12-31T23:33:21.022136",
+          "approach": "Implemented: Atualizar auth.setup.js se necess\u00e1rio para melhor suporte a demo mode",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-4-1": {
+      "attempts": [
+        {
+          "session": 9,
+          "timestamp": "2025-12-31T23:36:51.710629",
+          "approach": "Implemented: Executar todos os testes de failover em sequ\u00eancia e gerar relat\u00f3rio",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-4-2": {
+      "attempts": [
+        {
+          "session": 10,
+          "timestamp": "2025-12-31T23:41:05.615311",
+          "approach": "Implemented: Documentar status final dos testes e corre\u00e7\u00f5es aplicadas",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2025-12-31T22:46:26.119136",
-    "last_updated": "2025-12-31T22:58:03.242337"
+    "last_updated": "2025-12-31T23:41:05.615323"
   }
 }

@@ -265,7 +265,9 @@
             "type": "manual",
             "instructions": "Verificar que FINAL_TEST_STATUS.md documenta: (1) Testes que passam, (2) Corre\u00e7\u00f5es aplicadas, (3) Pr\u00f3ximos passos"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Created tests/FINAL_TEST_STATUS.md documenting: (1) All 47 tests across 3 spec files with their status, (2) 4 commits with corrections applied in Phase 3 (fixes to selectors, navigation helpers, demo mode support), (3) Test execution commands and expected results, (4) Known limitations and next steps. Commit: bbb4cc5",
+          "updated_at": "2025-12-31T22:40:17.742253+00:00"
         }
       ]
     }
@@ -384,10 +386,49 @@
       "checks": []
     }
   },
-  "qa_signoff": null,
-  "last_updated": "2025-12-31T22:36:11.165744+00:00",
-  "status": "in_progress",
-  "planStatus": "in_progress",
+  "qa_signoff": {
+    "status": "approved",
+    "qa_session": 2,
+    "issues_found": [
+      {
+        "description": "None - Investigation task completed successfully"
+      }
+    ],
+    "tests_passed": {},
+    "timestamp": "2025-12-31T22:50:57.950611+00:00",
+    "ready_for_qa_revalidation": false
+  },
+  "last_updated": "2025-12-31T22:50:57.950619+00:00",
+  "status": "human_review",
+  "planStatus": "review",
   "updated_at": "2025-12-31T21:46:13.540Z",
-  "recoveryNote": "Task recovered from stuck state at 2025-12-31T21:46:13.540Z"
+  "recoveryNote": "Task recovered from stuck state at 2025-12-31T21:46:13.540Z",
+  "qa_iteration_history": [
+    {
+      "iteration": 1,
+      "status": "error",
+      "timestamp": "2025-12-31T22:46:10.967311+00:00",
+      "issues": [
+        {
+          "title": "QA error",
+          "description": "QA agent did not update implementation_plan.json"
+        }
+      ]
+    },
+    {
+      "iteration": 2,
+      "status": "approved",
+      "timestamp": "2025-12-31T22:51:10.880872+00:00",
+      "issues": [],
+      "duration_seconds": 299.91
+    }
+  ],
+  "qa_stats": {
+    "total_iterations": 2,
+    "last_iteration": 2,
+    "last_status": "approved",
+    "issues_by_type": {
+      "unknown": 1
+    }
+  }
 }
