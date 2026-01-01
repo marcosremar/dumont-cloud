@@ -5,6 +5,7 @@ from .instance_status import InstanceStatus, HibernationEvent
 from .metrics import MarketSnapshot, ProviderReliability, PricePrediction, CostEfficiencyRanking
 from .machine_history import MachineAttempt, MachineBlacklist, MachineStats
 from .user import User
+from .email_verification_token import EmailVerificationToken
 
 __all__ = [
     'PriceHistory',
@@ -22,4 +23,6 @@ __all__ = [
     'MachineStats',
     # User model with trial support
     'User',
+    # Email verification token
+    'EmailVerificationToken',
 ]
