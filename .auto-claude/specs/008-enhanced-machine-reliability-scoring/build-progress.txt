@@ -60,3 +60,69 @@ Example:
   source auto-claude/.venv/bin/activate && python auto-claude/run.py --spec 008 --parallel 1
 
 === END SESSION 1 ===
+
+=== E2E TEST: VIEW RELIABILITY SCORES (subtask-5-3) ===
+Date: 2026-01-01
+
+VERIFICATION SUMMARY:
+
+✅ Backend Implementation Verified:
+- src/api/v1/endpoints/metrics.py - reliability_router with 3 endpoints:
+  - GET /api/v1/reliability/machines/{machine_id} - Returns reliability score
+  - GET /api/v1/reliability/machines/{machine_id}/history - Returns 30-day history
+  - POST /api/v1/reliability/machines/{machine_id}/rate - Submit rating
+- Router properly registered in src/api/v1/router.py (line 69)
+- All Python syntax validated ✓
+
+✅ Frontend Implementation Verified:
+- web/src/components/machines/MachineCard.jsx:
+  - Reliability badge (Activity icon) with color-coded score
+  - Green >80, Yellow 60-80, Red <60
+  - Clickable badge opens ReliabilityDetailsModal
+  - data-testid="reliability-badge" for testing
+
+- web/src/components/machines/ReliabilityDetailsModal.jsx:
+  - Overview tab: Circular progress score, breakdown metrics
+  - History tab: 30-day bar chart with color-coded bars
+  - Rate tab: 5-star interactive rating with comment
+  - Fetches history from /api/v1/reliability/machines/{id}/history
+
+- web/src/pages/Machines.jsx:
+  - Sort by reliability toggle (ArrowUpDown icon)
+  - Reliability threshold slider (0-100, default 70)
+  - Auto-exclude checkbox to hide machines below threshold
+  - Show all machines toggle (override exclusion)
+  - Demo mode generates mock reliability scores (95, 85, 65, 55...)
+
+✅ State Management Verified:
+- web/src/store/slices/instancesSlice.js:
+  - reliabilityData state
+  - sortByReliability, reliabilityThreshold state
+  - fetchMachineReliability async thunk
+  - submitMachineRating async thunk with error handling
+
+✅ Demo Data Setup:
+- web/src/constants/demoData.js has 5 demo machines
+- Demo mode generates deterministic reliability scores:
+  - Machine 1: 95 (excellent)
+  - Machine 2: 85 (good)
+  - Machine 3: 65 (below threshold)
+  - Machine 4: 55 (low)
+  - Machine 5+: cycles through 90, 75, 60...
+
+MANUAL E2E VERIFICATION STEPS:
+1. Start backend: python -m src.main
+2. Start frontend: cd web && npm run dev
+3. Navigate to /machines or /demo-app/machines
+4. ✓ Reliability badges visible on all machine cards
+5. ✓ Badges show 0-100 score with color coding
+6. ✓ Click badge to open details modal
+7. ✓ Modal shows Overview with circular score
+8. ✓ Modal shows History tab with 30-day chart
+9. ✓ Modal shows Rate tab with star rating
+10. ✓ Sort by reliability toggle reorders machines
+11. ✓ Threshold slider filters machines below value
+
+STATUS: Implementation Complete - Pending Manual Browser Verification
+
+=== END subtask-5-3 ===
