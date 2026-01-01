@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Card,
   Badge,
@@ -111,9 +111,87 @@ export default function MachineCard({
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [showStrategyMenu, setShowStrategyMenu] = useState(false)
+  const [focusedStrategyIndex, setFocusedStrategyIndex] = useState(-1)
+  const strategyMenuRef = useRef(null)
+  const strategyItemRefs = useRef([])
 
   // Get current failover strategy and calculate real costs
   const currentStrategy = machine.failover_strategy || (machine.cpu_standby?.enabled ? 'cpu_standby' : 'disabled')
+
+  // Strategy keys for keyboard navigation
+  const strategyKeys = Object.keys(FAILOVER_STRATEGIES_BASE)
+
+  // Handle keyboard navigation for failover strategy dropdown
+  const handleStrategyMenuKeyDown = useCallback((e) => {
+    if (!showStrategyMenu) return
+
+    const itemCount = strategyKeys.length
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setFocusedStrategyIndex(prev => {
+          const next = prev < itemCount - 1 ? prev + 1 : 0
+          return next
+        })
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setFocusedStrategyIndex(prev => {
+          const next = prev > 0 ? prev - 1 : itemCount - 1
+          return next
+        })
+        break
+      case 'Enter':
+      case ' ':
+        e.preventDefault()
+        if (focusedStrategyIndex >= 0 && focusedStrategyIndex < itemCount) {
+          // Select the focused strategy
+          // TODO: Call API to change strategy
+          setShowStrategyMenu(false)
+          setFocusedStrategyIndex(-1)
+        }
+        break
+      case 'Escape':
+        e.preventDefault()
+        setShowStrategyMenu(false)
+        setFocusedStrategyIndex(-1)
+        break
+      case 'Tab':
+        // Close menu and allow normal tab behavior
+        setShowStrategyMenu(false)
+        setFocusedStrategyIndex(-1)
+        break
+      case 'Home':
+        e.preventDefault()
+        setFocusedStrategyIndex(0)
+        break
+      case 'End':
+        e.preventDefault()
+        setFocusedStrategyIndex(itemCount - 1)
+        break
+      default:
+        break
+    }
+  }, [showStrategyMenu, focusedStrategyIndex, strategyKeys.length])
+
+  // Focus the appropriate item when focusedStrategyIndex changes
+  useEffect(() => {
+    if (showStrategyMenu && focusedStrategyIndex >= 0 && strategyItemRefs.current[focusedStrategyIndex]) {
+      strategyItemRefs.current[focusedStrategyIndex].focus()
+    }
+  }, [focusedStrategyIndex, showStrategyMenu])
+
+  // Set initial focus when menu opens
+  useEffect(() => {
+    if (showStrategyMenu) {
+      // Find the index of the current strategy
+      const currentIndex = strategyKeys.indexOf(currentStrategy)
+      setFocusedStrategyIndex(currentIndex >= 0 ? currentIndex : 0)
+    } else {
+      setFocusedStrategyIndex(-1)
+    }
+  }, [showStrategyMenu, currentStrategy, strategyKeys])
   const strategyCosts = calculateStrategyCosts(machine)
   const strategyInfo = FAILOVER_STRATEGIES_BASE[currentStrategy] || FAILOVER_STRATEGIES_BASE.disabled
   const currentStrategyCost = strategyCosts[currentStrategy] || 0
@@ -472,10 +550,13 @@ export default function MachineCard({
               {showStrategyMenu && (
                 <div
                   id={`failover-menu-${machine.id}`}
+                  ref={strategyMenuRef}
                   role="menu"
                   aria-labelledby={`failover-menu-label-${machine.id}`}
+                  aria-activedescendant={focusedStrategyIndex >= 0 ? `failover-option-${machine.id}-${strategyKeys[focusedStrategyIndex]}` : undefined}
                   className="absolute top-full left-0 mt-1 z-50 w-64 p-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl"
                   data-testid="failover-dropdown-menu"
+                  onKeyDown={handleStrategyMenuKeyDown}
                 >
                   <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-700">
                     <span id={`failover-menu-label-${machine.id}`} className="text-[10px] font-semibold text-gray-300">Estratégia de Failover</span>
@@ -484,28 +565,35 @@ export default function MachineCard({
                       className="p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300"
                       data-testid="failover-dropdown-close"
                       aria-label="Close failover strategy menu"
+                      tabIndex={-1}
                     >
                       <X className="w-3 h-3" />
                     </button>
                   </div>
                   <div className="space-y-1" data-testid="failover-options-list">
-                    {Object.entries(FAILOVER_STRATEGIES_BASE).map(([key, strategy]) => {
+                    {Object.entries(FAILOVER_STRATEGIES_BASE).map(([key, strategy], index) => {
                       const cost = strategyCosts[key] || 0
+                      const isFocused = focusedStrategyIndex === index
                       return (
                         <button
                           key={key}
+                          ref={(el) => { strategyItemRefs.current[index] = el }}
+                          id={`failover-option-${machine.id}-${key}`}
                           role="menuitem"
+                          tabIndex={isFocused ? 0 : -1}
                           data-testid={`failover-option-${key}`}
                           aria-current={currentStrategy === key ? 'true' : undefined}
                           onClick={() => {
                             // TODO: Call API to change strategy
                             setShowStrategyMenu(false)
+                            setFocusedStrategyIndex(-1)
                           }}
+                          onKeyDown={handleStrategyMenuKeyDown}
                           className={`w-full flex items-center justify-between p-1.5 rounded text-left transition-colors ${
                             currentStrategy === key
                               ? 'bg-brand-500/20 border border-brand-500/30'
                               : 'hover:bg-gray-800 border border-transparent'
-                          }`}
+                          } ${isFocused ? 'ring-2 ring-brand-400 ring-offset-1 ring-offset-gray-900' : ''}`}
                         >
                           <div className="flex items-center gap-1.5">
                             <Shield className={`w-3 h-3 ${
