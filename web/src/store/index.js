@@ -10,6 +10,7 @@ import uiSlice from './slices/uiSlice'
 import economySlice from './slices/economySlice'
 import templateReducer from './slices/templateSlice'
 import emailPreferencesSlice from './slices/emailPreferencesSlice'
+import npsSlice from './slices/npsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
     economy: economySlice,
     templates: templateReducer,
     emailPreferences: emailPreferencesSlice,
+    nps: npsSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

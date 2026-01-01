@@ -5,6 +5,11 @@
   "subtasks": {
     "completed": 16,
     "total": 19,
+  "spec": "011-nps-and-feedback-collection-system",
+  "state": "building",
+  "subtasks": {
+    "completed": 12,
+    "total": 15,
     "in_progress": 1,
     "failed": 0
   },
@@ -12,6 +17,9 @@
     "current": "Integration & Data Population",
     "id": null,
     "total": 5
+    "current": "Frontend UI Components",
+    "id": null,
+    "total": 4
   },
   "workers": {
     "active": 0,
@@ -22,4 +30,8 @@
     "started_at": "2026-01-01T07:07:30.772879"
   },
   "last_update": "2026-01-01T07:27:53.110650"
+    "number": 13,
+    "started_at": "2025-12-31T22:35:21.966915"
+  },
+  "last_update": "2025-12-31T23:34:41.937606"
 }

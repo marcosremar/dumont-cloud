@@ -8,6 +8,7 @@ from .endpoints import warmpool, failover_settings, failover, serverless, spot_d
 from .endpoints import market, hosts, templates
 from .endpoints import market, hosts
 from .endpoints import email_preferences, unsubscribe
+from .endpoints import market, hosts, nps
 from .endpoints.settings import balance_router
 from .endpoints.spot import router as spot_router
 from .endpoints.metrics import reliability_router
@@ -78,3 +79,5 @@ api_router.include_router(email_preferences.router, tags=["Email Preferences"])
 
 # Unsubscribe - One-click email unsubscribe (no auth required per CAN-SPAM)
 api_router.include_router(unsubscribe.router, tags=["Unsubscribe"])
+# NPS - Net Promoter Score surveys
+api_router.include_router(nps.router, tags=["NPS"])
