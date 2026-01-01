@@ -2,10 +2,48 @@
 Modelos de banco de dados para RBAC (Role-Based Access Control) e Teams.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index, ForeignKey, Text, Float, Table
-from sqlalchemy.orm import relationship
+import json
+from contextvars import ContextVar
+from typing import Optional, Any, Dict
+
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index, ForeignKey, Text, Float, Table, event
+from sqlalchemy.orm import relationship, Session, object_session
 from datetime import datetime
 from src.config.database import Base
+
+
+# Context variable to store audit context (user_id, ip_address, user_agent)
+# This allows passing request context to SQLAlchemy event listeners
+_audit_context: ContextVar[Optional[Dict[str, Any]]] = ContextVar('audit_context', default=None)
+
+
+def set_audit_context(user_id: str, team_id: Optional[int] = None, ip_address: Optional[str] = None, user_agent: Optional[str] = None):
+    """
+    Set the audit context for the current request/operation.
+    Call this at the start of API requests that modify team data.
+
+    Args:
+        user_id: The ID of the user performing the action
+        team_id: Optional team ID context
+        ip_address: Optional IP address of the request
+        user_agent: Optional user agent string
+    """
+    _audit_context.set({
+        'user_id': user_id,
+        'team_id': team_id,
+        'ip_address': ip_address,
+        'user_agent': user_agent,
+    })
+
+
+def get_audit_context() -> Optional[Dict[str, Any]]:
+    """Get the current audit context."""
+    return _audit_context.get()
+
+
+def clear_audit_context():
+    """Clear the audit context after the request is complete."""
+    _audit_context.set(None)
 
 
 # Association table for Role-Permission many-to-many relationship
@@ -612,3 +650,388 @@ AUDIT_ACTIONS = {
     'invitation.revoked': 'Invitation revoked',
     'invitation.expired': 'Invitation expired',
 }
+
+
+# =============================================================================
+# SQLAlchemy Event Listeners for Audit Logging
+# =============================================================================
+
+
+def _create_audit_log(
+    session: Session,
+    action: str,
+    resource_type: str,
+    resource_id: Optional[str],
+    team_id: Optional[int] = None,
+    details: Optional[Dict[str, Any]] = None,
+    old_value: Optional[Dict[str, Any]] = None,
+    new_value: Optional[Dict[str, Any]] = None,
+    status: str = 'success',
+):
+    """
+    Helper function to create an audit log entry.
+
+    Args:
+        session: SQLAlchemy session to use
+        action: The action being performed (from AUDIT_ACTIONS keys)
+        resource_type: Type of resource being modified (e.g., 'team', 'team_member')
+        resource_id: ID of the resource being modified
+        team_id: Optional team ID context
+        details: Optional dictionary with additional details
+        old_value: Optional dictionary with previous state (for updates)
+        new_value: Optional dictionary with new state (for updates)
+        status: Status of the action ('success', 'failure', 'denied')
+    """
+    ctx = get_audit_context()
+
+    # If no audit context, use a system user placeholder
+    user_id = ctx.get('user_id', 'system') if ctx else 'system'
+    context_team_id = ctx.get('team_id') if ctx else None
+    ip_address = ctx.get('ip_address') if ctx else None
+    user_agent = ctx.get('user_agent') if ctx else None
+
+    # Use provided team_id or fall back to context team_id
+    final_team_id = team_id if team_id is not None else context_team_id
+
+    audit_log = AuditLog(
+        user_id=user_id,
+        team_id=final_team_id,
+        action=action,
+        resource_type=resource_type,
+        resource_id=str(resource_id) if resource_id else None,
+        details=json.dumps(details) if details else None,
+        old_value=json.dumps(old_value) if old_value else None,
+        new_value=json.dumps(new_value) if new_value else None,
+        ip_address=ip_address,
+        user_agent=user_agent,
+        status=status,
+    )
+
+    session.add(audit_log)
+
+
+# -----------------------------------------------------------------------------
+# Team Event Listeners
+# -----------------------------------------------------------------------------
+
+@event.listens_for(Team, 'after_insert')
+def audit_team_created(mapper, connection, target: Team):
+    """Log when a team is created."""
+    session = object_session(target)
+    if session is None:
+        return
+
+    _create_audit_log(
+        session=session,
+        action='team.created',
+        resource_type='team',
+        resource_id=target.id,
+        team_id=target.id,
+        new_value={
+            'name': target.name,
+            'slug': target.slug,
+            'description': target.description,
+            'owner_user_id': target.owner_user_id,
+        },
+    )
+
+
+@event.listens_for(Team, 'after_update')
+def audit_team_updated(mapper, connection, target: Team):
+    """Log when a team is updated."""
+    session = object_session(target)
+    if session is None:
+        return
+
+    # Check if this is a soft delete
+    if target.deleted_at is not None:
+        action = 'team.deleted'
+        details = {'soft_delete': True}
+    else:
+        action = 'team.updated'
+        details = None
+
+    _create_audit_log(
+        session=session,
+        action=action,
+        resource_type='team',
+        resource_id=target.id,
+        team_id=target.id,
+        details=details,
+        new_value={
+            'name': target.name,
+            'slug': target.slug,
+            'description': target.description,
+            'is_active': target.is_active,
+        },
+    )
+
+
+# -----------------------------------------------------------------------------
+# TeamMember Event Listeners
+# -----------------------------------------------------------------------------
+
+@event.listens_for(TeamMember, 'after_insert')
+def audit_member_added(mapper, connection, target: TeamMember):
+    """Log when a member is added to a team."""
+    session = object_session(target)
+    if session is None:
+        return
+
+    _create_audit_log(
+        session=session,
+        action='member.added',
+        resource_type='team_member',
+        resource_id=target.id,
+        team_id=target.team_id,
+        new_value={
+            'user_id': target.user_id,
+            'team_id': target.team_id,
+            'role_id': target.role_id,
+            'invited_by_user_id': target.invited_by_user_id,
+        },
+    )
+
+
+@event.listens_for(TeamMember, 'after_update')
+def audit_member_updated(mapper, connection, target: TeamMember):
+    """Log when a team member is updated (role change or removal)."""
+    session = object_session(target)
+    if session is None:
+        return
+
+    # Check if this is a soft delete (member removed)
+    if target.removed_at is not None and target.is_active is False:
+        action = 'member.removed'
+        details = {
+            'removed_by_user_id': target.removed_by_user_id,
+            'removed_at': target.removed_at.isoformat() if target.removed_at else None,
+        }
+    else:
+        # This is likely a role change
+        action = 'member.role_changed'
+        details = None
+
+    _create_audit_log(
+        session=session,
+        action=action,
+        resource_type='team_member',
+        resource_id=target.id,
+        team_id=target.team_id,
+        details=details,
+        new_value={
+            'user_id': target.user_id,
+            'role_id': target.role_id,
+            'is_active': target.is_active,
+        },
+    )
+
+
+# -----------------------------------------------------------------------------
+# TeamInvitation Event Listeners
+# -----------------------------------------------------------------------------
+
+@event.listens_for(TeamInvitation, 'after_insert')
+def audit_invitation_sent(mapper, connection, target: TeamInvitation):
+    """Log when an invitation is sent."""
+    session = object_session(target)
+    if session is None:
+        return
+
+    _create_audit_log(
+        session=session,
+        action='invitation.sent',
+        resource_type='team_invitation',
+        resource_id=target.id,
+        team_id=target.team_id,
+        new_value={
+            'email': target.email,
+            'role_id': target.role_id,
+            'invited_by_user_id': target.invited_by_user_id,
+            'expires_at': target.expires_at.isoformat() if target.expires_at else None,
+        },
+    )
+
+
+@event.listens_for(TeamInvitation, 'after_update')
+def audit_invitation_updated(mapper, connection, target: TeamInvitation):
+    """Log when an invitation status changes."""
+    session = object_session(target)
+    if session is None:
+        return
+
+    # Determine the action based on status
+    status_to_action = {
+        'accepted': 'invitation.accepted',
+        'revoked': 'invitation.revoked',
+        'expired': 'invitation.expired',
+    }
+
+    action = status_to_action.get(target.status)
+    if action is None:
+        return  # Don't log for other status changes
+
+    details = {
+        'email': target.email,
+        'status': target.status,
+    }
+
+    if target.status == 'accepted':
+        details['accepted_by_user_id'] = target.accepted_by_user_id
+        details['accepted_at'] = target.accepted_at.isoformat() if target.accepted_at else None
+
+    _create_audit_log(
+        session=session,
+        action=action,
+        resource_type='team_invitation',
+        resource_id=target.id,
+        team_id=target.team_id,
+        details=details,
+    )
+
+
+# -----------------------------------------------------------------------------
+# Role Event Listeners
+# -----------------------------------------------------------------------------
+
+@event.listens_for(Role, 'after_insert')
+def audit_role_created(mapper, connection, target: Role):
+    """Log when a custom role is created."""
+    session = object_session(target)
+    if session is None:
+        return
+
+    # Only log custom roles (not system roles during seeding)
+    if target.is_system:
+        return
+
+    _create_audit_log(
+        session=session,
+        action='role.created',
+        resource_type='role',
+        resource_id=target.id,
+        team_id=target.team_id,
+        new_value={
+            'name': target.name,
+            'display_name': target.display_name,
+            'description': target.description,
+            'is_system': target.is_system,
+        },
+    )
+
+
+@event.listens_for(Role, 'after_update')
+def audit_role_updated(mapper, connection, target: Role):
+    """Log when a role is updated."""
+    session = object_session(target)
+    if session is None:
+        return
+
+    # Don't log updates to system roles (they shouldn't be modified anyway)
+    if target.is_system:
+        return
+
+    _create_audit_log(
+        session=session,
+        action='role.updated',
+        resource_type='role',
+        resource_id=target.id,
+        team_id=target.team_id,
+        new_value={
+            'name': target.name,
+            'display_name': target.display_name,
+            'description': target.description,
+        },
+    )
+
+
+@event.listens_for(Role, 'after_delete')
+def audit_role_deleted(mapper, connection, target: Role):
+    """Log when a role is deleted."""
+    # Note: We use after_delete since roles don't have soft delete
+    # The session may not be available in after_delete, so we need special handling
+    session = object_session(target)
+    if session is None:
+        return
+
+    # Don't log deletion of system roles (they shouldn't be deleted anyway)
+    if target.is_system:
+        return
+
+    _create_audit_log(
+        session=session,
+        action='role.deleted',
+        resource_type='role',
+        resource_id=target.id,
+        team_id=target.team_id,
+        old_value={
+            'name': target.name,
+            'display_name': target.display_name,
+            'description': target.description,
+        },
+    )
+
+
+# -----------------------------------------------------------------------------
+# TeamQuota Event Listeners
+# -----------------------------------------------------------------------------
+
+@event.listens_for(TeamQuota, 'after_insert')
+def audit_quota_created(mapper, connection, target: TeamQuota):
+    """Log when team quota is created."""
+    session = object_session(target)
+    if session is None:
+        return
+
+    _create_audit_log(
+        session=session,
+        action='quota.updated',
+        resource_type='team_quota',
+        resource_id=target.id,
+        team_id=target.team_id,
+        details={'action': 'created'},
+        new_value={
+            'max_gpu_hours_per_month': target.max_gpu_hours_per_month,
+            'max_concurrent_instances': target.max_concurrent_instances,
+            'max_monthly_budget_usd': target.max_monthly_budget_usd,
+        },
+    )
+
+
+@event.listens_for(TeamQuota, 'after_update')
+def audit_quota_updated(mapper, connection, target: TeamQuota):
+    """Log when team quota is updated."""
+    session = object_session(target)
+    if session is None:
+        return
+
+    # Check if any quota was exceeded
+    is_exceeded = target.is_any_quota_exceeded()
+
+    if is_exceeded:
+        action = 'quota.exceeded'
+        details = {
+            'gpu_hours_exceeded': target.is_gpu_hours_exceeded(),
+            'concurrent_instances_exceeded': target.is_concurrent_instances_exceeded(),
+            'budget_exceeded': target.is_budget_exceeded(),
+        }
+    else:
+        action = 'quota.updated'
+        details = None
+
+    _create_audit_log(
+        session=session,
+        action=action,
+        resource_type='team_quota',
+        resource_id=target.id,
+        team_id=target.team_id,
+        details=details,
+        new_value={
+            'max_gpu_hours_per_month': target.max_gpu_hours_per_month,
+            'max_concurrent_instances': target.max_concurrent_instances,
+            'max_monthly_budget_usd': target.max_monthly_budget_usd,
+            'current_gpu_hours_used': target.current_gpu_hours_used,
+            'current_concurrent_instances': target.current_concurrent_instances,
+            'current_monthly_spend_usd': target.current_monthly_spend_usd,
+        },
+    )
