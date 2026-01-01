@@ -7,6 +7,8 @@ Endpoints:
 - GET /api/referral/validate/<code> - Valida um código de referência
 - GET /api/referral/stats - Obtém estatísticas de referência do usuário
 - POST /api/referral/click/<code> - Registra clique em código de referência
+- GET /api/referral/my-referrer - Verifica se usuário tem referrer e status de email
+- GET /api/referral/credits - Obtém saldo e status de créditos do usuário
 """
 import logging
 from flask import Blueprint, request, jsonify, session, g
@@ -14,6 +16,7 @@ from functools import wraps
 
 from src.config.database import SessionLocal
 from src.services.referral_service import ReferralService
+from src.services.credit_service import CreditService, EmailNotVerifiedError
 
 logger = logging.getLogger(__name__)
 
@@ -312,7 +315,10 @@ def get_my_referrer():
             "has_referrer": true,
             "status": "active",
             "welcome_credit": 10.00,
-            "welcome_credit_granted": false
+            "welcome_credit_granted": false,
+            "email_verified": true,
+            "can_use_credits": true,
+            "verification_required_message": null
         }
     """
     db = SessionLocal()
@@ -325,8 +331,15 @@ def get_my_referrer():
         if not referral:
             return jsonify({
                 'success': True,
-                'has_referrer': False
+                'has_referrer': False,
+                'can_use_credits': True,
+                'email_verified': True,
+                'verification_required_message': None
             })
+
+        # Determinar se pode usar créditos
+        can_use_credits = referral.email_verified
+        verification_msg = None if can_use_credits else "Email verification required before using credits"
 
         return jsonify({
             'success': True,
@@ -335,11 +348,160 @@ def get_my_referrer():
             'welcome_credit': referral.referred_welcome_credit,
             'welcome_credit_granted': referral.welcome_credit_granted,
             'email_verified': referral.email_verified,
+            'can_use_credits': can_use_credits,
+            'verification_required_message': verification_msg,
             'referred_at': referral.created_at.isoformat() if referral.created_at else None
         })
 
     except Exception as e:
         logger.error(f"Erro ao verificar referrer: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+    finally:
+        db.close()
+
+
+@referrals_bp.route('/api/referral/credits', methods=['GET'])
+@login_required
+def get_user_credits():
+    """
+    Obtém saldo de créditos e status de verificação do usuário.
+
+    GET /api/referral/credits
+
+    Returns:
+        {
+            "success": true,
+            "balance": 10.00,
+            "email_verified": true,
+            "can_use_credits": true,
+            "verification_required_message": null,
+            "credit_summary": {
+                "balance": 10.00,
+                "total_credits": 10.00,
+                "total_debits": 0.00,
+                "transaction_count": 1
+            }
+        }
+    """
+    db = SessionLocal()
+    try:
+        user_id = session['user']
+
+        credit_service = CreditService(db)
+
+        # Obter saldo e resumo de créditos
+        balance = credit_service.get_balance(user_id)
+        credit_summary = credit_service.get_user_credit_summary(user_id)
+
+        # Verificar status de email
+        is_verified, error_message = credit_service.is_email_verified(user_id)
+
+        return jsonify({
+            'success': True,
+            'balance': balance,
+            'email_verified': is_verified,
+            'can_use_credits': is_verified,
+            'verification_required_message': error_message,
+            'credit_summary': credit_summary
+        })
+
+    except Exception as e:
+        logger.error(f"Erro ao obter créditos do usuário: {e}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+    finally:
+        db.close()
+
+
+@referrals_bp.route('/api/referral/credits/use', methods=['POST'])
+@login_required
+def use_user_credits():
+    """
+    Usa créditos do usuário para pagamento.
+
+    POST /api/referral/credits/use
+    Body: {
+        "amount": 5.00,
+        "description": "Payment for service",
+        "reference_id": "billing_123",
+        "reference_type": "billing"
+    }
+
+    Returns:
+        {
+            "success": true,
+            "transaction": {...},
+            "new_balance": 5.00
+        }
+
+    Errors:
+        400: Invalid amount, insufficient balance
+        401: Not authenticated
+        403: Email not verified
+    """
+    db = SessionLocal()
+    try:
+        user_id = session['user']
+        data = request.json or {}
+
+        amount = data.get('amount')
+        if not amount or not isinstance(amount, (int, float)) or amount <= 0:
+            return jsonify({
+                'success': False,
+                'error': 'Valid positive amount is required'
+            }), 400
+
+        description = data.get('description', 'Credit usage')
+        reference_id = data.get('reference_id')
+        reference_type = data.get('reference_type')
+
+        credit_service = CreditService(db)
+
+        # Usar créditos (inclui verificação de email)
+        transaction = credit_service.use_credits(
+            user_id=user_id,
+            amount=float(amount),
+            description=description,
+            reference_id=reference_id,
+            reference_type=reference_type
+        )
+
+        if transaction is None:
+            return jsonify({
+                'success': False,
+                'error': 'Insufficient credit balance'
+            }), 400
+
+        new_balance = credit_service.get_balance(user_id)
+
+        return jsonify({
+            'success': True,
+            'transaction': transaction.to_dict(),
+            'new_balance': new_balance
+        })
+
+    except EmailNotVerifiedError as e:
+        logger.warning(f"Tentativa de usar créditos com email não verificado: user={user_id}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'email_verification_required': True
+        }), 403
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 400
+
+    except Exception as e:
+        logger.error(f"Erro ao usar créditos: {e}", exc_info=True)
+        db.rollback()
         return jsonify({
             'success': False,
             'error': str(e)

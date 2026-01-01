@@ -7,9 +7,11 @@ Responsável por:
 - Calcular saldos
 - Processar welcome credits e referrer rewards
 - Lidar com retrações de crédito (fraude/reembolso)
+- Enforçar verificação de email antes de ativar créditos
 """
+import logging
 from datetime import datetime
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Tuple
 from decimal import Decimal
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -20,10 +22,23 @@ from src.models.referral import (
 )
 
 
+logger = logging.getLogger(__name__)
+
+
 # Configurações de créditos (não hardcoded, pode ser movido para config)
 REFERRER_REWARD_AMOUNT = 25.0  # $25 para quem indicou
 REFERRED_WELCOME_CREDIT = 10.0  # $10 para novo usuário
 SPEND_THRESHOLD = 50.0  # Threshold de gasto para liberar reward
+
+
+class EmailNotVerifiedError(Exception):
+    """
+    Exceção lançada quando uma operação requer email verificado.
+
+    Esta exceção é usada para bloquear operações de crédito
+    para usuários que ainda não verificaram seu email.
+    """
+    pass
 
 
 class CreditService:
@@ -31,6 +46,61 @@ class CreditService:
 
     def __init__(self, db: Session):
         self.db = db
+
+    def get_referral_by_referred(self, user_id: str) -> Optional[Referral]:
+        """
+        Busca a referência pelo ID do usuário indicado.
+
+        Args:
+            user_id: ID do usuário
+
+        Returns:
+            Referral ou None se não for um usuário indicado
+        """
+        return self.db.query(Referral).filter(
+            Referral.referred_id == user_id
+        ).first()
+
+    def is_email_verified(self, user_id: str) -> Tuple[bool, Optional[str]]:
+        """
+        Verifica se o email de um usuário está verificado.
+
+        Para usuários indicados, verifica o campo email_verified na referência.
+        Para usuários não-indicados, considera o email como verificado.
+
+        Args:
+            user_id: ID do usuário
+
+        Returns:
+            Tuple[bool, Optional[str]]: (is_verified, error_message)
+            - is_verified: True se email está verificado
+            - error_message: Mensagem de erro se não verificado, None caso contrário
+        """
+        referral = self.get_referral_by_referred(user_id)
+
+        # Se não é usuário indicado, considera verificado
+        if not referral:
+            return True, None
+
+        # Se é usuário indicado, verifica o campo email_verified
+        if not referral.email_verified:
+            return False, "Email verification required before using credits"
+
+        return True, None
+
+    def require_email_verification(self, user_id: str) -> None:
+        """
+        Verifica se o email do usuário está verificado e levanta exceção se não.
+
+        Args:
+            user_id: ID do usuário
+
+        Raises:
+            EmailNotVerifiedError: Se email não está verificado
+        """
+        is_verified, error_message = self.is_email_verified(user_id)
+        if not is_verified:
+            raise EmailNotVerifiedError(error_message)
 
     def get_balance(self, user_id: str) -> float:
         """
@@ -532,10 +602,13 @@ class CreditService:
         amount: float,
         description: str,
         reference_id: Optional[str] = None,
-        reference_type: Optional[str] = None
+        reference_type: Optional[str] = None,
+        skip_verification: bool = False
     ) -> Optional[CreditTransaction]:
         """
         Usa créditos do saldo do usuário (para pagamentos).
+
+        Requer que o email do usuário esteja verificado (para usuários indicados).
 
         Args:
             user_id: ID do usuário
@@ -543,15 +616,21 @@ class CreditService:
             description: Descrição do uso
             reference_id: ID de referência externa (ex: billing_id)
             reference_type: Tipo de referência (ex: "billing")
+            skip_verification: Pular verificação de email (apenas para uso interno)
 
         Returns:
             CreditTransaction ou None se saldo insuficiente
 
         Raises:
             ValueError: Se amount for negativo ou zero
+            EmailNotVerifiedError: Se email não está verificado
         """
         if amount <= 0:
             raise ValueError("Amount must be positive")
+
+        # Verificar se email está verificado antes de permitir uso de créditos
+        if not skip_verification:
+            self.require_email_verification(user_id)
 
         if not self.has_sufficient_balance(user_id, amount):
             return None
