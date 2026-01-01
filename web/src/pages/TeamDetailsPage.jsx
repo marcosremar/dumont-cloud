@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { apiGet, apiPost, apiPut, apiDelete, isDemoMode } from '../utils/api';
 import {
   Users,
@@ -10,6 +10,7 @@ import {
   Clock,
   Trash2,
   AlertCircle,
+  Activity,
 } from 'lucide-react';
 import {
   Card,
@@ -34,12 +35,16 @@ import {
   SelectContent,
   SelectItem,
   PageHeader,
+  Tabs,
+  TabsList,
+  TabsTrigger,
 } from '../components/tailadmin-ui';
 import { ErrorState } from '../components/ErrorState';
 import { EmptyState } from '../components/EmptyState';
 import { SkeletonList } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import InviteMemberModal from '../components/InviteMemberModal';
+import AuditLogTable from '../components/AuditLogTable';
 
 // Demo data for team details
 const DEMO_TEAM = {
@@ -122,8 +127,16 @@ const DEMO_INVITATIONS = [
 export default function TeamDetailsPage() {
   const { teamId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const isDemo = isDemoMode();
+
+  // Tab state - initialize from URL hash
+  const getInitialTab = () => {
+    const hash = location.hash.replace('#', '');
+    return hash === 'audit' ? 'audit' : 'members';
+  };
+  const [activeTab, setActiveTab] = useState(getInitialTab);
 
   const [team, setTeam] = useState(null);
   const [roles, setRoles] = useState([]);
@@ -145,6 +158,19 @@ export default function TeamDetailsPage() {
   useEffect(() => {
     fetchTeamDetails();
   }, [teamId]);
+
+  // Update URL hash when tab changes
+  useEffect(() => {
+    const newHash = activeTab === 'members' ? '' : `#${activeTab}`;
+    if (location.hash !== newHash) {
+      window.history.replaceState(null, '', `${location.pathname}${newHash}`);
+    }
+  }, [activeTab, location.pathname, location.hash]);
+
+  // Handle tab change
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+  };
 
   const fetchTeamDetails = async () => {
     try {
@@ -546,61 +572,95 @@ export default function TeamDetailsPage() {
         />
       </StatsGrid>
 
-      {/* Members Table */}
-      <Card className="mb-6">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-brand-500" />
-            Team Members
-          </CardTitle>
-          {team?.members?.length > 0 && (
-            <span className="text-sm text-gray-400">
-              {team.members.length} member{team.members.length !== 1 ? 's' : ''}
-            </span>
-          )}
-        </CardHeader>
-        <CardContent className="p-0">
-          {team?.members?.length === 0 ? (
-            <div className="p-6">
-              <EmptyState
-                icon="users"
-                title="No members yet"
-                description="Invite team members to start collaborating."
-                action={isAdmin ? () => setInviteModalOpen(true) : undefined}
-                actionText={isAdmin ? 'Invite Member' : undefined}
-              />
-            </div>
-          ) : (
-            <Table
-              columns={memberColumns}
-              data={team?.members || []}
-              emptyMessage="No members found"
-            />
-          )}
-        </CardContent>
-      </Card>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6">
+        <TabsList className="mb-6">
+          <TabsTrigger value="members" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Members
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            Audit Log
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Pending Invitations */}
-      {isAdmin && invitations.length > 0 && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="w-5 h-5 text-warning-500" />
-              Pending Invitations
-            </CardTitle>
-            <span className="text-sm text-gray-400">
-              {invitations.length} pending
-            </span>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table
-              columns={invitationColumns}
-              data={invitations}
-              emptyMessage="No pending invitations"
-            />
-          </CardContent>
-        </Card>
-      )}
+        {/* Members Tab Content */}
+        {activeTab === 'members' && (
+          <>
+            {/* Members Table */}
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-brand-500" />
+                  Team Members
+                </CardTitle>
+                {team?.members?.length > 0 && (
+                  <span className="text-sm text-gray-400">
+                    {team.members.length} member{team.members.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </CardHeader>
+              <CardContent className="p-0">
+                {team?.members?.length === 0 ? (
+                  <div className="p-6">
+                    <EmptyState
+                      icon="users"
+                      title="No members yet"
+                      description="Invite team members to start collaborating."
+                      action={isAdmin ? () => setInviteModalOpen(true) : undefined}
+                      actionText={isAdmin ? 'Invite Member' : undefined}
+                    />
+                  </div>
+                ) : (
+                  <Table
+                    columns={memberColumns}
+                    data={team?.members || []}
+                    emptyMessage="No members found"
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Pending Invitations */}
+            {isAdmin && invitations.length > 0 && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Mail className="w-5 h-5 text-warning-500" />
+                    Pending Invitations
+                  </CardTitle>
+                  <span className="text-sm text-gray-400">
+                    {invitations.length} pending
+                  </span>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table
+                    columns={invitationColumns}
+                    data={invitations}
+                    emptyMessage="No pending invitations"
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+
+        {/* Audit Log Tab Content */}
+        {activeTab === 'audit' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-brand-500" />
+                Audit Log
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <AuditLogTable teamId={teamId} />
+            </CardContent>
+          </Card>
+        )}
+      </Tabs>
 
       {/* Invite Member Modal */}
       <InviteMemberModal
