@@ -1,10 +1,10 @@
 {
   "discovered_files": {
     "web/src/components/Toast.jsx": {
-      "description": "Toast component uses React Context for global state, has 4 variants (success/error/warning/info), entrance animation (toast-in) exists but no exit animation. ToastProvider manages state and auto-dismiss via setTimeout. Toasts positioned top-center with dark theme styling.",
-      "category": "component-structure",
-      "discovered_at": "2026-01-01T06:02:06.711824+00:00"
+      "description": "ToastItem now manages its own auto-dismiss timer with hover pause support. Timer uses refs (remainingTimeRef, startTimeRef, timerRef) to track remaining time. On hover: timer is cleared, elapsed time is calculated, remaining time is stored. On mouse leave: timer resumes with remaining time. ProgressBar accepts isPaused prop to pause CSS animation via animation-play-state.",
+      "category": "component-behavior",
+      "discovered_at": "2026-01-01T06:18:30.678551+00:00"
     }
   },
-  "last_updated": "2026-01-01T06:02:06.711834+00:00"
+  "last_updated": "2026-01-01T06:18:30.678572+00:00"
 }

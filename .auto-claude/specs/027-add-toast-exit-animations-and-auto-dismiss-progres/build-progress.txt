@@ -4,12 +4,12 @@
 Enhancing Toast component with smooth exit animations and visual progress bar for auto-dismiss timing.
 
 ## Current Status
-Phase 2 In Progress - Progress Indicator Implementation
+Phase 3 In Progress - Polish and Edge Cases
 
 ## Phase Overview
 - Phase 1: Exit Animation Implementation (3 subtasks) - COMPLETE
-- Phase 2: Progress Indicator Implementation (3 subtasks) - IN PROGRESS (2.1, 2.2 complete)
-- Phase 3: Polish and Edge Cases (2 subtasks) - Pending
+- Phase 2: Progress Indicator Implementation (3 subtasks) - COMPLETE
+- Phase 3: Polish and Edge Cases (2 subtasks) - IN PROGRESS (3.1 complete, 3.2 in progress)
 - Phase 4: Testing and Verification (2 subtasks) - Pending
 
 ## Implementation Notes
@@ -17,7 +17,8 @@ Phase 2 In Progress - Progress Indicator Implementation
 - Current animation: toast-in (slide down + fade in)
 - Added: toast-out (slide up + fade out)
 - Progress bar: CSS animation for smooth performance
-- Must support hover-to-pause functionality
+- Hover-to-pause implemented with refs for timer management
+- Persistent toasts (duration=0) fully supported
 
 ## Progress Log
 - [2026-01-01] Created implementation plan with 4 phases and 10 subtasks
@@ -26,9 +27,20 @@ Phase 2 In Progress - Progress Indicator Implementation
 - [2026-01-01] 1.3 Complete: Applied conditional animation class to ToastItem (f4295e1)
 - [2026-01-01] 2.1 Complete: Created ProgressBar component with shrinking animation (385768e)
 - [2026-01-01] 2.2 Complete: ProgressBar already integrated into ToastItem in 2.1
+- [2026-01-01] 2.3 Complete: Added duration prop flow from addToast to ToastItem (ac8b852)
+- [2026-01-01] 3.1 Complete: Implemented hover pause with timer refs (e68fbb8)
+- [2026-01-01] 3.2 Complete: Verified persistent toast handling - no code changes needed
 
 ## Completed Commits
 - d39c2e5: Exit animation state tracking
 - 8424e8a: CSS toast-out animation
 - f4295e1: Apply exit animation conditionally
 - 385768e: ProgressBar component with integration
+- ac8b852: Duration prop flow to ToastItem
+- e68fbb8: Hover pause functionality
+
+## Persistent Toast Handling (verified in 3.2)
+The following behaviors are confirmed for toasts with duration=0:
+1. No progress bar shown (ProgressBar returns null for duration <= 0)
+2. Exit animation works correctly (isExiting prop controls animation regardless of duration)
+3. Manual dismiss only (auto-dismiss timer skipped for duration <= 0)

@@ -59,11 +59,35 @@
         }
       ],
       "status": "completed"
+    },
+    "2.3": {
+      "attempts": [
+        {
+          "session": 7,
+          "timestamp": "2026-01-01T07:16:09.728311",
+          "approach": "Implemented: Update toast state to include duration, pass to ToastItem for progress bar timing.",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "3.1": {
+      "attempts": [
+        {
+          "session": 8,
+          "timestamp": "2026-01-01T07:18:39.909500",
+          "approach": "Implemented: When user hovers over a toast, pause the auto-dismiss timer and progress bar animation. Resume on mo",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-01T07:00:06.237160",
-    "last_updated": "2026-01-01T07:13:24.033823"
+    "last_updated": "2026-01-01T07:18:39.909533"
   }
 }
