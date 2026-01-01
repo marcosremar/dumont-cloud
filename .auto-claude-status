@@ -3,13 +3,13 @@
   "spec": "027-add-toast-exit-animations-and-auto-dismiss-progres",
   "state": "building",
   "subtasks": {
-    "completed": 1,
+    "completed": 3,
     "total": 10,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Exit Animation Implementation",
+    "current": "Progress Indicator Implementation",
     "id": null,
     "total": 3
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 3,
+    "number": 5,
     "started_at": "2026-01-01T07:00:06.244360"
   },
-  "last_update": "2026-01-01T07:04:09.602323"
+  "last_update": "2026-01-01T07:07:12.908313"
 }

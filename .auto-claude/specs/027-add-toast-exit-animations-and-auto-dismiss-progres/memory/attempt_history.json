@@ -11,11 +11,35 @@
         }
       ],
       "status": "completed"
+    },
+    "1.2": {
+      "attempts": [
+        {
+          "session": 3,
+          "timestamp": "2026-01-01T07:05:20.275081",
+          "approach": "Implemented: Add @keyframes for toast-out animation that slides up and fades out. Create animate-toast-out class.",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "1.3": {
+      "attempts": [
+        {
+          "session": 4,
+          "timestamp": "2026-01-01T07:07:01.639913",
+          "approach": "Implemented: Update ToastItem to apply animate-toast-out class when isExiting is true.",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-01T07:00:06.237160",
-    "last_updated": "2026-01-01T07:03:52.934580"
+    "last_updated": "2026-01-01T07:07:01.639927"
   }
 }

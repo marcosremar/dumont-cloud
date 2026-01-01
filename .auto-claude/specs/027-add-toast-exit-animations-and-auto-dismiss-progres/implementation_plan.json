@@ -36,7 +36,7 @@
           "id": "1.2",
           "title": "Create toast-out CSS animation",
           "description": "Add @keyframes for toast-out animation that slides up and fades out. Create animate-toast-out class.",
-          "status": "pending",
+          "status": "completed",
           "file_paths": [
             "web/src/components/Toast.jsx"
           ],
@@ -44,13 +44,15 @@
             "toast-out keyframes defined with translateY(-100%) and opacity 0",
             "animate-toast-out class applies the exit animation",
             "Animation duration matches entrance animation (0.3s)"
-          ]
+          ],
+          "notes": "Added @keyframes toast-out animation and .animate-toast-out class. Animation slides up and fades out, matching the entrance animation timing (0.3s). Uses ease-in timing and forwards fill-mode to retain final state. Commit: 8424e8a",
+          "updated_at": "2026-01-01T06:05:07.520940+00:00"
         },
         {
           "id": "1.3",
           "title": "Apply exit animation conditionally",
           "description": "Update ToastItem to apply animate-toast-out class when isExiting is true.",
-          "status": "pending",
+          "status": "completed",
           "file_paths": [
             "web/src/components/Toast.jsx"
           ],
@@ -58,7 +60,9 @@
             "ToastItem receives isExiting prop",
             "Exit animation class applied when isExiting is true",
             "Both manual dismiss and auto-dismiss trigger exit animation"
-          ]
+          ],
+          "notes": "Applied conditional animation class to ToastItem: added animationClass computed property that returns 'animate-toast-out' when isExiting is true, otherwise 'animate-toast-in'. Exit animation now triggers correctly for both manual dismiss (close button) and auto-dismiss (timeout). Commit: f4295e1",
+          "updated_at": "2026-01-01T06:06:36.556649+00:00"
         }
       ]
     },
@@ -192,5 +196,5 @@
     "issues": "",
     "tests_passed": ""
   },
-  "last_updated": "2026-01-01T06:03:42.572543+00:00"
+  "last_updated": "2026-01-01T06:06:36.556658+00:00"
 }

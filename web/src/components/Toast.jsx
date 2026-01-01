@@ -31,33 +31,57 @@ const variants = {
   }
 }
 
-function ToastItem({ id, message, type = 'info', isExiting = false, onClose }) {
+// Progress bar that shrinks from 100% to 0% over the toast duration
+function ProgressBar({ duration = 4000, accentColor = 'bg-blue-500' }) {
+  // Don't render for persistent toasts (duration = 0)
+  if (duration <= 0) return null
+
+  return (
+    <div className="progress-bar-container h-1 w-full bg-gray-800">
+      <div
+        className={`progress-bar h-full ${accentColor}`}
+        style={{
+          animationDuration: `${duration}ms`,
+          animationTimingFunction: 'linear',
+          animationFillMode: 'forwards'
+        }}
+      />
+    </div>
+  )
+}
+
+function ToastItem({ id, message, type = 'info', duration = 4000, isExiting = false, onClose }) {
   const variant = variants[type] || variants.info
   const Icon = variant.icon
   const animationClass = isExiting ? 'animate-toast-out' : 'animate-toast-in'
 
   return (
     <div
-      className={`toast flex items-stretch bg-gray-900 rounded-lg shadow-2xl shadow-black/50 overflow-hidden ${animationClass} border border-gray-700`}
+      className={`toast flex flex-col bg-gray-900 rounded-lg shadow-2xl shadow-black/50 overflow-hidden ${animationClass} border border-gray-700`}
       style={{ minWidth: '320px', maxWidth: '500px' }}
       role="alert"
       aria-live="polite"
     >
-      {/* Color accent bar on left */}
-      <div className={`w-1.5 ${variant.accent} flex-shrink-0`} />
+      <div className="flex items-stretch flex-1">
+        {/* Color accent bar on left */}
+        <div className={`w-1.5 ${variant.accent} flex-shrink-0`} />
 
-      {/* Content */}
-      <div className="flex items-center gap-3 px-4 py-3.5 flex-1">
-        <Icon className={`w-5 h-5 ${variant.iconColor} flex-shrink-0`} />
-        <p className={`flex-1 text-sm font-medium ${variant.textColor}`}>{message}</p>
-        <button
-          onClick={() => onClose(id)}
-          className="text-gray-500 hover:text-white transition-colors p-1 rounded hover:bg-gray-800"
-          aria-label="Fechar notificacao"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        {/* Content */}
+        <div className="flex items-center gap-3 px-4 py-3.5 flex-1">
+          <Icon className={`w-5 h-5 ${variant.iconColor} flex-shrink-0`} />
+          <p className={`flex-1 text-sm font-medium ${variant.textColor}`}>{message}</p>
+          <button
+            onClick={() => onClose(id)}
+            className="text-gray-500 hover:text-white transition-colors p-1 rounded hover:bg-gray-800"
+            aria-label="Fechar notificacao"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
+      {/* Progress bar at bottom */}
+      <ProgressBar duration={duration} accentColor={variant.accent} />
     </div>
   )
 }
@@ -143,6 +167,17 @@ export function ToastProvider({ children }) {
         }
         .animate-toast-out {
           animation: toast-out 0.3s ease-in forwards;
+        }
+        @keyframes progress-shrink {
+          0% {
+            width: 100%;
+          }
+          100% {
+            width: 0%;
+          }
+        }
+        .progress-bar {
+          animation-name: progress-shrink;
         }
       `}</style>
     </ToastContext.Provider>
