@@ -1,4 +1,5 @@
 import { useRef, useEffect } from "react";
+import { useFocusTrap } from "@/hooks";
 
 interface ModalProps {
   isOpen: boolean;
@@ -7,6 +8,10 @@ interface ModalProps {
   children: React.ReactNode;
   showCloseButton?: boolean; // New prop to control close button visibility
   isFullscreen?: boolean; // Default to false for backwards compatibility
+  /** ID of the element that labels the modal (for aria-labelledby) */
+  "aria-labelledby"?: string;
+  /** ID of the element that describes the modal (for aria-describedby) */
+  "aria-describedby"?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -16,8 +21,13 @@ export const Modal: React.FC<ModalProps> = ({
   className,
   showCloseButton = true, // Default to true for backwards compatibility
   isFullscreen = false,
+  "aria-labelledby": ariaLabelledBy,
+  "aria-describedby": ariaDescribedBy,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Trap focus within the modal when open
+  useFocusTrap(modalRef, isOpen);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -63,12 +73,17 @@ export const Modal: React.FC<ModalProps> = ({
       )}
       <div
         ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
         className={`${contentClasses}  ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {showCloseButton && (
           <button
             onClick={onClose}
+            aria-label="Close modal"
             className="absolute right-3 top-3 z-999 flex h-9.5 w-9.5 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white sm:right-6 sm:top-6 sm:h-11 sm:w-11"
           >
             <svg

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef, forwardRef } from 'react';
 import React, { useState, useEffect, useCallback, useRef, useId } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useId, createContext, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
+import { useFocusTrap } from '../../hooks';
 import { Link } from 'react-router-dom';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
@@ -1107,6 +1109,9 @@ export function DropdownMenuLabel({ children, className = '' }) {
 }
 
 // Alert Dialog Components (usando Portal)
+// AlertDialog Context for sharing IDs and state between components
+const AlertDialogContext = createContext(null);
+
 export function AlertDialog({ children, open, onOpenChange }) {
   const dialogRef = useRef(null);
   const uniqueId = useId();
@@ -1131,6 +1136,10 @@ export function AlertDialog({ children, open, onOpenChange }) {
           data-open={open}
           data-onOpenChange={onOpenChange}
         >
+    <AlertDialogContext.Provider value={{ open, onOpenChange }}>
+      <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm" onClick={() => onOpenChange?.(false)} />
+      <div className="fixed inset-0 z-[1000] flex items-center justify-center pointer-events-none p-4">
+        <div className="pointer-events-auto relative">
           {children}
         </div>
       </div>
@@ -1160,7 +1169,50 @@ export function AlertDialogContent({ children, className = '' }) {
     >
       {children}
     </div>
+  const context = useContext(AlertDialogContext);
+  const { open, onOpenChange } = context || {};
+  const baseId = useId();
+  const titleId = `${baseId}-title`;
+  const descriptionId = `${baseId}-description`;
+  const contentRef = useRef(null);
+
+  // Trap focus within the dialog when it's open
+  useFocusTrap(contentRef, !!open);
+
+  // Handle Escape key to close the dialog
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onOpenChange?.(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onOpenChange]);
+
+  return (
+    <AlertDialogContext.Provider value={{ titleId, descriptionId, open, onOpenChange }}>
+      <div
+        ref={contentRef}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        className={`bg-dark-surface-card rounded-xl border border-white/10 shadow-xl max-w-md w-full mx-4 ${className}`}
+      >
+        {children}
+      </div>
+    </AlertDialogContext.Provider>
   );
+}
+
+// Custom hook to access AlertDialog context
+export function useAlertDialogContext() {
+  return useContext(AlertDialogContext);
 }
 
 export function AlertDialogHeader({ children, className = '' }) {
@@ -1169,11 +1221,15 @@ export function AlertDialogHeader({ children, className = '' }) {
 
 export function AlertDialogTitle({ children, className = '' }) {
   const { titleId } = React.useContext(AlertDialogContext);
+  const context = useAlertDialogContext();
+  const titleId = context?.titleId;
   return <h2 id={titleId} className={`text-lg font-semibold text-white ${className}`}>{children}</h2>;
 }
 
 export function AlertDialogDescription({ children, className = '' }) {
   const { descriptionId } = React.useContext(AlertDialogContext);
+  const context = useAlertDialogContext();
+  const descriptionId = context?.descriptionId;
   return <p id={descriptionId} className={`text-sm text-gray-500 dark:text-gray-400 mt-2 ${className}`}>{children}</p>;
 }
 

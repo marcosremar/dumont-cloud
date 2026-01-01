@@ -45,6 +45,11 @@
   "subtasks": {
     "completed": 11,
     "total": 13,
+  "spec": "026-add-focus-trapping-and-role-attributes-to-alertdia",
+  "state": "building",
+  "subtasks": {
+    "completed": 14,
+    "total": 15,
     "in_progress": 1,
     "failed": 0
   },
@@ -88,6 +93,9 @@
     "current": "Testing and Validation",
     "id": null,
     "total": 3
+    "current": "",
+    "id": 0,
+    "total": 0
   },
   "workers": {
     "active": 0,
@@ -134,4 +142,8 @@
     "started_at": "2026-01-01T07:00:13.744224"
   },
   "last_update": "2026-01-01T07:29:45.445472"
+    "number": 16,
+    "started_at": "2026-01-01T07:00:10.499713"
+  },
+  "last_update": "2026-01-01T07:38:07.271554"
 }
