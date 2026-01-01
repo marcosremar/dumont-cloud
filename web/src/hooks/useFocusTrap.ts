@@ -1,4 +1,4 @@
-import { useEffect, useCallback, RefObject } from "react";
+import { useEffect, useCallback, useRef, RefObject } from "react";
 
 export interface UseFocusTrapOptions {
   /** Whether the focus trap is active */
@@ -169,7 +169,65 @@ export const useFocusTrap = (
     };
   }, [isOpen, containerRef, handleKeyDown, handleFocusIn]);
 
-  // Auto-focus logic will be implemented in subtask 1.3
+  // Ref to track animation frame IDs for cleanup
+  const animationFrameRef = useRef<{ outer: number; inner: number } | null>(
+    null
+  );
+
+  /**
+   * Auto-focus initial element when dialog opens.
+   * Uses requestAnimationFrame to wait for any opening animations to complete.
+   * Priority: initialFocusRef > first focusable element > container
+   */
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Use requestAnimationFrame to wait for animation frame after render
+    // This ensures the dialog is fully visible before focusing
+    const outerId = requestAnimationFrame(() => {
+      // Double RAF for better animation timing - ensures styles are applied
+      const innerId = requestAnimationFrame(() => {
+        // Priority 1: Focus custom initialFocusRef if provided
+        if (initialFocusRef?.current) {
+          initialFocusRef.current.focus();
+          return;
+        }
+
+        // Priority 2: Focus first focusable element
+        const focusableElements = getFocusableElements(container);
+        if (focusableElements.length > 0) {
+          focusableElements[0].focus();
+          return;
+        }
+
+        // Priority 3: Focus the container itself if no focusable elements
+        container.focus();
+      });
+
+      // Store inner frame ID for cleanup
+      if (animationFrameRef.current) {
+        animationFrameRef.current.inner = innerId;
+      }
+    });
+
+    // Track animation frame IDs for cleanup
+    animationFrameRef.current = { outer: outerId, inner: 0 };
+
+    // Cleanup function - cancel animation frames if component unmounts before focus
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current.outer);
+        if (animationFrameRef.current.inner) {
+          cancelAnimationFrame(animationFrameRef.current.inner);
+        }
+        animationFrameRef.current = null;
+      }
+    };
+  }, [isOpen, containerRef, initialFocusRef]);
+
   // Focus return logic will be implemented in subtask 1.4
   // Escape key handler will be implemented in subtask 1.5
 };
