@@ -1,9 +1,23 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams, Link } from 'react-router-dom'
+import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive, Mail } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive } from 'lucide-react'
+import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive, Webhook } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import StandbyConfig from '../components/StandbyConfig'
 import FailoverReport from '../components/FailoverReport'
+import WebhookManager from '../components/WebhookManager'
+import { useTranslation } from 'react-i18next'
+import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive, Globe } from 'lucide-react'
+import { useToast } from '../components/Toast'
+import StandbyConfig from '../components/StandbyConfig'
+import FailoverReport from '../components/FailoverReport'
+import LanguageSelector from '../components/LanguageSelector'
+import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive, Globe } from 'lucide-react'
+import { useToast } from '../components/Toast'
+import StandbyConfig from '../components/StandbyConfig'
+import FailoverReport from '../components/FailoverReport'
+import RegionPreferences from '../components/settings/RegionPreferences'
 import { Alert, Card, Button } from '../components/tailadmin-ui'
 
 const API_BASE = ''
@@ -46,27 +60,33 @@ const validators = {
 
 
 // Componente para inputs de campos sensíveis com toggle show/hide e validação
-function SecretInput({ name, value, onChange, placeholder, validation }) {
+function SecretInput({ name, value, onChange, placeholder, validation, testId }) {
   const [show, setShow] = useState(false)
+
+  const borderClass = validation
+    ? validation.valid
+      ? 'border-success-500/30 focus:border-success-500'
+      : 'border-error-500/30 focus:border-error-500'
+    : 'border-white/10 focus:border-brand-500'
 
   return (
     <div>
-      <div className={`secret-input-wrapper ${validation ? (validation.valid ? 'border-green-500/30' : 'border-red-500/30') : ''}`}
-        style={validation ? { borderColor: validation.valid ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)' } : {}}>
+      <div className="relative">
         <input
           type={show ? "text" : "password"}
           name={name}
-          className="form-input"
+          className={`w-full px-4 py-3 text-sm text-white bg-dark-surface-card border rounded-xl focus:ring-2 focus:ring-brand-500/20 placeholder:text-gray-500 transition-all pr-12 ${borderClass}`}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          style={validation ? { borderColor: 'transparent' } : {}}
+          data-testid={testId || `input-${name}`}
         />
         <button
           type="button"
-          className="secret-toggle-btn"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-300 transition-colors"
           onClick={() => setShow(!show)}
           title={show ? "Ocultar" : "Mostrar"}
+          data-testid={`toggle-visibility-${name}`}
         >
           {show ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
@@ -83,17 +103,23 @@ function SecretInput({ name, value, onChange, placeholder, validation }) {
 }
 
 // Input com validação
-function ValidatedInput({ name, value, onChange, placeholder, type = 'text', validation }) {
+function ValidatedInput({ name, value, onChange, placeholder, type = 'text', validation, testId }) {
+  const borderClass = validation
+    ? validation.valid
+      ? 'border-success-500/30 focus:border-success-500'
+      : 'border-error-500/30 focus:border-error-500'
+    : 'border-white/10 focus:border-brand-500'
+
   return (
     <div>
       <input
         type={type}
         name={name}
-        className="form-input"
+        className={`w-full px-4 py-3 text-sm text-white bg-dark-surface-card border rounded-xl focus:ring-2 focus:ring-brand-500/20 placeholder:text-gray-500 transition-all ${borderClass}`}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        style={validation ? { borderColor: validation.valid ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)' } : {}}
+        data-testid={testId || `input-${name}`}
       />
       {validation && (
         <div className="mt-2">
@@ -160,7 +186,8 @@ function Toast({ message, title = 'Saldo Baixo!', type = 'warning', onClose }) {
       position: 'fixed',
       top: '20px',
       right: isVisible && !isLeaving ? '20px' : '-400px',
-      width: '360px',
+      width: 'calc(100% - 40px)',
+      maxWidth: '360px',
       backgroundColor: '#1c2128',
       borderRadius: '12px',
       border: `2px solid ${bgColor}`,
@@ -229,14 +256,24 @@ function Toast({ message, title = 'Saldo Baixo!', type = 'warning', onClose }) {
   )
 }
 
-// Menu items para Settings
+// Menu items para Settings - labels will be translated in the component
 const SETTINGS_MENU = [
   { id: 'apis', label: 'APIs & Credenciais', icon: Key, color: 'green' },
-  { id: 'storage', label: 'Armazenamento', icon: Database, color: 'blue' },
+  { id: 'regions', label: 'Preferencias de Regiao', icon: Globe, color: 'blue' },
+  { id: 'storage', label: 'Armazenamento', icon: Database, color: 'cyan' },
   { id: 'cloudstorage', label: 'Cloud Storage Failover', icon: Cloud, color: 'purple' },
   { id: 'agent', label: 'Agent Sync', icon: Server, color: 'cyan' },
+  { id: 'webhooks', label: 'Webhooks', icon: Webhook, color: 'orange' },
   { id: 'notifications', label: 'Notificações', icon: AlertCircle, color: 'yellow' },
+  { id: 'email', label: 'Relatórios por Email', icon: Mail, color: 'cyan', href: '/app/settings/email-preferences' },
   { id: 'failover', label: 'CPU Failover', icon: Shield, color: 'red' },
+  { id: 'preferences', labelKey: 'settings.preferences.title', icon: Globe, color: 'teal' },
+  { id: 'apis', labelKey: 'settings.menu.apis', icon: Key, color: 'green' },
+  { id: 'storage', labelKey: 'settings.menu.storage', icon: Database, color: 'blue' },
+  { id: 'cloudstorage', labelKey: 'settings.menu.cloudstorage', icon: Cloud, color: 'purple' },
+  { id: 'agent', labelKey: 'settings.menu.agent', icon: Server, color: 'cyan' },
+  { id: 'notifications', labelKey: 'settings.menu.notifications', icon: AlertCircle, color: 'yellow' },
+  { id: 'failover', labelKey: 'settings.menu.failover', icon: Shield, color: 'red' },
 ]
 
 // Cloud Storage Providers
@@ -276,10 +313,11 @@ const CLOUD_STORAGE_PROVIDERS = [
 ]
 
 export default function Settings() {
+  const { t } = useTranslation()
   const toast = useToast()
   const [searchParams] = useSearchParams()
   const tabFromUrl = searchParams.get('tab')
-  const [activeTab, setActiveTab] = useState(tabFromUrl || 'apis')
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'preferences')
   const [settings, setSettings] = useState({
     vast_api_key: '',
     r2_access_key: '',
@@ -536,7 +574,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container" data-testid="settings-page">
       {/* Toast de notificação */}
       {showToast && (
         <Toast
@@ -549,8 +587,10 @@ export default function Settings() {
 
       {/* Page Header - TailAdmin Style */}
       <div className="page-header">
-        <h1 className="page-title">Configurações</h1>
+        <h1 className="page-title" data-testid="settings-page-title">Configurações</h1>
         <p className="page-subtitle">Gerencie suas APIs, armazenamento e preferências</p>
+        <h1 className="page-title">{t('settings.pageTitle')}</h1>
+        <p className="page-subtitle">{t('settings.pageSubtitle')}</p>
       </div>
 
       {/* Layout: Sidebar + Content */}
@@ -565,7 +605,9 @@ export default function Settings() {
                   green: 'stat-card-icon-success',
                   blue: 'stat-card-icon-primary',
                   cyan: 'stat-card-icon-primary',
+                  teal: 'bg-teal-500/20 text-teal-400',
                   purple: 'bg-purple-500/20 text-purple-400',
+                  orange: 'bg-orange-500/20 text-orange-400',
                   yellow: 'stat-card-icon-warning',
                   red: 'stat-card-icon-error',
                 }
@@ -575,16 +617,49 @@ export default function Settings() {
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
+                    data-testid={`settings-tab-${item.id}`}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left mb-1 ${
                       isActive
                         ? 'bg-brand-500/10 text-brand-400'
                         : 'text-gray-400 hover:bg-white/10 hover:text-gray-200'
                     }`}
                   >
+                const menuItemContent = (
+                  <>
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconColorClasses[item.color]}`}>
                       <MenuIcon className="w-4 h-4" />
                     </div>
                     <span className="text-sm font-medium">{item.label}</span>
+                  </>
+                )
+
+                const menuItemClasses = `w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left mb-1 ${
+                  isActive
+                    ? 'bg-brand-500/10 text-brand-400'
+                    : 'text-gray-400 hover:bg-white/10 hover:text-gray-200'
+                }`
+
+                // If item has href, render as Link for navigation
+                if (item.href) {
+                  return (
+                    <Link
+                      key={item.id}
+                      to={item.href}
+                      className={menuItemClasses}
+                    >
+                      {menuItemContent}
+                    </Link>
+                  )
+                }
+
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={menuItemClasses}
+                  >
+                    {menuItemContent}
+                    <span className="text-sm font-medium">{t(item.labelKey)}</span>
                   </button>
                 )
               })}
@@ -594,11 +669,38 @@ export default function Settings() {
 
         {/* Main Content */}
         <div className="lg:col-span-3">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" data-testid="settings-form">
           {message && (
             <Alert variant={message.type === 'success' ? 'success' : 'error'}>
               {message.text}
             </Alert>
+          )}
+
+          {/* Preferences Tab */}
+          {activeTab === 'preferences' && (
+            <div className="space-y-6">
+              {/* Language Selection */}
+              <Card
+                className="border-white/10 bg-dark-surface-card"
+                header={
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-teal-500/10">
+                      <Globe className="w-5 h-5 text-teal-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">{t('settings.preferences.language')}</h3>
+                      <p className="text-gray-500 text-sm mt-1">{t('settings.preferences.languageDescription')}</p>
+                    </div>
+                  </div>
+                }
+              >
+                <LanguageSelector />
+              </Card>
+          {/* Region Preferences Tab */}
+          {activeTab === 'regions' && (
+            <div className="space-y-6">
+              <RegionPreferences />
+            </div>
           )}
 
           {/* APIs & Credenciais Tab */}
@@ -619,8 +721,8 @@ export default function Settings() {
               </div>
             }
           >
-            <div className="form-group">
-              <label className="form-label text-gray-300 block mb-2">API Key</label>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">API Key</label>
               <SecretInput
                 name="vast_api_key"
                 value={settings.vast_api_key}
@@ -646,10 +748,10 @@ export default function Settings() {
               </div>
             }
           >
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="form-group">
-                  <label className="form-label text-gray-300 block mb-2">Access Key</label>
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Access Key</label>
                   <SecretInput
                     name="r2_access_key"
                     value={settings.r2_access_key}
@@ -657,8 +759,8 @@ export default function Settings() {
                     validation={validations.r2_access_key}
                   />
                 </div>
-                <div className="form-group">
-                  <label className="form-label text-gray-300 block mb-2">Secret Key</label>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Secret Key</label>
                   <SecretInput
                     name="r2_secret_key"
                     value={settings.r2_secret_key}
@@ -667,8 +769,8 @@ export default function Settings() {
                   />
                 </div>
               </div>
-              <div className="form-group">
-                <label className="form-label text-gray-300 block mb-2">Endpoint URL</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Endpoint URL</label>
                 <ValidatedInput
                   name="r2_endpoint"
                   value={settings.r2_endpoint}
@@ -677,8 +779,8 @@ export default function Settings() {
                   validation={validations.r2_endpoint}
                 />
               </div>
-              <div className="form-group">
-                <label className="form-label text-gray-300 block mb-2">Bucket Name</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Bucket Name</label>
                 <ValidatedInput
                   name="r2_bucket"
                   value={settings.r2_bucket}
@@ -709,8 +811,8 @@ export default function Settings() {
               </div>
             }
           >
-            <div className="form-group">
-              <label className="form-label text-gray-300 block mb-2">Repository Password</label>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Repository Password</label>
               <SecretInput
                 name="restic_password"
                 value={settings.restic_password}
@@ -756,20 +858,21 @@ export default function Settings() {
                         checked={cloudStorageSettings.enabled}
                         onChange={handleCloudStorageChange}
                         className="sr-only peer"
+                        data-testid="settings-cloudstorage-enabled-toggle"
                       />
                       <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
                     </label>
                   </div>
 
                   {/* Provedor Principal */}
-                  <div className="form-group">
-                    <label className="form-label text-gray-300 block mb-2">Provedor de Storage</label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Provedor de Storage</label>
                     <select
                       name="primary_provider"
-                      className="form-input w-full"
+                      className="w-full px-4 py-3 text-sm text-white bg-dark-surface-card border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 cursor-pointer transition-all"
                       value={cloudStorageSettings.primary_provider}
                       onChange={handleCloudStorageChange}
-                      style={{ cursor: 'pointer' }}
+                      data-testid="settings-cloudstorage-provider"
                     >
                       {CLOUD_STORAGE_PROVIDERS.map(provider => (
                         <option key={provider.id} value={provider.id}>
@@ -780,14 +883,13 @@ export default function Settings() {
                   </div>
 
                   {/* Método de Montagem */}
-                  <div className="form-group">
-                    <label className="form-label text-gray-300 block mb-2">Método de Montagem</label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Método de Montagem</label>
                     <select
                       name="mount_method"
-                      className="form-input w-full"
+                      className="w-full px-4 py-3 text-sm text-white bg-dark-surface-card border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 cursor-pointer transition-all"
                       value={cloudStorageSettings.mount_method}
                       onChange={handleCloudStorageChange}
-                      style={{ cursor: 'pointer' }}
                     >
                       <option value="rclone">rclone mount (FUSE com VFS cache)</option>
                       <option value="restic">restic restore (snapshot completo)</option>
@@ -799,24 +901,24 @@ export default function Settings() {
                   </div>
 
                   {/* Configurações de Cache */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="form-group">
-                      <label className="form-label text-gray-300 block mb-2">Caminho de Montagem</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Caminho de Montagem</label>
                       <input
                         type="text"
                         name="mount_path"
-                        className="form-input w-full"
+                        className="w-full px-4 py-3 text-sm text-white bg-dark-surface-card border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 placeholder:text-gray-500 transition-all"
                         value={cloudStorageSettings.mount_path}
                         onChange={handleCloudStorageChange}
                         placeholder="/data"
                       />
                     </div>
-                    <div className="form-group">
-                      <label className="form-label text-gray-300 block mb-2">Tamanho do Cache (GB)</label>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Tamanho do Cache (GB)</label>
                       <input
                         type="number"
                         name="cache_size_gb"
-                        className="form-input w-full"
+                        className="w-full px-4 py-3 text-sm text-white bg-dark-surface-card border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 placeholder:text-gray-500 transition-all"
                         value={cloudStorageSettings.cache_size_gb}
                         onChange={handleCloudStorageChange}
                         min="1"
@@ -843,10 +945,10 @@ export default function Settings() {
                     </div>
                   }
                 >
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="form-group">
-                        <label className="form-label text-gray-300 block mb-2">Key ID</label>
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Key ID</label>
                         <SecretInput
                           name="b2_key_id"
                           value={cloudStorageSettings.b2_key_id}
@@ -854,8 +956,8 @@ export default function Settings() {
                           placeholder="000xxxxxxxxxxxxx"
                         />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label text-gray-300 block mb-2">Application Key</label>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Application Key</label>
                         <SecretInput
                           name="b2_app_key"
                           value={cloudStorageSettings.b2_app_key}
@@ -864,12 +966,12 @@ export default function Settings() {
                         />
                       </div>
                     </div>
-                    <div className="form-group">
-                      <label className="form-label text-gray-300 block mb-2">Bucket Name</label>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Bucket Name</label>
                       <input
                         type="text"
                         name="b2_bucket"
-                        className="form-input w-full"
+                        className="w-full px-4 py-3 text-sm text-white bg-dark-surface-card border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 placeholder:text-gray-500 transition-all"
                         value={cloudStorageSettings.b2_bucket}
                         onChange={handleCloudStorageChange}
                         placeholder="my-bucket-name"
@@ -895,10 +997,10 @@ export default function Settings() {
                     </div>
                   }
                 >
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="form-group">
-                        <label className="form-label text-gray-300 block mb-2">Access Key ID</label>
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Access Key ID</label>
                         <SecretInput
                           name="s3_access_key"
                           value={cloudStorageSettings.s3_access_key}
@@ -906,8 +1008,8 @@ export default function Settings() {
                           placeholder="AKIAIOSFODNN7EXAMPLE"
                         />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label text-gray-300 block mb-2">Secret Access Key</label>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Secret Access Key</label>
                         <SecretInput
                           name="s3_secret_key"
                           value={cloudStorageSettings.s3_secret_key}
@@ -916,15 +1018,14 @@ export default function Settings() {
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="form-group">
-                        <label className="form-label text-gray-300 block mb-2">Region</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Region</label>
                         <select
                           name="s3_region"
-                          className="form-input w-full"
+                          className="w-full px-4 py-3 text-sm text-white bg-dark-surface-card border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 cursor-pointer transition-all"
                           value={cloudStorageSettings.s3_region}
                           onChange={handleCloudStorageChange}
-                          style={{ cursor: 'pointer' }}
                         >
                           <option value="us-east-1">US East (N. Virginia)</option>
                           <option value="us-west-2">US West (Oregon)</option>
@@ -935,12 +1036,12 @@ export default function Settings() {
                           <option value="sa-east-1">South America (São Paulo)</option>
                         </select>
                       </div>
-                      <div className="form-group">
-                        <label className="form-label text-gray-300 block mb-2">Bucket Name</label>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Bucket Name</label>
                         <input
                           type="text"
                           name="s3_bucket"
-                          className="form-input w-full"
+                          className="w-full px-4 py-3 text-sm text-white bg-dark-surface-card border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 placeholder:text-gray-500 transition-all"
                           value={cloudStorageSettings.s3_bucket}
                           onChange={handleCloudStorageChange}
                           placeholder="my-bucket-name"
@@ -967,27 +1068,27 @@ export default function Settings() {
                     </div>
                   }
                 >
-                  <div className="space-y-4">
-                    <div className="form-group">
-                      <label className="form-label text-gray-300 block mb-2">Service Account JSON</label>
+                  <div className="space-y-5">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Service Account JSON</label>
                       <textarea
                         name="gcs_credentials_json"
-                        className="form-input w-full font-mono text-xs"
+                        className="w-full px-4 py-3 text-sm text-white bg-dark-surface-card border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 placeholder:text-gray-500 transition-all font-mono text-xs"
                         value={cloudStorageSettings.gcs_credentials_json}
                         onChange={handleCloudStorageChange}
                         placeholder='{"type": "service_account", ...}'
                         rows={4}
                       />
-                      <small className="text-gray-500 text-xs mt-1 block">
+                      <small className="text-gray-500 text-xs mt-2 block">
                         Cole o JSON completo da chave de serviço
                       </small>
                     </div>
-                    <div className="form-group">
-                      <label className="form-label text-gray-300 block mb-2">Bucket Name</label>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Bucket Name</label>
                       <input
                         type="text"
                         name="gcs_bucket"
-                        className="form-input w-full"
+                        className="w-full px-4 py-3 text-sm text-white bg-dark-surface-card border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 placeholder:text-gray-500 transition-all"
                         value={cloudStorageSettings.gcs_bucket}
                         onChange={handleCloudStorageChange}
                         placeholder="my-gcs-bucket"
@@ -1067,6 +1168,7 @@ export default function Settings() {
                   type="button"
                   onClick={testCloudStorageConnection}
                   disabled={testingConnection || !cloudStorageSettings.enabled}
+                  data-testid="settings-cloudstorage-test-connection"
                   className="py-3 px-6 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {testingConnection ? (
@@ -1085,6 +1187,7 @@ export default function Settings() {
                   type="button"
                   onClick={saveCloudStorageSettings}
                   disabled={savingCloudStorage}
+                  data-testid="settings-cloudstorage-save"
                   className="flex-1 py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 bg-brand-800/30 hover:bg-brand-800/50 border border-brand-700/40 text-brand-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {savingCloudStorage ? (
@@ -1121,14 +1224,15 @@ export default function Settings() {
               </div>
             }
           >
-            <div className="form-group">
-              <label className="form-label text-gray-300 block mb-2">Alertas de Saldo Baixo</label>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Alertas de Saldo Baixo</label>
               <p className="text-gray-400 text-sm mb-4">
                 Receba alertas visuais e sonoros quando seu saldo estiver abaixo de $1.00.
               </p>
               <Button
                 type="button"
                 onClick={testNotification}
+                data-testid="settings-test-notification"
                 className="bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 border border-brand-500/30"
               >
                 Testar Notificação
@@ -1141,6 +1245,7 @@ export default function Settings() {
                 <button
                   type="submit"
                   disabled={saving || !isFormValid}
+                  data-testid="settings-notifications-save"
                   className="flex-1 py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 bg-brand-800/30 hover:bg-brand-800/50 border border-brand-700/40 text-brand-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? (
@@ -1156,7 +1261,7 @@ export default function Settings() {
                   )}
                 </button>
                 {!isFormValid && (
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 flex items-center gap-2 text-red-400 text-sm">
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 flex items-center gap-2 text-red-400 text-sm" data-testid="settings-form-validation-error">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     <span>Corrija os erros antes de salvar</span>
                   </div>
@@ -1187,15 +1292,15 @@ export default function Settings() {
             Configure como o agente de sincronização funciona nas máquinas GPU.
             Estas configurações serão aplicadas em novas máquinas.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="form-group">
-              <label className="form-label text-gray-300 block mb-2">Intervalo de Sincronização</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Intervalo de Sincronização</label>
               <select
                 name="sync_interval"
-                className="form-input w-full"
+                className="w-full px-4 py-3 text-sm text-white bg-dark-surface-card border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 cursor-pointer transition-all"
                 value={agentSettings.sync_interval}
                 onChange={handleAgentChange}
-                style={{ cursor: 'pointer' }}
+                data-testid="settings-agent-sync-interval"
               >
                 <option value="30">30 segundos</option>
                 <option value="60">1 minuto</option>
@@ -1203,25 +1308,25 @@ export default function Settings() {
                 <option value="300">5 minutos</option>
                 <option value="600">10 minutos</option>
               </select>
-              <small className="text-gray-500 text-xs mt-1 block">
+              <small className="text-gray-500 text-xs mt-2 block">
                 Tempo entre cada backup automático
               </small>
             </div>
-            <div className="form-group">
-              <label className="form-label text-gray-300 block mb-2">Retenção de Snapshots</label>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Retenção de Snapshots</label>
               <select
                 name="keep_last"
-                className="form-input w-full"
+                className="w-full px-4 py-3 text-sm text-white bg-dark-surface-card border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 cursor-pointer transition-all"
                 value={agentSettings.keep_last}
                 onChange={handleAgentChange}
-                style={{ cursor: 'pointer' }}
+                data-testid="settings-agent-keep-last"
               >
                 <option value="5">Últimos 5</option>
                 <option value="10">Últimos 10</option>
                 <option value="20">Últimos 20</option>
                 <option value="50">Últimos 50</option>
               </select>
-              <small className="text-gray-500 text-xs mt-1 block">
+              <small className="text-gray-500 text-xs mt-2 block">
                 Quantidade de snapshots a manter
               </small>
             </div>
@@ -1230,6 +1335,7 @@ export default function Settings() {
             type="button"
             onClick={saveAgentSettings}
             disabled={savingAgent}
+            data-testid="settings-agent-save"
             className="py-2 px-4 rounded-lg font-semibold transition-all flex items-center gap-2 bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 border border-brand-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {savingAgent ? (
@@ -1246,6 +1352,11 @@ export default function Settings() {
           </button>
         </Card>
             </div>
+          )}
+
+          {/* Webhooks Tab */}
+          {activeTab === 'webhooks' && (
+            <WebhookManager />
           )}
 
           {/* Failover Tab */}
@@ -1267,15 +1378,15 @@ export default function Settings() {
           }
         >
           <div>
-          <p style={{ color: '#9ca3af', fontSize: '14px', marginBottom: '16px' }}>
+          <p className="text-gray-400 text-sm mb-5">
             Calcule o custo mensal estimado do armazenamento no Cloudflare R2.
           </p>
 
-          <div className="form-group" style={{ maxWidth: '300px' }}>
-            <label className="form-label">Tamanho Estimado dos Dados (GB)</label>
+          <div className="max-w-xs">
+            <label className="block text-sm font-medium text-gray-300 mb-2">Tamanho Estimado dos Dados (GB)</label>
             <input
               type="number"
-              className="form-input"
+              className="w-full px-4 py-3 text-sm text-white bg-dark-surface-card border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 placeholder:text-gray-500 transition-all"
               value={estimatedDataSize}
               onChange={(e) => setEstimatedDataSize(Math.max(1, parseInt(e.target.value) || 1))}
               min="1"
@@ -1283,62 +1394,45 @@ export default function Settings() {
             />
           </div>
 
-          <div style={{
-            background: '#0d1117',
-            borderRadius: '8px',
-            padding: '16px',
-            marginTop: '16px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ color: '#9ca3af' }}>Storage ({r2Costs.effectiveStorage} GB efetivo)</span>
-              <span style={{ color: '#c9d1d9' }}>${r2Costs.storage.toFixed(3)}/mes</span>
+          <div className="bg-dark-surface rounded-lg p-4 mt-4">
+            <div className="flex flex-col xsm:flex-row justify-between mb-3 gap-1">
+              <span className="text-gray-400">Storage ({r2Costs.effectiveStorage} GB efetivo)</span>
+              <span className="text-gray-200">${r2Costs.storage.toFixed(3)}/mes</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ color: '#9ca3af' }}>Operacoes (~{r2Costs.syncsPerMonth.toLocaleString()} syncs/mes)</span>
-              <span style={{ color: '#c9d1d9' }}>${r2Costs.operations.toFixed(3)}/mes</span>
+            <div className="flex flex-col xsm:flex-row justify-between mb-3 gap-1">
+              <span className="text-gray-400 break-words">Operacoes (~{r2Costs.syncsPerMonth.toLocaleString()} syncs/mes)</span>
+              <span className="text-gray-200">${r2Costs.operations.toFixed(3)}/mes</span>
             </div>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              borderTop: '1px solid #30363d',
-              paddingTop: '12px',
-              marginTop: '4px'
-            }}>
-              <span style={{ color: '#c9d1d9', fontWeight: '600' }}>Total Estimado</span>
-              <span style={{ color: '#3fb950', fontWeight: '700', fontSize: '1.1em' }}>
+            <div className="flex flex-col xsm:flex-row justify-between border-t border-white/10 pt-3 mt-1 gap-1">
+              <span className="text-gray-200 font-semibold">Total Estimado</span>
+              <span className="text-success-400 font-bold text-lg">
                 ${r2Costs.total.toFixed(2)}/mes
               </span>
             </div>
           </div>
 
-          <small style={{ color: '#6e7681', marginTop: '12px', display: 'block' }}>
+          <small className="text-gray-500 mt-3 block text-xs">
             * Estimativa baseada em ~70% de deduplicacao pelo Restic e ~50 operacoes por sync.
             Egress (download) e gratuito no R2.
           </small>
 
-          <div style={{
-            background: '#1c2128',
-            borderRadius: '8px',
-            padding: '12px',
-            marginTop: '16px',
-            fontSize: '13px'
-          }}>
-            <strong style={{ color: '#58a6ff' }}>Comparativo de Intervalos:</strong>
-            <div style={{ marginTop: '8px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-              <div style={{ textAlign: 'center', padding: '8px', background: '#0d1117', borderRadius: '4px' }}>
-                <div style={{ color: '#9ca3af', fontSize: '11px' }}>30 segundos</div>
-                <div style={{ color: '#3fb950', fontWeight: '600' }}>~$0.25/mes</div>
+          <div className="bg-dark-surface-card rounded-lg p-3 mt-4 text-[13px]">
+            <strong className="text-blue-light-500">Comparativo de Intervalos:</strong>
+            <div className="mt-2 grid grid-cols-1 xsm:grid-cols-3 gap-2">
+              <div className="text-center p-2 bg-dark-surface rounded">
+                <div className="text-gray-400 text-[11px]">30 segundos</div>
+                <div className="text-success-400 font-semibold">~$0.25/mes</div>
               </div>
-              <div style={{ textAlign: 'center', padding: '8px', background: '#0d1117', borderRadius: '4px' }}>
-                <div style={{ color: '#9ca3af', fontSize: '11px' }}>1 minuto</div>
-                <div style={{ color: '#3fb950', fontWeight: '600' }}>~$0.15/mes</div>
+              <div className="text-center p-2 bg-dark-surface rounded">
+                <div className="text-gray-400 text-[11px]">1 minuto</div>
+                <div className="text-success-400 font-semibold">~$0.15/mes</div>
               </div>
-              <div style={{ textAlign: 'center', padding: '8px', background: '#0d1117', borderRadius: '4px' }}>
-                <div style={{ color: '#9ca3af', fontSize: '11px' }}>5 minutos</div>
-                <div style={{ color: '#3fb950', fontWeight: '600' }}>~$0.07/mes</div>
+              <div className="text-center p-2 bg-dark-surface rounded">
+                <div className="text-gray-400 text-[11px]">5 minutos</div>
+                <div className="text-success-400 font-semibold">~$0.07/mes</div>
               </div>
             </div>
-            <div style={{ color: '#9ca3af', marginTop: '8px', fontSize: '11px' }}>
+            <div className="text-gray-400 mt-2 text-[11px]">
               * Valores para 10GB de dados
             </div>
           </div>

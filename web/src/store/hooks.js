@@ -8,6 +8,21 @@ import { addToast, removeToast } from './slices/uiSlice'
 import { fetchInstances, fetchOffers } from './slices/instancesSlice'
 import { fetchUser, completeOnboarding } from './slices/userSlice'
 import { checkAuth, logout } from './slices/authSlice'
+import {
+  startEconomyPolling,
+  stopEconomyPolling,
+  fetchSavings,
+} from './slices/economySlice'
+  fetchReservations,
+  fetchReservationStats,
+  createReservation,
+  cancelReservation,
+  setDemoReservations,
+  setDemoStats,
+  addDemoReservation,
+  removeDemoReservation,
+  clearError as clearReservationError,
+} from './reservationSlice'
 
 // Re-export typed hooks
 export const useAppDispatch = useDispatch
@@ -173,5 +188,127 @@ export const useAppInit = () => {
     initialized,
     isAuthenticated,
     hasCompletedOnboarding,
+  }
+}
+
+/**
+ * Economy polling hook - automatically polls for economy/savings data
+ * Uses adaptive polling: 30s when instances are active, 60s when idle
+ */
+export const useEconomyPolling = () => {
+  const dispatch = useDispatch()
+  const { isAuthenticated } = useSelector(state => state.auth)
+  const {
+    lifetimeSavings,
+    currentSessionSavings,
+    hourlyComparison,
+    projections,
+    activeSession,
+    selectedProvider,
+    isPolling,
+    loading,
+    error,
+  } = useSelector(state => state.economy)
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    // Fetch initial savings data
+    dispatch(fetchSavings(selectedProvider))
+
+    // Start polling for real-time updates
+    dispatch(startEconomyPolling())
+
+    // Cleanup on unmount
+    return () => {
+      dispatch(stopEconomyPolling())
+    }
+  }, [dispatch, isAuthenticated, selectedProvider])
+
+  return {
+    lifetimeSavings,
+    currentSessionSavings,
+    hourlyComparison,
+    projections,
+    activeSession,
+    selectedProvider,
+    isPolling,
+    loading,
+    error,
+    hasActiveInstances: activeSession.activeInstances > 0,
+ * Reservations hook - GPU reservation management
+ */
+export const useReservations = (isDemo = false) => {
+  const dispatch = useDispatch()
+  const {
+    reservations,
+    stats,
+    loading,
+    statsLoading,
+    createLoading,
+    error,
+  } = useSelector(state => state.reservations)
+
+  const fetch = useCallback(() => {
+    if (isDemo) {
+      return Promise.resolve()
+    }
+    return dispatch(fetchReservations())
+  }, [dispatch, isDemo])
+
+  const fetchStats = useCallback(() => {
+    if (isDemo) {
+      return Promise.resolve()
+    }
+    return dispatch(fetchReservationStats())
+  }, [dispatch, isDemo])
+
+  const create = useCallback((data) => {
+    if (isDemo) {
+      const newReservation = {
+        id: Date.now(),
+        ...data,
+        status: 'pending',
+        credits_used: Math.random() * 100 + 20,
+        discount_rate: 15,
+        reserved_price_per_hour: 0.75,
+        created_at: new Date().toISOString(),
+      }
+      dispatch(addDemoReservation(newReservation))
+      return Promise.resolve({ payload: newReservation })
+    }
+    return dispatch(createReservation(data))
+  }, [dispatch, isDemo])
+
+  const cancel = useCallback((reservationId) => {
+    if (isDemo) {
+      dispatch(removeDemoReservation(reservationId))
+      return Promise.resolve({ payload: { reservationId } })
+    }
+    return dispatch(cancelReservation(reservationId))
+  }, [dispatch, isDemo])
+
+  const setDemo = useCallback((demoReservations, demoStats) => {
+    dispatch(setDemoReservations(demoReservations))
+    dispatch(setDemoStats(demoStats))
+  }, [dispatch])
+
+  const clearError = useCallback(() => {
+    dispatch(clearReservationError())
+  }, [dispatch])
+
+  return {
+    reservations,
+    stats,
+    loading,
+    statsLoading,
+    createLoading,
+    error,
+    fetch,
+    fetchStats,
+    create,
+    cancel,
+    setDemo,
+    clearError,
   }
 }

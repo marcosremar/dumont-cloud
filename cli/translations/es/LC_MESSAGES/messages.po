@@ -1,0 +1,1308 @@
+# Spanish translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-01-01 03:48+0100\n"
+"PO-Revision-Date: 2026-01-01 03:31+0100\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: cli/__main__.py:33
+msgid "Configuration:"
+msgstr "Configuración:"
+
+#: cli/__main__.py:34
+msgid "Configure API key"
+msgstr "Configurar clave API"
+
+#: cli/__main__.py:35
+msgid "Show configuration"
+msgstr "Mostrar configuración"
+
+#: cli/__main__.py:36
+msgid "Set API key"
+msgstr "Establecer clave API"
+
+#: cli/__main__.py:37
+msgid "Set API URL"
+msgstr "Establecer URL de API"
+
+#: cli/__main__.py:66
+msgid "Authentication"
+msgstr "Autenticación"
+
+#: cli/__main__.py:67
+msgid "System"
+msgstr "Sistema"
+
+#: cli/__main__.py:68
+msgid "Instances"
+msgstr "Instancias"
+
+#: cli/__main__.py:69
+msgid "Market (Spot)"
+msgstr "Mercado (Spot)"
+
+#: cli/__main__.py:70
+msgid "Savings"
+msgstr "Ahorros"
+
+#: cli/__main__.py:71
+msgid "Serverless GPU"
+msgstr "GPU Serverless"
+
+#: cli/__main__.py:72
+msgid "Warm Pool"
+msgstr "Pool en Espera"
+
+#: cli/__main__.py:73
+msgid "Jobs"
+msgstr "Trabajos"
+
+#: cli/__main__.py:74
+msgid "Snapshots"
+msgstr "Instantáneas"
+
+#: cli/__main__.py:75
+msgid "Models"
+msgstr "Modelos"
+
+#: cli/__main__.py:76
+msgid "Hibernation"
+msgstr "Hibernación"
+
+#: cli/__main__.py:77
+msgid "Fine-tune"
+msgstr "Ajuste Fino"
+
+#: cli/__main__.py:92
+msgid "Direct API:"
+msgstr "API Directa:"
+
+#: cli/__main__.py:93
+msgid "List all endpoints"
+msgstr "Listar todos los endpoints"
+
+#: cli/__main__.py:94 cli/commands/api.py:190
+msgid "GET request"
+msgstr "Solicitud GET"
+
+#: cli/__main__.py:95 cli/commands/api.py:191
+msgid "POST request"
+msgstr "Solicitud POST"
+
+#: cli/__main__.py:99
+msgid "Wizard:"
+msgstr "Asistente:"
+
+#: cli/__main__.py:100
+msgid "Quick GPU deploy"
+msgstr "Despliegue rápido de GPU"
+
+#: cli/__main__.py:111
+msgid "Dumont Cloud CLI - GPU Cloud Management"
+msgstr "Dumont Cloud CLI - Gestión de GPU en la Nube"
+
+#: cli/__main__.py:118
+msgid "API URL (default: ~/.dumont/config.json or localhost:8000)"
+msgstr "URL de API (por defecto: ~/.dumont/config.json o localhost:8000)"
+
+#: cli/__main__.py:123
+msgid "API Key (default: ~/.dumont/config.json or DUMONT_API_KEY)"
+msgstr "Clave API (por defecto: ~/.dumont/config.json o DUMONT_API_KEY)"
+
+#: cli/__main__.py:129
+msgid "Debug mode"
+msgstr "Modo depuración"
+
+#: cli/__main__.py:136
+msgid "Language for CLI output (default: en, or LANGUAGE env var)"
+msgstr ""
+"Idioma para la salida del CLI (por defecto: en, o variable de entorno "
+"LANGUAGE)"
+
+#: cli/__main__.py:139
+msgid "Command or resource"
+msgstr "Comando o recurso"
+
+#: cli/__main__.py:140
+msgid "Subcommand or action"
+msgstr "Subcomando o acción"
+
+#: cli/__main__.py:141
+msgid "Additional arguments"
+msgstr "Argumentos adicionales"
+
+#: cli/__main__.py:162
+msgid "❌ Usage: dumont config set-key <api_key>"
+msgstr "❌ Uso: dumont config set-key <clave_api>"
+
+#: cli/__main__.py:169
+msgid "❌ Usage: dumont config set-url <url>"
+msgstr "❌ Uso: dumont config set-url <url>"
+
+#: cli/__main__.py:178
+#, python-brace-format
+msgid "❌ Unknown subcommand: {subcommand}"
+msgstr "❌ Subcomando desconocido: {subcommand}"
+
+#: cli/__main__.py:179
+msgid "Available: setup, show, set-key, set-url, clear"
+msgstr "Disponibles: setup, show, set-key, set-url, clear"
+
+#: cli/__main__.py:189
+msgid "Dumont Cloud CLI v1.0.0"
+msgstr "Dumont Cloud CLI v1.0.0"
+
+#: cli/__main__.py:245
+msgid "🧙 Wizard Deploy - Quick GPU Provisioning"
+msgstr "🧙 Asistente de Despliegue - Aprovisionamiento Rápido de GPU"
+
+#: cli/__main__.py:247
+msgid "Usage: dumont wizard deploy [gpu] [options]"
+msgstr "Uso: dumont wizard deploy [gpu] [opciones]"
+
+#: cli/__main__.py:249
+msgid "Options:"
+msgstr "Opciones:"
+
+#: cli/__main__.py:250
+msgid "  gpu=<name>       GPU type (e.g., 'RTX 4090', 'A100')"
+msgstr "  gpu=<nombre>     Tipo de GPU (ej., 'RTX 4090', 'A100')"
+
+#: cli/__main__.py:251
+msgid "  speed=<mode>     fast (default), slow, ultrafast"
+msgstr "  speed=<modo>     fast (por defecto), slow, ultrafast"
+
+#: cli/__main__.py:252
+msgid "  price=<$>        Max price per hour (default: 2.0)"
+msgstr "  price=<$>        Precio máximo por hora (por defecto: 2.0)"
+
+#: cli/__main__.py:253
+msgid "  region=<name>    Region filter (default: global)"
+msgstr "  region=<nombre>  Filtro de región (por defecto: global)"
+
+#: cli/__main__.py:263
+msgid "❌ Usage: dumont model install <instance_id> <model_id>"
+msgstr "❌ Uso: dumont model install <id_instancia> <id_modelo>"
+
+#: cli/__main__.py:282
+msgid "❌ Usage: dumont models deploy <type> <model_id> [options]"
+msgstr "❌ Uso: dumont models deploy <tipo> <id_modelo> [opciones]"
+
+#: cli/__main__.py:298
+#, python-brace-format
+msgid "❌ Usage: dumont models {subcommand} <deployment_id>"
+msgstr "❌ Uso: dumont models {subcommand} <id_despliegue>"
+
+#: cli/commands/api.py:71
+msgid "❌ Could not load API endpoints"
+msgstr "❌ No se pudieron cargar los endpoints de la API"
+
+#: cli/commands/api.py:72 cli/commands/base.py:26
+#, python-brace-format
+msgid "   URL: {url}"
+msgstr "   URL: {url}"
+
+#: cli/commands/api.py:86
+msgid "🚀 Dumont Cloud API Endpoints"
+msgstr "🚀 Endpoints de la API de Dumont Cloud"
+
+#: cli/commands/api.py:98 cli/commands/api.py:188
+msgid "💡 Usage:"
+msgstr "💡 Uso:"
+
+#: cli/commands/api.py:121
+#, python-brace-format
+msgid "❌ Missing parameters: {params}"
+msgstr "❌ Parámetros faltantes: {params}"
+
+#: cli/commands/api.py:176
+#, python-brace-format
+msgid "❌ Usage: dumont api {method} <path> [args...]"
+msgstr "❌ Uso: dumont api {method} <ruta> [args...]"
+
+#: cli/commands/api.py:187
+msgid "❌ Invalid format"
+msgstr "❌ Formato inválido"
+
+#: cli/commands/api.py:189
+msgid "List endpoints"
+msgstr "Listar endpoints"
+
+#: cli/commands/api.py:307
+msgid "🚀 Dumont Cloud CLI - Available Commands"
+msgstr "🚀 Dumont Cloud CLI - Comandos Disponibles"
+
+#: cli/commands/api.py:327 cli/commands/base.py:221
+msgid "💡 Examples:"
+msgstr "💡 Ejemplos:"
+
+#: cli/commands/api.py:332
+msgid "Direct API access"
+msgstr "Acceso directo a la API"
+
+#: cli/commands/base.py:25
+msgid "❌ Could not connect to backend."
+msgstr "❌ No se pudo conectar al backend."
+
+#: cli/commands/base.py:27
+msgid "💡 Check if the backend is running:"
+msgstr "💡 Verifica si el backend está en ejecución:"
+
+#: cli/commands/base.py:89
+msgid "GPU Job Commands"
+msgstr "Comandos de Trabajos GPU"
+
+#: cli/commands/base.py:90
+msgid "Fine-Tuning Commands"
+msgstr "Comandos de Ajuste Fino"
+
+#: cli/commands/base.py:91
+msgid "Instance Management"
+msgstr "Gestión de Instancias"
+
+#: cli/commands/base.py:92
+msgid "Snapshot Commands"
+msgstr "Comandos de Instantáneas"
+
+#: cli/commands/base.py:93
+msgid "Warm Pool Commands"
+msgstr "Comandos de Pool en Espera"
+
+#: cli/commands/base.py:94
+msgid "Failover Commands"
+msgstr "Comandos de Conmutación por Error"
+
+#: cli/commands/base.py:95
+msgid "Serverless Mode Commands"
+msgstr "Comandos de Modo Serverless"
+
+#: cli/commands/base.py:96
+msgid "Authentication Commands"
+msgstr "Comandos de Autenticación"
+
+#: cli/commands/base.py:97
+msgid "Settings Commands"
+msgstr "Comandos de Configuración"
+
+#: cli/commands/base.py:98
+msgid "Savings & Cost Commands"
+msgstr "Comandos de Ahorros y Costos"
+
+#: cli/commands/base.py:99
+msgid "History Commands"
+msgstr "Comandos de Historial"
+
+#: cli/commands/base.py:100
+msgid "Spot GPU Commands"
+msgstr "Comandos de GPU Spot"
+
+#: cli/commands/base.py:103
+#, python-brace-format
+msgid "{resource} Commands"
+msgstr "Comandos de {resource}"
+
+#: cli/commands/base.py:106
+#, python-brace-format
+msgid "❌ Unknown action '{action}' for {resource}\n"
+msgstr "❌ Acción desconocida '{action}' para {resource}\n"
+
+#: cli/commands/base.py:109
+#, python-brace-format
+msgid "Usage: dumont {resource} <action> [options]\n"
+msgstr "Uso: dumont {resource} <acción> [opciones]\n"
+
+#: cli/commands/base.py:110
+msgid "Actions:"
+msgstr "Acciones:"
+
+#: cli/commands/base.py:145
+msgid "Examples:"
+msgstr "Ejemplos:"
+
+#: cli/commands/base.py:206
+#, python-brace-format
+msgid "🚀 Dumont Cloud CLI - {count} commands available\n"
+msgstr "🚀 Dumont Cloud CLI - {count} comandos disponibles\n"
+
+#: cli/commands/base.py:207
+msgid "Usage: dumont <resource> <action> [args...]"
+msgstr "Uso: dumont <recurso> <acción> [args...]"
+
+#: cli/commands/base.py:237
+#, python-brace-format
+msgid "❌ Unknown resource: {resource}"
+msgstr "❌ Recurso desconocido: {resource}"
+
+#: cli/commands/base.py:238
+#, python-brace-format
+msgid "💡 Available resources: {resources}"
+msgstr "💡 Recursos disponibles: {resources}"
+
+#: cli/commands/base.py:260
+#, python-brace-format
+msgid "❌ Required parameter missing: {param}"
+msgstr "❌ Parámetro requerido faltante: {param}"
+
+#: cli/commands/base.py:261
+#, python-brace-format
+msgid "💡 Usage: dumont {resource} {action} <{param}>"
+msgstr "💡 Uso: dumont {resource} {action} <{param}>"
+
+#: cli/commands/base.py:273
+#, python-brace-format
+msgid "❌ Invalid JSON: {error}"
+msgstr "❌ JSON inválido: {error}"
+
+#: cli/commands/base.py:281
+msgid "❌ Usage: dumont auth login <email> <password>"
+msgstr "❌ Uso: dumont auth login <email> <contraseña>"
+
+#: cli/commands/config.py:90
+msgid "🔧 Dumont Cloud CLI Setup"
+msgstr "🔧 Configuración de Dumont Cloud CLI"
+
+#: cli/commands/config.py:100
+#, python-brace-format
+msgid "Current API URL: {url}"
+msgstr "URL de API actual: {url}"
+
+#: cli/commands/config.py:101
+msgid "New URL (Enter to keep): "
+msgstr "Nueva URL (Enter para mantener): "
+
+#: cli/commands/config.py:112
+#, python-brace-format
+msgid "Current API Key: {key}"
+msgstr "Clave API actual: {key}"
+
+#: cli/commands/config.py:114
+msgid "No API Key configured."
+msgstr "No hay clave API configurada."
+
+#: cli/commands/config.py:116
+msgid "To get your API Key:"
+msgstr "Para obtener tu clave API:"
+
+#: cli/commands/config.py:117
+msgid "  1. Go to https://cloud.dumont.ai/settings"
+msgstr "  1. Ve a https://cloud.dumont.ai/settings"
+
+#: cli/commands/config.py:118
+msgid "  2. Click 'Generate API Key'"
+msgstr "  2. Haz clic en 'Generar Clave API'"
+
+#: cli/commands/config.py:119
+msgid "  3. Copy the generated key"
+msgstr "  3. Copia la clave generada"
+
+#: cli/commands/config.py:122
+msgid "API Key (Enter to keep): "
+msgstr "Clave API (Enter para mantener): "
+
+#: cli/commands/config.py:127
+msgid "✅ Configuration saved to ~/.dumont/config.json"
+msgstr "✅ Configuración guardada en ~/.dumont/config.json"
+
+#: cli/commands/config.py:131
+msgid "📋 Current Configuration"
+msgstr "📋 Configuración Actual"
+
+#: cli/commands/config.py:137
+#, python-brace-format
+msgid "API URL: {url}"
+msgstr "URL de API: {url}"
+
+#: cli/commands/config.py:141
+#, python-brace-format
+msgid "API Key: {key}"
+msgstr "Clave API: {key}"
+
+#: cli/commands/config.py:143
+msgid "API Key: (not configured)"
+msgstr "Clave API: (no configurada)"
+
+#: cli/commands/config.py:145
+#, python-brace-format
+msgid "File: {file}"
+msgstr "Archivo: {file}"
+
+#: cli/commands/config.py:148
+msgid "Status: ✅ Configured"
+msgstr "Estado: ✅ Configurado"
+
+#: cli/commands/config.py:150
+msgid "Status: ❌ Not configured"
+msgstr "Estado: ❌ No configurado"
+
+#: cli/commands/config.py:151
+msgid "Run: dumont config setup"
+msgstr "Ejecuta: dumont config setup"
+
+#: cli/commands/config.py:156
+msgid "✅ API Key saved!"
+msgstr "✅ ¡Clave API guardada!"
+
+#: cli/commands/config.py:161
+#, python-brace-format
+msgid "✅ API URL configured: {url}"
+msgstr "✅ URL de API configurada: {url}"
+
+#: cli/commands/config.py:167
+msgid "✅ Configuration removed"
+msgstr "✅ Configuración eliminada"
+
+#: cli/commands/config.py:169
+msgid "ℹ️ No configuration to remove"
+msgstr "ℹ️ No hay configuración que eliminar"
+
+#: cli/commands/config.py:182
+msgid "⚠️  CLI not configured!"
+msgstr "⚠️  ¡CLI no configurado!"
+
+#: cli/commands/config.py:184
+msgid "To use the Dumont CLI, you need to configure your API Key."
+msgstr "Para usar el CLI de Dumont, necesitas configurar tu clave API."
+
+#: cli/commands/config.py:187
+msgid "Do you want to configure now? [Y/n]: "
+msgstr "¿Deseas configurar ahora? [S/n]: "
+
+#: cli/commands/config.py:193
+msgid "You can configure later with:"
+msgstr "Puedes configurar más tarde con:"
+
+#: cli/commands/config.py:195
+msgid "Or set the environment variable:"
+msgstr "O establece la variable de entorno:"
+
+#: cli/commands/model.py:17
+#, python-brace-format
+msgid "🚀 Installing model '{model}' on instance {instance}"
+msgstr "🚀 Instalando modelo '{model}' en la instancia {instance}"
+
+#: cli/commands/model.py:21
+msgid "📡 Step 1: Getting instance information..."
+msgstr "📡 Paso 1: Obteniendo información de la instancia..."
+
+#: cli/commands/model.py:25
+msgid "❌ Could not fetch instances. Make sure you are logged in."
+msgstr ""
+"❌ No se pudieron obtener las instancias. Asegúrate de haber iniciado "
+"sesión."
+
+#: cli/commands/model.py:38
+#, python-brace-format
+msgid "❌ Instance {id} not found"
+msgstr "❌ Instancia {id} no encontrada"
+
+#: cli/commands/model.py:39
+#, python-brace-format
+msgid "💡 Available instances: {instances}"
+msgstr "💡 Instancias disponibles: {instances}"
+
+#: cli/commands/model.py:45
+#, python-brace-format
+msgid "❌ Instance is not running (status: {status})"
+msgstr "❌ La instancia no está en ejecución (estado: {status})"
+
+#: cli/commands/model.py:46
+#, python-brace-format
+msgid "💡 Start the instance first: dumont instance resume {id}"
+msgstr "💡 Inicia la instancia primero: dumont instance resume {id}"
+
+#: cli/commands/model.py:61
+msgid "❌ Could not get SSH connection info"
+msgstr "❌ No se pudo obtener la información de conexión SSH"
+
+#: cli/commands/model.py:62
+#, python-brace-format
+msgid "   IP: {ip}, Port: {port}"
+msgstr "   IP: {ip}, Puerto: {port}"
+
+#: cli/commands/model.py:65
+#, python-brace-format
+msgid "   ✓ Instance found: {gpu} @ {ip}:{port}"
+msgstr "   ✓ Instancia encontrada: {gpu} @ {ip}:{port}"
+
+#: cli/commands/model.py:71
+msgid "📦 Step 2: Installing Ollama..."
+msgstr "📦 Paso 2: Instalando Ollama..."
+
+#: cli/commands/model.py:107
+msgid "   ✓ Ollama already installed"
+msgstr "   ✓ Ollama ya está instalado"
+
+#: cli/commands/model.py:109
+msgid "   ✓ Ollama installed successfully"
+msgstr "   ✓ Ollama instalado correctamente"
+
+#: cli/commands/model.py:112
+msgid "   ✓ Ollama service running"
+msgstr "   ✓ Servicio Ollama en ejecución"
+
+#: cli/commands/model.py:114
+msgid "   ⚠ Ollama service may not be running"
+msgstr "   ⚠ El servicio Ollama podría no estar en ejecución"
+
+#: cli/commands/model.py:116
+#, python-brace-format
+msgid "   ⚠ Installation output: {output}"
+msgstr "   ⚠ Salida de instalación: {output}"
+
+#: cli/commands/model.py:118
+#, python-brace-format
+msgid "   ⚠ Errors: {errors}"
+msgstr "   ⚠ Errores: {errors}"
+
+#: cli/commands/model.py:121
+#, python-brace-format
+msgid "🤖 Step 3: Pulling model '{model}'..."
+msgstr "🤖 Paso 3: Descargando modelo '{model}'..."
+
+#: cli/commands/model.py:122
+msgid "   (This may take a while depending on model size)"
+msgstr "   (Esto puede tardar dependiendo del tamaño del modelo)"
+
+#: cli/commands/model.py:152
+#, python-brace-format
+msgid "   ✓ Model '{model}' pulled successfully"
+msgstr "   ✓ Modelo '{model}' descargado correctamente"
+
+#: cli/commands/model.py:154
+msgid "   ❌ Failed to pull model"
+msgstr "   ❌ Error al descargar el modelo"
+
+#: cli/commands/model.py:155
+#, python-brace-format
+msgid "   Output: {output}"
+msgstr "   Salida: {output}"
+
+#: cli/commands/model.py:157
+#, python-brace-format
+msgid "   Errors: {errors}"
+msgstr "   Errores: {errors}"
+
+#: cli/commands/model.py:162
+msgid "✅ Installation Complete!"
+msgstr "✅ ¡Instalación Completa!"
+
+#: cli/commands/model.py:177
+msgid "📋 Connection Details:"
+msgstr "📋 Detalles de Conexión:"
+
+#: cli/commands/model.py:179
+#, python-brace-format
+msgid "   Model:      {model}"
+msgstr "   Modelo:     {model}"
+
+#: cli/commands/model.py:180
+#, python-brace-format
+msgid "   GPU:        {gpu}"
+msgstr "   GPU:        {gpu}"
+
+#: cli/commands/model.py:181
+#, python-brace-format
+msgid "   Host:       {host}"
+msgstr "   Host:       {host}"
+
+#: cli/commands/model.py:182
+#, python-brace-format
+msgid "   SSH:        {ssh}"
+msgstr "   SSH:        {ssh}"
+
+#: cli/commands/model.py:183
+#, python-brace-format
+msgid "   Ollama API: {url}"
+msgstr "   API Ollama: {url}"
+
+#: cli/commands/model.py:186
+msgid "🔧 Quick Test Commands:"
+msgstr "🔧 Comandos de Prueba Rápida:"
+
+#: cli/commands/models.py:19
+msgid "📦 Deployed Models"
+msgstr "📦 Modelos Desplegados"
+
+#: cli/commands/models.py:25
+msgid "❌ Could not fetch models. Make sure you are logged in."
+msgstr "❌ No se pudieron obtener los modelos. Asegúrate de haber iniciado sesión."
+
+#: cli/commands/models.py:31
+msgid "   No models deployed yet."
+msgstr "   Aún no hay modelos desplegados."
+
+#: cli/commands/models.py:32
+msgid "💡 Deploy a model:"
+msgstr "💡 Despliega un modelo:"
+
+#: cli/commands/models.py:49
+#, python-brace-format
+msgid "   ID:     {id}"
+msgstr "   ID:     {id}"
+
+#: cli/commands/models.py:50
+#, python-brace-format
+msgid "   Model:  {model}"
+msgstr "   Modelo: {model}"
+
+#: cli/commands/models.py:51
+#, python-brace-format
+msgid "   Type:   {type}"
+msgstr "   Tipo:   {type}"
+
+#: cli/commands/models.py:52
+#, python-brace-format
+msgid "   Status: {status} ({message})"
+msgstr "   Estado: {status} ({message})"
+
+#: cli/commands/models.py:55
+#, python-brace-format
+msgid "   URL:    {url}"
+msgstr "   URL:    {url}"
+
+#: cli/commands/models.py:57
+#, python-brace-format
+msgid "   Key:    {key}..."
+msgstr "   Clave:  {key}..."
+
+#: cli/commands/models.py:58
+#, python-brace-format
+msgid "   Cost:   ${cost:.2f}/h"
+msgstr "   Costo:  ${cost:.2f}/h"
+
+#: cli/commands/models.py:61
+#, python-brace-format
+msgid "   Progress: {progress:.0f}%"
+msgstr "   Progreso: {progress:.0f}%"
+
+#: cli/commands/models.py:67
+msgid "📋 Available Model Templates"
+msgstr "📋 Plantillas de Modelos Disponibles"
+
+#: cli/commands/models.py:73
+msgid "❌ Could not fetch templates."
+msgstr "❌ No se pudieron obtener las plantillas."
+
+#: cli/commands/models.py:87
+#, python-brace-format
+msgid "   Type:    {type}"
+msgstr "   Tipo:    {type}"
+
+#: cli/commands/models.py:88
+#, python-brace-format
+msgid "   Runtime: {runtime}"
+msgstr "   Runtime: {runtime}"
+
+#: cli/commands/models.py:89
+#, python-brace-format
+msgid "   Port:    {port}"
+msgstr "   Puerto:  {port}"
+
+#: cli/commands/models.py:90
+#, python-brace-format
+msgid "   GPU:     {memory}GB+ required"
+msgstr "   GPU:     {memory}GB+ requerido"
+
+#: cli/commands/models.py:91
+msgid "   Popular models:"
+msgstr "   Modelos populares:"
+
+#: cli/commands/models.py:99
+#, python-brace-format
+msgid "🚀 Deploying {type} model: {model}"
+msgstr "🚀 Desplegando modelo {type}: {model}"
+
+#: cli/commands/models.py:122
+msgid "Unknown error"
+msgstr "Error desconocido"
+
+#: cli/commands/models.py:122
+msgid "Failed to connect"
+msgstr "Error de conexión"
+
+#: cli/commands/models.py:123 cli/commands/wizard.py:145
+#, python-brace-format
+msgid "❌ Deploy failed: {error}"
+msgstr "❌ Despliegue fallido: {error}"
+
+#: cli/commands/models.py:127
+msgid "✅ Deployment started!"
+msgstr "✅ ¡Despliegue iniciado!"
+
+#: cli/commands/models.py:128
+#, python-brace-format
+msgid "   ID: {id}"
+msgstr "   ID: {id}"
+
+#: cli/commands/models.py:129
+#, python-brace-format
+msgid "   Estimated time: ~{minutes} minutes"
+msgstr "   Tiempo estimado: ~{minutes} minutos"
+
+#: cli/commands/models.py:133
+msgid "⏳ Waiting for deployment to complete..."
+msgstr "⏳ Esperando a que se complete el despliegue..."
+
+#: cli/commands/models.py:147
+msgid "   ⚠ Could not check status"
+msgstr "   ⚠ No se pudo verificar el estado"
+
+#: cli/commands/models.py:162
+msgid "✅ Deployment complete!"
+msgstr "✅ ¡Despliegue completado!"
+
+#: cli/commands/models.py:163
+#, python-brace-format
+msgid "   Endpoint: {url}"
+msgstr "   Endpoint: {url}"
+
+#: cli/commands/models.py:165
+#, python-brace-format
+msgid "   API Key:  {key}"
+msgstr "   Clave API: {key}"
+
+#: cli/commands/models.py:166
+#, python-brace-format
+msgid "   Cost:     ${cost:.2f}/h"
+msgstr "   Costo:    ${cost:.2f}/h"
+
+#: cli/commands/models.py:170
+#, python-brace-format
+msgid "❌ Deployment failed: {message}"
+msgstr "❌ Despliegue fallido: {message}"
+
+#: cli/commands/models.py:175
+msgid "⚠ Timeout waiting for deployment"
+msgstr "⚠ Tiempo de espera agotado para el despliegue"
+
+#: cli/commands/models.py:183
+#, python-brace-format
+msgid "❌ Deployment {id} not found"
+msgstr "❌ Despliegue {id} no encontrado"
+
+#: cli/commands/models.py:186
+msgid "📦 Deployment Details"
+msgstr "📦 Detalles del Despliegue"
+
+#: cli/commands/models.py:192
+#, python-brace-format
+msgid "⏹️ Stopping deployment {id}..."
+msgstr "⏹️ Deteniendo despliegue {id}..."
+
+#: cli/commands/models.py:202
+msgid "❌ Failed to stop deployment"
+msgstr "❌ Error al detener el despliegue"
+
+#: cli/commands/models.py:205
+msgid "✅ Deployment stopped"
+msgstr "✅ Despliegue detenido"
+
+#: cli/commands/models.py:209
+#, python-brace-format
+msgid "🗑️ Deleting deployment {id}..."
+msgstr "🗑️ Eliminando despliegue {id}..."
+
+#: cli/commands/models.py:218
+msgid "✅ Deployment deleted"
+msgstr "✅ Despliegue eliminado"
+
+#: cli/commands/models.py:225
+#, python-brace-format
+msgid "❌ Could not fetch logs for {id}"
+msgstr "❌ No se pudieron obtener los logs de {id}"
+
+#: cli/commands/models.py:228
+#, python-brace-format
+msgid "📋 Logs for {id}"
+msgstr "📋 Logs de {id}"
+
+#: cli/commands/models.py:230
+msgid "No logs available"
+msgstr "No hay logs disponibles"
+
+#: cli/commands/wizard.py:50
+msgid "🚀 Wizard Deploy Starting"
+msgstr "🚀 Iniciando Asistente de Despliegue"
+
+#: cli/commands/wizard.py:52
+#, python-brace-format
+msgid "   GPU:       {gpu}"
+msgstr "   GPU:       {gpu}"
+
+#: cli/commands/wizard.py:52
+msgid "Any"
+msgstr "Cualquiera"
+
+#: cli/commands/wizard.py:53
+#, python-brace-format
+msgid "   Speed:     {speed}"
+msgstr "   Velocidad: {speed}"
+
+#: cli/commands/wizard.py:54
+#, python-brace-format
+msgid "   Max Price: ${price}/hr"
+msgstr "   Precio Máx: ${price}/hr"
+
+#: cli/commands/wizard.py:55
+#, python-brace-format
+msgid "   Region:    {region}"
+msgstr "   Región:    {region}"
+
+#: cli/commands/wizard.py:69
+#, python-brace-format
+msgid "❌ Could not import wizard service: {error}"
+msgstr "❌ No se pudo importar el servicio del asistente: {error}"
+
+#: cli/commands/wizard.py:70
+msgid "   Make sure you're running from the dumontcloud directory"
+msgstr "   Asegúrate de estar ejecutando desde el directorio dumontcloud"
+
+#: cli/commands/wizard.py:76
+msgid "❌ No Vast.ai API key found"
+msgstr "❌ No se encontró la clave API de Vast.ai"
+
+#: cli/commands/wizard.py:77
+msgid "   Set VAST_API_KEY environment variable or configure via settings"
+msgstr "   Establece la variable de entorno VAST_API_KEY o configúrala en ajustes"
+
+#: cli/commands/wizard.py:80
+msgid "📡 Step 1: Searching for offers..."
+msgstr "📡 Paso 1: Buscando ofertas..."
+
+#: cli/commands/wizard.py:99
+msgid "❌ No offers found matching criteria"
+msgstr "❌ No se encontraron ofertas que coincidan con los criterios"
+
+#: cli/commands/wizard.py:100
+msgid "💡 Try relaxing filters (higher price, different GPU, different region)"
+msgstr ""
+"💡 Intenta relajar los filtros (precio más alto, GPU diferente, región "
+"diferente)"
+
+#: cli/commands/wizard.py:103
+#, python-brace-format
+msgid "   ✓ Found {count} offers"
+msgstr "   ✓ Se encontraron {count} ofertas"
+
+#: cli/commands/wizard.py:111
+msgid "🔄 Step 2: Starting multi-start deployment..."
+msgstr "🔄 Paso 2: Iniciando despliegue multi-inicio..."
+
+#: cli/commands/wizard.py:112
+#, python-brace-format
+msgid ""
+"   Strategy: Create {batch_size} machines per batch, up to {max_batches} "
+"batches"
+msgstr ""
+"   Estrategia: Crear {batch_size} máquinas por lote, hasta {max_batches} "
+"lotes"
+
+#: cli/commands/wizard.py:113
+#, python-brace-format
+msgid "   Timeout: {timeout}s per batch"
+msgstr "   Tiempo límite: {timeout}s por lote"
+
+#: cli/commands/wizard.py:126
+#, python-brace-format
+msgid "   [{elapsed}s] Status: {status}"
+msgstr "   [{elapsed}s] Estado: {status}"
+
+#: cli/commands/wizard.py:130
+#, python-brace-format
+msgid "   Batch {batch}/{max_batches} - Machines created: {count}"
+msgstr "   Lote {batch}/{max_batches} - Máquinas creadas: {count}"
+
+#: cli/commands/wizard.py:132
+#, python-brace-format
+msgid "   Machines created: {machines}"
+msgstr "   Máquinas creadas: {machines}"
+
+#: cli/commands/wizard.py:146
+#, python-brace-format
+msgid "   Machines tried: {count}"
+msgstr "   Máquinas intentadas: {count}"
+
+#: cli/commands/wizard.py:147
+#, python-brace-format
+msgid "   Machines created: {count}"
+msgstr "   Máquinas creadas: {count}"
+
+#: cli/commands/wizard.py:148
+#, python-brace-format
+msgid "   Machines destroyed: {count}"
+msgstr "   Máquinas destruidas: {count}"
+
+#: cli/commands/wizard.py:152
+msgid "✅ Deploy Complete!"
+msgstr "✅ ¡Despliegue Completo!"
+
+#: cli/commands/wizard.py:153
+msgid "📋 Instance Details:"
+msgstr "📋 Detalles de la Instancia:"
+
+#: cli/commands/wizard.py:155
+#, python-brace-format
+msgid "   Instance ID: {id}"
+msgstr "   ID de Instancia: {id}"
+
+#: cli/commands/wizard.py:156
+#, python-brace-format
+msgid "   GPU:         {gpu}"
+msgstr "   GPU:         {gpu}"
+
+#: cli/commands/wizard.py:156
+msgid "Unknown"
+msgstr "Desconocido"
+
+#: cli/commands/wizard.py:157
+#, python-brace-format
+msgid "   IP:          {ip}"
+msgstr "   IP:          {ip}"
+
+#: cli/commands/wizard.py:158
+#, python-brace-format
+msgid "   SSH Port:    {port}"
+msgstr "   Puerto SSH:  {port}"
+
+#: cli/commands/wizard.py:159
+#, python-brace-format
+msgid "   Price:       ${price:.3f}/hr"
+msgstr "   Precio:      ${price:.3f}/hr"
+
+#: cli/commands/wizard.py:160
+#, python-brace-format
+msgid "   Speed:       {speed:.0f} Mbps"
+msgstr "   Velocidad:   {speed:.0f} Mbps"
+
+#: cli/commands/wizard.py:161
+#, python-brace-format
+msgid "   Ready in:    {time:.1f}s"
+msgstr "   Listo en:    {time:.1f}s"
+
+#: cli/commands/wizard.py:163
+msgid "🔗 SSH Command:"
+msgstr "🔗 Comando SSH:"
+
+#: cli/commands/wizard.py:167
+msgid "💻 Code Server:"
+msgstr "💻 Servidor de Código:"
+
+#: cli/commands/wizard.py:171
+#, python-brace-format
+msgid "💾 Instance ID saved: {id}"
+msgstr "💾 ID de Instancia guardado: {id}"
+
+#: src/templates/finetune_task.yaml.j2:1
+msgid "SkyPilot Task for Fine-Tuning with Unsloth"
+msgstr "Tarea SkyPilot para Ajuste Fino con Unsloth"
+
+#: src/templates/finetune_task.yaml.j2:2
+msgid "Generated by Dumont Cloud Fine-Tuning Service"
+msgstr "Generado por el Servicio de Ajuste Fino de Dumont Cloud"
+
+#: src/templates/finetune_task.yaml.j2:22
+msgid "=== Setting up Unsloth Fine-Tuning Environment ==="
+msgstr "=== Configurando Entorno de Ajuste Fino con Unsloth ==="
+
+#: src/templates/finetune_task.yaml.j2:24
+msgid "Install Unsloth and dependencies"
+msgstr "Instalar Unsloth y dependencias"
+
+#: src/templates/finetune_task.yaml.j2:29
+msgid "Create output directory"
+msgstr "Crear directorio de salida"
+
+#: src/templates/finetune_task.yaml.j2:32
+msgid "Pre-download model to cache"
+msgstr "Pre-descargar modelo a caché"
+
+#: src/templates/finetune_task.yaml.j2:33
+msgid "Pre-downloading base model:"
+msgstr "Pre-descargando modelo base:"
+
+#: src/templates/finetune_task.yaml.j2:36
+msgid "=== Setup Complete ==="
+msgstr "=== Configuración Completa ==="
+
+#: src/templates/finetune_task.yaml.j2:41
+msgid "=== Starting Fine-Tuning with Unsloth ==="
+msgstr "=== Iniciando Ajuste Fino con Unsloth ==="
+
+#: src/templates/finetune_task.yaml.j2:42
+msgid "Base Model:"
+msgstr "Modelo Base:"
+
+#: src/templates/finetune_task.yaml.j2:43
+msgid "LoRA Rank:"
+msgstr "Rango LoRA:"
+
+#: src/templates/finetune_task.yaml.j2:44
+msgid "Learning Rate:"
+msgstr "Tasa de Aprendizaje:"
+
+#: src/templates/finetune_task.yaml.j2:45
+msgid "Epochs:"
+msgstr "Épocas:"
+
+#: src/templates/finetune_task.yaml.j2:46
+msgid "Batch Size:"
+msgstr "Tamaño de Lote:"
+
+#: src/templates/finetune_task.yaml.j2:47
+msgid "Max Sequence Length:"
+msgstr "Longitud Máxima de Secuencia:"
+
+#: src/templates/finetune_task.yaml.j2:59
+msgid "Configuration from template"
+msgstr "Configuración desde plantilla"
+
+#: src/templates/finetune_task.yaml.j2:74
+msgid "DUMONT CLOUD FINE-TUNING JOB"
+msgstr "TRABAJO DE AJUSTE FINO DE DUMONT CLOUD"
+
+#: src/templates/finetune_task.yaml.j2:75
+msgid "Started at:"
+msgstr "Iniciado a las:"
+
+#: src/templates/finetune_task.yaml.j2:78
+msgid "Load model with Unsloth (4-bit quantization)"
+msgstr "Cargar modelo con Unsloth (cuantización de 4 bits)"
+
+#: src/templates/finetune_task.yaml.j2:79
+msgid "Loading model:"
+msgstr "Cargando modelo:"
+
+#: src/templates/finetune_task.yaml.j2:83
+msgid "Auto-detect (float16 or bfloat16)"
+msgstr "Auto-detectar (float16 o bfloat16)"
+
+#: src/templates/finetune_task.yaml.j2:86
+msgid "Model loaded successfully!"
+msgstr "¡Modelo cargado exitosamente!"
+
+#: src/templates/finetune_task.yaml.j2:88
+msgid "Add LoRA adapters"
+msgstr "Añadir adaptadores LoRA"
+
+#: src/templates/finetune_task.yaml.j2:89
+msgid "Adding LoRA adapters (rank="
+msgstr "Añadiendo adaptadores LoRA (rango="
+
+#: src/templates/finetune_task.yaml.j2:89
+msgid ", alpha="
+msgstr ", alpha="
+
+#: src/templates/finetune_task.yaml.j2:101
+msgid "LoRA adapters added!"
+msgstr "¡Adaptadores LoRA añadidos!"
+
+#: src/templates/finetune_task.yaml.j2:103
+msgid "Load dataset"
+msgstr "Cargar dataset"
+
+#: src/templates/finetune_task.yaml.j2:105
+msgid "Load from URL"
+msgstr "Cargar desde URL"
+
+#: src/templates/finetune_task.yaml.j2:106
+msgid "Loading dataset from URL:"
+msgstr "Cargando dataset desde URL:"
+
+#: src/templates/finetune_task.yaml.j2:109
+msgid "Load from local file"
+msgstr "Cargar desde archivo local"
+
+#: src/templates/finetune_task.yaml.j2:110
+msgid "Loading dataset from local file:"
+msgstr "Cargando dataset desde archivo local:"
+
+#: src/templates/finetune_task.yaml.j2:117
+msgid "No JSON/JSONL files found in dataset directory"
+msgstr "No se encontraron archivos JSON/JSONL en el directorio del dataset"
+
+#: src/templates/finetune_task.yaml.j2:119
+msgid "Found dataset files:"
+msgstr "Archivos de dataset encontrados:"
+
+#: src/templates/finetune_task.yaml.j2:122
+msgid "Try to load from HuggingFace"
+msgstr "Intentar cargar desde HuggingFace"
+
+#: src/templates/finetune_task.yaml.j2:123
+msgid "Loading dataset from HuggingFace:"
+msgstr "Cargando dataset desde HuggingFace:"
+
+#: src/templates/finetune_task.yaml.j2:127
+msgid "Dataset loaded:"
+msgstr "Dataset cargado:"
+
+#: src/templates/finetune_task.yaml.j2:127
+#: src/templates/finetune_task.yaml.j2:182
+msgid "examples"
+msgstr "ejemplos"
+
+#: src/templates/finetune_task.yaml.j2:129
+msgid "Format dataset based on format type"
+msgstr "Formatear dataset según el tipo de formato"
+
+#: src/templates/finetune_task.yaml.j2:132
+msgid "Format Alpaca-style dataset"
+msgstr "Formatear dataset estilo Alpaca"
+
+#: src/templates/finetune_task.yaml.j2:161
+msgid "Format ShareGPT-style dataset"
+msgstr "Formatear dataset estilo ShareGPT"
+
+#: src/templates/finetune_task.yaml.j2:178
+msgid "Assume raw text format"
+msgstr "Asumir formato de texto plano"
+
+#: src/templates/finetune_task.yaml.j2:180
+msgid "Dataset must have text column for raw format"
+msgstr "El dataset debe tener columna de texto para formato plano"
+
+#: src/templates/finetune_task.yaml.j2:182
+msgid "Dataset formatted with"
+msgstr "Dataset formateado con"
+
+#: src/templates/finetune_task.yaml.j2:184
+msgid "Training arguments"
+msgstr "Argumentos de entrenamiento"
+
+#: src/templates/finetune_task.yaml.j2:205
+msgid "Create trainer"
+msgstr "Crear entrenador"
+
+#: src/templates/finetune_task.yaml.j2:217
+msgid "Train!"
+msgstr "¡Entrenar!"
+
+#: src/templates/finetune_task.yaml.j2:219
+msgid "STARTING TRAINING"
+msgstr "INICIANDO ENTRENAMIENTO"
+
+#: src/templates/finetune_task.yaml.j2:225
+msgid "TRAINING COMPLETE!"
+msgstr "¡ENTRENAMIENTO COMPLETADO!"
+
+#: src/templates/finetune_task.yaml.j2:228
+msgid "Save LoRA adapters"
+msgstr "Guardar adaptadores LoRA"
+
+#: src/templates/finetune_task.yaml.j2:230
+msgid "Saving LoRA adapters to:"
+msgstr "Guardando adaptadores LoRA en:"
+
+#: src/templates/finetune_task.yaml.j2:234
+msgid "Save training stats"
+msgstr "Guardar estadísticas de entrenamiento"
+
+#: src/templates/finetune_task.yaml.j2:257
+msgid "Training Statistics:"
+msgstr "Estadísticas de Entrenamiento:"
+
+#: src/templates/finetune_task.yaml.j2:258
+msgid "Final Loss:"
+msgstr "Pérdida Final:"
+
+#: src/templates/finetune_task.yaml.j2:259
+msgid "Runtime:"
+msgstr "Tiempo de Ejecución:"
+
+#: src/templates/finetune_task.yaml.j2:260
+msgid "Samples/sec:"
+msgstr "Muestras/seg:"
+
+#: src/templates/finetune_task.yaml.j2:263
+msgid "FINE-TUNING COMPLETE!"
+msgstr "¡AJUSTE FINO COMPLETADO!"
+
+#: src/templates/finetune_task.yaml.j2:264
+msgid "Model saved to:"
+msgstr "Modelo guardado en:"
+
+#: src/templates/finetune_task.yaml.j2:265
+msgid "Stats saved to:"
+msgstr "Estadísticas guardadas en:"
+
+#: src/templates/finetune_task.yaml.j2:270
+msgid "=== Fine-Tuning Job Complete ==="
+msgstr "=== Trabajo de Ajuste Fino Completado ==="
+
+#: src/templates/marketing_doc.html:7
+msgid "Dumont Cloud - Live Docs"
+msgstr "Dumont Cloud - Documentación en Vivo"
+
+#: src/templates/marketing_doc.html:146 src/templates/marketing_doc.html:166
+msgid "Live Docs"
+msgstr "Documentación en Vivo"
+
+#: src/templates/marketing_doc.html:171
+msgid "Strategy"
+msgstr "Estrategia"
+
+#: src/templates/marketing_doc.html:174
+msgid "Marketing Roadmap"
+msgstr "Hoja de Ruta de Marketing"
+
+#: src/templates/marketing_doc.html:179
+msgid "Engineering"
+msgstr "Ingeniería"
+
+#: src/templates/marketing_doc.html:182
+msgid "Project README"
+msgstr "README del Proyecto"
+
+#: src/templates/marketing_doc.html:190
+msgid "← Back to App"
+msgstr "← Volver a la Aplicación"
+
+#: src/templates/marketing_doc.html:213
+msgid "Loading documentation..."
+msgstr "Cargando documentación..."
+
+#: src/templates/marketing_doc.html:218
+msgid "Live Documentation System"
+msgstr "Sistema de Documentación en Vivo"
+
+#: src/templates/marketing_doc.html:310
+msgid "No documents found. Add .md files to Live-Doc/content/"
+msgstr "No se encontraron documentos. Añade archivos .md a Live-Doc/content/"
+
+#: src/templates/marketing_doc.html:315
+msgid "Error loading menu"
+msgstr "Error al cargar el menú"
+
+#: src/templates/marketing_doc.html:315
+msgid "Open Console (F12 or Ctrl+Shift+I) for full details."
+msgstr "Abre la Consola (F12 o Ctrl+Shift+I) para más detalles."
+
+#: src/templates/marketing_doc.html:493
+msgid "Document not found"
+msgstr "Documento no encontrado"
+
+#: src/templates/marketing_doc.html:497
+msgid "Error loading document:"
+msgstr "Error al cargar el documento:"
+
+#: src/templates/marketing_doc.html:530 src/templates/marketing_doc.html:536
+msgid "Copy URL"
+msgstr "Copiar URL"
+
+#: src/templates/marketing_doc.html:534
+msgid "Copied!"
+msgstr "¡Copiado!"
+

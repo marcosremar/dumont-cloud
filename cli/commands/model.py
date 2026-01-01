@@ -3,6 +3,8 @@ import json
 import sys
 from ..utils.ssh_client import SSHClient
 
+from ..i18n import _
+
 
 class ModelCommands:
     """Install and manage models on instances"""
@@ -12,15 +14,15 @@ class ModelCommands:
 
     def install(self, instance_id: str, model_id: str):
         """Install Ollama and a model on a running instance"""
-        print(f"\n🚀 Installing model '{model_id}' on instance {instance_id}\n")
+        print("\n" + _("🚀 Installing model '{model}' on instance {instance}").format(model=model_id, instance=instance_id) + "\n")
         print("=" * 60)
 
         # Step 1: Get instance info
-        print("\n📡 Step 1: Getting instance information...")
+        print("\n" + _("📡 Step 1: Getting instance information..."))
         instances = self.api.call("GET", "/api/v1/instances", silent=True)
 
         if not instances:
-            print("❌ Could not fetch instances. Make sure you are logged in.")
+            print(_("❌ Could not fetch instances. Make sure you are logged in."))
             sys.exit(1)
 
         # Find the instance
@@ -33,15 +35,15 @@ class ModelCommands:
                 break
 
         if not instance:
-            print(f"❌ Instance {instance_id} not found")
-            print(f"💡 Available instances: {[i.get('id') for i in instance_list]}")
+            print(_("❌ Instance {id} not found").format(id=instance_id))
+            print(_("💡 Available instances: {instances}").format(instances=[i.get('id') for i in instance_list]))
             sys.exit(1)
 
         # Check if running
         status = instance.get("actual_status", instance.get("status", "unknown"))
         if status != "running":
-            print(f"❌ Instance is not running (status: {status})")
-            print("💡 Start the instance first: dumont instance resume " + instance_id)
+            print(_("❌ Instance is not running (status: {status})").format(status=status))
+            print(_("💡 Start the instance first: dumont instance resume {id}").format(id=instance_id))
             sys.exit(1)
 
         # Get SSH connection info
@@ -56,17 +58,17 @@ class ModelCommands:
                 ssh_port = ssh_port_info[0].get("HostPort")
 
         if not public_ip or not ssh_port:
-            print("❌ Could not get SSH connection info")
-            print(f"   IP: {public_ip}, Port: {ssh_port}")
+            print(_("❌ Could not get SSH connection info"))
+            print(_("   IP: {ip}, Port: {port}").format(ip=public_ip, port=ssh_port))
             sys.exit(1)
 
-        print(f"   ✓ Instance found: {instance.get('gpu_name', 'GPU')} @ {public_ip}:{ssh_port}")
+        print(_("   ✓ Instance found: {gpu} @ {ip}:{port}").format(gpu=instance.get('gpu_name', 'GPU'), ip=public_ip, port=ssh_port))
 
         # Create SSH client
         ssh = SSHClient(public_ip, ssh_port)
 
         # Step 2: Install Ollama
-        print("\n📦 Step 2: Installing Ollama...")
+        print("\n" + _("📦 Step 2: Installing Ollama..."))
 
         install_script = '''#!/bin/bash
 set -e
@@ -102,22 +104,22 @@ echo "OLLAMA_INSTALL_COMPLETE=yes"
 
         if "OLLAMA_INSTALL_COMPLETE=yes" in stdout:
             if "already_installed" in stdout:
-                print("   ✓ Ollama already installed")
+                print(_("   ✓ Ollama already installed"))
             else:
-                print("   ✓ Ollama installed successfully")
+                print(_("   ✓ Ollama installed successfully"))
 
             if "OLLAMA_RUNNING=yes" in stdout:
-                print("   ✓ Ollama service running")
+                print(_("   ✓ Ollama service running"))
             else:
-                print("   ⚠ Ollama service may not be running")
+                print(_("   ⚠ Ollama service may not be running"))
         else:
-            print(f"   ⚠ Installation output: {stdout}")
+            print(_("   ⚠ Installation output: {output}").format(output=stdout))
             if stderr:
-                print(f"   ⚠ Errors: {stderr}")
+                print(_("   ⚠ Errors: {errors}").format(errors=stderr))
 
         # Step 3: Pull the model
-        print(f"\n🤖 Step 3: Pulling model '{model_id}'...")
-        print("   (This may take a while depending on model size)")
+        print("\n" + _("🤖 Step 3: Pulling model '{model}'...").format(model=model_id))
+        print(_("   (This may take a while depending on model size)"))
 
         pull_script = f'''#!/bin/bash
 
@@ -147,17 +149,17 @@ ollama list
         success, stdout, stderr = ssh.execute(pull_script, timeout=1800)
 
         if "MODEL_PULL_SUCCESS=yes" in stdout:
-            print(f"   ✓ Model '{model_id}' pulled successfully")
+            print(_("   ✓ Model '{model}' pulled successfully").format(model=model_id))
         else:
-            print(f"   ❌ Failed to pull model")
-            print(f"   Output: {stdout}")
+            print(_("   ❌ Failed to pull model"))
+            print(_("   Output: {output}").format(output=stdout))
             if stderr:
-                print(f"   Errors: {stderr}")
+                print(_("   Errors: {errors}").format(errors=stderr))
             sys.exit(1)
 
         # Step 4: Get connection info
         print("\n" + "=" * 60)
-        print("\n✅ Installation Complete!\n")
+        print("\n" + _("✅ Installation Complete!") + "\n")
 
         ollama_port = "11434"
 
@@ -172,16 +174,16 @@ ollama list
             "status": "ready"
         }
 
-        print("📋 Connection Details:")
+        print(_("📋 Connection Details:"))
         print("-" * 40)
-        print(f"   Model:      {model_id}")
-        print(f"   GPU:        {connection_info['gpu']}")
-        print(f"   Host:       {public_ip}")
-        print(f"   SSH:        {ssh.get_connection_string()}")
-        print(f"   Ollama API: {connection_info['ollama_url']}")
+        print(_("   Model:      {model}").format(model=model_id))
+        print(_("   GPU:        {gpu}").format(gpu=connection_info['gpu']))
+        print(_("   Host:       {host}").format(host=public_ip))
+        print(_("   SSH:        {ssh}").format(ssh=ssh.get_connection_string()))
+        print(_("   Ollama API: {url}").format(url=connection_info['ollama_url']))
         print("-" * 40)
 
-        print("\n🔧 Quick Test Commands:")
+        print("\n" + _("🔧 Quick Test Commands:"))
         print(f"   curl {connection_info['ollama_url']}/api/generate -d '{{\"model\": \"{model_id}\", \"prompt\": \"Hello!\"}}'")
         print(f"   {ssh.get_connection_string()} 'ollama run {model_id}'")
 

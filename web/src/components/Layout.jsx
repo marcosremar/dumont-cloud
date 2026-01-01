@@ -1,7 +1,9 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronDown, BarChart3, PiggyBank, Bot } from 'lucide-react'
 import MobileMenu from './MobileMenu'
+import CurrencySelector from './CurrencySelector'
 
 // Helper to get base path based on demo mode
 function useBasePath() {
@@ -100,45 +102,50 @@ function DumontLogo() {
 export default function Layout({ user, onLogout, children, isDemo = false }) {
   const basePath = useBasePath()
   const isDemoMode = isDemo || basePath === '/demo-app'
+  const { t } = useTranslation()
 
   return (
     <div className="layout">
       <header className="header">
         <div className="header-left">
-          {/* Mobile Menu - visível apenas em telas pequenas */}
+          {/* Mobile Menu */}
           <MobileMenu onLogout={onLogout} basePath={basePath} />
 
           <div className="logo-container">
             <DumontLogo />
-            <span className="logo-text">Dumont <span className="logo-highlight">Cloud</span></span>
-            {isDemoMode && <span className="demo-badge">DEMO</span>}
+            <span className="logo-text">{t('layout.brandName')} <span className="logo-highlight">{t('layout.brandHighlight')}</span></span>
+            {isDemoMode && <span className="demo-badge">{t('layout.demoBadge')}</span>}
           </div>
           <div className="header-divider desktop-only"></div>
           <nav className="nav desktop-only">
             <NavLink to={basePath} end className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-              Dashboard
+              {t('navigation.dashboard')}
             </NavLink>
             <NavLink to={`${basePath}/machines`} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-              Machines
+              {t('navigation.machines')}
+            </NavLink>
+            <NavLink to={`${basePath}/reservations`} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+              Reservations
             </NavLink>
             <NavDropdown
-              label="Analytics"
+              label={t('navigation.analytics')}
               icon={BarChart3}
               basePath={basePath}
               children={[
-                { path: '/metrics-hub', label: 'Métricas', icon: BarChart3 },
-                { path: '/savings', label: 'Economia', icon: PiggyBank },
-                { path: '/advisor', label: 'AI Advisor', icon: Bot },
+                { path: '/metrics-hub', label: t('navigation.metrics'), icon: BarChart3 },
+                { path: '/savings', label: t('navigation.savings'), icon: PiggyBank },
+                { path: '/advisor', label: t('navigation.aiAdvisor'), icon: Bot },
               ]}
             />
             <NavLink to={`${basePath}/settings`} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-              Settings
+              {t('navigation.settings')}
             </NavLink>
           </nav>
         </div>
         <div className="header-right">
+          <CurrencySelector compact />
           <span className="user-name">{user?.username}</span>
-          <button className="btn btn-sm" onClick={onLogout}>{isDemoMode ? 'Sair do Demo' : 'Logout'}</button>
+          <button className="btn btn-sm" onClick={onLogout}>{isDemoMode ? t('navigation.exitDemo') : t('navigation.logout')}</button>
         </div>
       </header>
       <main className="main">

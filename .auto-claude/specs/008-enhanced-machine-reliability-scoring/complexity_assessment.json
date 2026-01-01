@@ -1,0 +1,71 @@
+{
+  "complexity": "standard",
+  "workflow_type": "feature",
+  "confidence": 0.85,
+  "reasoning": "Extends existing blacklist system with reliability scoring. Requires database schema changes, score calculation logic, UI integration, and data collection mechanisms. Estimated 10-15 files across 2-3 services. No external integrations or unfamiliar technologies, but significant scope across backend and frontend.",
+
+  "analysis": {
+    "scope": {
+      "estimated_files": 12,
+      "estimated_services": 2,
+      "is_cross_cutting": true,
+      "notes": "Affects machine selection flow across platform. Backend changes for data collection and score calculation, frontend changes for display and filtering, database schema additions for metrics storage."
+    },
+    "integrations": {
+      "external_services": [],
+      "new_dependencies": [],
+      "research_needed": false,
+      "notes": "No external integrations. Uses existing infrastructure and technology stack. Primary research needed is understanding existing blacklist system architecture."
+    },
+    "infrastructure": {
+      "docker_changes": false,
+      "database_changes": true,
+      "config_changes": true,
+      "notes": "Database schema changes for reliability metrics, historical data (30 days), and user ratings. Configuration changes for auto-exclusion thresholds and feature toggles."
+    },
+    "knowledge": {
+      "patterns_exist": true,
+      "research_required": true,
+      "unfamiliar_tech": [],
+      "notes": "Existing blacklist system provides foundation. Need to research codebase to understand current implementation patterns. Score calculation and data collection are new patterns to establish."
+    },
+    "risk": {
+      "level": "medium",
+      "concerns": [
+        "Affects critical machine selection flow",
+        "Data accuracy for uptime and interruption tracking",
+        "Performance impact of historical data queries",
+        "Auto-exclusion UX could frustrate users if threshold too aggressive",
+        "User rating system needs spam/abuse prevention"
+      ],
+      "notes": "Medium risk due to impact on core user flow. Need careful testing of auto-exclusion logic and performance optimization for historical data queries."
+    }
+  },
+
+  "recommended_phases": [
+    "discovery",
+    "requirements",
+    "context",
+    "spec_writing",
+    "planning",
+    "validation"
+  ],
+
+  "flags": {
+    "needs_research": false,
+    "needs_self_critique": false,
+    "needs_infrastructure_setup": false
+  },
+
+  "validation_recommendations": {
+    "risk_level": "medium",
+    "skip_validation": false,
+    "minimal_mode": false,
+    "test_types_required": ["unit", "integration"],
+    "security_scan_required": false,
+    "staging_deployment_required": false,
+    "reasoning": "Affects core machine selection flow but no security-critical changes. Requires unit tests for score calculation logic and integration tests for API endpoints and database operations. E2E tests recommended but not strictly required."
+  },
+
+  "created_at": "2025-12-31T00:00:00Z"
+}

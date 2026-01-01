@@ -2,11 +2,13 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, createContext, useContext, useMemo, useCallback } from 'react'
 import { Provider } from 'react-redux'
 import { store } from './store'
+import { setToken } from './store/slices/authSlice'
 import AppLayout from './components/layout/AppLayout'
 import { SidebarProvider } from './context/SidebarContext'
 import { ThemeProvider } from './context/ThemeContext'
 import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
+import EmailPreferences from './pages/Settings/EmailPreferences'
 import Login from './pages/Login'
 import LandingPage from './pages/LandingPage'
 import Machines from './pages/Machines'
@@ -20,11 +22,23 @@ import GpuOffers from './pages/GpuOffers'
 import Jobs from './pages/Jobs'
 import ChatArena from './pages/ChatArena'
 import Models from './pages/Models'
+import Savings from './pages/Savings'
 import Documentation from './pages/Documentation'
 import ButtonShowcase from './pages/ButtonShowcase'
 import ForgotPassword from './pages/ForgotPassword'
+import TemplatePage from './pages/TemplatePage'
+import TemplateDetailPage from './pages/TemplateDetailPage'
+import ShareableReportView from './components/tailadmin/reports/ShareableReportView'
+import NPSTrends from './pages/Admin/NPSTrends'
+import AffiliateDashboard from './components/affiliate/AffiliateDashboard'
+import TeamsPage from './pages/TeamsPage'
+import TeamDetailsPage from './pages/TeamDetailsPage'
+import CreateRolePage from './pages/CreateRolePage'
+import Reservations from './pages/Reservations'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
+import NPSSurvey from './components/NPSSurvey'
+import useNPSTrigger, { NPS_TRIGGER_TYPES } from './hooks/useNPSTrigger'
 import './styles/landing.css'
 
 const API_BASE = ''
@@ -51,6 +65,60 @@ function DemoRoute({ children }) {
     <DemoContext.Provider value={true}>
       {children}
     </DemoContext.Provider>
+  )
+}
+
+/**
+ * NPSSurveyManager - Manages NPS survey display and submission
+ * This component uses the useNPSTrigger hook to handle survey logic
+ * and renders the NPSSurvey modal when appropriate.
+ */
+function NPSSurveyManager() {
+  const {
+    isOpen,
+    score,
+    comment,
+    triggerType,
+    submitting,
+    submitError,
+    isAuthenticated,
+    handleDismiss,
+    handleSubmit,
+    handleScoreChange,
+    handleCommentChange,
+    checkTrigger,
+  } = useNPSTrigger({
+    triggerType: NPS_TRIGGER_TYPES.MONTHLY,
+    autoCheck: false,
+    checkOnAuth: true,
+  })
+
+  // Check for monthly trigger when component mounts and user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Add a small delay to avoid checking immediately on page load
+      const timer = setTimeout(() => {
+        checkTrigger(NPS_TRIGGER_TYPES.MONTHLY)
+      }, 5000) // 5 second delay after authentication
+
+      return () => clearTimeout(timer)
+    }
+  }, [isAuthenticated, checkTrigger])
+
+  return (
+    <NPSSurvey
+      isOpen={isOpen}
+      onClose={handleDismiss}
+      onDismiss={handleDismiss}
+      onSubmit={handleSubmit}
+      score={score}
+      onScoreChange={handleScoreChange}
+      comment={comment}
+      onCommentChange={handleCommentChange}
+      submitting={submitting}
+      error={submitError}
+      triggerType={triggerType}
+    />
   )
 }
 
@@ -118,9 +186,13 @@ export default function App() {
 
       if (data.authenticated) {
         setUser(data.user)
+        // Sync Redux auth state
+        store.dispatch(setToken(token))
       } else {
         localStorage.removeItem('auth_token')
         sessionStorage.removeItem('auth_token')
+        // Clear Redux auth state
+        store.dispatch(setToken(null))
       }
     } catch (e) {
       console.error('[App.jsx] Auth check failed:', e)
@@ -203,6 +275,8 @@ export default function App() {
         localStorage.removeItem('demo_mode')
 
         setUser(data.user)
+        // Sync Redux auth state
+        store.dispatch(setToken(data.token))
         return { success: true }
       }
 
@@ -257,6 +331,8 @@ export default function App() {
     sessionStorage.removeItem('auth_token')
     localStorage.removeItem('demo_mode')  // Clear demo mode flag
     setUser(null)
+    // Clear Redux auth state
+    store.dispatch(setToken(null))
   }
 
   if (loading) {
@@ -273,6 +349,8 @@ export default function App() {
         <ThemeProvider>
           <SidebarProvider>
             <ToastProvider>
+              {/* NPS Survey Manager - handles survey triggers and display */}
+              <NPSSurveyManager />
               <Routes>
             {/* Rotas Públicas */}
             <Route path="/" element={
@@ -283,6 +361,9 @@ export default function App() {
               user ? <Navigate to="/app" replace /> : <Login onLogin={handleLogin} />
             } />
             <Route path="/esqueci-senha" element={<ForgotPassword />} />
+
+            {/* Shareable Reports - Public route (no auth required) */}
+            <Route path="/reports/:id" element={<ShareableReportView />} />
 
             {/* Rotas Protegidas (requer login) */}
             <Route path="/app" element={
@@ -324,6 +405,38 @@ export default function App() {
               <ProtectedRoute user={user}>
                 <AppLayout user={user} onLogout={handleLogout}>
                   <Settings />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/app/settings/email-preferences" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <EmailPreferences />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/settings/email-preferences" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <EmailPreferences />
+            <Route path="/app/teams" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <TeamsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/app/teams/:teamId" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <TeamDetailsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/app/teams/:teamId/roles/new" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <CreateRolePage />
                 </AppLayout>
               </ProtectedRoute>
             } />
@@ -376,6 +489,35 @@ export default function App() {
                 </AppLayout>
               </ProtectedRoute>
             } />
+            <Route path="/app/savings" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <Savings user={user} onLogout={handleLogout} />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/app/templates" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <TemplatePage />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/app/templates/:slug" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <TemplateDetailPage />
+            <Route path="/app/affiliate" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <AffiliateDashboard />
+            <Route path="/app/reservations" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <Reservations />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
 
             {/* Documentation Routes */}
             <Route path="/docs" element={
@@ -386,6 +528,15 @@ export default function App() {
             <Route path="/docs/:docId" element={
               <ProtectedRoute user={user}>
                 <Documentation />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin Routes */}
+            <Route path="/app/admin/nps" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <NPSTrends />
+                </AppLayout>
               </ProtectedRoute>
             } />
 
@@ -429,6 +580,31 @@ export default function App() {
               <DemoRoute>
                 <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
                   <Settings />
+                </AppLayout>
+              </DemoRoute>
+            } />
+            <Route path="/demo-app/settings/email-preferences" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <EmailPreferences />
+            <Route path="/demo-app/teams" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <TeamsPage />
+                </AppLayout>
+              </DemoRoute>
+            } />
+            <Route path="/demo-app/teams/:teamId" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <TeamDetailsPage />
+                </AppLayout>
+              </DemoRoute>
+            } />
+            <Route path="/demo-app/teams/:teamId/roles/new" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <CreateRolePage />
                 </AppLayout>
               </DemoRoute>
             } />
@@ -478,6 +654,35 @@ export default function App() {
               <DemoRoute>
                 <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
                   <Models />
+                </AppLayout>
+              </DemoRoute>
+            } />
+            <Route path="/demo-app/savings" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <Savings user={user || demoUser} onLogout={handleDemoLogout} />
+                </AppLayout>
+              </DemoRoute>
+            } />
+            <Route path="/demo-app/templates" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <TemplatePage />
+                </AppLayout>
+              </DemoRoute>
+            } />
+            <Route path="/demo-app/templates/:slug" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <TemplateDetailPage />
+            <Route path="/demo-app/affiliate" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <AffiliateDashboard />
+            <Route path="/demo-app/reservations" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <Reservations />
                 </AppLayout>
               </DemoRoute>
             } />

@@ -66,6 +66,99 @@ class AnalyzeResponse(BaseModel):
     model_used: str
 
 
+# Cost Optimization Models
+class CostOptimizationRequest(BaseModel):
+    user_id: str = Field(..., description="User identifier")
+    instance_id: str = Field(..., description="Instance identifier")
+    days_to_analyze: int = Field(
+        default=30,
+        ge=3,
+        le=90,
+        description="Number of days of historical data to analyze (3-90)"
+    )
+    current_hibernation_timeout: int = Field(
+        default=0,
+        ge=0,
+        description="Current hibernation timeout in minutes (0 = disabled)"
+    )
+
+
+class RecommendationItem(BaseModel):
+    type: str = Field(..., description="Recommendation type: gpu_downgrade, gpu_upgrade, hibernation, spot_timing")
+    current_gpu: Optional[str] = Field(default=None, description="Current GPU type (for GPU recommendations)")
+    recommended_gpu: Optional[str] = Field(default=None, description="Recommended GPU type (for GPU recommendations)")
+    current_timeout_minutes: Optional[int] = Field(default=None, description="Current timeout (for hibernation)")
+    recommended_timeout_minutes: Optional[int] = Field(default=None, description="Recommended timeout (for hibernation)")
+    recommended_windows: Optional[List[Dict[str, str]]] = Field(default=None, description="Recommended timing windows (for spot)")
+    reason: str = Field(..., description="Explanation for the recommendation")
+    estimated_monthly_savings_usd: float = Field(..., description="Estimated monthly savings in USD")
+    confidence_score: float = Field(..., ge=0, le=1, description="Confidence score (0-1)")
+
+
+class CurrentConfiguration(BaseModel):
+    gpu_type: str = Field(..., description="Current GPU type")
+    avg_utilization: float = Field(..., description="Average GPU utilization percentage")
+    monthly_cost_usd: float = Field(..., description="Current monthly cost in USD")
+
+
+class CostOptimizationResponse(BaseModel):
+    success: bool = Field(..., description="Whether the request was successful")
+    current_configuration: Optional[Dict[str, Any]] = Field(default=None, description="Current instance configuration")
+    recommendations: List[Dict[str, Any]] = Field(default=[], description="List of cost optimization recommendations")
+    estimated_monthly_savings: float = Field(default=0.0, description="Total estimated monthly savings in USD")
+    current_gpu: str = Field(..., description="Current GPU type")
+    recommended_gpu: str = Field(..., description="Recommended GPU type (same as current if optimal)")
+    analysis_period_days: int = Field(..., description="Number of days analyzed")
+    data_completeness: float = Field(default=0.0, ge=0, le=1, description="Ratio of expected vs actual data points")
+    has_sufficient_data: Optional[bool] = Field(default=True, description="Whether there is sufficient data for analysis")
+    warning: Optional[str] = Field(default=None, description="Warning message if any issues")
+    message: Optional[str] = Field(default=None, description="Additional message (e.g., 'Already optimized')")
+
+
+@router.post("/cost-optimization", response_model=CostOptimizationResponse)
+async def get_cost_optimization(request: CostOptimizationRequest):
+    """
+    Get cost optimization recommendations based on historical usage analysis.
+
+    Analyzes the specified number of days of GPU usage data to provide:
+    - GPU-to-workload matching recommendations (upgrade/downgrade suggestions)
+    - Hibernation timeout optimization based on idle patterns
+    - Spot instance timing recommendations for cost savings
+    - Estimated monthly savings for each recommendation
+
+    Requirements:
+    - Minimum 3 days of historical data required
+    - Optimal analysis with 30 days of data
+    - Returns confidence scores based on data completeness
+    """
+    result = await ai_wizard_service.get_cost_optimization_recommendations(
+        user_id=request.user_id,
+        instance_id=request.instance_id,
+        days_to_analyze=request.days_to_analyze,
+        current_hibernation_timeout=request.current_hibernation_timeout
+    )
+
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=500,
+            detail=result.get("error", "Failed to get cost optimization recommendations")
+        )
+
+    return CostOptimizationResponse(
+        success=result.get("success", True),
+        current_configuration=result.get("current_configuration"),
+        recommendations=result.get("recommendations", []),
+        estimated_monthly_savings=result.get("estimated_monthly_savings", 0.0),
+        current_gpu=result.get("current_gpu", "Unknown"),
+        recommended_gpu=result.get("recommended_gpu", "Unknown"),
+        analysis_period_days=result.get("analysis_period_days", request.days_to_analyze),
+        data_completeness=result.get("data_completeness", 0.0),
+        has_sufficient_data=result.get("has_sufficient_data", True),
+        warning=result.get("warning"),
+        message=result.get("message")
+    )
+
+
 @router.post("/analyze")
 async def analyze_project(request: AnalyzeRequest):
     """

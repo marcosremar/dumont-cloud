@@ -1,0 +1,367 @@
+{
+  "integrations_researched": [
+    {
+      "name": "tenacity",
+      "type": "library",
+      "verified_package": {
+        "name": "tenacity",
+        "install_command": "pip install tenacity",
+        "version": "9.1.2",
+        "verified": true,
+        "already_installed": true
+      },
+      "api_patterns": {
+        "imports": [
+          "from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type"
+        ],
+        "initialization": "N/A - decorator-based",
+        "key_functions": [
+          "@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))",
+          "@retry(retry=retry_if_exception_type(requests.exceptions.RequestException))"
+        ],
+        "verified_against": "pip index (installed in environment)"
+      },
+      "configuration": {
+        "env_vars": [],
+        "config_files": [],
+        "dependencies": []
+      },
+      "usage_examples": [
+        "@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=30))\nasync def send_webhook(url: str, payload: dict):\n    async with httpx.AsyncClient() as client:\n        response = await client.post(url, json=payload, timeout=10)\n        response.raise_for_status()\n        return response"
+      ],
+      "gotchas": [
+        "Use async-compatible retry for async functions",
+        "Consider combining with specific exception types using retry_if_exception_type",
+        "Exponential backoff prevents overwhelming failed endpoints"
+      ],
+      "research_sources": [
+        "Package verified via pip index",
+        "Current project already has tenacity 9.1.2 installed"
+      ]
+    },
+    {
+      "name": "httpx",
+      "type": "library",
+      "verified_package": {
+        "name": "httpx",
+        "install_command": "pip install httpx",
+        "version": "0.28.1",
+        "verified": true,
+        "already_installed": true
+      },
+      "api_patterns": {
+        "imports": [
+          "import httpx",
+          "from httpx import AsyncClient, TimeoutException"
+        ],
+        "initialization": "client = httpx.AsyncClient(timeout=10.0)",
+        "key_functions": [
+          "await client.post(url, json=payload, headers=headers)",
+          "response.raise_for_status()",
+          "async with httpx.AsyncClient() as client: ..."
+        ],
+        "verified_against": "requirements.txt + pip index"
+      },
+      "configuration": {
+        "env_vars": [],
+        "config_files": [],
+        "dependencies": []
+      },
+      "usage_examples": [
+        "# Async webhook delivery\nasync with httpx.AsyncClient(timeout=10.0) as client:\n    response = await client.post(\n        webhook_url,\n        json=payload,\n        headers={'Content-Type': 'application/json', 'X-Webhook-Signature': signature}\n    )\n    response.raise_for_status()"
+      ],
+      "gotchas": [
+        "Use context manager (async with) to ensure proper cleanup",
+        "Default timeout is 5 seconds - set explicitly for webhook delivery",
+        "httpx supports both sync and async - use async for better performance",
+        "Raises httpx.HTTPStatusError for 4xx/5xx responses when using raise_for_status()"
+      ],
+      "research_sources": [
+        "requirements.txt (httpx==0.28.1)",
+        "pip index verification"
+      ]
+    },
+    {
+      "name": "requests",
+      "type": "library",
+      "verified_package": {
+        "name": "requests",
+        "install_command": "pip install requests",
+        "version": "2.32.5",
+        "verified": true,
+        "already_installed": true
+      },
+      "api_patterns": {
+        "imports": [
+          "import requests"
+        ],
+        "initialization": "N/A - direct function calls",
+        "key_functions": [
+          "requests.post(url, json=payload, headers=headers, timeout=10)",
+          "response.raise_for_status()",
+          "response.status_code",
+          "response.json()"
+        ],
+        "verified_against": "requirements.txt + existing codebase usage"
+      },
+      "configuration": {
+        "env_vars": [],
+        "config_files": [],
+        "dependencies": []
+      },
+      "usage_examples": [
+        "# Synchronous webhook delivery\nresponse = requests.post(\n    webhook_url,\n    json=payload,\n    headers={'Content-Type': 'application/json', 'X-Webhook-Signature': signature},\n    timeout=10\n)\nresponse.raise_for_status()"
+      ],
+      "gotchas": [
+        "Synchronous only - blocks thread during HTTP call",
+        "Always set timeout to prevent hanging indefinitely",
+        "Widely used in existing codebase (src/infrastructure/providers/vast_provider.py)",
+        "Project has custom retry_with_backoff decorator for requests in vast_provider.py"
+      ],
+      "research_sources": [
+        "requirements.txt (requests==2.32.5)",
+        "src/infrastructure/providers/vast_provider.py (existing usage patterns)"
+      ]
+    },
+    {
+      "name": "SQLAlchemy",
+      "type": "library",
+      "verified_package": {
+        "name": "sqlalchemy",
+        "install_command": "pip install sqlalchemy",
+        "version": "2.0.45",
+        "verified": true,
+        "already_installed": true
+      },
+      "api_patterns": {
+        "imports": [
+          "from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON",
+          "from sqlalchemy.orm import Session",
+          "from src.config.database import Base"
+        ],
+        "initialization": "class WebhookConfig(Base): ...",
+        "key_functions": [
+          "Column(String(500), nullable=False)",
+          "Column(JSON, nullable=True)",
+          "session.add(webhook)",
+          "session.commit()",
+          "session.query(WebhookConfig).filter_by(user_id=user_id).all()"
+        ],
+        "verified_against": "requirements.txt + existing models in src/models/"
+      },
+      "configuration": {
+        "env_vars": [],
+        "config_files": [],
+        "dependencies": ["psycopg2-binary==2.9.11"]
+      },
+      "usage_examples": [
+        "class WebhookConfig(Base):\n    __tablename__ = 'webhook_configs'\n    id = Column(Integer, primary_key=True)\n    user_id = Column(String(100), nullable=False, index=True)\n    url = Column(String(500), nullable=False)\n    events = Column(JSON, nullable=False)  # ['instance.started', 'snapshot.completed']\n    enabled = Column(Boolean, default=True)\n    secret = Column(String(100), nullable=True)\n    created_at = Column(DateTime, default=datetime.utcnow)"
+      ],
+      "gotchas": [
+        "Use JSON column type for array/object fields (events, metadata)",
+        "Always index user_id and frequently queried fields",
+        "Project uses Base from src.config.database",
+        "Existing pattern: InstanceStatus model in src/models/instance_status.py"
+      ],
+      "research_sources": [
+        "requirements.txt (sqlalchemy==2.0.40, installed: 2.0.45)",
+        "src/models/instance_status.py (existing model patterns)"
+      ]
+    },
+    {
+      "name": "hmac (webhook signing)",
+      "type": "library",
+      "verified_package": {
+        "name": "hmac",
+        "install_command": "N/A - built-in Python module",
+        "version": "built-in",
+        "verified": true,
+        "already_installed": true
+      },
+      "api_patterns": {
+        "imports": [
+          "import hmac",
+          "import hashlib"
+        ],
+        "initialization": "N/A - function-based",
+        "key_functions": [
+          "hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()",
+          "hmac.compare_digest(signature1, signature2)"
+        ],
+        "verified_against": "Python standard library"
+      },
+      "configuration": {
+        "env_vars": [],
+        "config_files": [],
+        "dependencies": []
+      },
+      "usage_examples": [
+        "# Generate webhook signature\nimport hmac\nimport hashlib\nimport json\n\ndef generate_signature(secret: str, payload: dict) -> str:\n    payload_bytes = json.dumps(payload, sort_keys=True).encode('utf-8')\n    signature = hmac.new(secret.encode('utf-8'), payload_bytes, hashlib.sha256).hexdigest()\n    return f'sha256={signature}'\n\n# Verify signature\ndef verify_signature(secret: str, payload: dict, received_signature: str) -> bool:\n    expected = generate_signature(secret, payload)\n    return hmac.compare_digest(expected, received_signature)"
+      ],
+      "gotchas": [
+        "Always use hmac.compare_digest() for signature comparison (prevents timing attacks)",
+        "Include timestamp in payload to prevent replay attacks",
+        "Use sha256 as hashing algorithm (industry standard)",
+        "Signature format: 'sha256=<hex_digest>' (GitHub/Stripe pattern)"
+      ],
+      "research_sources": [
+        "Python standard library documentation"
+      ]
+    },
+    {
+      "name": "asyncio",
+      "type": "library",
+      "verified_package": {
+        "name": "asyncio",
+        "install_command": "N/A - built-in Python module",
+        "version": "built-in",
+        "verified": true,
+        "already_installed": true
+      },
+      "api_patterns": {
+        "imports": [
+          "import asyncio"
+        ],
+        "initialization": "N/A",
+        "key_functions": [
+          "asyncio.create_task(send_webhook(url, payload))",
+          "await asyncio.gather(*tasks)",
+          "asyncio.run(main())"
+        ],
+        "verified_against": "Existing async patterns in src/services/"
+      },
+      "configuration": {
+        "env_vars": [],
+        "config_files": [],
+        "dependencies": []
+      },
+      "usage_examples": [
+        "# Fire-and-forget webhook delivery\nasync def trigger_webhooks(event_type: str, payload: dict):\n    webhooks = get_webhooks_for_event(event_type)\n    tasks = [send_webhook(wh.url, payload, wh.secret) for wh in webhooks]\n    # Don't await - fire and forget, handle errors in send_webhook\n    for task in tasks:\n        asyncio.create_task(task)"
+      ],
+      "gotchas": [
+        "Project already uses async in services (job_manager.py, llm_client.py)",
+        "Use create_task() for background webhook delivery (non-blocking)",
+        "Ensure proper exception handling in async tasks"
+      ],
+      "research_sources": [
+        "Existing async usage in src/services/job/job_manager.py",
+        "Python standard library"
+      ]
+    },
+    {
+      "name": "Celery (task queue - optional)",
+      "type": "library",
+      "verified_package": {
+        "name": "celery",
+        "install_command": "pip install celery[redis]",
+        "version": "5.6.1 (available, not installed)",
+        "verified": true,
+        "already_installed": false
+      },
+      "api_patterns": {
+        "imports": [
+          "from celery import Celery"
+        ],
+        "initialization": "celery = Celery('dumont', broker='redis://localhost:6379/0')",
+        "key_functions": [
+          "@celery.task",
+          "send_webhook.delay(url, payload)",
+          "@celery.task(bind=True, max_retries=3)"
+        ],
+        "verified_against": "pip index"
+      },
+      "configuration": {
+        "env_vars": ["CELERY_BROKER_URL", "CELERY_RESULT_BACKEND"],
+        "config_files": [],
+        "dependencies": ["redis"]
+      },
+      "infrastructure": {
+        "requires_docker": true,
+        "docker_image": "redis:latest",
+        "ports": [6379],
+        "additional_services": ["celery worker", "celery beat (for scheduled tasks)"]
+      },
+      "gotchas": [
+        "Requires Redis or RabbitMQ broker - adds infrastructure dependency",
+        "Need separate worker process running",
+        "More complex setup than async tasks",
+        "Best for high-volume, persistent task queues",
+        "NOT currently in project dependencies"
+      ],
+      "research_sources": [
+        "pip index (celery 5.6.1 available)"
+      ],
+      "recommendation": "NOT RECOMMENDED - Adds significant infrastructure complexity (Redis, worker processes) for a feature that can be implemented with simpler async tasks + tenacity retry. Use asyncio + httpx + tenacity instead."
+    }
+  ],
+  "unverified_claims": [],
+  "recommendations": [
+    "Use httpx (async) over requests for webhook delivery - better performance and non-blocking",
+    "Leverage existing tenacity library (already installed) for retry logic - no new dependencies",
+    "Use asyncio.create_task() for fire-and-forget webhook delivery - simple, no infrastructure",
+    "Implement HMAC signature using built-in hmac module - industry standard security",
+    "Follow existing SQLAlchemy patterns from src/models/instance_status.py for database models",
+    "Store webhook configs and delivery logs in PostgreSQL (existing infrastructure)",
+    "Avoid Celery/RQ - adds unnecessary infrastructure complexity for this use case",
+    "Pattern: async webhook delivery + tenacity retry + asyncio background tasks = simple, reliable, no new infrastructure"
+  ],
+  "implementation_approach": {
+    "summary": "Use existing libraries (httpx, tenacity, asyncio, SQLAlchemy) with no new infrastructure dependencies",
+    "webhook_delivery": "httpx AsyncClient with tenacity retry decorator",
+    "background_processing": "asyncio.create_task() for non-blocking delivery",
+    "retry_logic": "tenacity with exponential backoff (3 attempts)",
+    "security": "HMAC-SHA256 signatures using built-in hmac module",
+    "storage": "SQLAlchemy models in existing PostgreSQL database",
+    "new_dependencies_required": []
+  },
+  "existing_patterns_to_follow": [
+    {
+      "pattern": "Custom retry decorator",
+      "location": "src/infrastructure/providers/vast_provider.py",
+      "description": "Project has retry_with_backoff decorator - can reference this pattern, but use tenacity for better async support"
+    },
+    {
+      "pattern": "SQLAlchemy models",
+      "location": "src/models/instance_status.py",
+      "description": "Follow existing model structure: Base from src.config.database, proper indexing, DateTime fields"
+    },
+    {
+      "pattern": "Async service patterns",
+      "location": "src/services/job/job_manager.py, src/services/llm_client.py",
+      "description": "Project already uses async/await - webhook delivery should follow same patterns"
+    },
+    {
+      "pattern": "Flask blueprints",
+      "location": "app.py",
+      "description": "Register new webhook API routes as Flask blueprint (webhooks_bp)"
+    }
+  ],
+  "event_types_to_implement": [
+    {
+      "event": "instance.started",
+      "trigger_location": "API endpoint where instances are created/started",
+      "payload_fields": ["instance_id", "user_id", "gpu_type", "region", "timestamp"]
+    },
+    {
+      "event": "instance.stopped",
+      "trigger_location": "Instance stop/delete endpoints",
+      "payload_fields": ["instance_id", "user_id", "reason", "timestamp"]
+    },
+    {
+      "event": "snapshot.completed",
+      "trigger_location": "Snapshot creation completion",
+      "payload_fields": ["snapshot_id", "instance_id", "user_id", "size_bytes", "timestamp"]
+    },
+    {
+      "event": "failover.triggered",
+      "trigger_location": "Failover service",
+      "payload_fields": ["instance_id", "user_id", "old_region", "new_region", "reason", "timestamp"]
+    },
+    {
+      "event": "cost.threshold",
+      "trigger_location": "Cost tracking/monitoring service",
+      "payload_fields": ["user_id", "current_cost", "threshold", "period", "timestamp"]
+    }
+  ],
+  "created_at": "2024-12-31T22:00:00Z"
+}

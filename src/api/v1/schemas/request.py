@@ -98,6 +98,20 @@ class PruneSnapshotsRequest(BaseModel):
     keep_last: int = Field(10, ge=1, description="Number of snapshots to keep")
 
 
+class SetKeepForeverRequest(BaseModel):
+    """Set keep-forever flag on snapshot request"""
+    keep_forever: bool = Field(..., description="Whether to keep this snapshot forever (protected from automatic cleanup)")
+
+
+class UpdateRetentionPolicyRequest(BaseModel):
+    """Update retention policy request"""
+    retention_days: Optional[int] = Field(None, ge=0, le=365, description="Default retention days (0 = keep forever)")
+    min_snapshots_to_keep: Optional[int] = Field(None, ge=1, le=100, description="Minimum snapshots to keep per instance")
+    max_snapshots_per_instance: Optional[int] = Field(None, ge=1, le=1000, description="Maximum snapshots per instance")
+    cleanup_enabled: Optional[bool] = Field(None, description="Enable/disable automatic cleanup")
+    instance_id: Optional[str] = Field(None, description="Instance ID for instance-specific policy (omit for global)")
+
+
 # Migration Requests
 
 class MigrateInstanceRequest(BaseModel):
@@ -151,3 +165,33 @@ class CreateFineTuneJobRequest(BaseModel):
     config: Optional[FineTuneConfigRequest] = Field(None, description="Fine-tuning configuration")
     gpu_type: str = Field("A100", description="GPU type")
     num_gpus: int = Field(1, ge=1, le=8, description="Number of GPUs")
+
+
+# Reservation Requests
+
+class ReservationCreateRequest(BaseModel):
+    """Create GPU reservation request"""
+    gpu_type: str = Field(..., min_length=1, max_length=100, description="GPU type (e.g., 'A100', 'H100')")
+    gpu_count: int = Field(1, ge=1, le=8, description="Number of GPUs")
+    start_time: str = Field(..., description="Reservation start time (ISO 8601 format, UTC)")
+    end_time: str = Field(..., description="Reservation end time (ISO 8601 format, UTC)")
+    provider: Optional[str] = Field(None, description="Preferred provider (vast, tensordock, etc)")
+
+
+class CheckAvailabilityRequest(BaseModel):
+    """Check GPU availability request"""
+    gpu_type: str = Field(..., min_length=1, max_length=100, description="GPU type (e.g., 'A100', 'H100')")
+    gpu_count: int = Field(1, ge=1, le=8, description="Number of GPUs")
+    start_time: str = Field(..., description="Start time (ISO 8601 format, UTC)")
+    end_time: str = Field(..., description="End time (ISO 8601 format, UTC)")
+
+
+class CancelReservationRequest(BaseModel):
+    """Cancel reservation request"""
+    reason: Optional[str] = Field(None, max_length=500, description="Cancellation reason")
+
+
+class PurchaseCreditsRequest(BaseModel):
+    """Purchase reservation credits request"""
+    amount: float = Field(..., gt=0, description="Amount of credits to purchase")
+    description: Optional[str] = Field(None, max_length=500, description="Purchase description")

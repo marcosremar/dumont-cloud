@@ -1,0 +1,84 @@
+[
+  {
+    "id": 1,
+    "name": "JupyterLab",
+    "slug": "jupyter-lab",
+    "description": "Ready-to-use JupyterLab environment with PyTorch and GPU support. Perfect for data science, ML experiments, and interactive development.",
+    "docker_image": "jupyter/pytorch-notebook:latest",
+    "gpu_min_vram": 4,
+    "gpu_recommended_vram": 8,
+    "cuda_version": "11.8",
+    "ports": [8888],
+    "volumes": ["/home/jovyan/work"],
+    "launch_command": "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root",
+    "env_vars": {
+      "JUPYTER_ENABLE_LAB": "yes"
+    },
+    "category": "notebook",
+    "icon_url": "",
+    "documentation_url": "/docs/templates/jupyter-lab",
+    "is_active": true,
+    "is_verified": true
+  },
+  {
+    "id": 2,
+    "name": "Stable Diffusion WebUI",
+    "slug": "stable-diffusion",
+    "description": "AUTOMATIC1111's Stable Diffusion WebUI with pre-configured settings for AI image generation. Includes popular extensions and optimized memory settings.",
+    "docker_image": "ghcr.io/absolutelyludicrous/automatic1111-webui:latest",
+    "gpu_min_vram": 4,
+    "gpu_recommended_vram": 8,
+    "cuda_version": "11.8",
+    "ports": [7860],
+    "volumes": ["/app/models", "/app/outputs"],
+    "launch_command": "python launch.py --listen --port 7860",
+    "env_vars": {
+      "COMMANDLINE_ARGS": "--medvram"
+    },
+    "category": "image_generation",
+    "icon_url": "",
+    "documentation_url": "/docs/templates/stable-diffusion",
+    "is_active": true,
+    "is_verified": false
+  },
+  {
+    "id": 3,
+    "name": "ComfyUI",
+    "slug": "comfy-ui",
+    "description": "Node-based Stable Diffusion interface for advanced workflows. Build complex image generation pipelines with a visual editor.",
+    "docker_image": "yanwk/comfyui-boot:latest",
+    "gpu_min_vram": 4,
+    "gpu_recommended_vram": 8,
+    "cuda_version": "11.8",
+    "ports": [8188],
+    "volumes": ["/app/models", "/app/output", "/app/input"],
+    "launch_command": "python main.py --listen 0.0.0.0 --port 8188",
+    "env_vars": {},
+    "category": "image_generation",
+    "icon_url": "",
+    "documentation_url": "/docs/templates/comfy-ui",
+    "is_active": true,
+    "is_verified": false
+  },
+  {
+    "id": 4,
+    "name": "vLLM",
+    "slug": "vllm",
+    "description": "High-throughput LLM inference server with OpenAI-compatible API. Deploy large language models with optimized memory management and fast generation.",
+    "docker_image": "vllm/vllm-openai:latest",
+    "gpu_min_vram": 16,
+    "gpu_recommended_vram": 24,
+    "cuda_version": "11.8",
+    "ports": [8000],
+    "volumes": ["/root/.cache/huggingface"],
+    "launch_command": "python -m vllm.entrypoints.openai.api_server --model meta-llama/Llama-2-7b-hf --host 0.0.0.0 --port 8000",
+    "env_vars": {
+      "HUGGING_FACE_HUB_TOKEN": ""
+    },
+    "category": "llm_inference",
+    "icon_url": "",
+    "documentation_url": "/docs/templates/vllm",
+    "is_active": true,
+    "is_verified": false
+  }
+]

@@ -67,6 +67,16 @@ class AppConfig:
 
 
 @dataclass
+class ReportImageConfig:
+    """Configuracoes de armazenamento de imagens de relatorios"""
+    storage_path: str = field(default_factory=lambda: os.getenv("REPORT_IMAGE_STORAGE_PATH", "data/report_images"))
+    max_width: int = 1200  # Largura maxima da imagem em pixels
+    max_height: int = 800  # Altura maxima da imagem em pixels
+    quality: int = 85  # Qualidade JPEG (1-100)
+    format: str = "png"  # Formato padrao da imagem
+
+
+@dataclass
 class Settings:
     """Container principal de configuracoes"""
     app: AppConfig = field(default_factory=AppConfig)
@@ -74,6 +84,12 @@ class Settings:
     restic: ResticConfig = field(default_factory=ResticConfig)
     vast: VastConfig = field(default_factory=VastConfig)
     agent: DumontAgentConfig = field(default_factory=DumontAgentConfig)
+    report_image: ReportImageConfig = field(default_factory=ReportImageConfig)
+
+    @property
+    def report_image_storage_path(self) -> str:
+        """Caminho de armazenamento de imagens de relatorios (atalho)"""
+        return self.report_image.storage_path
 
 
 # Singleton das configuracoes

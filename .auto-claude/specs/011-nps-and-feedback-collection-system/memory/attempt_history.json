@@ -1,0 +1,153 @@
+{
+  "subtasks": {
+    "subtask-1-1": {
+      "attempts": [
+        {
+          "session": 1,
+          "timestamp": "2025-12-31T22:38:06.777631",
+          "approach": "Implemented: Create SQLAlchemy models for NPS responses, config, and user interactions",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-1-2": {
+      "attempts": [
+        {
+          "session": 2,
+          "timestamp": "2025-12-31T22:40:27.957829",
+          "approach": "Implemented: Create SQL migration file for NPS tables",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-2-1": {
+      "attempts": [
+        {
+          "session": 3,
+          "timestamp": "2025-12-31T22:43:42.263237",
+          "approach": "Implemented: Create Pydantic schemas for NPS API requests and responses",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-2-2": {
+      "attempts": [
+        {
+          "session": 4,
+          "timestamp": "2025-12-31T22:48:54.974674",
+          "approach": "Implemented: Create NPS service with business logic for triggers and rate limiting",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-2-3": {
+      "attempts": [
+        {
+          "session": 5,
+          "timestamp": "2025-12-31T22:54:39.155550",
+          "approach": "Implemented: Create FastAPI endpoints for NPS operations",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-2-4": {
+      "attempts": [
+        {
+          "session": 6,
+          "timestamp": "2025-12-31T22:57:04.688891",
+          "approach": "Implemented: Register NPS router in main API router",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-3-1": {
+      "attempts": [
+        {
+          "session": 7,
+          "timestamp": "2025-12-31T22:59:49.724872",
+          "approach": "Implemented: Create NPS Redux slice with async thunks",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-3-2": {
+      "attempts": [
+        {
+          "session": 8,
+          "timestamp": "2025-12-31T23:02:00.874164",
+          "approach": "Implemented: Register NPS slice in Redux store",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-3-3": {
+      "attempts": [
+        {
+          "session": 9,
+          "timestamp": "2025-12-31T23:10:41.631596",
+          "approach": "Implemented: Create useNPSTrigger custom hook for trigger and rate limit logic",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-4-1": {
+      "attempts": [
+        {
+          "session": 10,
+          "timestamp": "2025-12-31T23:18:57.116533",
+          "approach": "Implemented: Create NPSSurvey modal component with 0-10 score selection",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-4-2": {
+      "attempts": [
+        {
+          "session": 11,
+          "timestamp": "2025-12-31T23:29:22.232181",
+          "approach": "Implemented: Integrate NPSSurvey into App.jsx with trigger logic",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-4-3": {
+      "attempts": [
+        {
+          "session": 12,
+          "timestamp": "2025-12-31T23:34:24.770943",
+          "approach": "Implemented: Create NPSTrends admin dashboard page with charts",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    }
+  },
+  "stuck_subtasks": [],
+  "metadata": {
+    "created_at": "2025-12-31T22:35:21.951620",
+    "last_updated": "2025-12-31T23:34:24.771004"
+  }
+}

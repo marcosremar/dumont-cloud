@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Zap,
   Plus,
@@ -23,6 +24,7 @@ import CreateServerlessModal from '../components/serverless/CreateServerlessModa
 const API_BASE = ''
 
 export default function Serverless() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const isDemo = location.pathname.startsWith('/demo-app')
@@ -242,16 +244,16 @@ export default function Serverless() {
               <div className="stat-card-icon stat-card-icon-primary">
                 <Zap className="w-5 h-5" />
               </div>
-              Serverless Endpoints
+              {t('serverless.pageTitle')}
             </h1>
-            <p className="page-subtitle">Auto-scaling GPU endpoints com Spot pricing</p>
+            <p className="page-subtitle">{t('serverless.pageSubtitle')}</p>
           </div>
           <Button
             variant="primary"
             onClick={() => setShowCreateModal(true)}
             icon={Plus}
           >
-            Criar Endpoint
+            {t('serverless.createEndpoint')}
           </Button>
         </div>
       </div>
@@ -261,53 +263,53 @@ export default function Serverless() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="p-4 rounded-xl bg-dark-surface-card border border-white/10">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500">Total Requests (24h)</span>
+              <span className="text-sm text-gray-500">{t('serverless.stats.totalRequests24h')}</span>
               <Activity className="w-4 h-4 text-brand-400" />
             </div>
             <div className="text-2xl font-bold text-white">
               {(stats.total_requests_24h || 0).toLocaleString()}
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {endpoints.filter(e => e.status === 'running').length} endpoints ativos
+              {t('serverless.stats.activeEndpoints', { count: endpoints.filter(e => e.status === 'running').length })}
             </div>
           </div>
 
           <div className="p-4 rounded-xl bg-dark-surface-card border border-white/10">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500">Latência Média</span>
+              <span className="text-sm text-gray-500">{t('serverless.stats.avgLatency')}</span>
               <Clock className="w-4 h-4 text-brand-400" />
             </div>
             <div className="text-2xl font-bold text-white">
               {stats.avg_latency_ms || 0}ms
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {stats.cold_starts_24h || 0} cold starts
+              {t('serverless.stats.coldStarts', { count: stats.cold_starts_24h || 0 })}
             </div>
           </div>
 
           <div className="p-4 rounded-xl bg-dark-surface-card border border-white/10">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500">Custo (24h)</span>
+              <span className="text-sm text-gray-500">{t('serverless.stats.cost24h')}</span>
               <DollarSign className="w-4 h-4 text-brand-400" />
             </div>
             <div className="text-2xl font-bold text-white">
               ${(stats.total_cost_24h || 0).toFixed(2)}
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              ~${((stats.total_cost_24h || 0) * 30).toFixed(2)}/mês
+              {t('serverless.stats.perMonth', { amount: ((stats.total_cost_24h || 0) * 30).toFixed(2) })}
             </div>
           </div>
 
           <div className="p-4 rounded-xl bg-dark-surface-card border border-white/10">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500">Instâncias Ativas</span>
+              <span className="text-sm text-gray-500">{t('serverless.stats.activeInstances')}</span>
               <Server className="w-4 h-4 text-brand-400" />
             </div>
             <div className="text-2xl font-bold text-white">
               {stats.active_instances || 0}
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {stats.total_endpoints || endpoints.length} endpoints configurados
+              {t('serverless.stats.configuredEndpoints', { count: stats.total_endpoints || endpoints.length })}
             </div>
           </div>
         </div>
@@ -319,16 +321,16 @@ export default function Serverless() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-500/10 mb-4">
             <Zap className="w-8 h-8 text-brand-400" />
           </div>
-          <h3 className="text-lg font-medium text-white mb-2">Nenhum endpoint serverless</h3>
+          <h3 className="text-lg font-medium text-white mb-2">{t('serverless.noEndpoints')}</h3>
           <p className="text-sm text-gray-500 mb-6">
-            Crie seu primeiro endpoint auto-scaling com spot pricing
+            {t('serverless.noEndpointsDescription')}
           </p>
           <Button
             variant="primary"
             onClick={() => setShowCreateModal(true)}
             icon={Plus}
           >
-            Criar Primeiro Endpoint
+            {t('serverless.createFirstEndpoint')}
           </Button>
         </div>
       ) : (

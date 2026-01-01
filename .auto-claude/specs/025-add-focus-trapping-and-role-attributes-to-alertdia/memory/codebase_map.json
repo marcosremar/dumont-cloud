@@ -1,0 +1,15 @@
+{
+  "discovered_files": {
+    "web/src/components/tailadmin-ui/index.jsx": {
+      "description": "AlertDialogDescription now consumes descriptionId from AlertDialogContext and applies it as the id attribute on the p element, completing the aria-describedby connection with AlertDialogContent. This follows the same pattern as AlertDialogTitle which uses titleId.",
+      "category": "pattern",
+      "discovered_at": "2026-01-01T06:24:04.717452+00:00"
+    },
+    "web/src/hooks/useFocusTrap.ts": {
+      "description": "Auto-focus implementation uses double requestAnimationFrame technique for smooth animation timing - the first RAF waits for the browser's paint, and the second ensures CSS transitions/animations have started. Focus priority is: initialFocusRef > first focusable element > container. Animation frame IDs are tracked in a ref for proper cleanup.",
+      "category": "implementation",
+      "discovered_at": "2026-01-01T06:08:14.677726+00:00"
+    }
+  },
+  "last_updated": "2026-01-01T06:24:04.717477+00:00"
+}

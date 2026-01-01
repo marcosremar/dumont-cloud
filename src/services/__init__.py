@@ -11,6 +11,8 @@ from .gpu import (
     GPUMonitorAgent,
     VastAIService,
 )
+# Alias for backward compatibility
+from .gpu.vast import VastService
 
 # Storage services
 from .storage import (
@@ -54,8 +56,14 @@ from .failover_orchestrator import (
     execute_orchestrated_failover,
 )
 
+# Pricing and Economy services
+from .pricing_service import PricingService, get_pricing_service
+
 # Other services
 from .deploy_wizard import DeployWizardService, DeployConfig, get_wizard_service
+
+# Email services
+from .email_service import EmailService, get_email_service
 
 __all__ = [
     # GPU
@@ -67,6 +75,7 @@ __all__ = [
     "GPUCheckpointService",
     "GPUMonitorAgent",
     "VastAIService",
+    "VastService",
     # Storage
     "ResticService",
     "create_snapshot_service_b2",
@@ -101,8 +110,14 @@ __all__ = [
     "OrchestratedFailoverResult",
     "get_failover_orchestrator",
     "execute_orchestrated_failover",
+    # Pricing and Economy
+    "PricingService",
+    "get_pricing_service",
     # Other
     "DeployWizardService",
     "DeployConfig",
     "get_wizard_service",
+    # Email
+    "EmailService",
+    "get_email_service",
 ]

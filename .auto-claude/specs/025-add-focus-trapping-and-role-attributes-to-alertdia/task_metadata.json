@@ -1,0 +1,12 @@
+{
+  "sourceType": "ideation",
+  "ideationType": "ui_ux_improvements",
+  "ideaId": "uiux-002",
+  "rationale": "AlertDialog uses React Portal for proper z-index stacking but lacks focus management. When a modal opens, focus doesn't move into the dialog, and pressing Tab can focus elements behind the modal overlay. This violates WCAG 2.4.3 Focus Order.",
+  "category": "ui_ux",
+  "uiuxCategory": "accessibility",
+  "affectedFiles": [
+    "web/src/components/tailadmin-ui/index.jsx"
+  ],
+  "problemSolved": "AlertDialog (lines 667-729) renders a modal with backdrop but: 1) No role=\"dialog\" on content container. 2) No aria-modal=\"true\". 3) No focus trap - Tab key can focus elements behind modal. 4) No auto-focus to first focusable element. 5) Escape key doesn't close the dialog. 6) Focus not returned to trigger element on close."
+}

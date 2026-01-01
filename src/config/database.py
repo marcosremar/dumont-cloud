@@ -37,9 +37,20 @@ def get_db():
 
 def init_db():
     """Inicializa o banco de dados criando todas as tabelas."""
+    # Import all models to register them with Base.metadata
+    from src.models.webhook_config import WebhookConfig, WebhookLog
+
     Base.metadata.create_all(bind=engine)
 
 
 def get_session_factory():
     """Retorna a factory de sessões do banco de dados."""
     return SessionLocal
+
+
+def get_db_session():
+    """
+    Retorna uma sessao do banco de dados para uso direto.
+    O chamador e responsavel por fechar a sessao apos uso.
+    """
+    return SessionLocal()

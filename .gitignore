@@ -95,3 +95,27 @@ tmp/
 temp/
 *.tmp
 .env.backup
+*.bak
+
+# Node
+node_modules/
+
+# Playwright
+playwright-report/
+test-results/
+
+# Build artifacts
+web/build/
+
+# macOS metadata files
+._*
+
+# Credentials
+.credentials/
+
+# pytest-testmon cache
+.testmondata
+
+# Auto Claude data directory
+.auto-claude/
+.worktrees/

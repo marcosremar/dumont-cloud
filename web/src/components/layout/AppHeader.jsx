@@ -15,9 +15,21 @@ import {
   Cloud,
   Server,
   DollarSign,
-  Shield
+  Shield,
+  Building2,
+  Check,
+  Users
 } from "lucide-react";
 import DumontLogo from "../DumontLogo";
+import CurrencySelector from "../CurrencySelector";
+import { apiGet, apiPost, isDemoMode } from "../../utils/api";
+
+// Demo data for team selector
+const DEMO_TEAMS = [
+  { id: 1, name: 'Engineering', role: 'Admin', member_count: 8 },
+  { id: 2, name: 'Data Science', role: 'Developer', member_count: 5 },
+  { id: 3, name: 'Research', role: 'Viewer', member_count: 3 },
+];
 
 // Helper to get base path based on demo mode
 function useBasePath() {
@@ -28,6 +40,11 @@ function useBasePath() {
 const AppHeader = ({ user, onLogout, isDemo = false, dashboardStats = null }) => {
   const [isNotificationOpen, setNotificationOpen] = useState(false);
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
+  const [isTeamSelectorOpen, setTeamSelectorOpen] = useState(false);
+  const [teams, setTeams] = useState([]);
+  const [currentTeam, setCurrentTeam] = useState(null);
+  const [teamsLoading, setTeamsLoading] = useState(true);
+  const [switchingTeam, setSwitchingTeam] = useState(false);
 
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
   const { theme, toggleTheme } = useTheme();
@@ -35,12 +52,105 @@ const AppHeader = ({ user, onLogout, isDemo = false, dashboardStats = null }) =>
 
   const notificationRef = useRef(null);
   const userMenuRef = useRef(null);
+  const teamSelectorRef = useRef(null);
 
   const handleToggle = () => {
     if (window.innerWidth >= 1024) {
       toggleSidebar();
     } else {
       toggleMobileSidebar();
+    }
+  };
+
+  // Fetch user's teams on mount
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        if (isDemo || isDemoMode()) {
+          // Use demo data
+          await new Promise(r => setTimeout(r, 300));
+          setTeams(DEMO_TEAMS);
+          // Get current team from localStorage or default to first team
+          const storedTeamId = localStorage.getItem('current_team_id');
+          const storedTeam = storedTeamId
+            ? DEMO_TEAMS.find(t => t.id === parseInt(storedTeamId))
+            : DEMO_TEAMS[0];
+          setCurrentTeam(storedTeam || DEMO_TEAMS[0]);
+          setTeamsLoading(false);
+          return;
+        }
+
+        const res = await apiGet('/api/v1/users/me/teams');
+        if (res.ok) {
+          const data = await res.json();
+          const teamsList = data.teams || data || [];
+          setTeams(teamsList);
+
+          // Get current team from localStorage or token
+          const storedTeamId = localStorage.getItem('current_team_id');
+          if (storedTeamId) {
+            const storedTeam = teamsList.find(t => t.id === parseInt(storedTeamId));
+            setCurrentTeam(storedTeam || teamsList[0]);
+          } else if (teamsList.length > 0) {
+            setCurrentTeam(teamsList[0]);
+            localStorage.setItem('current_team_id', teamsList[0].id.toString());
+          }
+        }
+      } catch (err) {
+        // Fall back to demo data on error
+        if (isDemo || isDemoMode()) {
+          setTeams(DEMO_TEAMS);
+          setCurrentTeam(DEMO_TEAMS[0]);
+        }
+      } finally {
+        setTeamsLoading(false);
+      }
+    };
+
+    fetchTeams();
+  }, [isDemo]);
+
+  // Handle team switch
+  const handleTeamSwitch = async (team) => {
+    if (team.id === currentTeam?.id) {
+      setTeamSelectorOpen(false);
+      return;
+    }
+
+    setSwitchingTeam(true);
+    try {
+      if (isDemo || isDemoMode()) {
+        // Demo mode - just update local state
+        await new Promise(r => setTimeout(r, 500));
+        setCurrentTeam(team);
+        localStorage.setItem('current_team_id', team.id.toString());
+        setTeamSelectorOpen(false);
+        // Reload page to refresh context
+        window.location.reload();
+        return;
+      }
+
+      // Call switch-team API
+      const res = await apiPost('/api/v1/users/me/switch-team', { team_id: team.id });
+      if (res.ok) {
+        const data = await res.json();
+        // Update token in localStorage
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token);
+        }
+        localStorage.setItem('current_team_id', team.id.toString());
+        setCurrentTeam(team);
+        setTeamSelectorOpen(false);
+        // Reload page to refresh with new team context
+        window.location.reload();
+      } else {
+        const error = await res.json().catch(() => ({}));
+        console.error('Failed to switch team:', error);
+      }
+    } catch (err) {
+      console.error('Error switching team:', err);
+    } finally {
+      setSwitchingTeam(false);
     }
   };
 
@@ -52,6 +162,9 @@ const AppHeader = ({ user, onLogout, isDemo = false, dashboardStats = null }) =>
       }
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
         setUserMenuOpen(false);
+      }
+      if (teamSelectorRef.current && !teamSelectorRef.current.contains(event.target)) {
+        setTeamSelectorOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -119,6 +232,98 @@ const AppHeader = ({ user, onLogout, isDemo = false, dashboardStats = null }) =>
               <div className="h-8 w-px bg-white/10 hidden lg:block" />
             </>
           )}
+
+          {/* Team Selector */}
+          {teams.length > 0 && (
+            <div className="relative" ref={teamSelectorRef}>
+              <button
+                onClick={() => setTeamSelectorOpen(!isTeamSelectorOpen)}
+                disabled={switchingTeam}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1f1a] border border-transparent hover:border-gray-200 dark:hover:border-white/10 transition-colors disabled:opacity-50"
+                data-testid="team-selector"
+              >
+                <div className="w-7 h-7 bg-brand-500/20 rounded-lg flex items-center justify-center">
+                  <Building2 size={14} className="text-brand-400" />
+                </div>
+                <div className="hidden sm:block text-left max-w-[120px]">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {teamsLoading ? '...' : (currentTeam?.name || 'Select Team')}
+                  </p>
+                  <p className="text-[10px] text-gray-500 leading-none">
+                    {currentTeam?.role || 'Team'}
+                  </p>
+                </div>
+                <ChevronDown size={14} className={`text-gray-400 hidden sm:block transition-transform ${isTeamSelectorOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Team Selector Dropdown */}
+              {isTeamSelectorOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-theme-lg border border-gray-200 dark:bg-[#131713] dark:border-gray-800">
+                  <div className="p-3 border-b border-gray-200 dark:border-gray-800">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <Users size={14} className="text-gray-400" />
+                      Switch Team
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5">{teams.length} team{teams.length !== 1 ? 's' : ''} available</p>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto py-1">
+                    {teams.map((team) => (
+                      <button
+                        key={team.id}
+                        onClick={() => handleTeamSwitch(team)}
+                        disabled={switchingTeam}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-[#1a1f1a] transition-colors disabled:opacity-50 ${
+                          currentTeam?.id === team.id ? 'bg-brand-500/5' : ''
+                        }`}
+                        data-testid={`team-option-${team.id}`}
+                      >
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                          currentTeam?.id === team.id
+                            ? 'bg-brand-500/20 border border-brand-500/30'
+                            : 'bg-gray-100 dark:bg-white/5'
+                        }`}>
+                          <Building2 size={16} className={currentTeam?.id === team.id ? 'text-brand-400' : 'text-gray-400'} />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className={`text-sm font-medium ${
+                            currentTeam?.id === team.id ? 'text-brand-400' : 'text-gray-800 dark:text-gray-200'
+                          }`}>
+                            {team.name}
+                          </p>
+                          <p className="text-xs text-gray-500 flex items-center gap-1">
+                            <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] ${
+                              team.role === 'Admin' ? 'bg-brand-500/10 text-brand-400' :
+                              team.role === 'Developer' ? 'bg-success-500/10 text-success-400' :
+                              'bg-gray-500/10 text-gray-400'
+                            }`}>
+                              {team.role}
+                            </span>
+                            <span>• {team.member_count} member{team.member_count !== 1 ? 's' : ''}</span>
+                          </p>
+                        </div>
+                        {currentTeam?.id === team.id && (
+                          <Check size={16} className="text-brand-400" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="p-2 border-t border-gray-200 dark:border-gray-800">
+                    <Link
+                      to={`${basePath}/teams`}
+                      className="flex items-center justify-center gap-2 w-full px-3 py-2 text-sm text-brand-500 hover:text-brand-600 hover:bg-brand-500/5 rounded-lg font-medium transition-colors"
+                      onClick={() => setTeamSelectorOpen(false)}
+                    >
+                      <Users size={14} />
+                      Manage Teams
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {teams.length > 0 && <div className="h-8 w-px bg-white/10 hidden md:block" />}
+
           {/* TODO: Dark Mode Toggle - será implementado no futuro
           <button
             onClick={toggleTheme}
@@ -128,6 +333,9 @@ const AppHeader = ({ user, onLogout, isDemo = false, dashboardStats = null }) =>
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </button>
           */}
+
+          {/* Currency Selector */}
+          <CurrencySelector compact />
 
           {/* Notifications */}
           <div className="relative" ref={notificationRef}>

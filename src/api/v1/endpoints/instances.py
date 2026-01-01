@@ -5,6 +5,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks, Request
 from typing import Optional
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from ..schemas.request import SearchOffersRequest, CreateInstanceRequest, MigrateInstanceRequest, MigrationEstimateRequest
 
@@ -29,13 +30,22 @@ from ....core.exceptions import (
     OfferUnavailableException,
     ServiceUnavailableException,
 )
-from ..dependencies import get_instance_service, get_migration_service, get_sync_service, require_auth, get_current_user_email
+from ..dependencies import (
+    get_instance_service,
+    get_migration_service,
+    get_sync_service,
+    require_auth,
+    get_current_user_email,
+    get_current_team_id,
+)
 from ..dependencies_usage import get_usage_service
 from ....services.usage_service import UsageService
 from ....services.standby.manager import get_standby_manager
 from ....services.machine_history_service import get_machine_history_service
-from ....services.machine_setup_service import MachineSetupService, MachineSetupConfig
+from ....infrastructure.providers import SQLAlchemyTeamRepository
+from ....config.database import get_db
 from ....core.config import settings
+from ....services.machine_setup_service import MachineSetupService, MachineSetupConfig
 import time
 
 router = APIRouter(prefix="/instances", tags=["Instances"], dependencies=[Depends(require_auth)])
@@ -476,12 +486,18 @@ async def create_instance(
     instance_service: InstanceService = Depends(get_instance_service),
     usage_service: UsageService = Depends(get_usage_service),
     user_id: str = Depends(get_current_user_email),
+    team_id: Optional[int] = Depends(get_current_team_id),
+    db: Session = Depends(get_db),
 ):
     """
     Create a new GPU instance
 
     Creates instance from a GPU offer.
     If auto-standby is enabled, also creates a CPU standby for failover.
+
+    Quota enforcement:
+    - If user has a team context with quotas configured, checks max_concurrent_instances
+    - Returns 429 (Too Many Requests) if quota is exceeded
 
     Pré-validações executadas:
     - Verificar conectividade com VAST.ai
@@ -526,6 +542,45 @@ async def create_instance(
             cpu_standby=None,
             total_dph=0.55,
         )
+
+    # =========================================================================
+    # QUOTA ENFORCEMENT - Check team quota before provisioning
+    # =========================================================================
+    quota_reserved = False
+    team_repo = None
+
+    if team_id is not None:
+        team_repo = SQLAlchemyTeamRepository(session=db)
+        try:
+            # Check and reserve quota atomically (uses SELECT FOR UPDATE)
+            quota_check = team_repo.check_and_reserve_instance_quota(
+                team_id=team_id,
+                instances_needed=1
+            )
+
+            if not quota_check['available']:
+                # Quota exceeded - return 429 Too Many Requests
+                violations = quota_check['violations']
+                error_message = violations[0]['message'] if violations else 'Team quota exceeded'
+                logger.warning(
+                    f"Quota exceeded for team {team_id} by user {user_id}: {error_message}"
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=error_message
+                )
+
+            quota_reserved = quota_check['quota_exists']
+            if quota_reserved:
+                logger.info(f"Quota reserved for team {team_id} by user {user_id}")
+
+        except HTTPException:
+            # Re-raise HTTP exceptions
+            raise
+        except Exception as e:
+            logger.error(f"Error checking quota for team {team_id}: {e}")
+            # Don't block provisioning if quota check fails
+            # (fail open for backwards compatibility)
 
     # =========================================================================
     # PRÉ-VALIDAÇÕES - Verificar antes de executar (pode ser pulada para testes)
@@ -597,13 +652,17 @@ async def create_instance(
                     label=request.label
                 )
 
-        # Auto-setup code-server + DumontAgent in background
-        background_tasks.add_task(
-            setup_machine_components,
+            db.commit()
             instance_id=instance.id,
-            ssh_host=instance.ssh_host,
-            ssh_port=instance.ssh_port,
+        background_tasks.add_task(
         )
+            ssh_port=instance.ssh_port,
+            logger.info(f"Quota committed for team {team_id}: instance {instance.id} created")
+            ssh_host=instance.ssh_host,
+        if quota_reserved:
+# Auto-setup code-server + DumontAgent in background
+            setup_machine_components,
+# Commit quota reservation on success
 
         return InstanceResponse(
             id=instance.id,
@@ -624,10 +683,28 @@ async def create_instance(
         )
     except VastAPIException as e:
         logger.error(f"VastAPI error: {e}")
+        # Release quota if it was reserved
+        if quota_reserved and team_repo and team_id:
+            try:
+                team_repo.release_instance_quota(team_id, instances_released=1)
+                db.commit()
+                logger.info(f"Quota released for team {team_id} due to VastAPI error")
+            except Exception as release_error:
+                logger.error(f"Failed to release quota after error: {release_error}")
+                db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         import traceback
         logger.error(f"Unexpected error creating instance: {e}\n{traceback.format_exc()}")
+        # Release quota if it was reserved
+        if quota_reserved and team_repo and team_id:
+            try:
+                team_repo.release_instance_quota(team_id, instances_released=1)
+                db.commit()
+                logger.info(f"Quota released for team {team_id} due to error")
+            except Exception as release_error:
+                logger.error(f"Failed to release quota after error: {release_error}")
+                db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to create instance: {e}")
 
 
@@ -789,16 +866,30 @@ async def destroy_instance(
     reason: str = Query("user_request", description="Reason for destruction: user_request, gpu_failure, spot_interruption"),
     instance_service: InstanceService = Depends(get_instance_service),
     usage_service: UsageService = Depends(get_usage_service),
+    team_id: Optional[int] = Depends(get_current_team_id),
+    db: Session = Depends(get_db),
 ):
     """
     Destroy an instance
-    ...
+
+    Also releases team quota (if applicable).
     If destroy_standby=false, CPU standby is always kept.
     """
     # Finalizar tracking de uso
     usage_service.stop_usage(str(instance_id))
 
     success = instance_service.destroy_instance(instance_id)
+
+    # Release quota if team context exists
+    if team_id is not None:
+        try:
+            team_repo = SQLAlchemyTeamRepository(session=db)
+            team_repo.release_instance_quota(team_id, instances_released=1)
+            db.commit()
+            logger.info(f"Quota released for team {team_id}: instance {instance_id} destroyed")
+        except Exception as e:
+            logger.warning(f"Failed to release quota for team {team_id}: {e}")
+            # Don't fail the destroy operation if quota release fails
 
     if not success:
         raise HTTPException(

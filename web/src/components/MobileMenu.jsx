@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Menu, X, Home, Server, Settings, BarChart3, LogOut, PiggyBank, Bot, ChevronDown } from 'lucide-react'
+import { Menu, X, Home, Server, Calendar, Settings, BarChart3, LogOut, PiggyBank, Bot, ChevronDown } from 'lucide-react'
 
 export default function MobileMenu({ onLogout, basePath = '/app' }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -10,6 +10,7 @@ export default function MobileMenu({ onLogout, basePath = '/app' }) {
   const mainLinks = [
     { to: basePath, icon: Home, label: 'Dashboard', end: true },
     { to: `${basePath}/machines`, icon: Server, label: 'Machines' },
+    { to: `${basePath}/reservations`, icon: Calendar, label: 'Reservations' },
   ]
 
   const analyticsLinks = [

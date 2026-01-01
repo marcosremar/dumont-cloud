@@ -1,0 +1,1011 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "machine": "Machine",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "submit": "Submit",
+    "reset": "Reset",
+    "search": "Search",
+    "filter": "Filter",
+    "refresh": "Refresh",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "yes": "Yes",
+    "no": "No",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "active": "Active",
+    "inactive": "Inactive",
+    "online": "Online",
+    "offline": "Offline",
+    "pending": "Pending",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info",
+    "learnMore": "Learn More",
+    "viewAll": "View All",
+    "showMore": "Show More",
+    "showLess": "Show Less",
+    "noResults": "No results found",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "machines": "Machines",
+    "serverless": "Serverless",
+    "jobs": "Jobs",
+    "models": "Models",
+    "finetuning": "Fine-Tuning",
+    "gpuMetrics": "GPU Metrics",
+    "documentation": "Documentation",
+    "settings": "Settings",
+    "logout": "Log Out",
+    "exitDemo": "Exit Demo",
+    "login": "Log In",
+    "signup": "Sign Up",
+    "balance": "Balance",
+    "analytics": "Analytics",
+    "metrics": "Metrics",
+    "savings": "Savings",
+    "aiAdvisor": "AI Advisor"
+  },
+  "layout": {
+    "brandName": "Dumont",
+    "brandHighlight": "Cloud",
+    "demoBadge": "DEMO"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to Dumont Cloud",
+    "subtitle": "GPU cloud platform for AI workloads",
+    "activeMachines": "Active Machines",
+    "totalMachines": "Total Machines",
+    "dailyCost": "Daily Cost",
+    "savings": "Savings",
+    "uptime": "Uptime",
+    "newInstance": {
+      "title": "New GPU Instance",
+      "subtitle": "Provision your machine in minutes"
+    },
+    "deployMethods": {
+      "guided": {
+        "title": "Guided Configuration",
+        "description": "Choose region, GPU and performance in a simple and intuitive way",
+        "badge": "✓ Recommended"
+      },
+      "advanced": {
+        "title": "Advanced Configuration",
+        "description": "Full control with detailed hardware and network filters",
+        "badge": "For specialists"
+      },
+      "ai": {
+        "title": "AI Assistant",
+        "description": "Chat and let AI recommend the best configuration",
+        "badge": "✨ Smart"
+      }
+    },
+    "wizard": {
+      "title": "GPU Wizard",
+      "description": "Find the perfect GPU for your workload",
+      "aiAssistant": "AI Assistant",
+      "askQuestion": "Ask a question about GPUs",
+      "suggestedPrompts": "Suggested Prompts"
+    },
+    "filters": {
+      "title": "Filters",
+      "gpuType": "GPU Type",
+      "region": "Region",
+      "priceRange": "Price Range",
+      "cudaVersion": "CUDA Version",
+      "rentalType": "Rental Type",
+      "availability": "Availability"
+    },
+    "offers": {
+      "title": "Available Offers",
+      "noOffers": "No offers match your criteria",
+      "pricePerHour": "per hour",
+      "rent": "Rent Now",
+      "viewDetails": "View Details"
+    },
+    "results": {
+      "title": "Available Machines",
+      "resultsFound": "{{count}} results found",
+      "sortBy": "Sort by:",
+      "limit": "Limit:",
+      "noMachinesFound": "No machines found",
+      "noMachinesDescription": "We couldn't find offers with the selected filters. Try adjusting the search criteria.",
+      "adjustFilters": "Adjust filters"
+    },
+    "toasts": {
+      "machinesFound": "{{count}} machines found!",
+      "showingDemoOffers": "Showing demo offers",
+      "errorShowingDemo": "Error fetching offers. Showing demo data.",
+      "machineSelected": "Machine {{name}} selected!",
+      "guidedModeSelected": "Guided Mode already selected. Start by choosing a region below.",
+      "advancedModeSelected": "Advanced Mode selected. Configure detailed filters.",
+      "aiAssistantActivated": "AI Assistant activated. Describe what you need.",
+      "noMachinesForTier": "No machines found for this tier. Try another.",
+      "filtersReset": "Filters reset",
+      "startingRound": "Starting round {{round}}/{{total}}...",
+      "unknownError": "Unknown error",
+      "networkError": "Network error",
+      "authError": "Authentication error",
+      "diskError": "Disk error",
+      "initError": "Initialization error",
+      "httpError": "HTTP error {{status}}"
+    },
+    "errors": {
+      "fetchOffers": "Failed to fetch offers",
+      "insufficientBalance": "Insufficient balance",
+      "connectionTimeout": "Connection timeout",
+      "machineUnavailable": "Machine unavailable",
+      "instanceLimit": "Instance limit reached",
+      "invalidApiKey": "Invalid API Key",
+      "alreadyRented": "Already rented",
+      "serverUnavailable": "Server unavailable",
+      "invalidRequest": "Invalid request",
+      "allAttemptsFailed": "All attempts failed. Check your API Key and balance.",
+      "allMachinesFailed": "All {{count}} machines failed. Trying next batch..."
+    }
+  },
+  "machines": {
+    "title": "Machines",
+    "description": "Manage your GPU instances",
+    "pageTitle": "My Machines",
+    "pageSubtitle": "Manage your GPU and CPU instances",
+    "noMachines": "No machines found",
+    "noMachinesDescription": "You don't have any machines yet. Start by renting a GPU from the Dashboard.",
+    "createMachine": "Create Machine",
+    "newMachine": "New Machine",
+    "instance": {
+      "title": "Instance Details",
+      "status": "Status",
+      "type": "Type",
+      "region": "Region",
+      "created": "Created",
+      "uptime": "Uptime",
+      "cost": "Cost",
+      "ipAddress": "IP Address",
+      "sshCommand": "SSH Command"
+    },
+    "actions": {
+      "start": "Start",
+      "stop": "Stop",
+      "restart": "Restart",
+      "terminate": "Terminate",
+      "hibernate": "Hibernate",
+      "connect": "Connect",
+      "destroy": "Destroy",
+      "migrate": "Migrate",
+      "restoreToNew": "Restore to New",
+      "createSnapshot": "Create Snapshot"
+    },
+    "status": {
+      "running": "Running",
+      "stopped": "Stopped",
+      "starting": "Starting",
+      "stopping": "Stopping",
+      "hibernating": "Hibernating",
+      "terminated": "Terminated",
+      "error": "Error",
+      "loading": "Loading",
+      "creating": "Creating",
+      "pending": "Pending",
+      "provisioning": "Provisioning",
+      "configuring": "Configuring",
+      "failover": "Failover"
+    },
+    "stats": {
+      "activeGpus": "Active GPUs",
+      "cpuBackup": "CPU Backup",
+      "totalVram": "Total VRAM",
+      "costPerHour": "Cost/Hour",
+      "balance": "Balance",
+      "inUse": "in use"
+    },
+    "filters": {
+      "all": "All",
+      "online": "Online",
+      "offline": "Offline"
+    },
+    "emptyState": {
+      "noMachines": "No machines",
+      "noOnlineMachines": "No online machines",
+      "noOfflineMachines": "No offline machines",
+      "createFirst": "Create your first GPU machine to start working.",
+      "allOffline": "All your machines are offline. Start one to begin.",
+      "allOnline": "All your machines are online."
+    },
+    "toast": {
+      "destroying": "Destroying {{name}}...",
+      "destroyedSuccess": "{{name}} destroyed successfully!",
+      "creatingDemo": "Creating demo machine...",
+      "createdWithStandby": "{{name}} created with CPU Standby!",
+      "creating": "Creating {{name}}...",
+      "createdProvisioningStandby": "{{name}} created! CPU Standby being provisioned...",
+      "starting": "Starting {{name}}...",
+      "started": "{{name}} started!",
+      "pausing": "Pausing {{name}}...",
+      "paused": "{{name}} paused!",
+      "creatingSnapshot": "Creating snapshot of {{name}}...",
+      "snapshotComplete": "Snapshot completed! {{size}} synchronized",
+      "noCpuStandby": "This machine doesn't have CPU Standby configured",
+      "gpuInterrupted": "⚠️ GPU {{name}} was interrupted!",
+      "failoverUsingCpu": "🔄 Automatic failover: using CPU Standby ({{ip}})",
+      "provisioningNewGpu": "🚀 Provisioning new GPU: {{name}}",
+      "restoringFiles": "📦 Restoring {{count}} files to new GPU...",
+      "recoveryComplete": "✅ Recovery complete in {{time}}s! New GPU: {{name}}"
+    },
+    "errors": {
+      "fetchMachines": "Error fetching machines",
+      "destroyMachine": "Error destroying machine",
+      "startMachine": "Error starting machine",
+      "pauseMachine": "Error pausing machine",
+      "createInstance": "Error creating instance",
+      "syncFailed": "Error synchronizing"
+    },
+    "sync": {
+      "incrementalComplete": "Incremental sync completed in {{time}}s!",
+      "initialComplete": "Initial sync completed in {{time}}s!",
+      "filesNew": "New files",
+      "filesChanged": "Changed files",
+      "filesUnmodified": "Unchanged files",
+      "dataSent": "Data sent"
+    },
+    "destroy": {
+      "title": "Destroy machine?",
+      "message": "Are you sure you want to destroy the machine {{name}}? This action is irreversible and all unsaved data will be lost.",
+      "confirm": "Destroy",
+      "cancel": "Cancel"
+    },
+    "create": {
+      "title": "Create GPU Machine",
+      "vram": "VRAM",
+      "cpu": "CPU",
+      "ram": "RAM",
+      "disk": "Disk",
+      "cpuStandbyAuto": "CPU Standby will be created automatically",
+      "cpuStandbyNote": "A backup VM will be provisioned for protection against interruptions.",
+      "creating": "Creating...",
+      "create": "Create Machine",
+      "cancel": "Cancel"
+    },
+    "failover": {
+      "gpuLost": "GPU {{name}} was interrupted (Spot Preemption)",
+      "failoverActive": "Redirecting traffic to CPU Standby ({{ip}})",
+      "searching": "Searching for available GPUs on Vast.ai...",
+      "provisioning": "Provisioning {{name}}...",
+      "restoring": "Restoring {{count}} files ({{size}} MB) from CPU Standby...",
+      "complete": "Recovery complete! New GPU {{name}} operational.",
+      "recoveryComplete": "Recovery complete in {{time}}s! New GPU: {{name}}"
+    }
+  },
+  "serverless": {
+    "title": "Serverless",
+    "pageTitle": "Serverless Endpoints",
+    "pageSubtitle": "Auto-scaling GPU endpoints with Spot pricing",
+    "description": "Deploy serverless GPU functions",
+    "noEndpoints": "No serverless endpoints",
+    "noEndpointsDescription": "Create your first auto-scaling endpoint with spot pricing",
+    "createEndpoint": "Create Endpoint",
+    "createFirstEndpoint": "Create First Endpoint",
+    "endpoint": {
+      "title": "Endpoint Details",
+      "name": "Name",
+      "status": "Status",
+      "requests": "Requests",
+      "latency": "Latency",
+      "cost": "Cost"
+    },
+    "stats": {
+      "totalRequests24h": "Total Requests (24h)",
+      "activeEndpoints": "{{count}} active endpoints",
+      "avgLatency": "Average Latency",
+      "coldStarts": "{{count}} cold starts",
+      "cost24h": "Cost (24h)",
+      "perMonth": "~${{amount}}/month",
+      "activeInstances": "Active Instances",
+      "configuredEndpoints": "{{count}} configured endpoints"
+    }
+  },
+  "jobs": {
+    "title": "Jobs",
+    "description": "Manage batch processing jobs",
+    "pageSubtitle": "Run tasks on GPU and auto-destroy when finished",
+    "noJobs": "No jobs created",
+    "noJobsDescription": "Jobs run tasks on GPU and auto-destroy when finished",
+    "submitJob": "Submit Job",
+    "newJob": "New Job",
+    "createFirstJob": "Create First Job",
+    "loading": "Loading jobs...",
+    "job": {
+      "title": "Job Details",
+      "status": "Status",
+      "progress": "Progress",
+      "duration": "Duration",
+      "cost": "Cost"
+    },
+    "status": {
+      "pending": "Pending",
+      "provisioning": "Provisioning",
+      "starting": "Starting",
+      "running": "Running",
+      "completing": "Completing",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "timeout": "Timeout",
+      "queued": "Queued"
+    },
+    "form": {
+      "title": "New Job",
+      "subtitle": "Creates GPU, runs task, destroys when finished",
+      "jobName": "Job Name",
+      "jobNamePlaceholder": "E.g.: Fine-tune LLaMA",
+      "sourceType": "Source Type",
+      "huggingface": "Hugging Face",
+      "git": "Git",
+      "command": "Command",
+      "hfRepo": "Hugging Face Repository",
+      "hfRepoPlaceholder": "E.g.: unsloth/llama-3-8b-Instruct-bnb-4bit",
+      "hfRepoHint": "Repository will be downloaded to /workspace/model",
+      "revision": "Revision (optional)",
+      "revisionPlaceholder": "main, v1.0, commit-hash...",
+      "gitUrl": "Git Repository URL",
+      "branch": "Branch (optional)",
+      "commandLabel": "Command to Execute",
+      "commandOptional": "(optional)",
+      "commandHint": "Will be executed in /workspace. Create /workspace/.job_complete when finished.",
+      "gpu": "GPU",
+      "disk": "Disk (GB)",
+      "timeout": "Timeout (min)",
+      "pipPackages": "Pip Packages (optional)",
+      "pipPackagesPlaceholder": "transformers, accelerate, bitsandbytes",
+      "pipPackagesHint": "Comma-separated. Will be installed before the command.",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "createAndRun": "Create and Run"
+    },
+    "details": {
+      "created": "Created",
+      "started": "Started",
+      "completed": "Completed",
+      "gpuHours": "GPU Hours",
+      "ssh": "SSH",
+      "error": "Error",
+      "viewLogs": "View Logs",
+      "cost": "Cost",
+      "cancelJob": "Cancel job"
+    },
+    "confirmCancel": "Are you sure you want to cancel this job? The GPU will be destroyed.",
+    "errors": {
+      "createError": "Error creating job",
+      "unknownError": "Unknown error"
+    },
+    "howItWorks": {
+      "title": "How does Job mode work?",
+      "step1": "Creates a GPU with the specified configuration",
+      "step2": "Downloads the Hugging Face or Git repository",
+      "step3": "Executes the specified command",
+      "step4": "Destroys the GPU automatically when finished (or timeout)",
+      "step5": "Create the file /workspace/.job_complete to indicate completion"
+    }
+  },
+  "models": {
+    "title": "Models",
+    "description": "Deploy and manage AI models",
+    "pageSubtitle": "Deploy ML/AI models with API endpoint",
+    "noModels": "No models deployed",
+    "noModelsDescription": "Deploy LLM, Speech-to-Text, Image Generation, or Embeddings models with one click",
+    "deployModel": "Deploy Model",
+    "deployFirstModel": "Deploy First Model",
+    "loading": "Loading models...",
+    "model": {
+      "title": "Model Details",
+      "name": "Name",
+      "version": "Version",
+      "status": "Status",
+      "endpoint": "Endpoint"
+    },
+    "status": {
+      "pending": "Pending",
+      "deploying": "Deploying",
+      "downloading": "Downloading",
+      "starting": "Starting",
+      "running": "Running",
+      "stopped": "Stopped",
+      "error": "Error"
+    },
+    "types": {
+      "llm": "LLM",
+      "speech": "Speech",
+      "image": "Image",
+      "embeddings": "Embeddings"
+    },
+    "wizard": {
+      "title": "Deploy Model",
+      "stepOf": "Step {{current}} of {{total}}",
+      "chooseModelType": "Choose model type",
+      "chooseModel": "Choose model",
+      "gpuConfig": "GPU Configuration",
+      "accessConfig": "Access Configuration",
+      "popularModels": "Popular models",
+      "customModelLabel": "Or use a custom model (HuggingFace ID)",
+      "customModelPlaceholder": "E.g.: meta-llama/Llama-3.2-3B-Instruct",
+      "gpuType": "GPU Type",
+      "numGpus": "Number of GPUs",
+      "maxPrice": "Maximum price per hour ($/h)",
+      "name": "Name (optional)",
+      "namePlaceholder": "E.g.: My production LLM",
+      "accessType": "Access Type",
+      "private": "Private",
+      "privateDescription": "Access via auto-generated API key",
+      "public": "Public",
+      "publicDescription": "Anyone can access the endpoint",
+      "port": "Port",
+      "deploySummary": "Deploy Summary",
+      "type": "Type",
+      "modelLabel": "Model",
+      "notSelected": "Not selected",
+      "gpu": "GPU",
+      "access": "Access",
+      "privateApiKey": "Private (API Key)",
+      "cancel": "Cancel",
+      "back": "Back",
+      "next": "Next",
+      "deploying": "Deploying...",
+      "deploy": "Deploy",
+      "preparing": "Preparing...",
+      "downloadingModel": "Downloading model...",
+      "loadingIntoGpu": "Loading into GPU...",
+      "startingDeploy": "Starting deploy..."
+    },
+    "card": {
+      "stop": "Stop",
+      "logs": "Logs",
+      "delete": "Delete",
+      "copyUrl": "Copy URL",
+      "copyApiKey": "Copy API Key"
+    },
+    "confirmStop": "Are you sure you want to stop this model?",
+    "confirmDelete": "Are you sure you want to delete this deploy? This action cannot be undone.",
+    "errors": {
+      "deployError": "Error deploying",
+      "unknownError": "Unknown error"
+    },
+    "supportedTypes": {
+      "title": "Supported Model Types",
+      "llmDescription": "Chat & Completion (vLLM)",
+      "speechDescription": "Whisper (Transcription)",
+      "imageDescription": "SD, FLUX (Diffusers)",
+      "embeddingsDescription": "BGE, E5 (Sentence-Transformers)"
+    }
+  },
+  "finetuning": {
+    "title": "Fine-Tuning",
+    "description": "Fine-tune models on your data",
+    "noJobs": "No fine-tuning jobs",
+    "noJobsDescription": "Start a new fine-tuning job to customize models.",
+    "startJob": "Start Fine-Tuning",
+    "job": {
+      "title": "Fine-Tuning Job",
+      "baseModel": "Base Model",
+      "dataset": "Dataset",
+      "status": "Status",
+      "progress": "Progress",
+      "epochs": "Epochs"
+    }
+  },
+  "gpuMetrics": {
+    "title": "GPU Metrics",
+    "description": "Monitor GPU performance and usage",
+    "pageTitle": "GPU Metrics",
+    "pageSubtitle": "Complete analysis of prices, providers and efficiency",
+    "utilization": "GPU Utilization",
+    "memory": "Memory Usage",
+    "temperature": "Temperature",
+    "power": "Power Usage",
+    "loading": "Loading metrics...",
+    "breadcrumb": {
+      "home": "Home",
+      "metrics": "Metrics"
+    },
+    "tabs": {
+      "market": "Market",
+      "providers": "Providers",
+      "efficiency": "Efficiency",
+      "savings": "Savings",
+      "spot": "Spot Reports"
+    },
+    "filters": {
+      "allGpus": "All GPUs",
+      "allTypes": "All Types",
+      "hours1": "1h",
+      "hours6": "6h",
+      "hours24": "24h",
+      "days7": "7d"
+    },
+    "machineTypes": {
+      "onDemand": "On-Demand",
+      "interruptible": "Spot/Interruptible",
+      "bid": "Bid"
+    },
+    "market": {
+      "realTimeAnalytics": "Real-time Analytics",
+      "offers": "offers",
+      "bestPrice": "Best Price",
+      "units": "units",
+      "min": "Min",
+      "max": "Max",
+      "collectingData": "Collecting market data...",
+      "collectingDataDescription": "The metrics monitor collects GPU data periodically. Please wait a few minutes.",
+      "priceHistory": "Price History",
+      "detailedData": "Detailed Data",
+      "gpu": "GPU",
+      "type": "Type",
+      "dateTime": "Date/Time",
+      "avgPrice": "Avg Price",
+      "minPrice": "Minimum",
+      "maxPrice": "Maximum",
+      "totalOffers": "Offers",
+      "costPerTflops": "$/TFLOPS"
+    },
+    "providers": {
+      "title": "Provider Reliability Ranking",
+      "rank": "#",
+      "host": "Host",
+      "location": "Location",
+      "reliability": "Reliability",
+      "availability": "Availability",
+      "priceStability": "Price Stability",
+      "observations": "Observations",
+      "verified": "Verified",
+      "collectingData": "Collecting provider data...",
+      "collectingDataDescription": "Reliability data is calculated based on multiple observations over time."
+    },
+    "efficiency": {
+      "title": "Cost-Benefit Ranking",
+      "gpuCluster": "GPU Cluster",
+      "excellent": "Excellent",
+      "good": "Good",
+      "regular": "Regular",
+      "price": "Price",
+      "tflops": "TFLOPS",
+      "vram": "VRAM",
+      "efficiencyHigh": "High Efficiency",
+      "efficiencyMedium": "Medium Efficiency",
+      "efficiencyLow": "Low Efficiency",
+      "calculatingRankings": "Calculating efficiency rankings...",
+      "calculatingDescription": "Rankings are calculated based on price, performance and reliability."
+    },
+    "spot": {
+      "reportsAvailable": "Available Reports",
+      "spotAnalyses": "Spot Analyses",
+      "prices": "Prices",
+      "monitor": "Monitor",
+      "trackRealTime": "Track in real time",
+      "savings": "Savings",
+      "calculator": "Calculator",
+      "simulateSavings": "Simulate your savings",
+      "reliability": "Reliability",
+      "score": "Score",
+      "verifiedProviders": "Verified providers",
+      "reports": {
+        "monitor": "Spot Price Monitor",
+        "savings": "Savings Calculator",
+        "availability": "Instant Availability",
+        "prediction": "Price Prediction",
+        "safeWindows": "Safe Windows",
+        "reliability": "Reliability Score",
+        "interruption": "Interruption Rate",
+        "llm": "Best GPU for LLM",
+        "training": "Cost per Training",
+        "fleet": "Fleet Strategy"
+      }
+    },
+    "errors": {
+      "loadingInitialData": "Error loading initial data",
+      "loadingMarketData": "Error loading market data",
+      "loadingProviders": "Error loading providers",
+      "loadingEfficiency": "Error loading efficiency",
+      "loadingPredictions": "Error loading predictions"
+    }
+  },
+  "documentation": {
+    "title": "Documentation",
+    "description": "Learn how to use Dumont Cloud",
+    "gettingStarted": "Getting Started",
+    "apiReference": "API Reference",
+    "tutorials": "Tutorials",
+    "faq": "FAQ",
+    "liveDocs": "Live Docs",
+    "backToApp": "← Back to App",
+    "loading": "Loading documentation...",
+    "copyLink": "Copy Link",
+    "footer": "Live Documentation System • Dumont Cloud © 2025"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your account settings",
+    "pageTitle": "Settings",
+    "pageSubtitle": "Manage your APIs, storage and preferences",
+    "profile": {
+      "title": "Profile",
+      "name": "Name",
+      "email": "Email",
+      "avatar": "Avatar"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "language": "Language",
+      "languageDescription": "Choose your preferred language",
+      "theme": "Theme",
+      "themeDescription": "Choose your preferred theme",
+      "notifications": "Notifications",
+      "notificationsDescription": "Manage notification preferences"
+    },
+    "security": {
+      "title": "Security",
+      "password": "Password",
+      "twoFactor": "Two-Factor Authentication",
+      "apiKeys": "API Keys"
+    },
+    "billing": {
+      "title": "Billing",
+      "plan": "Current Plan",
+      "usage": "Usage",
+      "invoices": "Invoices",
+      "paymentMethod": "Payment Method"
+    },
+    "menu": {
+      "apis": "APIs & Credentials",
+      "storage": "Storage",
+      "cloudstorage": "Cloud Storage Failover",
+      "agent": "Agent Sync",
+      "notifications": "Notifications",
+      "failover": "CPU Failover"
+    },
+    "validation": {
+      "apiKeyTooShort": "API key too short",
+      "accessKeyTooShort": "Access key too short",
+      "secretKeyTooShort": "Secret key too short",
+      "mustStartWithHttps": "Must start with https://",
+      "mustBeValidR2Endpoint": "Must be a valid R2 endpoint",
+      "nameTooShort": "Name too short (min. 3 characters)",
+      "onlyLowercaseNumbersHyphens": "Only lowercase letters, numbers and hyphens",
+      "passwordTooShort": "Password too short (min. 8 characters)",
+      "validFormat": "Valid format",
+      "validUrl": "Valid URL",
+      "validName": "Valid name",
+      "validPassword": "Valid password",
+      "fixErrorsBeforeSave": "Fix errors before saving"
+    },
+    "actions": {
+      "hide": "Hide",
+      "show": "Show",
+      "save": "Save",
+      "saving": "Saving...",
+      "saveSettings": "Save Settings",
+      "testConnection": "Test Connection",
+      "testing": "Testing...",
+      "testNotification": "Test Notification"
+    },
+    "toast": {
+      "lowBalance": "Low Balance!",
+      "testNotificationTitle": "Test Notification",
+      "testNotificationMessage": "Notifications are working correctly!",
+      "notificationsWorking": "Notifications are working!",
+      "settingsSaved": "Settings saved successfully!",
+      "agentSettingsSaved": "Agent settings saved!",
+      "cloudStorageSettingsSaved": "Cloud Storage settings saved!",
+      "connectionError": "Connection error",
+      "saveFailedAgent": "Failed to save agent settings",
+      "saveFailedCloudStorage": "Failed to save settings",
+      "connectionOk": "Connection with {{provider}} OK!",
+      "connectionTestFailed": "Failed to test connection"
+    },
+    "apis": {
+      "vastai": {
+        "title": "Vast.ai",
+        "description": "Configuration for Vast.ai platform access",
+        "apiKeyLabel": "API Key",
+        "apiKeyPlaceholder": "Enter your vast.ai API key"
+      },
+      "cloudflareR2": {
+        "title": "Cloudflare R2",
+        "description": "Cloud storage for snapshots and backups",
+        "accessKeyLabel": "Access Key",
+        "secretKeyLabel": "Secret Key",
+        "endpointLabel": "Endpoint URL",
+        "endpointPlaceholder": "https://xxx.r2.cloudflarestorage.com",
+        "bucketLabel": "Bucket Name"
+      }
+    },
+    "storage": {
+      "restic": {
+        "title": "Restic",
+        "description": "Repository protection and encryption",
+        "passwordLabel": "Repository Password"
+      }
+    },
+    "cloudStorage": {
+      "title": "Cloud Storage Failover",
+      "description": "Configure storage providers for global failover",
+      "enableTitle": "Enable Cloud Storage Failover",
+      "enableDescription": "Allows failover to any global region using cloud storage",
+      "providerLabel": "Storage Provider",
+      "mountMethodLabel": "Mount Method",
+      "mountMethodRclone": "rclone mount (FUSE with VFS cache)",
+      "mountMethodRestic": "restic restore (complete snapshot)",
+      "mountMethodS3fs": "s3fs (S3 compatible)",
+      "mountMethodHint": "rclone is recommended for better performance with local cache",
+      "mountPathLabel": "Mount Path",
+      "cacheSizeLabel": "Cache Size (GB)",
+      "providers": {
+        "backblaze_b2": {
+          "name": "Backblaze B2",
+          "description": "Low-cost storage, ~$0.005/GB/month"
+        },
+        "cloudflare_r2": {
+          "name": "Cloudflare R2",
+          "description": "Zero egress fees, ~$0.015/GB/month",
+          "note": "Note: Cloudflare R2 credentials are configured in the \"APIs & Credentials\" tab. If you already configured R2 there, it will be ready for use."
+        },
+        "aws_s3": {
+          "name": "Amazon S3",
+          "description": "High availability, multi-region"
+        },
+        "google_gcs": {
+          "name": "Google Cloud Storage",
+          "description": "GCP integration, multi-region",
+          "serviceAccountLabel": "Service Account JSON",
+          "serviceAccountHint": "Paste the complete service key JSON"
+        }
+      },
+      "backblaze": {
+        "keyIdLabel": "Key ID",
+        "appKeyLabel": "Application Key",
+        "bucketLabel": "Bucket Name"
+      },
+      "aws": {
+        "accessKeyLabel": "Access Key ID",
+        "secretKeyLabel": "Secret Access Key",
+        "regionLabel": "Region",
+        "bucketLabel": "Bucket Name"
+      },
+      "strategies": {
+        "title": "Strategy Comparison",
+        "description": "Estimated failover time for each strategy",
+        "gpuWarmPool": "GPU Warm Pool",
+        "sameHost": "Same host",
+        "regionalVolume": "Regional Volume",
+        "sameRegion": "Same region",
+        "cloudStorage": "Cloud Storage",
+        "anyRegion": "Any region",
+        "cpuStandby": "CPU Standby",
+        "gcpAws": "GCP/AWS"
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Visual and sound alerts from the system",
+      "lowBalanceAlertsLabel": "Low Balance Alerts",
+      "lowBalanceAlertsDescription": "Receive visual and sound alerts when your balance is below $1.00."
+    },
+    "agent": {
+      "title": "DumontAgent",
+      "description": "Automatic synchronization on GPU machines",
+      "configDescription": "Configure how the sync agent works on GPU machines. These settings will be applied to new machines.",
+      "syncIntervalLabel": "Sync Interval",
+      "syncInterval30s": "30 seconds",
+      "syncInterval1m": "1 minute",
+      "syncInterval2m": "2 minutes",
+      "syncInterval5m": "5 minutes",
+      "syncInterval10m": "10 minutes",
+      "syncIntervalHint": "Time between each automatic backup",
+      "snapshotRetentionLabel": "Snapshot Retention",
+      "retentionLast5": "Last 5",
+      "retentionLast10": "Last 10",
+      "retentionLast20": "Last 20",
+      "retentionLast50": "Last 50",
+      "retentionHint": "Number of snapshots to keep"
+    },
+    "failover": {
+      "costEstimator": {
+        "title": "Cost Estimate",
+        "description": "Cloudflare R2 - Cloud storage",
+        "calculateDescription": "Calculate the estimated monthly cost of Cloudflare R2 storage.",
+        "dataSizeLabel": "Estimated Data Size (GB)",
+        "storageLabel": "Storage ({{size}} GB effective)",
+        "operationsLabel": "Operations (~{{count}} syncs/month)",
+        "totalEstimatedLabel": "Total Estimated",
+        "perMonth": "/month",
+        "estimateNote": "* Estimate based on ~70% deduplication by Restic and ~50 operations per sync. Egress (download) is free on R2.",
+        "intervalComparison": "Interval Comparison:",
+        "seconds30": "30 seconds",
+        "minute1": "1 minute",
+        "minutes5": "5 minutes",
+        "valuesFor10GB": "* Values for 10GB of data"
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Log In",
+      "email": "Email",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up"
+    },
+    "signup": {
+      "title": "Sign Up",
+      "name": "Full Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "termsAgree": "I agree to the Terms of Service and Privacy Policy",
+      "haveAccount": "Already have an account?",
+      "logIn": "Log in"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "description": "Enter your email and we'll send you a reset link",
+      "email": "Email",
+      "sendLink": "Send Reset Link",
+      "backToLogin": "Back to login"
+    }
+  },
+  "errors": {
+    "network": "Network error. Please try again.",
+    "auth": "Authentication failed. Please log in again.",
+    "notFound": "Page not found",
+    "serverError": "Server error. Please try again later.",
+    "timeout": "Request timed out. Please try again.",
+    "unauthorized": "You are not authorized to perform this action.",
+    "forbidden": "Access forbidden.",
+    "validation": "Please check your input and try again.",
+    "generic": "Something went wrong. Please try again."
+  },
+  "emptyState": {
+    "noData": "No data available",
+    "noResults": "No results found",
+    "tryAgain": "Try adjusting your filters or search criteria"
+  },
+  "languages": {
+    "en": "English",
+    "es": "Spanish"
+  },
+  "components": {
+    "emptyState": {
+      "noItemFound": "No item found",
+      "createNew": "Create new"
+    },
+    "errorState": {
+      "somethingWentWrong": "Something went wrong",
+      "errorLoadingData": "An error occurred while loading the data.",
+      "tryAgain": "Try again",
+      "retrying": "Retrying...",
+      "retryingIn": "Retrying in {{seconds}}s..."
+    }
+  },
+  "deployWizard": {
+    "title": "Deploy",
+    "tabs": {
+      "newMachine": "New Machine",
+      "existingMachine": "Existing Machine"
+    },
+    "simpleMode": "Simple mode",
+    "showAdvancedFilters": "Show advanced filters",
+    "region": "Region",
+    "measuringLatency": "measuring latency...",
+    "regions": {
+      "global": "Global",
+      "us": "US",
+      "europe": "Europe",
+      "asia": "Asia"
+    },
+    "speedLabel": "Speed (faster = more expensive)",
+    "speedTiers": {
+      "slow": "Slow",
+      "medium": "Medium",
+      "fast": "Fast",
+      "ultra": "Ultra"
+    },
+    "noOffers": "No offers",
+    "machines": "machines",
+    "gpu": "GPU",
+    "anyGpu": "Any GPU",
+    "minimumDisk": "Minimum Disk",
+    "selectGpuToSeeOffers": "Select a GPU to see offers",
+    "advanced": {
+      "numGpus": "Num GPUs",
+      "gpuRam": "GPU RAM (GB)",
+      "cpuCores": "CPU Cores",
+      "cpuRam": "CPU RAM (GB)",
+      "disk": "Disk (GB)",
+      "download": "Download (Mbps)",
+      "upload": "Upload (Mbps)",
+      "maxPricePerHour": "Max $/hour",
+      "cudaMin": "CUDA Min",
+      "reliabilityMin": "Reliability Min",
+      "directPorts": "Direct Ports",
+      "verifiedOnly": "Verified only",
+      "staticIp": "Static IP"
+    },
+    "searching": "Searching...",
+    "searchOffers": "Search offers",
+    "table": {
+      "gpu": "GPU",
+      "vram": "VRAM",
+      "cpu": "CPU",
+      "ram": "RAM",
+      "disk": "Disk",
+      "dl": "DL",
+      "ul": "UL",
+      "pricePerHour": "$/h",
+      "region": "Region"
+    },
+    "use": "Use",
+    "hotStart": {
+      "title": "Hot Start + Migrate",
+      "description": "Start fast, save later"
+    },
+    "creating": "Creating...",
+    "createMachineRestore": "Create Machine + Restore",
+    "selectMachine": "Select a machine",
+    "noActiveMachines": "No active machines",
+    "restoring": "Restoring...",
+    "restoreSnapshot": "Restore Snapshot",
+    "errors": {
+      "noOffersForTier": "No offers available for this tier",
+      "createFailed": "Failed to create instance",
+      "connectionError": "Connection error",
+      "selectMachine": "Select a machine",
+      "restoreFailed": "Failed to restore"
+    }
+  },
+  "migrationModal": {
+    "title": "Migrate Instance",
+    "targetType": "Target Type",
+    "gpuModel": "GPU Model",
+    "costComparison": "Cost Comparison",
+    "current": "Current",
+    "new": "New",
+    "savings": "Savings of ${{amount}}/h ({{percent}}%)",
+    "searchingOffers": "Searching offers...",
+    "noOffersAvailable": "No offers available",
+    "process": "Process",
+    "processDescription": "Create snapshot -> New instance -> Restore -> Destroy old",
+    "estimatedTime": "Estimated time: ~5 minutes. Your workspace will be preserved.",
+    "migrating": "Migrating...",
+    "migrateTo": "Migrate to {{target}}",
+    "progress": {
+      "starting": "Starting migration...",
+      "creatingSnapshot": "Creating snapshot...",
+      "completed": "Migration completed!"
+    },
+    "steps": {
+      "creatingSnapshot": "Creating workspace snapshot...",
+      "provisioningInstance": "Provisioning new instance...",
+      "waitingSSH": "Waiting for SSH to be ready...",
+      "restoringSnapshot": "Restoring snapshot...",
+      "destroyingOld": "Destroying old instance..."
+    },
+    "errors": {
+      "fetchEstimate": "Error fetching estimate",
+      "migrationError": "Migration error",
+      "migrationFailed": "Migration failed"
+    }
+  }
+}

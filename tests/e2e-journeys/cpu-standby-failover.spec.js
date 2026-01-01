@@ -1,45 +1,74 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
-
-// Testes simplificados que não dependem de helpers externos
-// Usam dados demo mode e são flexíveis com o estado atual das máquinas
-
 /**
- * 🎯 TESTE E2E: CPU Standby e Failover Automático - MODO REAL
+ * CPU Standby e Failover Automático - Testes E2E Headless
  *
- * Este teste verifica o fluxo completo de:
- * 1. Máquina GPU com CPU Standby configurado
- * 2. Simulação de "roubo" da GPU (preemption)
- * 3. Failover automático para CPU Standby
- * 4. Busca e provisionamento de nova GPU
- * 5. Restauração de dados e sincronização
- *
- * IMPORTANTE:
- * - USA VAST.AI + GCP REAL (custa dinheiro)
- * - CRIA máquinas e CPU Standby quando não existem
- * - ZERO SKIPS por falta de recursos
+ * Testa funcionalidades de failover:
+ * - Máquina GPU com CPU Standby configurado
+ * - Simulação de failover (GPU roubada → CPU Standby)
+ * - Configurações de failover em Settings
+ * - Métricas e status do CPU Standby
+ * - Relatórios de failover
  */
 
+const { test, expect } = require('@playwright/test');
+
+// Configuração para headless mode
+test.use({
+  headless: true,
+  viewport: { width: 1920, height: 1080 },
+});
+
+// Usa demo-app pois é o modo padrão para testes
+const BASE_PATH = '/demo-app';
+
+// Helper para navegar para Machines
+async function goToMachines(page) {
+  await page.goto(`${BASE_PATH}/machines`);
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(2000);
+}
+
+// Helper para navegar para Settings
+async function goToSettings(page) {
+  await page.goto(`${BASE_PATH}/settings`);
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(1000);
+}
+
+// Helper para navegar para Failover Report
+async function goToFailoverReport(page) {
+  await page.goto(`${BASE_PATH}/failover-report`);
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(1000);
+}
+
+// Helper para navegar para Dashboard
+async function goToDashboard(page) {
+  await page.goto(BASE_PATH);
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(1000);
+}
+
+// ============================================================
+// TESTE 1: CPU Standby e Failover Automático
+// ============================================================
 test.describe('🔄 CPU Standby e Failover Automático', () => {
 
   test('Verificar que máquina tem CPU Standby configurado', async ({ page }) => {
-    // Ir para a página de máquinas
-    await page.goto('/app/machines');
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await goToMachines(page);
 
     // Em demo mode, os dados mockados já têm máquinas com CPU Standby
     // Procurar por indicação de backup (texto ou botão)
-    const hasBackupBadge = await page.getByText(/Backup|CPU Standby|Pronto para failover/i).first().isVisible({ timeout: 5000 }).catch(() => false);
-    const hasBackupButton = await page.getByRole('button', { name: /Backup/i }).first().isVisible({ timeout: 3000 }).catch(() => false);
-    const hasGCPText = await page.getByText(/GCP|gcp/i).first().isVisible({ timeout: 3000 }).catch(() => false);
+    const hasBackupBadge = await page.getByText(/Backup|CPU Standby|Pronto para failover/i).first().isVisible().catch(() => false);
+    const hasBackupButton = await page.getByRole('button', { name: /Backup/i }).first().isVisible().catch(() => false);
+    const hasGCPText = await page.getByText(/GCP|gcp/i).first().isVisible().catch(() => false);
 
     if (hasBackupBadge || hasBackupButton || hasGCPText) {
       console.log('✅ Indicação de CPU Standby/Backup encontrada');
     } else {
       // Verificar se tem alguma máquina com indicação de standby no card
-      const hasMachineCard = await page.locator('[data-testid*="machine-card"]').first().isVisible({ timeout: 5000 }).catch(() => false);
-      const hasAnyMachine = await page.getByText(/RTX|A100|H100/i).first().isVisible({ timeout: 5000 }).catch(() => false);
+      const hasMachineCard = await page.locator('[data-testid*="machine-card"]').first().isVisible().catch(() => false);
+      const hasAnyMachine = await page.getByText(/RTX|A100|H100/i).first().isVisible().catch(() => false);
 
       if (hasAnyMachine || hasMachineCard) {
         console.log('✅ Máquinas encontradas - CPU Standby pode estar disponível via API');
@@ -47,25 +76,22 @@ test.describe('🔄 CPU Standby e Failover Automático', () => {
     }
 
     // O teste passa se encontrou qualquer indicação de failover/backup ou máquinas
-    const hasMachines = await page.getByText(/RTX|A100|H100|4090|3090/i).first().isVisible({ timeout: 3000 }).catch(() => false);
+    const hasMachines = await page.getByText(/RTX|A100|H100|4090|3090/i).first().isVisible().catch(() => false);
     expect(hasBackupBadge || hasBackupButton || hasGCPText || hasMachines).toBeTruthy();
     console.log('✅ Página de máquinas carregada com informações de failover');
   });
 
   test('Simular failover completo: GPU roubada → CPU Standby → Nova GPU', async ({ page }) => {
-    // Ir para a página de máquinas
-    await page.goto('/app/machines');
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await goToMachines(page);
 
     // 1. Verificar que existem máquinas GPU
-    const gpuText = await page.getByText(/RTX|A100|H100|4090|3090/i).first().textContent({ timeout: 5000 }).catch(() => null);
+    const gpuText = await page.getByText(/RTX|A100|H100|4090|3090/i).first().textContent().catch(() => null);
     if (gpuText) {
       console.log(`🖥️ GPU encontrada: ${gpuText}`);
     }
 
     // 2. Verificar se existe o botão "Simular Failover" (só aparece em demo mode com CPU Standby)
-    const hasSimulateButton = await page.getByRole('button', { name: /Simular/i }).first().isVisible({ timeout: 5000 }).catch(() => false);
+    const hasSimulateButton = await page.getByRole('button', { name: /Simular/i }).first().isVisible().catch(() => false);
 
     if (hasSimulateButton) {
       // Clicar no botão de simular
@@ -74,7 +100,7 @@ test.describe('🔄 CPU Standby e Failover Automático', () => {
 
       // Aguardar e verificar se aparece painel de progresso
       await page.waitForTimeout(1000);
-      const hasProgressPanel = await page.locator('[data-testid="failover-progress-panel"]').isVisible({ timeout: 5000 }).catch(() => false);
+      const hasProgressPanel = await page.locator('[data-testid="failover-progress-panel"]').isVisible().catch(() => false);
 
       if (hasProgressPanel) {
         console.log('✅ Painel de progresso do failover visível');
@@ -97,34 +123,29 @@ test.describe('🔄 CPU Standby e Failover Automático', () => {
       console.log('ℹ️ Botão "Simular Failover" não encontrado - verificando alternativas');
 
       // Verificar se existe botão/badge de Failover
-      const hasFailoverButton = await page.getByRole('button', { name: /Failover/i }).first().isVisible({ timeout: 3000 }).catch(() => false);
+      const hasFailoverButton = await page.getByRole('button', { name: /Failover/i }).first().isVisible().catch(() => false);
       if (hasFailoverButton) {
         console.log('✅ Botão de Failover disponível (migração/configuração)');
       }
 
       // Verificar se existem estratégias de failover configuráveis
-      const hasStrategySelector = await page.locator('[data-testid="failover-strategy-container"]').first().isVisible({ timeout: 3000 }).catch(() => false);
+      const hasStrategySelector = await page.locator('[data-testid="failover-strategy-container"]').first().isVisible().catch(() => false);
       if (hasStrategySelector) {
         console.log('✅ Seletor de estratégia de failover disponível');
       }
     }
 
     // Verificação final - página funciona
-    const hasMachines = await page.getByText(/RTX|A100|H100|4090|3090/i).first().isVisible({ timeout: 3000 }).catch(() => false);
+    const hasMachines = await page.getByText(/RTX|A100|H100|4090|3090/i).first().isVisible().catch(() => false);
     expect(hasMachines || hasSimulateButton).toBeTruthy();
     console.log('✅ Funcionalidades de failover verificadas');
   });
 
   test('Verificar que máquina está Online após failover', async ({ page }) => {
-    // Verificar se já está na página antes de navegar
-    if (!page.url().includes('/app/machines')) {
-      await page.goto('/app/machines');
-    }
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await goToMachines(page);
 
     // Verificar que existem máquinas online (usar getByText com .first())
-    const hasOnline = await page.getByText('Online').first().isVisible({ timeout: 5000 }).catch(() => false);
+    const hasOnline = await page.getByText('Online').first().isVisible().catch(() => false);
 
     if (hasOnline) {
       console.log('✅ Máquina online encontrada');
@@ -133,7 +154,7 @@ test.describe('🔄 CPU Standby e Failover Automático', () => {
       const hasBackup = await page.getByRole('button', { name: /Backup/i })
         .filter({ hasNotText: /Sem backup/i })
         .first()
-        .isVisible({ timeout: 5000 })
+        .isVisible()
         .catch(() => false);
 
       if (hasBackup) {
@@ -147,7 +168,7 @@ test.describe('🔄 CPU Standby e Failover Automático', () => {
         await page.waitForTimeout(1000);
 
         // Verificar estado "ready" do standby
-        const isReady = await page.getByText(/Pronto para failover|ready/i).first().isVisible({ timeout: 5000 }).catch(() => false);
+        const isReady = await page.getByText(/Pronto para failover|ready/i).first().isVisible().catch(() => false);
         if (isReady) {
           console.log('✅ CPU Standby pronto para próximo failover');
         }
@@ -160,12 +181,13 @@ test.describe('🔄 CPU Standby e Failover Automático', () => {
   });
 
   test('Verificar configuração de CPU Standby em Settings', async ({ page }) => {
-    await page.goto('/app/settings');
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000);
+    await goToSettings(page);
 
     // Fechar modal de boas-vindas se aparecer (usar getByText com .first())
     const skipButton = page.getByText('Pular tudo').first();
+    if (await skipButton.isVisible().catch(() => false)) {
+    // Fechar modal de boas-vindas se aparecer (bilingual: PT/EN/ES)
+    const skipButton = page.getByText(/Pular tudo|Skip All|Saltar todo/i).first();
     if (await skipButton.isVisible({ timeout: 2000 }).catch(() => false)) {
       await skipButton.click({ force: true });
       await page.waitForTimeout(500);
@@ -173,21 +195,21 @@ test.describe('🔄 CPU Standby e Failover Automático', () => {
 
     // Clicar na aba de Failover/CPU Standby (usar getByRole)
     const failoverTab = page.getByRole('button', { name: /CPU Failover|Failover/i }).first();
-    const hasFailoverTab = await failoverTab.isVisible({ timeout: 5000 }).catch(() => false);
+    const hasFailoverTab = await failoverTab.isVisible().catch(() => false);
 
     if (hasFailoverTab) {
       await failoverTab.click({ force: true });
       await page.waitForTimeout(1000);
 
       // Verificar elementos de configuração (usar getByText)
-      const hasConfigElements = await page.getByText(/Auto-Failover|Auto-Recovery|CPU Standby|R2/i).first().isVisible({ timeout: 5000 }).catch(() => false);
+      const hasConfigElements = await page.getByText(/Auto-Failover|Auto-Recovery|CPU Standby|R2/i).first().isVisible().catch(() => false);
 
       if (hasConfigElements) {
         console.log('✅ Configuração de CPU Failover visível em Settings');
       }
 
       // Verificar estimativa de custo (usar getByText)
-      const hasCostEstimate = await page.getByText(/Estimativa de Custo|\$\d+/i).first().isVisible({ timeout: 5000 }).catch(() => false);
+      const hasCostEstimate = await page.getByText(/Estimativa de Custo|\$\d+/i).first().isVisible().catch(() => false);
       if (hasCostEstimate) {
         console.log('✅ Estimativa de custo do R2 visível');
       }
@@ -200,23 +222,23 @@ test.describe('🔄 CPU Standby e Failover Automático', () => {
 
 });
 
+// ============================================================
+// TESTE 2: Métricas e Status do CPU Standby
+// ============================================================
 test.describe('📊 Métricas e Status do CPU Standby', () => {
 
   test('Verificar métricas de sync do CPU Standby', async ({ page }) => {
-    // Ir para página de máquinas
-    await page.goto('/app/machines');
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await goToMachines(page);
 
     // Verificar se existem máquinas com informações de CPU Standby/Backup
     // Em demo mode, os dados já incluem máquinas com cpu_standby configurado
     const hasBackupButton = await page.getByRole('button', { name: /Backup/i })
       .filter({ hasNotText: /Sem backup/i })
       .first()
-      .isVisible({ timeout: 5000 })
+      .isVisible()
       .catch(() => false);
 
-    const hasBackupText = await page.getByText(/Backup|Standby|GCP|gcp/i).first().isVisible({ timeout: 3000 }).catch(() => false);
+    const hasBackupText = await page.getByText(/Backup|Standby|GCP|gcp/i).first().isVisible().catch(() => false);
 
     if (hasBackupButton) {
       // Abrir popover de backup (com force)
@@ -227,19 +249,19 @@ test.describe('📊 Métricas e Status do CPU Standby', () => {
       await page.waitForTimeout(1000);
 
       // Verificar sync count (usar getByText)
-      const hasSyncCount = await page.getByText(/syncs|sincroniza/i).first().isVisible({ timeout: 5000 }).catch(() => false);
+      const hasSyncCount = await page.getByText(/syncs|sincroniza/i).first().isVisible().catch(() => false);
       if (hasSyncCount) {
         console.log('✅ Contador de syncs visível');
       }
 
       // Verificar custo/hora (usar getByText)
-      const hasCost = await page.getByText(/\$0\.0\d+\/h|custo/i).first().isVisible({ timeout: 5000 }).catch(() => false);
+      const hasCost = await page.getByText(/\$0\.0\d+\/h|custo/i).first().isVisible().catch(() => false);
       if (hasCost) {
         console.log('✅ Custo por hora do standby visível');
       }
 
       // Verificar zone (usar getByText)
-      const hasZone = await page.getByText(/us-|europe-|asia-/i).first().isVisible({ timeout: 5000 }).catch(() => false);
+      const hasZone = await page.getByText(/us-|europe-|asia-/i).first().isVisible().catch(() => false);
       if (hasZone) {
         console.log('✅ Zona do GCP visível');
       }
@@ -251,31 +273,28 @@ test.describe('📊 Métricas e Status do CPU Standby', () => {
       expect(hasBackupText).toBeTruthy();
     } else {
       // Verificar se pelo menos tem máquinas GPU (mínimo esperado)
-      const hasMachines = await page.getByText(/RTX|A100|H100|4090|3090/i).first().isVisible({ timeout: 5000 }).catch(() => false);
+      const hasMachines = await page.getByText(/RTX|A100|H100|4090|3090/i).first().isVisible().catch(() => false);
       expect(hasMachines).toBeTruthy();
       console.log('✅ Máquinas GPU encontradas - funcionalidade de backup pode estar em outro formato');
     }
   });
 
   test('Verificar custo total inclui CPU Standby', async ({ page }) => {
-    // Ir para página de máquinas
-    await page.goto('/app/machines');
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await goToMachines(page);
 
     // Verificar que existe máquina com custos
-    const hasCost = await page.getByText(/\$\d+\.\d+/).first().isVisible({ timeout: 5000 }).catch(() => false);
+    const hasCost = await page.getByText(/\$\d+\.\d+/).first().isVisible().catch(() => false);
 
     if (hasCost) {
       // Verificar que mostra "+backup" no custo ou outro indicador
-      const hasBackupCost = await page.getByText('+backup').first().isVisible({ timeout: 3000 }).catch(() => false);
+      const hasBackupCost = await page.getByText('+backup').first().isVisible().catch(() => false);
 
       if (hasBackupCost) {
         console.log('✅ Indicador de custo +backup visível');
       }
 
       // Verificar valor do custo
-      const costText = await page.getByText(/\$\d+\.\d+/).first().textContent({ timeout: 5000 }).catch(() => '');
+      const costText = await page.getByText(/\$\d+\.\d+/).first().textContent().catch(() => '');
 
       if (costText) {
         console.log(`✅ Custo total visível: ${costText}`);
@@ -284,7 +303,7 @@ test.describe('📊 Métricas e Status do CPU Standby', () => {
       expect(hasBackupCost || costText).toBeTruthy();
     } else {
       // Verificar que existem máquinas GPU (mínimo esperado)
-      const hasMachines = await page.getByText(/RTX|A100|H100|4090|3090/i).first().isVisible({ timeout: 5000 }).catch(() => false);
+      const hasMachines = await page.getByText(/RTX|A100|H100|4090|3090/i).first().isVisible().catch(() => false);
       expect(hasMachines).toBeTruthy();
       console.log('✅ Máquinas GPU encontradas - custos podem estar em formato diferente');
     }
@@ -292,6 +311,9 @@ test.describe('📊 Métricas e Status do CPU Standby', () => {
 
 });
 
+// ============================================================
+// TESTE 3: Relatório de Failover
+// ============================================================
 test.describe('📈 Relatório de Failover', () => {
 
   // Helper para verificar se a aba de failover está disponível
@@ -300,8 +322,8 @@ test.describe('📈 Relatório de Failover', () => {
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(1000);
 
-    // Fechar modal de boas-vindas se aparecer (usar getByText)
-    const skipButton = page.getByText('Pular tudo').first();
+    // Fechar modal de boas-vindas se aparecer (bilingual: PT/EN/ES)
+    const skipButton = page.getByText(/Pular tudo|Skip All|Saltar todo/i).first();
     if (await skipButton.isVisible({ timeout: 2000 }).catch(() => false)) {
       await skipButton.click({ force: true });
       await page.waitForTimeout(500);
@@ -322,10 +344,7 @@ test.describe('📈 Relatório de Failover', () => {
   }
 
   test('Verificar página de relatório de failover', async ({ page }) => {
-    // Navegar para página de failover-report
-    await page.goto('/app/failover-report');
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000);
+    await goToFailoverReport(page);
 
     // Verificar que a página carregou
     const hasContent = await page.locator('main, [role="main"]').isVisible().catch(() => false);
@@ -343,9 +362,7 @@ test.describe('📈 Relatório de Failover', () => {
   });
 
   test('Verificar métricas de latência na página de failover', async ({ page }) => {
-    await page.goto('/app/failover-report');
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000);
+    await goToFailoverReport(page);
 
     // Verificar se há métricas de latência (ms, sec, tempo, etc)
     const latencyPatterns = /\d+\s*(ms|sec|s|min|segundos|minutos)|latência|latency|tempo/i;
@@ -364,9 +381,7 @@ test.describe('📈 Relatório de Failover', () => {
   });
 
   test('Verificar histórico de failovers na página', async ({ page }) => {
-    await page.goto('/app/failover-report');
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000);
+    await goToFailoverReport(page);
 
     // Verificar se há lista/tabela/grid com histórico
     const hasList = await page.locator('[class*="grid"], [class*="list"], table, [role="table"]').first().isVisible().catch(() => false);
@@ -386,13 +401,11 @@ test.describe('📈 Relatório de Failover', () => {
   });
 
   test('Verificar navegação do menu para failover', async ({ page }) => {
-    // Navegar para dashboard primeiro
-    await page.goto('/app');
-    await page.waitForLoadState('domcontentloaded');
+    await goToDashboard(page);
 
     // Tentar encontrar link para failover no menu
     const failoverLink = page.getByRole('link', { name: /failover|backup|relatório/i }).first();
-    const hasLink = await failoverLink.isVisible({ timeout: 5000 }).catch(() => false);
+    const hasLink = await failoverLink.isVisible().catch(() => false);
 
     if (hasLink) {
       await failoverLink.click({ force: true });
@@ -400,22 +413,19 @@ test.describe('📈 Relatório de Failover', () => {
       console.log('✅ Navegou para seção de failover via menu');
     } else {
       // Tentar Settings > Failover
-      await page.goto('/app/settings');
-      await page.waitForLoadState('domcontentloaded');
+      await goToSettings(page);
 
       const hasFailoverInSettings = await page.getByText(/failover|backup|cpu standby/i).first().isVisible().catch(() => false);
       if (hasFailoverInSettings) {
         console.log('✅ Configurações de failover em Settings');
       } else {
-        console.log('ℹ️ Failover acessível via /app/failover-report');
+        console.log('ℹ️ Failover acessível via /demo-app/failover-report');
       }
     }
   });
 
   test('Verificar estatísticas de failover no dashboard', async ({ page }) => {
-    await page.goto('/app');
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000);
+    await goToDashboard(page);
 
     // Procurar por cards/métricas relacionadas a failover
     const statsPatterns = ['Backup', 'Failover', 'Recovery', 'Disponibilidade', 'Uptime', 'CPU Standby', 'GPU', 'Economia', 'Savings'];

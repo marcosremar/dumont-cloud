@@ -699,5 +699,121 @@ class AIWizardService:
                 "recommendations": "Baseado no projeto, recomendo GPUs com VRAM adequada."
             }
 
-        # Singleton instance
+    async def get_cost_optimization_recommendations(
+        self,
+        user_id: str,
+        instance_id: str,
+        days_to_analyze: int = 30,
+        current_hibernation_timeout: int = 0
+    ) -> Dict[str, Any]:
+        """
+        Get comprehensive cost optimization recommendations based on usage patterns.
+
+        Analyzes historical GPU usage data to provide:
+        - GPU-to-workload matching (upgrade/downgrade suggestions)
+        - Hibernation timeout optimization
+        - Spot instance timing recommendations
+        - Estimated monthly cost savings
+
+        Args:
+            user_id: User identifier
+            instance_id: Instance identifier
+            days_to_analyze: Number of days of history to analyze (default 30)
+            current_hibernation_timeout: Current hibernation timeout in minutes (0 = disabled)
+
+        Returns:
+            Dict containing:
+            - current_configuration: Current GPU, utilization, and monthly cost
+            - recommendations: List of optimization recommendations
+            - estimated_monthly_savings: Total potential savings in USD
+            - current_gpu: Current GPU type
+            - recommended_gpu: Suggested GPU type (same if optimal)
+            - analysis_period_days: Days of data analyzed
+            - data_completeness: Ratio of expected vs actual data points
+        """
+        try:
+            # Import and use cost optimization service
+            from services.cost_optimization_service import CostOptimizationService
+
+            service = CostOptimizationService()
+
+            # Get comprehensive recommendations
+            result = service.get_comprehensive_recommendations(
+                user_id=user_id,
+                instance_id=instance_id,
+                current_hibernation_timeout=current_hibernation_timeout,
+                days=days_to_analyze
+            )
+
+            # Extract GPU recommendation info
+            current_config = result.get("current_configuration", {})
+            current_gpu = current_config.get("gpu_type", "Unknown")
+            recommendations = result.get("recommendations", [])
+
+            # Find GPU recommendation if exists
+            gpu_rec = next(
+                (r for r in recommendations if r.get("type") in ["gpu_downgrade", "gpu_upgrade", "gpu_match"]),
+                None
+            )
+            recommended_gpu = gpu_rec.get("recommended_gpu", current_gpu) if gpu_rec else current_gpu
+
+            # Check for warning (insufficient data)
+            warning = result.get("warning")
+            if warning:
+                logger.warning(f"Cost optimization warning for user={user_id}: {warning}")
+
+            # Build response in the expected format
+            response = {
+                "success": True,
+                "current_configuration": current_config,
+                "recommendations": recommendations,
+                "estimated_monthly_savings": result.get("total_estimated_monthly_savings_usd", 0.0),
+                "current_gpu": current_gpu,
+                "recommended_gpu": recommended_gpu,
+                "analysis_period_days": result.get("analysis_period_days", days_to_analyze),
+                "data_completeness": result.get("data_completeness", 0.0),
+            }
+
+            # Add warning if present
+            if warning:
+                response["warning"] = warning
+                response["has_sufficient_data"] = False
+            else:
+                response["has_sufficient_data"] = True
+
+            # Add message if already optimal
+            if not recommendations:
+                response["message"] = "Your setup is already optimized. No significant improvements detected."
+
+            logger.info(
+                f"Cost optimization analysis complete for user={user_id}, instance={instance_id}. "
+                f"Found {len(recommendations)} recommendations with ${response['estimated_monthly_savings']:.2f} potential savings."
+            )
+
+            return response
+
+        except ImportError as e:
+            logger.error(f"Failed to import CostOptimizationService: {e}")
+            return {
+                "success": False,
+                "error": "Cost optimization service not available",
+                "recommendations": [],
+                "estimated_monthly_savings": 0.0,
+                "current_gpu": "Unknown",
+                "recommended_gpu": "Unknown",
+            }
+
+        except Exception as e:
+            logger.error(f"Error getting cost optimization recommendations: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "recommendations": [],
+                "estimated_monthly_savings": 0.0,
+                "current_gpu": "Unknown",
+                "recommended_gpu": "Unknown",
+            }
+
+
+# Singleton instance
 ai_wizard_service = AIWizardService()

@@ -94,6 +94,20 @@ class LLMSettings(BaseSettings):
     model_name: str = Field(default="gpt-4o", validation_alias=AliasChoices("model_name", "LLM_MODEL_NAME"))
 
 
+class MailSettings(BaseSettings):
+    """Email configuration for notifications and verification"""
+    model_config = SettingsConfigDict(env_prefix="MAIL_", extra="ignore")
+
+    username: str = Field(default="", validation_alias=AliasChoices("username", "MAIL_USERNAME"))
+    password: str = Field(default="", validation_alias=AliasChoices("password", "MAIL_PASSWORD"))
+    mail_from: str = Field(default="noreply@dumontcloud.com", validation_alias=AliasChoices("mail_from", "MAIL_FROM"))
+    port: int = Field(default=587, validation_alias=AliasChoices("port", "MAIL_PORT"))
+    server: str = Field(default="smtp.gmail.com", validation_alias=AliasChoices("server", "MAIL_SERVER"))
+    starttls: bool = Field(default=True, validation_alias=AliasChoices("starttls", "MAIL_STARTTLS"))
+    ssl_tls: bool = Field(default=False, validation_alias=AliasChoices("ssl_tls", "MAIL_SSL_TLS"))
+    frontend_url: str = Field(default="http://localhost:8000", validation_alias=AliasChoices("frontend_url", "FRONTEND_URL"))
+
+
 class Settings(BaseSettings):
     """Main settings container"""
     model_config = SettingsConfigDict(extra="ignore")
@@ -104,6 +118,7 @@ class Settings(BaseSettings):
     vast: VastSettings = Field(default_factory=VastSettings)
     agent: DumontAgentSettings = Field(default_factory=DumontAgentSettings)
     llm: LLMSettings = Field(default_factory=LLMSettings)
+    mail: MailSettings = Field(default_factory=MailSettings)
 
 
 # Singleton instance

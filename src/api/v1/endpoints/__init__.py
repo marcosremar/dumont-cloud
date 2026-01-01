@@ -2,6 +2,7 @@
 API endpoints
 """
 from . import auth
+from . import oidc
 from . import instances
 from . import snapshots
 from . import settings
@@ -13,9 +14,13 @@ from . import failover_settings
 from . import failover
 from . import serverless
 from . import machine_history
+from . import teams
+from . import roles
+from . import users
 
 __all__ = [
     'auth',
+    'oidc',
     'instances',
     'snapshots',
     'settings',
@@ -27,5 +32,8 @@ __all__ = [
     'failover',
     'serverless',
     'machine_history',
+    'teams',
+    'roles',
+    'users',
 ]
 

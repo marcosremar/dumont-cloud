@@ -1,13 +1,62 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useState, useEffect, useCallback } from "react";
+import { Link, useSearchParams } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
+import {
+  validateReferralCode,
+  clearValidation,
+  selectValidatedCodeInfo,
+  selectValidating,
+  selectValidationError,
+} from "../../../store/slices/referralSlice";
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [referralCode, setReferralCode] = useState("");
+  const [searchParams] = useSearchParams();
+
+  const dispatch = useDispatch();
+  const validatedCodeInfo = useSelector(selectValidatedCodeInfo);
+  const validating = useSelector(selectValidating);
+  const validationError = useSelector(selectValidationError);
+
+  // Pre-fill referral code from URL params (?ref=ABC123)
+  useEffect(() => {
+    const refCode = searchParams.get("ref");
+    if (refCode) {
+      setReferralCode(refCode.toUpperCase());
+      dispatch(validateReferralCode(refCode));
+    }
+    // Cleanup validation state on unmount
+    return () => {
+      dispatch(clearValidation());
+    };
+  }, [searchParams, dispatch]);
+
+  // Debounced validation when user types referral code
+  const handleReferralCodeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const code = e.target.value.toUpperCase();
+      setReferralCode(code);
+
+      // Clear validation if empty
+      if (!code.trim()) {
+        dispatch(clearValidation());
+        return;
+      }
+
+      // Validate if code is at least 6 characters (minimum valid length)
+      if (code.length >= 6) {
+        dispatch(validateReferralCode(code));
+      }
+    },
+    [dispatch]
+  );
+
   return (
     <div className="flex flex-col flex-1 w-full overflow-y-auto lg:w-1/2 no-scrollbar">
       <div className="w-full max-w-md mx-auto mb-5 sm:pt-10">
@@ -143,6 +192,100 @@ export default function SignUpForm() {
                       )}
                     </span>
                   </div>
+                </div>
+                {/* <!-- Referral Code --> */}
+                <div>
+                  <Label>
+                    Referral Code{" "}
+                    <span className="text-gray-400 dark:text-gray-500">
+                      (optional)
+                    </span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      id="referralCode"
+                      name="referralCode"
+                      placeholder="Enter referral code"
+                      value={referralCode}
+                      onChange={handleReferralCodeChange}
+                      className={
+                        validatedCodeInfo?.valid
+                          ? "border-success-500 focus:border-success-500"
+                          : validationError
+                          ? "border-error-500 focus:border-error-500"
+                          : ""
+                      }
+                    />
+                    {validating && (
+                      <span className="absolute -translate-y-1/2 right-4 top-1/2">
+                        <svg
+                          className="w-5 h-5 text-gray-400 animate-spin"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                      </span>
+                    )}
+                    {!validating && validatedCodeInfo?.valid && (
+                      <span className="absolute -translate-y-1/2 right-4 top-1/2">
+                        <svg
+                          className="w-5 h-5 text-success-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </span>
+                    )}
+                    {!validating && validationError && referralCode && (
+                      <span className="absolute -translate-y-1/2 right-4 top-1/2">
+                        <svg
+                          className="w-5 h-5 text-error-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </span>
+                    )}
+                  </div>
+                  {validatedCodeInfo?.valid && (
+                    <p className="mt-1.5 text-sm text-success-500">
+                      Valid code! You'll receive ${validatedCodeInfo.welcomeCredit || 10} welcome credit.
+                    </p>
+                  )}
+                  {validationError && referralCode && (
+                    <p className="mt-1.5 text-sm text-error-500">
+                      {validationError}
+                    </p>
+                  )}
                 </div>
                 {/* <!-- Checkbox --> */}
                 <div className="flex items-center gap-3">

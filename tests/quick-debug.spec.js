@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-test('Quick debug - Click Iniciar and check console', async ({ page }) => {
+test('Quick debug - Click Start/Iniciar and check console', async ({ page }) => {
   // Collect console logs
   const logs = [];
   page.on('console', msg => {
@@ -43,19 +43,19 @@ test('Quick debug - Click Iniciar and check console', async ({ page }) => {
     }
   }
 
-  console.log('4. Finding Iniciar button...');
-  const iniciarButton = page.locator('button:has-text("Iniciar")').first();
+  console.log('4. Finding Start/Iniciar button...');
+  const iniciarButton = page.locator('button').filter({ hasText: /^Start$|^Iniciar$/i }).first();
 
   const exists = await iniciarButton.count() > 0;
   console.log(`   Button exists: ${exists}`);
 
   if (!exists) {
-    console.log('   ERROR: No Iniciar button found!');
+    console.log('   ERROR: No Start/Iniciar button found!');
     await page.screenshot({ path: '/tmp/quick-debug-no-button.png', fullPage: true });
-    throw new Error('No Iniciar button found');
+    throw new Error('No Start/Iniciar button found');
   }
 
-  console.log('5. Clicking Iniciar button...');
+  console.log('5. Clicking Start/Iniciar button...');
   await iniciarButton.click();
 
   console.log('6. Waiting 3 seconds for changes...');

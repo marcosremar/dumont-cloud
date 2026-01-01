@@ -5,6 +5,9 @@ import App from "./App"
 import DevBar from "./components/DevBar"
 import "./styles/index.css"
 
+// Initialize i18n before React renders - must be imported at entry point
+import "./i18n"
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   // StrictMode desabilitado temporariamente - causa flickering
   // <React.StrictMode>

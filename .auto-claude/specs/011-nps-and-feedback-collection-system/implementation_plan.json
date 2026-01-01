@@ -1,0 +1,497 @@
+{
+  "feature": "NPS and Feedback Collection System",
+  "workflow_type": "feature",
+  "workflow_rationale": "This is a new feature implementation adding user satisfaction measurement capabilities to the platform. It requires new UI components, backend APIs, database schema, and integration with existing user workflows. Follows the FEATURE workflow pattern with phases ordered by service dependencies: Database \u2192 Backend \u2192 Frontend State \u2192 Frontend UI \u2192 Integration.",
+  "phases": [
+    {
+      "id": "phase-1-database",
+      "name": "Database Schema",
+      "type": "setup",
+      "description": "Create database migration and SQLAlchemy models for NPS data storage",
+      "depends_on": [],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-1-1",
+          "description": "Create SQLAlchemy models for NPS responses, config, and user interactions",
+          "service": "backend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "src/models/nps.py"
+          ],
+          "patterns_from": [
+            "src/models/price_history.py",
+            "src/models/instance_status.py"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"from src.models.nps import NPSResponse, NPSSurveyConfig, NPSUserInteraction; print('Models imported successfully')\"",
+            "expected": "Models imported successfully"
+          },
+          "status": "completed",
+          "notes": "Created SQLAlchemy models for NPS system: NPSResponse (survey responses with score, comment, category tracking), NPSSurveyConfig (trigger configurations), NPSUserInteraction (rate limiting). All models include proper indexes, __repr__, and to_dict() methods following existing patterns.",
+          "updated_at": "2025-12-31T21:37:54.117303+00:00"
+        },
+        {
+          "id": "subtask-1-2",
+          "description": "Create SQL migration file for NPS tables",
+          "service": "backend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "migrations/002_create_nps_tables.sql"
+          ],
+          "patterns_from": [
+            "migrations/001_add_failover_metrics.sql"
+          ],
+          "verification": {
+            "type": "manual",
+            "instructions": "Review migration SQL to ensure tables are created with proper constraints and indexes. Should include: CREATE TABLE statements for all 3 tables, indexes on user_id and created_at columns, default values for nps_survey_config"
+          },
+          "status": "completed",
+          "notes": "Created SQL migration file migrations/002_create_nps_tables.sql with: 1) nps_responses table - stores survey responses with score, comment, category, and follow-up tracking fields, 2) nps_survey_config table - configures triggers with default rows for first_deployment, monthly, issue_resolution, 3) nps_user_interactions table - tracks survey interactions for rate limiting. Includes all indexes on user_id and created_at columns, composite indexes for performance, check constraints, and foreign key reference from interactions to responses.",
+          "updated_at": "2025-12-31T21:40:13.874451+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-2-backend",
+      "name": "Backend API",
+      "type": "implementation",
+      "description": "Build FastAPI endpoints for NPS submission, retrieval, and trigger logic",
+      "depends_on": [
+        "phase-1-database"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-2-1",
+          "description": "Create Pydantic schemas for NPS API requests and responses",
+          "service": "backend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "src/api/v1/schemas/nps.py"
+          ],
+          "patterns_from": [
+            "src/api/v1/schemas/request.py",
+            "src/api/v1/schemas/response.py"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"from src.api.v1.schemas.nps import NPSSubmissionRequest, NPSTrendsResponse, NPSShouldShowResponse; print('Schemas imported successfully')\"",
+            "expected": "Schemas imported successfully"
+          },
+          "status": "completed",
+          "notes": "Created src/api/v1/schemas/nps.py with comprehensive Pydantic schemas for NPS API. Includes request schemas (NPSSubmissionRequest, NPSDismissRequest, NPSFollowupUpdateRequest) and response schemas (NPSSubmissionResponse, NPSShouldShowResponse, NPSTrendsResponse, NPSDetractorsResponse, NPSListResponse, NPSConfigListResponse, NPSErrorResponse). All schemas include proper validation (score 0-10, trigger_type validation), Field descriptions, and follow existing patterns. Verification passed successfully.",
+          "updated_at": "2025-12-31T21:43:30.332073+00:00"
+        },
+        {
+          "id": "subtask-2-2",
+          "description": "Create NPS service with business logic for triggers and rate limiting",
+          "service": "backend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "src/domain/services/nps_service.py"
+          ],
+          "patterns_from": [
+            "src/domain/services/auth_service.py"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "python -c \"from src.domain.services.nps_service import NPSService; service = NPSService(); print('Service instantiated successfully')\"",
+            "expected": "Service instantiated successfully"
+          },
+          "status": "completed",
+          "notes": "Created NPSService domain service with comprehensive business logic: should_show_survey() for rate limiting (max 1 survey per user per frequency_days), submit_response() for NPS submission with automatic category calculation, record_dismissal() for tracking dismissals, get_trends() for admin dashboard data aggregation, get_detractors() for follow-up listing, update_followup() for marking follow-ups complete, and config management methods. Service follows auth_service.py pattern with proper logging, exception handling, and optional session injection for flexibility.",
+          "updated_at": "2025-12-31T21:48:35.034684+00:00"
+        },
+        {
+          "id": "subtask-2-3",
+          "description": "Create FastAPI endpoints for NPS operations",
+          "service": "backend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "src/api/v1/endpoints/nps.py"
+          ],
+          "patterns_from": [
+            "src/api/v1/endpoints/auth.py"
+          ],
+          "verification": {
+            "type": "api",
+            "method": "GET",
+            "url": "http://localhost:8000/api/v1/nps/should-show?trigger_type=monthly",
+            "expected_status": 200
+          },
+          "status": "completed",
+          "notes": "Created src/api/v1/endpoints/nps.py with FastAPI endpoints for NPS operations. Endpoints include: GET /should-show (rate limiting check), POST /submit (NPS response submission), POST /dismiss (record dismissal), GET /trends (admin dashboard data), GET /detractors (follow-up list), PUT /responses/{id}/followup (update follow-up status), GET /config (survey configs), PUT /config/{trigger_type} (update config). All endpoints follow auth.py patterns with proper error handling, validation, and authentication via get_current_user_email. Import verification passed successfully.",
+          "updated_at": "2025-12-31T21:54:12.664420+00:00"
+        },
+        {
+          "id": "subtask-2-4",
+          "description": "Register NPS router in main API router",
+          "service": "backend",
+          "files_to_modify": [
+            "src/api/v1/__init__.py"
+          ],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "grep -q 'from .endpoints import nps' src/api/v1/__init__.py && echo 'NPS router registered'",
+            "expected": "NPS router registered"
+          },
+          "status": "completed",
+          "notes": "Registered NPS router in main API router by adding 'nps' import and api_router.include_router(nps.router, tags=[\"NPS\"]) in src/api/v1/router.py",
+          "updated_at": "2025-12-31T21:56:55.509603+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-3-frontend-state",
+      "name": "Frontend State Management",
+      "type": "implementation",
+      "description": "Create Redux slice and custom hook for NPS state management",
+      "depends_on": [
+        "phase-2-backend"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-3-1",
+          "description": "Create NPS Redux slice with async thunks",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "web/src/store/slices/npsSlice.js"
+          ],
+          "patterns_from": [
+            "web/src/store/slices/authSlice.js"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "grep -q 'createSlice' web/src/store/slices/npsSlice.js && echo 'NPS slice created'",
+            "expected": "NPS slice created"
+          },
+          "status": "completed",
+          "notes": "Created comprehensive NPS Redux slice (web/src/store/slices/npsSlice.js) with: 1) Async thunks for all NPS operations (checkShouldShow, submitNPS, dismissNPS, fetchTrends, fetchDetractors, updateFollowup, fetchConfig), 2) Complete state management for survey modal, submission status, admin dashboard data, and config, 3) Synchronous reducers for modal control and form state, 4) Comprehensive selectors for all state slices. Follows authSlice.js patterns with proper error handling. Verification passed.",
+          "updated_at": "2025-12-31T21:59:39.133367+00:00"
+        },
+        {
+          "id": "subtask-3-2",
+          "description": "Register NPS slice in Redux store",
+          "service": "frontend",
+          "files_to_modify": [
+            "web/src/store/index.js"
+          ],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "grep -q 'npsSlice' web/src/store/index.js && echo 'NPS slice registered'",
+            "expected": "NPS slice registered"
+          },
+          "status": "completed",
+          "notes": "Registered NPS slice in Redux store by adding import and including nps: npsSlice in the reducer configuration. Verification passed.",
+          "updated_at": "2025-12-31T22:01:39.707442+00:00"
+        },
+        {
+          "id": "subtask-3-3",
+          "description": "Create useNPSTrigger custom hook for trigger and rate limit logic",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "web/src/hooks/useNPSTrigger.js"
+          ],
+          "patterns_from": [
+            "web/src/hooks/"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "grep -q 'useNPSTrigger' web/src/hooks/useNPSTrigger.js && echo 'Hook created'",
+            "expected": "Hook created"
+          },
+          "status": "completed",
+          "notes": "Created useNPSTrigger custom hook (web/src/hooks/useNPSTrigger.js) with: 1) checkTrigger() to check if survey should show based on trigger type and rate limiting, 2) triggerSurvey() for manual override, 3) handleDismiss() to record dismissals, 4) handleSubmit() for survey submission with validation, 5) handleScoreChange() and handleCommentChange() for form state, 6) NPS_TRIGGER_TYPES constants export. Hook integrates with Redux state for auth checking and NPS slice operations. Follows existing hook patterns with useCallback for memoization. Verification passed.",
+          "updated_at": "2025-12-31T22:09:45.463022+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-4-frontend-ui",
+      "name": "Frontend UI Components",
+      "type": "implementation",
+      "description": "Build NPS survey modal and admin dashboard components",
+      "depends_on": [
+        "phase-3-frontend-state"
+      ],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-4-1",
+          "description": "Create NPSSurvey modal component with 0-10 score selection",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "web/src/components/NPSSurvey.jsx"
+          ],
+          "patterns_from": [
+            "web/src/components/ui/dialog.jsx",
+            "web/src/components/auth/LoginModal.jsx"
+          ],
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:8000/",
+            "checks": [
+              "Survey modal can be opened",
+              "0-10 score buttons render",
+              "Comment textarea works",
+              "Submit and dismiss buttons work"
+            ]
+          },
+          "status": "completed",
+          "notes": "Created NPSSurvey modal component (web/src/components/NPSSurvey.jsx) with: 1) 0-10 score selection buttons with color-coded visual feedback (red for detractors 0-6, yellow for passives 7-8, green for promoters 9-10), 2) Optional comment textarea with 1000 character limit, 3) Score category indicator showing Detractor/Passive/Promoter with contextual messaging, 4) Submit and dismiss buttons with loading states and disabled state handling, 5) Error display for submission failures, 6) Keyboard accessible with proper ARIA attributes (aria-label, aria-pressed), 7) Dark mode styling following HibernationConfigModal.jsx patterns, 8) NPSSurveyStandalone variant for independent usage. Component uses Dialog from ui/dialog.jsx, Button from ui/button.jsx, and Label from ui/label.jsx. Icons from lucide-react (MessageSquare, Send, ThumbsUp, ThumbsDown, Meh, X).",
+          "updated_at": "2025-12-31T22:17:28.602603+00:00"
+        },
+        {
+          "id": "subtask-4-2",
+          "description": "Integrate NPSSurvey into App.jsx with trigger logic",
+          "service": "frontend",
+          "files_to_modify": [
+            "web/src/App.jsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:8000/",
+            "checks": [
+              "Survey can appear based on trigger conditions",
+              "No console errors"
+            ]
+          },
+          "status": "completed",
+          "notes": "Integrated NPSSurvey into App.jsx with trigger logic. Added NPSSurveyManager component that uses useNPSTrigger hook with monthly trigger type and 5-second delay. Synced Redux auth state with App.jsx local state on login/logout/auth-check. Rendered NPSSurvey modal inside ToastProvider context.",
+          "updated_at": "2025-12-31T22:29:05.724755+00:00"
+        },
+        {
+          "id": "subtask-4-3",
+          "description": "Create NPSTrends admin dashboard page with charts",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [
+            "web/src/pages/Admin/NPSTrends.jsx"
+          ],
+          "patterns_from": [
+            "web/src/components/DashboardReports.jsx"
+          ],
+          "verification": {
+            "type": "browser",
+            "url": "http://localhost:8000/admin/nps",
+            "checks": [
+              "Trend chart displays",
+              "Detractor/Passive/Promoter breakdown shows",
+              "Date range filter works"
+            ]
+          },
+          "status": "completed",
+          "notes": "Created NPSTrends admin dashboard page (web/src/pages/Admin/NPSTrends.jsx) with comprehensive features: 1) NPS score trend line chart using Chart.js showing daily NPS scores over time, 2) Doughnut chart for Detractor/Passive/Promoter breakdown with percentages, 3) Summary stat cards showing NPS score, total responses, and individual category counts, 4) Date range filter with options for 7d, 30d, 90d, 1y, and all time, 5) Detractor follow-up list with ability to mark follow-ups complete and add notes, 6) Loading skeleton states and error handling, 7) Responsive design following DashboardReports.jsx and SavingsHistoryGraph.jsx patterns. Uses Redux selectors from npsSlice for state management (fetchTrends, fetchDetractors, updateFollowup). Route registration is handled in subtask-4-4.",
+          "updated_at": "2025-12-31T22:34:10.500796+00:00"
+        },
+        {
+          "id": "subtask-4-4",
+          "description": "Add NPSTrends route to application router",
+          "service": "frontend",
+          "files_to_modify": [
+            "web/src/App.jsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "grep -q 'NPSTrends' web/src/App.jsx && echo 'Route added'",
+            "expected": "Route added"
+          },
+          "status": "completed",
+          "notes": "Added NPSTrends route to application router. Imported NPSTrends component from pages/Admin/NPSTrends and added protected route at /app/admin/nps wrapped with ProtectedRoute and AppLayout components, consistent with other protected routes. Verification passed.",
+          "updated_at": "2025-12-31T22:36:08.172131+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-5-integration",
+      "name": "Integration and Verification",
+      "type": "integration",
+      "description": "Wire all services together and verify end-to-end NPS flow",
+      "depends_on": [
+        "phase-4-frontend-ui"
+      ],
+      "parallel_safe": false,
+      "subtasks": [
+        {
+          "id": "subtask-5-1",
+          "description": "End-to-end verification of NPS survey submission flow",
+          "all_services": true,
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "e2e",
+            "steps": [
+              "Start backend and frontend servers",
+              "Login as authenticated user",
+              "Trigger survey (manually or via trigger condition)",
+              "Submit NPS score 8 with comment 'Great product'",
+              "Verify response saved in database",
+              "Check survey doesn't reappear (rate limiting)",
+              "Submit score 3 (detractor) with new user",
+              "Verify detractor appears in admin dashboard"
+            ]
+          },
+          "status": "pending",
+          "notes": "Full integration test. Verify database persistence, rate limiting, and admin dashboard display."
+        },
+        {
+          "id": "subtask-5-2",
+          "description": "Apply database migration and verify tables exist",
+          "service": "backend",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "psql postgresql://dumont:dumont123@localhost:5432/dumont_cloud -c \"SELECT table_name FROM information_schema.tables WHERE table_name IN ('nps_responses', 'nps_survey_config', 'nps_user_interactions');\" | grep -q 'nps_responses' && echo 'Tables created'",
+            "expected": "Tables created"
+          },
+          "status": "pending",
+          "notes": "Run migration SQL file. Verify all 3 tables created with proper schema."
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_phases": 5,
+    "total_subtasks": 13,
+    "services_involved": [
+      "backend",
+      "frontend"
+    ],
+    "parallelism": {
+      "max_parallel_phases": 1,
+      "parallel_groups": [],
+      "recommended_workers": 1,
+      "speedup_estimate": "Sequential execution recommended due to tight dependencies between phases"
+    },
+    "startup_command": "source auto-claude/.venv/bin/activate && python auto-claude/run.py --spec 011 --parallel 1"
+  },
+  "verification_strategy": {
+    "risk_level": "medium",
+    "skip_validation": false,
+    "test_creation_phase": "post_implementation",
+    "test_types_required": [
+      "unit",
+      "integration"
+    ],
+    "security_scanning_required": false,
+    "staging_deployment_required": false,
+    "acceptance_criteria": [
+      "All existing tests pass",
+      "NPS responses stored in database with proper validation",
+      "Rate limiting prevents survey spam",
+      "Admin dashboard displays trends correctly",
+      "No security vulnerabilities in comment storage"
+    ],
+    "verification_steps": [
+      {
+        "name": "Unit Tests - Backend",
+        "command": "cd cli && pytest tests/",
+        "expected_outcome": "All existing tests pass",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Unit Tests - Frontend",
+        "command": "cd web && npm test",
+        "expected_outcome": "All tests pass",
+        "type": "test",
+        "required": false,
+        "blocking": false
+      },
+      {
+        "name": "Integration Test - NPS Flow",
+        "command": "pytest tests/integration/test_nps_flow.py",
+        "expected_outcome": "Survey submission, retrieval, and rate limiting work end-to-end",
+        "type": "test",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Database Verification",
+        "command": "psql postgresql://dumont:dumont123@localhost:5432/dumont_cloud -c \"SELECT COUNT(*) FROM nps_responses;\"",
+        "expected_outcome": "Tables exist and queries execute successfully",
+        "type": "manual",
+        "required": true,
+        "blocking": true
+      }
+    ],
+    "reasoning": "Medium risk change requires unit and integration test coverage. Database schema changes and user data collection must be thoroughly tested. Rate limiting logic is critical to prevent survey fatigue."
+  },
+  "qa_acceptance": {
+    "unit_tests": {
+      "required": true,
+      "commands": [
+        "pytest src/domain/services/test_nps_service.py",
+        "cd web && npm test -- NPSSurvey"
+      ],
+      "minimum_coverage": null
+    },
+    "integration_tests": {
+      "required": true,
+      "commands": [
+        "pytest tests/integration/test_nps_api.py"
+      ],
+      "services_to_test": [
+        "backend",
+        "frontend"
+      ]
+    },
+    "e2e_tests": {
+      "required": false,
+      "commands": [],
+      "flows": []
+    },
+    "browser_verification": {
+      "required": true,
+      "pages": [
+        {
+          "url": "http://localhost:8000/",
+          "checks": [
+            "Survey modal can be triggered",
+            "0-10 buttons clickable",
+            "Comment field accepts input",
+            "Submit works",
+            "Dismiss works"
+          ]
+        },
+        {
+          "url": "http://localhost:8000/admin/nps",
+          "checks": [
+            "Trend chart displays",
+            "Detractor list shows scores 0-6",
+            "No console errors"
+          ]
+        }
+      ]
+    },
+    "database_verification": {
+      "required": true,
+      "checks": [
+        "migrations-exist",
+        "migrations-applied",
+        "schema-valid",
+        "indexes-created"
+      ]
+    }
+  },
+  "qa_signoff": null,
+  "last_updated": "2025-12-31T22:36:08.172141+00:00"
+}

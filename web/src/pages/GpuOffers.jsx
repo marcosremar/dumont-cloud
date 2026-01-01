@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
 import {
   Sparkles,
   Zap,
@@ -14,9 +15,20 @@ import {
   Cpu,
   HardDrive,
   Gauge,
-  DollarSign
+  DollarSign,
+  Globe,
+  Shield,
+  MapPin
 } from 'lucide-react'
 import { Badge } from '../components/tailadmin-ui'
+import { RegionSelector, RegionComplianceBadge } from '../components/regions'
+import {
+  fetchRegions,
+  setSelectedRegion,
+  selectRegions,
+  selectSelectedRegion,
+  selectRegionsLoading,
+} from '../store/slices/regionsSlice'
 
 // Dados de GPUs com preços reais baseados em Vast.ai (Dezembro 2024)
 const GPU_OFFERS = [
@@ -219,13 +231,33 @@ const VRAM_FILTERS = [
 export default function GpuOffers() {
   const navigate = useNavigate()
   const location = useLocation()
+  const dispatch = useDispatch()
   const isDemo = location.pathname.startsWith('/demo-app')
   const basePath = isDemo ? '/demo-app' : '/app'
+
+  // Region state from Redux
+  const regions = useSelector(selectRegions)
+  const selectedRegion = useSelector(selectSelectedRegion)
+  const regionsLoading = useSelector(selectRegionsLoading)
 
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('price-asc')
   const [vramFilter, setVramFilter] = useState('all')
   const [showEnterprise, setShowEnterprise] = useState(true)
+  const [showRegionSelector, setShowRegionSelector] = useState(false)
+
+  // Fetch regions on mount
+  useEffect(() => {
+    if (regions.length === 0 && !regionsLoading) {
+      dispatch(fetchRegions())
+    }
+  }, [dispatch, regions.length, regionsLoading])
+
+  // Get selected region data
+  const selectedRegionData = useMemo(() => {
+    if (!selectedRegion) return null
+    return regions.find(r => r.id === selectedRegion || r.region_id === selectedRegion)
+  }, [selectedRegion, regions])
 
   const filteredOffers = useMemo(() => {
     let result = [...GPU_OFFERS]
@@ -283,8 +315,24 @@ export default function GpuOffers() {
   }, [searchQuery, sortBy, vramFilter, showEnterprise])
 
   const handleProvision = (gpu) => {
-    // Redireciona para página de machines com GPU selecionada
-    navigate(`${basePath}/machines`, { state: { selectedGpu: gpu.name } })
+    // Redireciona para página de machines com GPU selecionada e região
+    navigate(`${basePath}/machines`, {
+      state: {
+        selectedGpu: gpu.name,
+        selectedRegion: selectedRegion,
+        regionData: selectedRegionData,
+      }
+    })
+  }
+
+  // Handle region selection
+  const handleRegionSelect = (regionId) => {
+    dispatch(setSelectedRegion(regionId))
+  }
+
+  // Clear region selection
+  const handleClearRegion = () => {
+    dispatch(setSelectedRegion(null))
   }
 
   const getAvailabilityBadge = (availability) => {
@@ -374,8 +422,64 @@ export default function GpuOffers() {
             />
             <span className="text-sm text-gray-400">Incluir Enterprise</span>
           </label>
+
+          {/* Region Selector Toggle */}
+          <button
+            onClick={() => setShowRegionSelector(!showRegionSelector)}
+            className={`flex items-center gap-2 px-3 py-2.5 text-sm rounded-lg border transition-all ${
+              selectedRegion
+                ? 'bg-brand-500/10 border-brand-500/50 text-brand-400'
+                : 'bg-dark-surface-secondary border-white/10 text-gray-400 hover:border-white/20'
+            }`}
+          >
+            <Globe className="w-4 h-4" />
+            {selectedRegionData ? (
+              <span className="flex items-center gap-1.5">
+                {selectedRegionData.name || selectedRegionData.region_name || selectedRegion}
+                {selectedRegionData.is_eu && <Shield className="w-3 h-3 text-blue-400" />}
+              </span>
+            ) : (
+              <span>Todas Regioes</span>
+            )}
+          </button>
         </div>
+
+        {/* Selected Region Badge */}
+        {selectedRegionData && (
+          <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-brand-400" />
+              <span className="text-sm text-gray-300">
+                Provisionando em: <span className="font-medium text-white">{selectedRegionData.name || selectedRegionData.region_name}</span>
+              </span>
+              {selectedRegionData.is_eu && (
+                <RegionComplianceBadge isEu={true} size="xs" />
+              )}
+            </div>
+            <button
+              onClick={handleClearRegion}
+              className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              Limpar
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Region Selector Panel */}
+      {showRegionSelector && (
+        <div className="mb-6">
+          <RegionSelector
+            selectedRegion={selectedRegion}
+            onSelectRegion={(regionId) => {
+              handleRegionSelect(regionId)
+              setShowRegionSelector(false)
+            }}
+            showMap={true}
+            compact={false}
+          />
+        </div>
+      )}
 
       {/* GPU Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -468,11 +572,19 @@ export default function GpuOffers() {
             {/* CTA */}
             <button
               onClick={() => handleProvision(gpu)}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-brand-800/20 hover:bg-brand-800/30 border border-brand-700/40 text-brand-400 text-sm font-medium transition-all"
+              className="w-full flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg bg-brand-800/20 hover:bg-brand-800/30 border border-brand-700/40 text-brand-400 text-sm font-medium transition-all"
             >
-              <Server className="w-4 h-4" />
-              Provisionar
-              <ArrowRight className="w-4 h-4" />
+              <div className="flex items-center gap-2">
+                <Server className="w-4 h-4" />
+                <span>Provisionar</span>
+                <ArrowRight className="w-4 h-4" />
+              </div>
+              {selectedRegionData && (
+                <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                  <MapPin className="w-3 h-3" />
+                  <span>{selectedRegionData.name || selectedRegionData.region_name}</span>
+                </div>
+              )}
             </button>
           </div>
         ))}

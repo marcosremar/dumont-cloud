@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cpu, Zap, Activity, Gauge, Server } from 'lucide-react';
+import { Cpu, Zap, Activity, Gauge, Server, Globe, Shield, MapPin } from 'lucide-react';
 import {
   Card,
   CardHeader,
@@ -15,7 +15,27 @@ import {
 } from '../tailadmin-ui';
 import { GPU_OPTIONS, GPU_CATEGORIES } from './constants';
 
-const GPUSelector = ({ selectedGPU, onSelectGPU, selectedCategory, onSelectCategory }) => {
+/**
+ * GPUSelector Component
+ *
+ * Allows users to select GPU type/category for provisioning.
+ * Optionally displays selected region information.
+ *
+ * @param {string} selectedGPU - Currently selected GPU ID
+ * @param {function} onSelectGPU - Callback when GPU is selected
+ * @param {string} selectedCategory - Currently selected category ID
+ * @param {function} onSelectCategory - Callback when category is selected
+ * @param {object} selectedRegion - Optional region data to display
+ * @param {function} onRegionClick - Optional callback when region badge is clicked
+ */
+const GPUSelector = ({
+  selectedGPU,
+  onSelectGPU,
+  selectedCategory,
+  onSelectCategory,
+  selectedRegion = null,
+  onRegionClick = null,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const getCategoryIcon = (iconType, isActive) => {
@@ -52,11 +72,25 @@ const GPUSelector = ({ selectedGPU, onSelectGPU, selectedCategory, onSelectCateg
             <CardDescription className="text-[10px]">Selecione o tipo</CardDescription>
           </div>
         </div>
-        {selectedGPU !== 'any' && (
-          <span className="px-2 py-1 rounded-full bg-brand-100 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 text-[10px] font-medium">
-            {GPU_OPTIONS.find(g => g.value === selectedGPU)?.label}
-          </span>
-        )}
+        <div className="flex items-center gap-1.5">
+          {/* Region Badge */}
+          {selectedRegion && (
+            <button
+              onClick={onRegionClick}
+              className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-[10px] font-medium hover:opacity-80 transition-opacity"
+            >
+              <Globe className="w-3 h-3" />
+              <span>{selectedRegion.name || selectedRegion.region_name || selectedRegion.region_id}</span>
+              {selectedRegion.is_eu && <Shield className="w-3 h-3" />}
+            </button>
+          )}
+          {/* GPU Badge */}
+          {selectedGPU !== 'any' && (
+            <span className="px-2 py-1 rounded-full bg-brand-100 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 text-[10px] font-medium">
+              {GPU_OPTIONS.find(g => g.value === selectedGPU)?.label}
+            </span>
+          )}
+        </div>
       </CardHeader>
 
       {/* Category Grid */}
@@ -119,6 +153,27 @@ const GPUSelector = ({ selectedGPU, onSelectGPU, selectedCategory, onSelectCateg
                 ))}
               </SelectContent>
             </Select>
+          </div>
+        )}
+
+        {/* Region Info - shows when region is selected */}
+        {selectedRegion && (
+          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700/50">
+            <div className="flex items-center justify-between p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-3.5 h-3.5 text-blue-400" />
+                <span className="text-[10px] text-gray-400">Provisionando em:</span>
+                <span className="text-xs text-white font-medium">
+                  {selectedRegion.name || selectedRegion.region_name || selectedRegion.region_id}
+                </span>
+              </div>
+              {selectedRegion.is_eu && (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/20 text-[9px] text-blue-400">
+                  <Shield className="w-2.5 h-2.5" />
+                  <span>GDPR</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </CardContent>

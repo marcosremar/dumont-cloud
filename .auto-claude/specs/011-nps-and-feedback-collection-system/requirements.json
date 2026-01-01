@@ -1,0 +1,4 @@
+{
+  "task_description": "# NPS and Feedback Collection System\n\nIntegrated NPS surveys and feedback collection. Triggered at key moments (after first successful deployment, monthly, after issues resolved). Data feeds into product improvement.\n\n## Rationale\nEssential for understanding user satisfaction and identifying issues. NPS is a success metric in product vision. Enables data-driven prioritization of features.\n\n## User Stories\n- As a product manager, I want to collect NPS so that I can measure user satisfaction over time\n- As a user, I want to provide feedback easily so that the product improves based on my needs\n\n## Acceptance Criteria\n- [ ] NPS survey appears at key moments (configurable triggers)\n- [ ] Simple 0-10 score with optional comment\n- [ ] Non-intrusive: easy to dismiss, rate limits on frequency\n- [ ] Dashboard for admin to view NPS trends\n- [ ] Follow-up mechanism for detractors (score 0-6)\n",
+  "workflow_type": "feature"
+}

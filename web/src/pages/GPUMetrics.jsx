@@ -23,7 +23,11 @@ import {
   InstantAvailability,
   ReliabilityScore,
   TrainingCost,
-  FleetStrategy
+  FleetStrategy,
+  CostForecastDashboard,
+  OptimalTimingCard,
+  BudgetAlertSettings,
+  AccuracyTracker
 } from '../components/spot'
 import RealSavingsDashboard from '../components/RealSavingsDashboard'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/dumont-ui'
@@ -261,7 +265,11 @@ export default function GPUMetrics() {
       'interruption': 'Taxa de Interrupção',
       'llm': 'Melhor GPU para LLM',
       'training': 'Custo por Treinamento',
-      'fleet': 'Estratégia de Fleet'
+      'fleet': 'Estratégia de Fleet',
+      'cost-forecast': 'Previsão de Custos 7 Dias',
+      'optimal-timing': 'Horário Ideal para Jobs',
+      'budget-alerts': 'Alertas de Orçamento',
+      'accuracy': 'Precisão do Modelo'
     }
     return titles[report] || 'Relatórios Spot'
   }
@@ -835,6 +843,10 @@ export default function GPUMetrics() {
               {activeReport === 'interruption' && <InterruptionRate getAuthHeaders={getAuthHeaders} />}
               {activeReport === 'llm' && <LLMGpuRanking getAuthHeaders={getAuthHeaders} />}
               {activeReport === 'fleet' && <FleetStrategy getAuthHeaders={getAuthHeaders} />}
+              {activeReport === 'cost-forecast' && <CostForecastDashboard getAuthHeaders={getAuthHeaders} selectedGPU={selectedGPU !== 'all' ? selectedGPU : 'RTX 4090'} />}
+              {activeReport === 'optimal-timing' && <OptimalTimingCard getAuthHeaders={getAuthHeaders} selectedGPU={selectedGPU !== 'all' ? selectedGPU : 'RTX 4090'} />}
+              {activeReport === 'budget-alerts' && <BudgetAlertSettings getAuthHeaders={getAuthHeaders} selectedGPU={selectedGPU !== 'all' ? selectedGPU : 'RTX 4090'} />}
+              {activeReport === 'accuracy' && <AccuracyTracker getAuthHeaders={getAuthHeaders} selectedGPU={selectedGPU !== 'all' ? selectedGPU : 'RTX 4090'} />}
             </div>
           ) : (
             <>
@@ -844,8 +856,8 @@ export default function GPUMetrics() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Relatórios Disponíveis</p>
-                      <p className="text-2xl font-bold text-white">10</p>
-                      <p className="text-xs text-gray-500 mt-1">Análises de Spot</p>
+                      <p className="text-2xl font-bold text-white">14</p>
+                      <p className="text-xs text-gray-500 mt-1">Análises de Spot + Previsão</p>
                     </div>
                     <div className="stat-card-icon stat-card-icon-success">
                       <Sparkles size={20} />
@@ -892,6 +904,12 @@ export default function GPUMetrics() {
 
               {/* Reports Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Cost Forecast Section */}
+                <CostForecastDashboard getAuthHeaders={getAuthHeaders} selectedGPU={selectedGPU !== 'all' ? selectedGPU : 'RTX 4090'} />
+                <OptimalTimingCard getAuthHeaders={getAuthHeaders} selectedGPU={selectedGPU !== 'all' ? selectedGPU : 'RTX 4090'} />
+                <BudgetAlertSettings getAuthHeaders={getAuthHeaders} selectedGPU={selectedGPU !== 'all' ? selectedGPU : 'RTX 4090'} />
+                <AccuracyTracker getAuthHeaders={getAuthHeaders} selectedGPU={selectedGPU !== 'all' ? selectedGPU : 'RTX 4090'} />
+                {/* Existing Reports */}
                 <SpotMonitor getAuthHeaders={getAuthHeaders} />
                 <InstantAvailability getAuthHeaders={getAuthHeaders} />
                 <SavingsCalculator getAuthHeaders={getAuthHeaders} selectedGPU={selectedGPU} />

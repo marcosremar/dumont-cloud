@@ -2,12 +2,49 @@ import os
 import time
 import json
 import base64
+import asyncio
 import logging
 import subprocess
 from datetime import datetime
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
+
+from src.services.webhook_service import trigger_webhooks
 
 logger = logging.getLogger(__name__)
+
+
+def _fire_webhook_from_sync(
+    event_type: str,
+    data: Dict[str, Any],
+    user_id: Optional[str] = None
+) -> None:
+    """
+    Fire a webhook from synchronous code.
+
+    This helper handles the case where we need to trigger async webhooks
+    from synchronous GPU service methods. It will schedule the task on
+    the running event loop (if available).
+    """
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an async context, schedule the task
+        loop.create_task(trigger_webhooks(event_type, data, user_id))
+        logger.debug(
+            f"[Snapshot] Scheduled webhook for event {event_type}, user={user_id}"
+        )
+    except RuntimeError:
+        # No running event loop - create a new one for this delivery
+        # This shouldn't normally happen in FastAPI context, but handle gracefully
+        try:
+            asyncio.run(trigger_webhooks(event_type, data, user_id))
+            logger.debug(
+                f"[Snapshot] Fired webhook synchronously for event {event_type}, user={user_id}"
+            )
+        except Exception as e:
+            # Never let webhook errors propagate to main flow
+            logger.warning(
+                f"[Snapshot] Webhook delivery failed (suppressed): {e}"
+            )
 
 class GPUSnapshotService:
     """
@@ -48,7 +85,8 @@ class GPUSnapshotService:
         ssh_host: str,
         ssh_port: int,
         workspace_path: str = "/workspace",
-        snapshot_name: Optional[str] = None
+        snapshot_name: Optional[str] = None,
+        user_id: Optional[str] = None
     ) -> Dict:
         """Creates a hybrid snapshot of the workspace."""
         if not snapshot_name:
@@ -102,6 +140,22 @@ class GPUSnapshotService:
         self._save_snapshot_metadata(snapshot_info)
 
         logger.info(f"Snapshot complete: {snapshot_name} ({overall_time:.1f}s)")
+
+        # Trigger snapshot.completed webhook (fire-and-forget)
+        _fire_webhook_from_sync(
+            event_type="snapshot.completed",
+            data={
+                "snapshot_id": snapshot_name,
+                "instance_id": instance_id,
+                "size_original": snapshot_info['size_original'],
+                "size_compressed": snapshot_info['size_compressed'],
+                "compression_ratio": snapshot_info['compression_ratio'],
+                "total_time": overall_time,
+                "workspace_path": workspace_path,
+            },
+            user_id=user_id
+        )
+
         return snapshot_info
 
     def restore_snapshot(

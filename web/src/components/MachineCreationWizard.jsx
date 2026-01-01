@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 const API_BASE = ''
 
 // Speed tiers based on inet_down
 const SPEED_TIERS = [
-  { id: 'slow', name: 'Lenta', minSpeed: 100, maxSpeed: 500, icon: 'stop', color: '#f85149', time: '~5 min' },
-  { id: 'medium', name: 'Media', minSpeed: 500, maxSpeed: 2000, icon: 'bolt', color: '#d29922', time: '~1-2 min' },
-  { id: 'fast', name: 'Rapida', minSpeed: 2000, maxSpeed: 4000, icon: 'forward', color: '#3fb950', time: '~30s' },
-  { id: 'ultra', name: 'Ultra', minSpeed: 4000, maxSpeed: 99999, icon: 'fire', color: '#a371f7', time: '~15s' },
+  { id: 'slow', nameKey: 'slow', minSpeed: 100, maxSpeed: 500, icon: 'stop', color: '#f85149', time: '~5 min' },
+  { id: 'medium', nameKey: 'medium', minSpeed: 500, maxSpeed: 2000, icon: 'bolt', color: '#d29922', time: '~1-2 min' },
+  { id: 'fast', nameKey: 'fast', minSpeed: 2000, maxSpeed: 4000, icon: 'forward', color: '#3fb950', time: '~30s' },
+  { id: 'ultra', nameKey: 'ultra', minSpeed: 4000, maxSpeed: 99999, icon: 'fire', color: '#a371f7', time: '~15s' },
 ]
 
 // GPU options
@@ -28,13 +29,15 @@ const DISK_OPTIONS = [30, 50, 100, 200, 500]
 
 // Region options
 const REGIONS = [
-  { id: 'global', name: 'Global', icon: 'globe', flag: null },
-  { id: 'US', name: 'US', icon: 'flag', flag: 'us' },
-  { id: 'EU', name: 'Europa', icon: 'flag', flag: 'eu' },
-  { id: 'ASIA', name: 'Asia', icon: 'flag', flag: 'asia' },
+  { id: 'global', nameKey: 'global', icon: 'globe', flag: null },
+  { id: 'US', nameKey: 'us', icon: 'flag', flag: 'us' },
+  { id: 'EU', nameKey: 'europe', icon: 'flag', flag: 'eu' },
+  { id: 'ASIA', nameKey: 'asia', icon: 'flag', flag: 'asia' },
 ]
 
 export default function MachineCreationWizard({ snapshots, machines, onRefresh }) {
+export default function DeployWizard({ snapshots, machines, onRefresh }) {
+  const { t } = useTranslation()
   const [tab, setTab] = useState('new') // 'new' or 'existing'
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [offers, setOffers] = useState([])
@@ -88,7 +91,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
         const data = await res.json()
         setLatencies(data)
       } catch (e) {
-        console.error('Failed to fetch latency:', e)
+        // Silent fail for latency
       }
       setLoadingLatency(false)
     }
@@ -129,7 +132,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
       const data = await res.json()
       setOffers(data.offers || [])
     } catch (e) {
-      console.error('Failed to fetch offers:', e)
+      // Silent fail for offers
     }
     setLoading(false)
   }
@@ -180,8 +183,9 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
       // Find best offer for selected tier
       const tierOffers = offersByTier[selectedSpeed] || []
       if (tierOffers.length === 0) {
-        alert('Nenhuma oferta disponivel para este tier')
+alert('Nenhuma oferta disponivel para este tier')
         setCreating(false);
+alert(t('deployWizard.errors.noOffersForTier'))
         return
       }
 
@@ -202,17 +206,18 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
         if (data.success) {
           onRefresh?.()
         } else {
-          alert(data.error || 'Falha ao criar instancia')
+          alert(data.error || t('deployWizard.errors.createFailed'))
         }
       } catch (e) {
-        alert('Erro de conexao')
+        alert(t('deployWizard.errors.connectionError'))
       }
       setCreating(false)
     } else {
       // Restore to existing machine
       if (!selectedMachine) {
-        alert('Selecione uma maquina')
+alert('Selecione uma maquina')
         setCreating(false);
+alert(t('deployWizard.errors.selectMachine'))
         return
       }
       try {
@@ -224,10 +229,10 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
         })
         const data = await res.json()
         if (!data.success) {
-          alert(data.error || 'Falha ao restaurar')
+          alert(data.error || t('deployWizard.errors.restoreFailed'))
         }
       } catch (e) {
-        alert('Erro de conexao')
+        alert(t('deployWizard.errors.connectionError'))
       }
       setCreating(false)
     }
@@ -262,7 +267,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
   return (
     <div className="deploy-wizard">
       <div className="deploy-header">
-        <h3>Deploy</h3>
+        <h3>{t('deployWizard.title')}</h3>
       </div>
 
       {/* Tabs */}
@@ -271,13 +276,13 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
           className={`deploy-tab ${tab === 'new' ? 'active' : ''}`}
           onClick={() => setTab('new')}
         >
-          Nova Maquina
+          {t('deployWizard.tabs.newMachine')}
         </button>
         <button
           className={`deploy-tab ${tab === 'existing' ? 'active' : ''}`}
           onClick={() => setTab('existing')}
         >
-          Maquina Existente
+          {t('deployWizard.tabs.existingMachine')}
         </button>
       </div>
 
@@ -293,7 +298,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                 <path d="M3 4h18l-7 8v8l-4-2v-6L3 4z"/>
               </svg>
             </span>
-            {showAdvanced ? 'Modo simples' : 'Mostrar filtros avancados'}
+            {showAdvanced ? t('deployWizard.simpleMode') : t('deployWizard.showAdvancedFilters')}
           </button>
 
           {!showAdvanced ? (
@@ -301,7 +306,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
             <>
               {/* Region selector */}
               <div className="filter-section">
-                <label className="filter-label">Regiao {loadingLatency && <span className="latency-loading">(medindo latencia...)</span>}</label>
+                <label className="filter-label">{t('deployWizard.region')} {loadingLatency && <span className="latency-loading">({t('deployWizard.measuringLatency')})</span>}</label>
                 <div className="region-buttons">
                   {REGIONS.map(region => {
                     const latencyInfo = latencies[region.id]
@@ -319,7 +324,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                           {region.flag === 'asia' && '🌏'}
                           {region.id === 'global' && '🌐'}
                         </span>
-                        <span className="region-name">{region.name}</span>
+                        <span className="region-name">{t(`deployWizard.regions.${region.nameKey}`)}</span>
                         {latencyMs && (
                           <span className={`region-latency ${latencyClass}`}>
                             {Math.round(latencyMs)}ms
@@ -333,7 +338,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
 
               {/* Speed selector */}
               <div className="filter-section">
-                <label className="filter-label">Velocidade (mais rapido = mais caro)</label>
+                <label className="filter-label">{t('deployWizard.speedLabel')}</label>
                 <div className="speed-cards">
                   {SPEED_TIERS.map(tier => {
                     const priceInfo = tierPrices[tier.id]
@@ -347,7 +352,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                         <div className="speed-icon">
                           {renderSpeedIcon(tier.icon, tier.color)}
                         </div>
-                        <div className="speed-name">{tier.name}</div>
+                        <div className="speed-name">{t(`deployWizard.speedTiers.${tier.nameKey}`)}</div>
                         <div className="speed-range">{tier.minSpeed}-{tier.maxSpeed === 99999 ? '4000+' : tier.maxSpeed} Mbps</div>
                         <div className="speed-time" style={{ color: tier.color }}>{tier.time}</div>
                         {priceInfo ? (
@@ -355,9 +360,9 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                             ${priceInfo.min.toFixed(2)} - ${priceInfo.max.toFixed(2)}/h
                           </div>
                         ) : (
-                          <div className="speed-price muted">Sem ofertas</div>
+                          <div className="speed-price muted">{t('deployWizard.noOffers')}</div>
                         )}
-                        <div className="speed-count">{priceInfo?.count || 0} maquinas</div>
+                        <div className="speed-count">{priceInfo?.count || 0} {t('deployWizard.machines')}</div>
                       </div>
                     )
                   })}
@@ -367,20 +372,20 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
               {/* GPU and Disk selectors */}
               <div className="filter-row">
                 <div className="filter-section half">
-                  <label className="filter-label">GPU</label>
+                  <label className="filter-label">{t('deployWizard.gpu')}</label>
                   <select
                     className="form-select"
                     value={selectedGpu}
                     onChange={e => setSelectedGpu(e.target.value)}
                   >
-                    <option value="">Qualquer GPU</option>
+                    <option value="">{t('deployWizard.anyGpu')}</option>
                     {GPU_OPTIONS.map(gpu => (
                       <option key={gpu} value={gpu}>{gpu}</option>
                     ))}
                   </select>
                 </div>
                 <div className="filter-section half">
-                  <label className="filter-label">Disco Minimo</label>
+                  <label className="filter-label">{t('deployWizard.minimumDisk')}</label>
                   <select
                     className="form-select"
                     value={selectedDisk}
@@ -396,13 +401,13 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
               {/* Offer preview */}
               {selectedGpu && offersByTier[selectedSpeed]?.length > 0 && (
                 <div className="offer-preview">
-                  Selecione uma GPU para ver ofertas
+                  {t('deployWizard.selectGpuToSeeOffers')}
                 </div>
               )}
 
               {!selectedGpu && (
                 <div className="offer-hint">
-                  Selecione uma GPU para ver ofertas
+                  {t('deployWizard.selectGpuToSeeOffers')}
                 </div>
               )}
             </>
@@ -411,7 +416,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
             <div className="advanced-filters">
               <div className="advanced-grid">
                 <div className="form-group">
-                  <label className="form-label">Num GPUs</label>
+                  <label className="form-label">{t('deployWizard.advanced.numGpus')}</label>
                   <input
                     type="number"
                     className="form-input"
@@ -423,7 +428,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">GPU RAM (GB)</label>
+                  <label className="form-label">{t('deployWizard.advanced.gpuRam')}</label>
                   <input
                     type="number"
                     className="form-input"
@@ -433,7 +438,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">CPU Cores</label>
+                  <label className="form-label">{t('deployWizard.advanced.cpuCores')}</label>
                   <input
                     type="number"
                     className="form-input"
@@ -443,7 +448,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">CPU RAM (GB)</label>
+                  <label className="form-label">{t('deployWizard.advanced.cpuRam')}</label>
                   <input
                     type="number"
                     className="form-input"
@@ -453,7 +458,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Disco (GB)</label>
+                  <label className="form-label">{t('deployWizard.advanced.disk')}</label>
                   <input
                     type="number"
                     className="form-input"
@@ -463,7 +468,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Download (Mbps)</label>
+                  <label className="form-label">{t('deployWizard.advanced.download')}</label>
                   <input
                     type="number"
                     className="form-input"
@@ -473,7 +478,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Upload (Mbps)</label>
+                  <label className="form-label">{t('deployWizard.advanced.upload')}</label>
                   <input
                     type="number"
                     className="form-input"
@@ -483,7 +488,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Max $/hora</label>
+                  <label className="form-label">{t('deployWizard.advanced.maxPricePerHour')}</label>
                   <input
                     type="number"
                     className="form-input"
@@ -494,7 +499,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">CUDA Min</label>
+                  <label className="form-label">{t('deployWizard.advanced.cudaMin')}</label>
                   <input
                     type="text"
                     className="form-input"
@@ -504,7 +509,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Reliability Min</label>
+                  <label className="form-label">{t('deployWizard.advanced.reliabilityMin')}</label>
                   <input
                     type="number"
                     className="form-input"
@@ -517,7 +522,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Direct Ports</label>
+                  <label className="form-label">{t('deployWizard.advanced.directPorts')}</label>
                   <input
                     type="number"
                     className="form-input"
@@ -534,7 +539,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                     checked={advancedFilters.verified}
                     onChange={e => setAdvancedFilters({...advancedFilters, verified: e.target.checked})}
                   />
-                  Apenas verificados
+                  {t('deployWizard.advanced.verifiedOnly')}
                 </label>
 
                 <label className="checkbox-label">
@@ -543,12 +548,12 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                     checked={advancedFilters.static_ip}
                     onChange={e => setAdvancedFilters({...advancedFilters, static_ip: e.target.checked})}
                   />
-                  IP Estatico
+                  {t('deployWizard.advanced.staticIp')}
                 </label>
               </div>
 
               <button className="btn" onClick={fetchOffers}>
-                {loading ? 'Buscando...' : 'Buscar ofertas'}
+                {loading ? t('deployWizard.searching') : t('deployWizard.searchOffers')}
               </button>
 
               {/* Advanced offers table */}
@@ -557,15 +562,15 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                   <table className="offers-table">
                     <thead>
                       <tr>
-                        <th>GPU</th>
-                        <th>VRAM</th>
-                        <th>CPU</th>
-                        <th>RAM</th>
-                        <th>Disco</th>
-                        <th>DL</th>
-                        <th>UL</th>
-                        <th>$/h</th>
-                        <th>Regiao</th>
+                        <th>{t('deployWizard.table.gpu')}</th>
+                        <th>{t('deployWizard.table.vram')}</th>
+                        <th>{t('deployWizard.table.cpu')}</th>
+                        <th>{t('deployWizard.table.ram')}</th>
+                        <th>{t('deployWizard.table.disk')}</th>
+                        <th>{t('deployWizard.table.dl')}</th>
+                        <th>{t('deployWizard.table.ul')}</th>
+                        <th>{t('deployWizard.table.pricePerHour')}</th>
+                        <th>{t('deployWizard.table.region')}</th>
                         <th></th>
                       </tr>
                     </thead>
@@ -588,7 +593,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
                                 // Direct create with this offer
                               }}
                             >
-                              Usar
+                              {t('deployWizard.use')}
                             </button>
                           </td>
                         </tr>
@@ -605,8 +610,8 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
             <div className="hotstart-info">
               <span className="hotstart-icon">🔥</span>
               <div>
-                <div className="hotstart-title">Hot Start + Migrate</div>
-                <div className="hotstart-desc">Inicie rapido, economize depois</div>
+                <div className="hotstart-title">{t('deployWizard.hotStart.title')}</div>
+                <div className="hotstart-desc">{t('deployWizard.hotStart.description')}</div>
               </div>
             </div>
             <label className="switch">
@@ -625,16 +630,16 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
             onClick={handleCreate}
             disabled={creating || loading}
           >
-            {creating ? 'Criando...' : 'Criar Maquina + Restore'}
+            {creating ? t('deployWizard.creating') : t('deployWizard.createMachineRestore')}
           </button>
         </div>
       ) : (
         /* EXISTING MACHINE TAB */
         <div className="deploy-content">
           <div className="filter-section">
-            <label className="filter-label">Selecione uma maquina</label>
+            <label className="filter-label">{t('deployWizard.selectMachine')}</label>
             {machines?.length === 0 ? (
-              <div className="empty-state">Nenhuma maquina ativa</div>
+              <div className="empty-state">{t('deployWizard.noActiveMachines')}</div>
             ) : (
               <div className="machine-select-list">
                 {machines?.map(machine => (
@@ -663,7 +668,7 @@ export default function MachineCreationWizard({ snapshots, machines, onRefresh }
             onClick={handleCreate}
             disabled={creating || !selectedMachine || selectedMachine.actual_status !== 'running'}
           >
-            {creating ? 'Restaurando...' : 'Restaurar Snapshot'}
+            {creating ? t('deployWizard.restoring') : t('deployWizard.restoreSnapshot')}
           </button>
         </div>
       )}

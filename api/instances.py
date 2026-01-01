@@ -1,11 +1,24 @@
 """
 API Routes para gerenciamento de instancias GPU
+
+Includes multi-region failover support for instance provisioning.
+When a region is specified with fallback_regions, the system will
+automatically try fallback regions if the primary region is unavailable.
 """
+import logging
 import subprocess
 import time
+import uuid
 from flask import Blueprint, jsonify, request, g
 from src.services import VastService, ResticService
 from src.services.codeserver_service import CodeServerService, CodeServerConfig
+from src.services.region_service import (
+    RegionService,
+    RegionalProvisioningResult,
+    ProvisioningPhase,
+)
+
+logger = logging.getLogger(__name__)
 
 instances_bp = Blueprint('instances', __name__, url_prefix='/api')
 
@@ -234,6 +247,12 @@ def get_restic_service() -> ResticService:
     )
 
 
+def get_region_service() -> RegionService:
+    """Factory para criar RegionService com API key do usuario"""
+    api_key = getattr(g, 'vast_api_key', '')
+    return RegionService(api_key)
+
+
 @instances_bp.route('/offers')
 def list_offers():
     """Lista ofertas de GPU disponiveis"""
@@ -282,30 +301,226 @@ def list_instances():
 
 @instances_bp.route('/instances', methods=['POST'])
 def create_instance():
-    """Cria uma nova instancia com Tailscale opcional"""
+    """
+    Cria uma nova instancia com suporte a multi-region failover.
+
+    Request body:
+        offer_id: ID da oferta (obrigatorio se region nao especificado)
+        region: ID da regiao (e.g., "eu-de", "na-us-ca") para selecao automatica
+        gpu_name: Nome da GPU para filtro (opcional, usado com region)
+        max_price: Preco maximo por hora (opcional, usado com region)
+        min_reliability: Confiabilidade minima (0.0-1.0, default: 0.90)
+        image: Imagem Docker (opcional)
+        enable_failover: Habilita failover automatico para a regiao (default: True)
+        fallback_regions: Lista de regioes de fallback para failover (opcional)
+        auto_suggest_fallbacks: Se True e fallback_regions vazio, sugere automaticamente (default: True)
+
+    Multi-Region Failover:
+        Quando region é especificado, o sistema usa orquestracao de failover:
+        1. Tenta provisionar na regiao primaria
+        2. Se nao houver ofertas, tenta cada fallback_region em ordem
+        3. Retorna detalhes completos do processo incluindo timing e erros
+
+    Se offer_id for especificado diretamente, o failover e ignorado.
+    """
     vast = get_vast_service()
-    data = request.get_json()
+    region_service = get_region_service()
+    data = request.get_json() or {}
 
     offer_id = data.get('offer_id')
-    if not offer_id:
-        return jsonify({'error': 'offer_id obrigatorio'}), 400
+    region = data.get('region')
+    gpu_name = data.get('gpu_name')
+    max_price = data.get('max_price', 2.0)
+    min_reliability = data.get('min_reliability', 0.90)
+    enable_failover = data.get('enable_failover', True)
+    fallback_regions = data.get('fallback_regions', [])
+    auto_suggest_fallbacks = data.get('auto_suggest_fallbacks', True)
 
+    # Generate provisioning ID for tracking
+    provisioning_id = f"prov-{uuid.uuid4().hex[:8]}"
+
+    # Validar entrada: precisa de offer_id ou region
+    if not offer_id and not region:
+        return jsonify({
+            'error': 'offer_id ou region obrigatorio',
+            'details': 'Especifique um offer_id direto ou uma region para selecao automatica',
+            'provisioning_id': provisioning_id,
+        }), 400
+
+    selected_region = None
+    region_metadata = None
+    failover_result = None
+
+    # ================================================================
+    # MODE 1: Region-based provisioning with multi-region failover
+    # ================================================================
+    if region and not offer_id:
+        logger.info(
+            f"[{provisioning_id}] Multi-region provisioning: "
+            f"primary={region}, gpu={gpu_name}, max_price={max_price}"
+        )
+
+        # Auto-suggest fallback regions if enabled and none provided
+        if enable_failover and not fallback_regions and auto_suggest_fallbacks:
+            fallback_regions = region_service.get_fallback_regions_for_primary(
+                primary_region=region,
+                max_fallbacks=3,
+            )
+            logger.info(
+                f"[{provisioning_id}] Auto-suggested fallback regions: {fallback_regions}"
+            )
+
+        # Use orchestrated failover for multi-region provisioning
+        failover_result = region_service.provision_with_regional_failover(
+            primary_region=region,
+            fallback_regions=fallback_regions if enable_failover else [],
+            gpu_name=gpu_name,
+            num_gpus=1,
+            max_price=max_price,
+            min_reliability=min_reliability,
+            provisioning_id=provisioning_id,
+        )
+
+        if not failover_result.success:
+            # All regions failed
+            logger.error(
+                f"[{provisioning_id}] Multi-region failover failed: {failover_result.error}"
+            )
+            return jsonify({
+                'error': 'Nenhuma oferta disponivel em nenhuma regiao',
+                'provisioning_id': provisioning_id,
+                'primary_region': region,
+                'attempted_regions': failover_result.attempted_regions,
+                'region_errors': failover_result.region_errors,
+                'fallback_regions_configured': fallback_regions,
+                'timing_ms': failover_result.total_ms,
+                'suggestion': 'Tente aumentar max_price, reduzir min_reliability, ou escolher outras regioes',
+                'failover_details': failover_result.to_dict(),
+            }), 404
+
+        # Failover succeeded - use the selected offer
+        offer_id = failover_result.offer_id
+        selected_region = failover_result.successful_region
+        region_metadata = region_service.get_region_metadata(selected_region)
+
+        # Log if we used a fallback region
+        if selected_region != region:
+            logger.info(
+                f"[{provisioning_id}] Failover activated: "
+                f"primary={region} -> fallback={selected_region}"
+            )
+
+        logger.info(
+            f"[{provisioning_id}] Offer selected via failover: "
+            f"offer_id={offer_id} in {selected_region} "
+            f"(GPU={failover_result.gpu_name}, "
+            f"price=${failover_result.price_per_hour:.3f}/hr, "
+            f"total_time={failover_result.total_ms}ms)"
+        )
+
+    # ================================================================
+    # MODE 2: Direct offer_id with optional region metadata
+    # ================================================================
+    elif offer_id:
+        if region:
+            selected_region = region
+            region_metadata = region_service.get_region_metadata(region)
+            logger.info(
+                f"[{provisioning_id}] Direct offer provisioning: "
+                f"offer_id={offer_id}, region_hint={region}"
+            )
+        else:
+            logger.info(
+                f"[{provisioning_id}] Direct offer provisioning: offer_id={offer_id}"
+            )
+
+    # ================================================================
+    # Create the instance with the selected offer
+    # ================================================================
     image = data.get('image', 'pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime')
 
     # Obter Tailscale auth key das configuracoes do usuario
     user_settings = getattr(g, 'user_settings', {})
     tailscale_authkey = user_settings.get('tailscale_authkey')
 
+    # Criar instancia
     instance_id = vast.create_instance(
         offer_id=offer_id,
         image=image,
         tailscale_authkey=tailscale_authkey,
-        instance_id_hint=offer_id,  # Usar offer_id como hint para hostname
+        instance_id_hint=offer_id,
     )
-    if instance_id:
-        return jsonify({'instance_id': instance_id, 'success': True})
-    else:
-        return jsonify({'error': 'Falha ao criar instancia'}), 500
+
+    if not instance_id:
+        logger.error(f"[{provisioning_id}] Instance creation failed for offer {offer_id}")
+        return jsonify({
+            'error': 'Falha ao criar instancia',
+            'provisioning_id': provisioning_id,
+            'offer_id': offer_id,
+            'region': selected_region,
+        }), 500
+
+    logger.info(f"[{provisioning_id}] Instance created: {instance_id}")
+
+    # ================================================================
+    # Build response with full failover details
+    # ================================================================
+    response = {
+        'success': True,
+        'instance_id': instance_id,
+        'offer_id': offer_id,
+        'provisioning_id': provisioning_id,
+    }
+
+    # Add region info
+    if selected_region:
+        response['region'] = {
+            'region_id': selected_region,
+            'is_primary': failover_result is None or selected_region == region,
+            'original_primary': region if failover_result else None,
+            'metadata': region_metadata,
+        }
+
+    # Add failover configuration and results
+    if enable_failover and selected_region:
+        response['failover'] = {
+            'enabled': True,
+            'primary_region': region,
+            'successful_region': selected_region,
+            'used_fallback': selected_region != region if failover_result else False,
+            'fallback_regions': fallback_regions,
+            'strategy': 'multi_region_orchestrated',
+        }
+
+        # Include detailed failover timing if available
+        if failover_result:
+            response['failover']['timing'] = {
+                'primary_attempt_ms': failover_result.primary_attempt_ms,
+                'fallback_attempts_ms': failover_result.fallback_attempts_ms,
+                'total_ms': failover_result.total_ms,
+            }
+            response['failover']['attempted_regions'] = failover_result.attempted_regions
+            response['failover']['region_errors'] = failover_result.region_errors
+            response['failover']['phase_history'] = [
+                {'phase': phase, 'timestamp': ts}
+                for phase, ts in failover_result.phase_history
+            ]
+
+        logger.info(
+            f"[{provisioning_id}] Failover config: "
+            f"primary={region}, successful={selected_region}, "
+            f"fallbacks={fallback_regions}"
+        )
+
+    # Add GPU info if available from failover result
+    if failover_result and failover_result.offer_details:
+        response['gpu'] = {
+            'name': failover_result.gpu_name,
+            'price_per_hour': failover_result.price_per_hour,
+            'reliability': failover_result.offer_details.get('reliability2'),
+        }
+
+    return jsonify(response), 201
 
 
 @instances_bp.route('/instances/<int:instance_id>')

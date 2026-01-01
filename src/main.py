@@ -16,6 +16,7 @@ from .core.config import get_settings
 from .core.constants import API_V1_PREFIX, API_TITLE, API_VERSION, API_DESCRIPTION
 from .core.exceptions import DumontCloudException
 from .api.v1 import api_router
+from .services.template_service import render_template
 from .api.v1.middleware.error_handler import (
     dumont_exception_handler,
     http_exception_handler,
@@ -171,6 +172,38 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"⚠ PeriodicSnapshotService not started: {e}")
 
+        # Initialize Exchange Rate Scheduler (updates rates daily at midnight UTC)
+        try:
+            from .core.scheduler import init_scheduler
+
+            # Run without immediate fetch on startup to avoid blocking
+            # The scheduler will fetch rates at midnight UTC or when triggered manually
+            await init_scheduler(run_immediately=False)
+            agents_started.append("ExchangeRateScheduler")
+            logger.info("✓ Exchange rate scheduler started (daily at 00:00 UTC)")
+        except Exception as e:
+            logger.warning(f"⚠ Exchange rate scheduler not started: {e}")
+        # Initialize GPU Reservation Scheduler (Credit Expiration & Reservation Jobs)
+        try:
+            from .services.scheduler_service import (
+                init_scheduler,
+                start_scheduler,
+                setup_reservation_jobs
+            )
+            from .config.database import SessionLocal
+
+            # Initialize and start the scheduler
+            init_scheduler(timezone="UTC")
+            start_scheduler()
+
+            # Set up reservation-related scheduled jobs (credit expiration at midnight UTC)
+            setup_reservation_jobs(SessionLocal)
+
+            agents_started.append("ReservationScheduler")
+            logger.info("✓ GPU Reservation Scheduler started (credit expiration at midnight UTC)")
+        except Exception as e:
+            logger.warning(f"⚠ GPU Reservation Scheduler not started: {e}")
+
         logger.info(f"   Started agents: {', '.join(agents_started) if agents_started else 'None'}")
         
     except Exception as e:
@@ -180,7 +213,7 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("🛑 Shutting down Dumont Cloud FastAPI application...")
-    
+
     # Stop background agents
     try:
         from .services.standby.hibernation import get_auto_hibernation_manager
@@ -189,7 +222,22 @@ async def lifespan(app: FastAPI):
             manager.stop()
             logger.info("✓ AutoHibernationManager stopped")
     except Exception as e:
-        logger.error(f"Error stopping agents: {e}")
+        logger.error(f"Error stopping AutoHibernationManager: {e}")
+
+    # Stop exchange rate scheduler
+    try:
+        from .core.scheduler import shutdown_scheduler
+        await shutdown_scheduler()
+        logger.info("✓ Exchange rate scheduler stopped")
+    except Exception as e:
+        logger.error(f"Error stopping exchange rate scheduler: {e}")
+    # Stop GPU Reservation Scheduler
+    try:
+        from .services.scheduler_service import stop_scheduler
+        stop_scheduler(wait=True)
+        logger.info("✓ GPU Reservation Scheduler stopped")
+    except Exception as e:
+        logger.error(f"Error stopping Reservation Scheduler: {e}")
 
 
 
@@ -294,7 +342,7 @@ def create_app() -> FastAPI:
 
         raise HTTPException(status_code=404, detail="Document not found")
 
-    # Include API v1 router
+    # Include API v1 router (includes all endpoint routers: auth, instances, reservations, etc.)
     app.include_router(api_router, prefix=API_V1_PREFIX)
 
     # Compatibility: also mount at /api (without v1) for frontend
@@ -314,16 +362,30 @@ def create_app() -> FastAPI:
     static_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "web", "build")
     index_path = os.path.join(static_path, "index.html")
 
-    # Marketing Live Docs (Standalone HTML)
+    # Marketing Live Docs (Standalone HTML with i18n support)
     @app.get("/admin/doc/live", response_class=HTMLResponse)
-    async def admin_doc_live():
-        """Serve separate Marketing Live Docs"""
-        template_path = os.path.join(os.path.dirname(__file__), "templates", "marketing_doc.html")
-        if os.path.exists(template_path):
-            with open(template_path, "r", encoding="utf-8") as f:
-                return f.read()
-        from fastapi.responses import Response
-        return Response("<h1>Template not found</h1>", status_code=404, media_type="text/html")
+    async def admin_doc_live(lang: str = "en"):
+        """
+        Serve separate Marketing Live Docs with internationalization.
+
+        Args:
+            lang: Language code (e.g., 'en', 'es'). Defaults to English.
+        """
+        try:
+            # Render template with i18n support
+            html_content = render_template(
+                "marketing_doc.html",
+                context={},
+                locale=lang
+            )
+            return html_content
+        except FileNotFoundError:
+            from fastapi.responses import Response
+            return Response("<h1>Template not found</h1>", status_code=404, media_type="text/html")
+        except Exception as e:
+            logger.error(f"Error rendering marketing doc template: {e}")
+            from fastapi.responses import Response
+            return Response(f"<h1>Error rendering template</h1><p>{str(e)}</p>", status_code=500, media_type="text/html")
 
     # Mount static files (React build) - for JS, CSS, images
     assets_path = os.path.join(static_path, "assets")

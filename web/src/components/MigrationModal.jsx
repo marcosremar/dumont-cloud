@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { RefreshCw, Cpu, Server, DollarSign, Info, ArrowRight, Check, Loader2 } from 'lucide-react';
 import {
   Dialog,
@@ -24,9 +25,10 @@ const GPU_OPTIONS = [
 ];
 
 /**
- * Modal de Migração GPU <-> CPU
+ * Migration Modal GPU <-> CPU
  */
 export default function MigrationModal({ instance, isOpen, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const isCurrentlyGpu = instance?.num_gpus > 0;
   const defaultTargetType = isCurrentlyGpu ? 'cpu' : 'gpu';
 
@@ -77,13 +79,12 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
       const res = await apiPost(`/api/instances/${instance.id}/migrate/estimate`, body);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || 'Erro ao buscar estimativa');
+        throw new Error(data.detail || t('migrationModal.errors.fetchEstimate'));
       }
 
       const data = await res.json();
       setEstimate(data);
     } catch (err) {
-      console.error('Erro ao buscar estimativa:', err);
       setEstimate(null);
     } finally {
       setEstimating(false);
@@ -97,7 +98,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
       setLoading(true);
       setError(null);
       setMigrationStarted(true);
-      setProgress('Iniciando migração...');
+      setProgress(t('migrationModal.progress.starting'));
 
       const body = {
         target_type: targetType,
@@ -109,26 +110,25 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
         body.gpu_name = gpuName;
       }
 
-      setProgress('Criando snapshot...');
+      setProgress(t('migrationModal.progress.creatingSnapshot'));
 
       const res = await apiPost(`/api/instances/${instance.id}/migrate`, body);
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.detail || 'Erro na migração');
+        throw new Error(data.detail || t('migrationModal.errors.migrationError'));
       }
 
       if (data.success) {
-        setProgress('Migração concluída!');
+        setProgress(t('migrationModal.progress.completed'));
         setTimeout(() => {
           onSuccess && onSuccess(data);
           onClose();
         }, 1500);
       } else {
-        throw new Error(data.error || 'Migração falhou');
+        throw new Error(data.error || t('migrationModal.errors.migrationFailed'));
       }
     } catch (err) {
-      console.error('Erro na migração:', err);
       setError(err.message);
       setMigrationStarted(false);
     } finally {
@@ -147,7 +147,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <RefreshCw className="w-5 h-5 text-brand-400" />
-            Migrar Instância
+            {t('migrationModal.title')}
           </DialogTitle>
           <DialogDescription className="text-gray-400">
             {currentGpuName} (ID: {instance?.id})
@@ -196,7 +196,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
           {/* Target Type Selection (only show if can switch both ways) */}
           {!migrationStarted && (
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Tipo de Destino</Label>
+              <Label className="text-sm font-medium">{t('migrationModal.targetType')}</Label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setTargetType('cpu')}
@@ -229,7 +229,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
           {/* GPU Selection (only if migrating to GPU) */}
           {targetType === 'gpu' && !migrationStarted && (
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Modelo da GPU</Label>
+              <Label className="text-sm font-medium">{t('migrationModal.gpuModel')}</Label>
               <select
                 value={gpuName}
                 onChange={(e) => setGpuName(e.target.value)}
@@ -269,21 +269,23 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
             <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
               <div className="flex items-center gap-2 mb-3">
                 <DollarSign className="w-4 h-4 text-yellow-400" />
-                <span className="text-sm font-medium">Comparação de Custos</span>
+                <span className="text-sm font-medium">{t('migrationModal.costComparison')}</span>
               </div>
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Atual (GPU)</p>
+<p className="text-xs text-gray-500 mb-1">{t('migrationModal.current')}</p>
+<p className="text-xs text-gray-500 mb-1">Atual (GPU)</p>
                   <p className="text-lg font-bold text-white">${currentCost.toFixed(3)}/h</p>
-                </div>
                 <div>
+                  <p className="text-xs text-gray-500 mb-1">{t('migrationModal.new')}</p>
                   <p className="text-xs text-gray-500 mb-1">{estimate.uses_cpu_standby ? 'CPU Standby' : 'Novo'}</p>
+                </div>
                   <p className="text-lg font-bold text-green-400">${targetCost.toFixed(3)}/h</p>
                 </div>
               </div>
               {savings > 0 && (
                 <p className="text-center text-xs text-green-400 mt-2">
-                  Economia de ${savings.toFixed(3)}/h ({((savings / currentCost) * 100).toFixed(0)}%)
+                  {t('migrationModal.savings', { amount: savings.toFixed(3), percent: ((savings / currentCost) * 100).toFixed(0) })}
                 </p>
               )}
             </div>
@@ -293,40 +295,39 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
           {estimating && !migrationStarted && (
             <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Buscando ofertas...
+              {t('migrationModal.searchingOffers')}
             </div>
           )}
 
           {/* No offers available */}
           {estimate && !estimate.available && !migrationStarted && (
-            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 space-y-2">
-              <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-                <div className="space-y-1">
-                  <p className="text-yellow-400 text-sm font-medium">
-                    {targetType === 'cpu'
-                      ? 'CPU Standby não configurado'
-                      : 'Nenhuma oferta disponível'}
-                  </p>
-                  {targetType === 'cpu' ? (
-                    <>
-                      <p className="text-gray-400 text-xs">
-                        Esta máquina não possui CPU Standby ativo. Para migrar para CPU, você precisa primeiro configurar o CPU Standby.
-                      </p>
-                      <p className="text-gray-400 text-xs">
-                        O CPU Standby mantém uma VM CPU sincronizada com a GPU, permitindo failover instantâneo.
-                      </p>
-                      <p className="text-gray-400 text-xs mt-2">
-                        <strong>Nota:</strong> O vast.ai não oferece instâncias CPU-only. Para workloads sem GPU, use o CPU Standby (GCP) ou configure manualmente no Google Cloud Platform ou AWS.
-                      </p>
                     </>
-                  ) : (
-                    <p className="text-gray-400 text-xs">
-                      {estimate.error || 'Não há ofertas disponíveis no momento com os critérios selecionados.'}
+                    {targetType === 'cpu'
+                  <p className="text-yellow-400 text-sm font-medium">
+                      </p>
+                <Info className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+              <p className="text-yellow-400 text-sm">{estimate.error || t('migrationModal.noOffersAvailable')}</p>
                     </p>
-                  )}
+                        Esta máquina não possui CPU Standby ativo. Para migrar para CPU, você precisa primeiro configurar o CPU Standby.
+                  </p>
+                      : 'Nenhuma oferta disponível'}
+                      <p className="text-gray-400 text-xs mt-2">
+                      ? 'CPU Standby não configurado'
+                        O CPU Standby mantém uma VM CPU sincronizada com a GPU, permitindo failover instantâneo.
                 </div>
+                      {estimate.error || 'Não há ofertas disponíveis no momento com os critérios selecionados.'}
+                    <p className="text-gray-400 text-xs">
+                      <p className="text-gray-400 text-xs">
+                    <>
+              <div className="flex items-start gap-2">
+                <div className="space-y-1">
+                  {targetType === 'cpu' ? (
               </div>
+<div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 space-y-2">
+<div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+                  ) : (
+                  )}
+                        <strong>Nota:</strong> O vast.ai não oferece instâncias CPU-only. Para workloads sem GPU, use o CPU Standby (GCP) ou configure manualmente no Google Cloud Platform ou AWS.
             </div>
           )}
 
@@ -343,11 +344,11 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
               </div>
               {loading && (
                 <div className="space-y-2 text-sm text-gray-400">
-                  <p>1. Criando snapshot do workspace...</p>
-                  <p>2. Provisionando nova instância...</p>
-                  <p>3. Aguardando SSH ficar pronto...</p>
-                  <p>4. Restaurando snapshot...</p>
-                  <p>5. Destruindo instância antiga...</p>
+                  <p>1. {t('migrationModal.steps.creatingSnapshot')}</p>
+                  <p>2. {t('migrationModal.steps.provisioningInstance')}</p>
+                  <p>3. {t('migrationModal.steps.waitingSSH')}</p>
+                  <p>4. {t('migrationModal.steps.restoringSnapshot')}</p>
+                  <p>5. {t('migrationModal.steps.destroyingOld')}</p>
                 </div>
               )}
             </div>
@@ -357,10 +358,10 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
           {!migrationStarted && (
             <div className="bg-brand-500/10 border border-brand-500/30 rounded-lg p-3">
               <p className="text-xs text-gray-600 dark:text-gray-300">
-                <strong className="text-brand-500 dark:text-brand-400">Processo:</strong> Cria snapshot {'->'} Nova instância {'->'} Restaura {'->'} Destrói antiga
+                <strong className="text-brand-500 dark:text-brand-400">{t('migrationModal.process')}:</strong> {t('migrationModal.processDescription')}
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                Tempo estimado: ~5 minutos. Seu workspace será preservado.
+                {t('migrationModal.estimatedTime')}
               </p>
             </div>
           )}
@@ -373,7 +374,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
             disabled={loading}
             className="text-gray-400 hover:text-white"
           >
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleMigrate}
@@ -383,12 +384,12 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Migrando...
+                {t('migrationModal.migrating')}
               </>
             ) : (
               <>
                 <RefreshCw className="w-4 h-4" />
-                Migrar para {targetType === 'cpu' ? 'CPU' : 'GPU'}
+                {t('migrationModal.migrateTo', { target: targetType === 'cpu' ? 'CPU' : 'GPU' })}
               </>
             )}
           </Button>

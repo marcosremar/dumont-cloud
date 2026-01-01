@@ -1,0 +1,69 @@
+{
+  "subtasks": {
+    "1.1": {
+      "attempts": [
+        {
+          "session": 2,
+          "timestamp": "2025-12-31T22:27:51.366854",
+          "approach": "Implemented: Implement useEffect hook to listen for Escape key press when dropdown is open, similar to the patter",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "1.2": {
+      "attempts": [
+        {
+          "session": 3,
+          "timestamp": "2025-12-31T22:30:30.788592",
+          "approach": "Implemented: Implement Up/Down arrow key navigation to move focus between DropdownMenuItem elements",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "1.3": {
+      "attempts": [
+        {
+          "session": 4,
+          "timestamp": "2025-12-31T22:32:48.792628",
+          "approach": "Implemented: Allow selecting the focused menu item using Enter or Space keys",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "2.1": {
+      "attempts": [
+        {
+          "session": 5,
+          "timestamp": "2025-12-31T22:34:55.793446",
+          "approach": "Implemented: Automatically focus the first non-disabled menu item when the dropdown is opened",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "2.2": {
+      "attempts": [
+        {
+          "session": 6,
+          "timestamp": "2025-12-31T22:36:57.783740",
+          "approach": "Implemented: Restore focus to the trigger element when dropdown is closed via keyboard or click outside",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    }
+  },
+  "stuck_subtasks": [],
+  "metadata": {
+    "created_at": "2025-12-31T22:20:01.849232",
+    "last_updated": "2025-12-31T22:36:57.783755"
+  }
+}

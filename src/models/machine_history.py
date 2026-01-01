@@ -459,3 +459,164 @@ class OfferStability(Base):
 
     def __repr__(self):
         return f"<OfferStability {self.provider}:{self.machine_id} score={self.stability_score:.2f} [{self.stability_status}]>"
+
+
+class MachineUptimeHistory(Base):
+    """
+    Histórico diário de uptime por máquina.
+
+    Armazena dados de uptime e interrupções para cada dia,
+    permitindo calcular o score de confiabilidade com base
+    nos últimos 30 dias de performance.
+    """
+    __tablename__ = "machine_uptime_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Identificação da máquina
+    provider = Column(String(50), nullable=False, index=True)  # vast, tensordock, etc
+    machine_id = Column(String(100), nullable=False, index=True)  # ID no provider
+
+    # Data do registro (um registro por dia por máquina)
+    date = Column(DateTime, nullable=False, index=True)
+
+    # Métricas de uptime do dia
+    uptime_percentage = Column(Float, nullable=False, default=0.0)  # 0.0 a 100.0
+    uptime_seconds = Column(Integer, nullable=True)  # Tempo total online em segundos
+    total_seconds = Column(Integer, nullable=True)  # Tempo total monitorado
+
+    # Métricas de interrupções
+    interruption_count = Column(Integer, default=0)  # Número de interrupções no dia
+    avg_interruption_duration_seconds = Column(Float, nullable=True)  # Duração média das interrupções
+
+    # Métricas de tentativas (agregado de MachineAttempt)
+    total_attempts = Column(Integer, default=0)  # Total de tentativas no dia
+    successful_attempts = Column(Integer, default=0)  # Tentativas bem sucedidas
+    failed_attempts = Column(Integer, default=0)  # Tentativas com falha
+
+    # Cache de informações da máquina
+    gpu_name = Column(String(100), nullable=True)
+    price_per_hour = Column(Float, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        # Index composto para queries de histórico por máquina (últimos 30 dias)
+        Index('idx_uptime_history_provider_machine_date', 'provider', 'machine_id', 'date'),
+        # Garante apenas um registro por máquina por dia
+        Index('idx_uptime_history_unique_day', 'provider', 'machine_id', 'date', unique=True),
+        # Para queries de data
+        Index('idx_uptime_history_date', 'date'),
+    )
+
+    @property
+    def success_rate(self) -> float:
+        """Calcula taxa de sucesso das tentativas do dia."""
+        if self.total_attempts == 0:
+            return 0.0
+        return self.successful_attempts / self.total_attempts
+
+    @property
+    def uptime_status(self) -> str:
+        """Retorna status legível do uptime do dia."""
+        if self.uptime_percentage >= 99.0:
+            return "excellent"
+        if self.uptime_percentage >= 95.0:
+            return "good"
+        if self.uptime_percentage >= 90.0:
+            return "fair"
+        if self.uptime_percentage >= 80.0:
+            return "poor"
+        return "critical"
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "provider": self.provider,
+            "machine_id": self.machine_id,
+            "date": self.date.isoformat() if self.date else None,
+            "uptime_percentage": self.uptime_percentage,
+            "uptime_seconds": self.uptime_seconds,
+            "interruption_count": self.interruption_count,
+            "avg_interruption_duration_seconds": self.avg_interruption_duration_seconds,
+            "total_attempts": self.total_attempts,
+            "successful_attempts": self.successful_attempts,
+            "failed_attempts": self.failed_attempts,
+            "success_rate": self.success_rate,
+            "uptime_status": self.uptime_status,
+            "gpu_name": self.gpu_name,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+    def __repr__(self):
+        date_str = self.date.strftime("%Y-%m-%d") if self.date else "?"
+        return f"<MachineUptimeHistory {self.provider}:{self.machine_id} @ {date_str} uptime={self.uptime_percentage:.1f}%>"
+
+
+class UserMachineRating(Base):
+    """
+    Avaliações de máquinas feitas por usuários.
+
+    Permite que usuários avaliem máquinas que já alugaram,
+    contribuindo para o score de confiabilidade comunitário.
+    Rating de 1-5 estrelas com comentário opcional.
+    """
+    __tablename__ = "user_machine_ratings"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Identificação da máquina
+    provider = Column(String(50), nullable=False, index=True)  # vast, tensordock, etc
+    machine_id = Column(String(100), nullable=False, index=True)  # ID no provider
+
+    # Identificação do usuário
+    user_id = Column(String(100), nullable=False, index=True)  # ID do usuário que avaliou
+
+    # Avaliação
+    rating = Column(Integer, nullable=False)  # 1-5 estrelas
+    comment = Column(Text, nullable=True)  # Comentário opcional
+
+    # Contexto da avaliação
+    rental_duration_hours = Column(Float, nullable=True)  # Quanto tempo usou a máquina
+    instance_id = Column(String(100), nullable=True)  # ID da instância relacionada
+    gpu_name = Column(String(100), nullable=True)  # Para referência
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        Index('idx_rating_provider_machine', 'provider', 'machine_id'),
+        Index('idx_rating_user', 'user_id'),
+        Index('idx_rating_created', 'created_at'),
+        # Garante que cada usuário pode avaliar cada máquina apenas uma vez
+        Index('idx_rating_unique_user_machine', 'provider', 'machine_id', 'user_id', unique=True),
+    )
+
+    # Configurações de validação
+    MIN_RATING = 1
+    MAX_RATING = 5
+
+    def validate_rating(self) -> bool:
+        """Valida se o rating está dentro do intervalo permitido."""
+        return self.MIN_RATING <= self.rating <= self.MAX_RATING
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "provider": self.provider,
+            "machine_id": self.machine_id,
+            "user_id": self.user_id,
+            "rating": self.rating,
+            "comment": self.comment,
+            "rental_duration_hours": self.rental_duration_hours,
+            "gpu_name": self.gpu_name,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        stars = "★" * self.rating + "☆" * (5 - self.rating)
+        return f"<UserMachineRating {stars} {self.provider}:{self.machine_id} by {self.user_id}>"

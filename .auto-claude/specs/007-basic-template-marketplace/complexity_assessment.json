@@ -1,0 +1,74 @@
+{
+  "complexity": "complex",
+  "workflow_type": "feature",
+  "confidence": 0.88,
+  "reasoning": "Building a template marketplace is a new architectural subsystem requiring Vast.ai integration, Docker container management, multiple ML framework configurations, and performance optimization. The one-click deployment mechanism touches UI, backend, and infrastructure layers with strict boot time requirements.",
+
+  "analysis": {
+    "scope": {
+      "estimated_files": 25,
+      "estimated_services": 3,
+      "is_cross_cutting": true,
+      "notes": "Touches frontend (dashboard UI), backend (template API, deployment orchestration), and infrastructure (Docker containers, GPU provisioning). Estimated 25 files: UI components, API endpoints, template configs, deployment logic, docs."
+    },
+    "integrations": {
+      "external_services": ["Vast.ai"],
+      "new_dependencies": ["docker", "vastai-sdk", "stable-diffusion-webui", "comfyui", "vllm", "jupyterlab"],
+      "research_needed": true,
+      "notes": "Vast.ai API requires research for GPU provisioning. Each ML framework (Stable Diffusion, ComfyUI, vLLM) has unique setup requirements. Need to understand CUDA/driver compatibility matrices and container optimization strategies."
+    },
+    "infrastructure": {
+      "docker_changes": true,
+      "database_changes": true,
+      "config_changes": true,
+      "notes": "Templates are Docker images requiring build/storage infrastructure. Database needed for template metadata, deployment history, and GPU recommendations. New env vars for Vast.ai credentials, template registry, and performance tuning."
+    },
+    "knowledge": {
+      "patterns_exist": false,
+      "research_required": true,
+      "unfamiliar_tech": ["Vast.ai API", "Stable Diffusion WebUI", "ComfyUI", "vLLM"],
+      "notes": "No existing template marketplace in codebase. Requires research on: Vast.ai provisioning API, each ML framework's dependencies, GPU compatibility, container optimization for <2min boot target, one-click deployment UX patterns."
+    },
+    "risk": {
+      "level": "high",
+      "concerns": [
+        "Boot time SLA (<2 min) requires performance testing and optimization",
+        "GPU provisioning errors on Vast.ai cost real money",
+        "4 different templates increase maintenance burden and testing surface",
+        "Container security vulnerabilities in ML frameworks",
+        "Vast.ai API reliability and rate limits",
+        "GPU recommendation accuracy affects user experience and costs"
+      ],
+      "notes": "High-risk deployment system touching production infrastructure. Performance requirements are strict. Multiple moving parts (4 templates × Vast.ai integration × GPU provisioning). Errors are costly (GPU time charges)."
+    }
+  },
+
+  "recommended_phases": [
+    "discovery",
+    "requirements",
+    "research",
+    "context",
+    "spec_writing",
+    "self_critique",
+    "planning",
+    "validation"
+  ],
+
+  "flags": {
+    "needs_research": true,
+    "needs_self_critique": true,
+    "needs_infrastructure_setup": true
+  },
+
+  "validation_recommendations": {
+    "risk_level": "high",
+    "skip_validation": false,
+    "minimal_mode": false,
+    "test_types_required": ["unit", "integration", "e2e"],
+    "security_scan_required": true,
+    "staging_deployment_required": false,
+    "reasoning": "Production deployment system with GPU cost implications requires comprehensive testing. E2E tests needed for each template's one-click flow. Security scan for container vulnerabilities. No staging environment needed since Vast.ai is external platform."
+  },
+
+  "created_at": "2025-12-31T00:00:00Z"
+}

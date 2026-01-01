@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { apiGet, apiPost, apiDelete, isDemoMode } from '../utils/api'
 import { ConfirmModal } from '../components/ui/dumont-ui'
-import { Plus, Server, Shield, Cpu, Activity, Check, RefreshCw, DollarSign, TrendingDown, Wallet } from 'lucide-react'
+import { Plus, Server, Shield, Cpu, Activity, Check, RefreshCw, DollarSign, TrendingDown, Wallet, ArrowUpDown, Filter, Eye, EyeOff } from 'lucide-react'
 import MigrationModal from '../components/MigrationModal'
 import { ErrorState } from '../components/ErrorState'
 import { EmptyState } from '../components/EmptyState'
@@ -17,11 +18,15 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
+  Switch,
+  Slider,
+  Checkbox,
 } from '../components/tailadmin-ui'
 
 
 // Main Machines Page
 export default function Machines() {
+  const { t } = useTranslation()
   const location = useLocation()
   const isDemo = isDemoMode()
 
@@ -40,6 +45,13 @@ export default function Machines() {
   const [newMachineIds, setNewMachineIds] = useState(new Set()) // Track newly created machines for highlight animation
   const [vastBalance, setVastBalance] = useState(null) // VAST.ai account balance
   const [deletingMachines, setDeletingMachines] = useState(new Set()) // Track machines being deleted
+
+  // Reliability filter/sort state
+  const [sortByReliability, setSortByReliability] = useState(false) // Sort by reliability score
+  const [reliabilityThreshold, setReliabilityThreshold] = useState(70) // Minimum reliability threshold (0-100)
+  const [autoExcludeBelowThreshold, setAutoExcludeBelowThreshold] = useState(false) // Auto-exclude machines below threshold
+  const [showAllMachines, setShowAllMachines] = useState(false) // Show all machines even when auto-exclude is on
+  const [reliabilityData, setReliabilityData] = useState({}) // Machine ID -> reliability data
 
   // Create machine modal state
   const [createModal, setCreateModal] = useState({ open: false, offer: null, creating: false, error: null })
@@ -75,7 +87,59 @@ export default function Machines() {
         setVastBalance(data)
       }
     } catch (e) {
-      console.error('Error fetching balance:', e)
+      // Silently fail - balance is not critical
+    }
+  }
+
+  // Fetch reliability data for machines
+  const fetchReliabilityData = async (machineList) => {
+    if (!machineList || machineList.length === 0) return
+
+    // In demo mode, generate mock reliability data
+    if (isDemo) {
+      const mockData = {}
+      machineList.forEach((machine, index) => {
+        const machineKey = machine.machine_id || machine.id
+        // Use deterministic scores based on index for predictable testing:
+        // - First machine: 95 (excellent)
+        // - Second machine: 85 (good)
+        // - Third machine: 65 (below threshold)
+        // - Fourth machine: 55 (low)
+        // - Others: cycle through 90, 75, 60
+        const scorePatterns = [95, 85, 65, 55, 90, 75, 60, 80, 70, 50]
+        const baseScore = scorePatterns[index % scorePatterns.length]
+        mockData[machineKey] = {
+          overall_score: baseScore,
+          uptime_score: Math.min(100, baseScore + 5),
+          performance_score: Math.max(50, baseScore - 5),
+          user_rating: Math.round((baseScore / 20) * 10) / 10, // 4.75, 4.25, 3.25, etc.
+          total_ratings: 10 + index * 5
+        }
+      })
+      setReliabilityData(mockData)
+      return
+    }
+
+    try {
+      // Get machine IDs - prefer machine_id if available
+      const machineIds = machineList
+        .map(m => m.machine_id || m.id)
+        .filter(id => id != null)
+
+      if (machineIds.length === 0) return
+
+      // Build query params
+      const params = new URLSearchParams()
+      machineIds.forEach(id => params.append('machine_id', id))
+
+      const res = await apiGet(`/api/v1/reliability/machines?${params}`)
+      if (res.ok) {
+        const data = await res.json()
+        // API returns { reliability: { machine_id: data, ... } }
+        setReliabilityData(data.reliability || data)
+      }
+    } catch (e) {
+      // Silently fail - reliability data is optional, sorting/filtering will use fallbacks
     }
   }
 
@@ -106,6 +170,13 @@ export default function Machines() {
       handleCreateInstance(offer)
     }
   }, []) // Run only once on mount
+
+  // Fetch reliability data when machines change
+  useEffect(() => {
+    if (machines.length > 0) {
+      fetchReliabilityData(machines)
+    }
+  }, [machines.length]) // Only refetch when machine count changes
 
   // Auto-sync every 30 seconds for running machines
   useEffect(() => {
@@ -160,22 +231,24 @@ export default function Machines() {
 
     if (isDemo) {
       // Demo mode: simulate destruction with animation
-      showDemoToast(`Destruindo ${machineName}...`, 'warning')
+      showDemoToast(t('machines.toast.destroying', { name: machineName }), 'warning')
       await new Promise(r => setTimeout(r, 1500))
       setMachines(prev => prev.filter(m => m.id !== machineId))
-      setDeletingMachines(prev => {
-        const next = new Set(prev)
+setDeletingMachines(prev => {
         next.delete(machineId)
-        return next
       })
+        return next
       showDemoToast(`${machineName} destruída com sucesso!`, 'success')
+        const next = new Set(prev)
+showDemoToast(t('machines.toast.destroyedSuccess', { name: machineName }), 'success')
       return
     }
 
     try {
       const res = await apiDelete(`/api/v1/instances/${machineId}`)
-      if (!res.ok) throw new Error('Erro ao destruir máquina')
+if (!res.ok) throw new Error('Erro ao destruir máquina')
       showDemoToast(`${machineName} destruída com sucesso!`, 'success')
+if (!res.ok) throw new Error(t('machines.errors.destroyMachine'))
       fetchMachines()
     } catch (err) {
       alert(err.message)
@@ -192,7 +265,7 @@ export default function Machines() {
   // Create instance from offer (called from Dashboard or Nova Máquina)
   const handleCreateInstance = async (offer) => {
     if (isDemo) {
-      showDemoToast('Criando máquina demo...', 'info')
+      showDemoToast(t('machines.toast.creatingDemo'), 'info')
       await new Promise(r => setTimeout(r, 2000))
       const newMachineId = Date.now()
       const newMachine = {
@@ -234,12 +307,12 @@ export default function Machines() {
         })
       }, 5000)
       setCreateModal({ open: false, offer: null, creating: false, error: null })
-      showDemoToast(`${offer.gpu_name} criada com CPU Standby!`, 'success')
+      showDemoToast(t('machines.toast.createdWithStandby', { name: offer.gpu_name }), 'success')
       return
     }
 
     // Show toast that we're creating
-    showDemoToast(`Criando ${offer.gpu_name}...`, 'info')
+    showDemoToast(t('machines.toast.creating', { name: offer.gpu_name }), 'info')
 
     try {
       const res = await apiPost('/api/v1/instances', {
@@ -250,7 +323,7 @@ export default function Machines() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data.detail || data.error || 'Erro ao criar instância')
+        throw new Error(data.detail || data.error || t('machines.errors.createInstance'))
       }
 
       const data = await res.json()
@@ -276,11 +349,11 @@ export default function Machines() {
       setTimeout(() => scrollToNewMachine(), 500)
 
       // Show success message
-      showDemoToast(`${offer.gpu_name} criada! CPU Standby sendo provisionado...`, 'success')
+      showDemoToast(t('machines.toast.createdProvisioningStandby', { name: offer.gpu_name }), 'success')
 
     } catch (err) {
       // Show error as toast instead of modal
-      showDemoToast(`Erro: ${err.message}`, 'error')
+      showDemoToast(err.message, 'error')
       setCreateModal({ open: false, offer: null, creating: false, error: null })
     }
   }
@@ -289,7 +362,8 @@ export default function Machines() {
     if (isDemo) {
       // Demo mode: simulate starting
       const machine = machines.find(m => m.id === machineId)
-      showDemoToast(`Iniciando ${machine?.gpu_name || 'máquina'}...`, 'info')
+      const machineName = machine?.gpu_name || t('common.machine')
+      showDemoToast(t('machines.toast.starting', { name: machineName }), 'info')
       await new Promise(r => setTimeout(r, 2000))
       setMachines(prev => prev.map(m =>
         m.id === machineId
@@ -304,13 +378,13 @@ export default function Machines() {
           }
           : m
       ))
-      showDemoToast(`${machine?.gpu_name || 'Máquina'} iniciada!`, 'success')
+      showDemoToast(t('machines.toast.started', { name: machineName }), 'success')
       return
     }
 
     try {
       const res = await apiPost(`/api/v1/instances/${machineId}/resume`)
-      if (!res.ok) throw new Error('Erro ao iniciar máquina')
+      if (!res.ok) throw new Error(t('machines.errors.startMachine'))
       fetchMachines()
     } catch (err) {
       alert(err.message)
@@ -321,7 +395,8 @@ export default function Machines() {
     if (isDemo) {
       // Demo mode: simulate pausing
       const machine = machines.find(m => m.id === machineId)
-      showDemoToast(`Pausando ${machine?.gpu_name || 'máquina'}...`, 'info')
+      const machineName = machine?.gpu_name || t('common.machine')
+      showDemoToast(t('machines.toast.pausing', { name: machineName }), 'info')
       await new Promise(r => setTimeout(r, 1500))
       setMachines(prev => prev.map(m =>
         m.id === machineId
@@ -335,13 +410,13 @@ export default function Machines() {
           }
           : m
       ))
-      showDemoToast(`${machine?.gpu_name || 'Máquina'} pausada!`, 'success')
+      showDemoToast(t('machines.toast.paused', { name: machineName }), 'success')
       return
     }
 
     try {
       const res = await apiPost(`/api/v1/instances/${machineId}/pause`)
-      if (!res.ok) throw new Error('Erro ao pausar máquina')
+      if (!res.ok) throw new Error(t('machines.errors.pauseMachine'))
       fetchMachines()
     } catch (err) {
       alert(err.message)
@@ -354,7 +429,7 @@ export default function Machines() {
       // Demo mode: simulate snapshot
       const machine = machines.find(m => m.id === machineId)
       setSyncStatus(prev => ({ ...prev, [machineId]: 'syncing' }))
-      showDemoToast(`Criando snapshot de ${machine?.gpu_name}...`, 'info')
+      showDemoToast(t('machines.toast.creatingSnapshot', { name: machine?.gpu_name }), 'info')
       await new Promise(r => setTimeout(r, 2500))
 
       const demoStats = {
@@ -369,7 +444,7 @@ export default function Machines() {
       setSyncStatus(prev => ({ ...prev, [machineId]: 'synced' }))
       setLastSyncTime(prev => ({ ...prev, [machineId]: Date.now() }))
       setSyncStats(prev => ({ ...prev, [machineId]: demoStats }))
-      showDemoToast(`Snapshot concluído! ${demoStats.data_added} sincronizados`, 'success')
+      showDemoToast(t('machines.toast.snapshotComplete', { size: demoStats.data_added }), 'success')
       return
     }
 
@@ -383,8 +458,9 @@ export default function Machines() {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
-        console.error(`[Snapshot] Error:`, errorData)
+throw new Error(errorData.detail || errorData.error || t('machines.errors.syncFailed'))
         throw new Error(errorData.detail || errorData.error || 'Erro ao sincronizar')
+console.error(`[Snapshot] Error:`, errorData)
       }
 
       const data = await res.json()
@@ -466,7 +542,7 @@ export default function Machines() {
   // Simulate GPU failover (demo mode only) - with enriched metrics
   const handleSimulateFailover = async (machine) => {
     if (!machine.cpu_standby?.enabled) {
-      showDemoToast('Esta máquina não tem CPU Standby configurado', 'error')
+      showDemoToast(t('machines.toast.noCpuStandby'), 'error')
       return
     }
 
@@ -510,8 +586,8 @@ export default function Machines() {
     // Phase 1: GPU Lost - Detect the interruption
     const phaseStart = Date.now()
     const detectionTime = Math.floor(Math.random() * 500) + 500 // 500-1000ms
-    updateProgress('gpu_lost', `GPU ${machine.gpu_name} foi interrompida (Spot Preemption)`)
-    showDemoToast(`⚠️ GPU ${machine.gpu_name} foi interrompida!`, 'warning')
+    updateProgress('gpu_lost', t('machines.failover.gpuLost', { name: machine.gpu_name }))
+    showDemoToast(t('machines.toast.gpuInterrupted', { name: machine.gpu_name }), 'warning')
 
     // Update machine status
     setMachines(prev => prev.map(m =>
@@ -528,15 +604,15 @@ export default function Machines() {
 
     // Phase 2: Failover to CPU Standby
     const failoverTime = Math.floor(Math.random() * 300) + 800 // 800-1100ms
-    updateProgress('failover_active', `Redirecionando tráfego para CPU Standby (${machine.cpu_standby.ip})`, null, { detection_time_ms: detectionTime })
-    showDemoToast(`🔄 Failover automático: usando CPU Standby (${machine.cpu_standby.ip})`, 'info')
+    updateProgress('failover_active', t('machines.failover.failoverActive', { ip: machine.cpu_standby.ip }), null, { detection_time_ms: detectionTime })
+    showDemoToast(t('machines.toast.failoverUsingCpu', { ip: machine.cpu_standby.ip }), 'info')
     await new Promise(r => setTimeout(r, 2500))
     failoverMetrics.failover_time_ms = failoverTime
 
     // Phase 3: Searching for new GPU
     const searchTime = Math.floor(Math.random() * 2000) + 2000 // 2-4 seconds
-    updateProgress('searching', 'Pesquisando GPUs disponíveis em Vast.ai...', null, { failover_time_ms: failoverTime })
-    showDemoToast('🔍 Buscando nova GPU disponível...', 'info')
+    updateProgress('searching', t('machines.failover.searching'), null, { failover_time_ms: failoverTime })
+    showDemoToast(t('machines.failover.searching'), 'info')
     await new Promise(r => setTimeout(r, 3000))
     failoverMetrics.search_time_ms = searchTime
 
@@ -545,8 +621,8 @@ export default function Machines() {
     const newGpu = gpuOptions[Math.floor(Math.random() * gpuOptions.length)]
     const provisioningTime = Math.floor(Math.random() * 20000) + 30000 // 30-50 seconds
     failoverMetrics.new_gpu_name = newGpu
-    updateProgress('provisioning', `Provisionando ${newGpu}...`, newGpu, { search_time_ms: searchTime })
-    showDemoToast(`🚀 Provisionando nova GPU: ${newGpu}`, 'info')
+    updateProgress('provisioning', t('machines.failover.provisioning', { name: newGpu }), newGpu, { search_time_ms: searchTime })
+    showDemoToast(t('machines.toast.provisioningNewGpu', { name: newGpu }), 'info')
     await new Promise(r => setTimeout(r, 3500))
     failoverMetrics.provisioning_time_ms = provisioningTime
 
@@ -557,8 +633,8 @@ export default function Machines() {
     failoverMetrics.files_synced = filesCount
     failoverMetrics.data_restored_mb = dataSize
     failoverMetrics.restore_time_ms = restoreTime
-    updateProgress('restoring', `Restaurando ${filesCount.toLocaleString()} arquivos (${dataSize} MB) do CPU Standby...`, newGpu, { provisioning_time_ms: provisioningTime })
-    showDemoToast(`📦 Restaurando ${filesCount.toLocaleString()} arquivos para nova GPU...`, 'info')
+    updateProgress('restoring', t('machines.failover.restoring', { count: filesCount.toLocaleString(), size: dataSize }), newGpu, { provisioning_time_ms: provisioningTime })
+    showDemoToast(t('machines.toast.restoringFiles', { count: filesCount.toLocaleString() }), 'info')
     await new Promise(r => setTimeout(r, 4000))
 
     // Phase 6: Complete
@@ -567,7 +643,7 @@ export default function Machines() {
     failoverMetrics.status = 'success'
     failoverMetrics.completed_at = new Date().toISOString()
 
-    updateProgress('complete', `Recuperação completa! Nova GPU ${newGpu} operacional.`, newGpu, {
+    updateProgress('complete', t('machines.failover.complete', { name: newGpu }), newGpu, {
       restore_time_ms: restoreTime,
       total_time_ms: totalTime,
       files_synced: filesCount,
@@ -586,7 +662,7 @@ export default function Machines() {
       } : m
     ))
 
-    showDemoToast(`✅ Recuperação completa em ${(totalTime / 1000).toFixed(1)}s! Nova GPU: ${newGpu}`, 'success')
+    showDemoToast(t('machines.toast.recoveryComplete', { time: (totalTime / 1000).toFixed(1), name: newGpu }), 'success')
 
     // Save to failover history
     setFailoverHistory(prev => [...prev, failoverMetrics])
@@ -621,23 +697,62 @@ export default function Machines() {
     return dateB - dateA // Most recent first
   }
 
+  // Sort function: by reliability score (highest first)
+  const sortByReliabilityScore = (a, b) => {
+    // Check both machine_id and id for reliability data lookup
+    const dataA = reliabilityData[a.machine_id] || reliabilityData[a.id]
+    const dataB = reliabilityData[b.machine_id] || reliabilityData[b.id]
+    const scoreA = dataA?.overall_score || dataA?.reliability_score || a.reliability_score || 0
+    const scoreB = dataB?.overall_score || dataB?.reliability_score || b.reliability_score || 0
+    return scoreB - scoreA // Highest reliability first
+  }
+
+  // Get reliability score for a machine
+  const getReliabilityScore = (machine) => {
+    const data = reliabilityData[machine.machine_id] || reliabilityData[machine.id]
+    return data?.overall_score || data?.reliability_score || machine.reliability_score || null
+  }
+
+  // Check if machine meets reliability threshold
+  const meetsReliabilityThreshold = (machine) => {
+    const score = getReliabilityScore(machine)
+    // If no reliability data, consider it as meeting threshold (don't exclude for insufficient data)
+    if (score === null || score === undefined) return true
+    return score >= reliabilityThreshold
+  }
+
+  // Choose sort function based on settings
+  const getCurrentSortFn = sortByReliability ? sortByReliabilityScore : sortByRecent
+
   // Group machines: Loading → Running → Stopped
-  const loadingMachines = machines.filter(m => loadingStates.includes(m.actual_status)).sort(sortByRecent)
-  const runningMachines = machines.filter(m => m.actual_status === 'running').sort(sortByRecent)
+  const loadingMachines = machines.filter(m => loadingStates.includes(m.actual_status)).sort(getCurrentSortFn)
+  const runningMachines = machines.filter(m => m.actual_status === 'running').sort(getCurrentSortFn)
   const stoppedMachines = machines.filter(m =>
     !loadingStates.includes(m.actual_status) && m.actual_status !== 'running'
-  ).sort(sortByRecent)
+  ).sort(getCurrentSortFn)
 
   // For stats, "active" includes loading + running
   const activeMachines = [...loadingMachines, ...runningMachines]
   const inactiveMachines = stoppedMachines
 
   // Build filtered list: Loading always first, then based on filter
-  const filteredMachines = filter === 'online'
+  let filteredMachines = filter === 'online'
     ? [...loadingMachines, ...runningMachines]
     : filter === 'offline'
       ? stoppedMachines
       : [...loadingMachines, ...runningMachines, ...stoppedMachines]
+
+  // Apply reliability threshold filtering if enabled
+  const machinesExcludedByThreshold = autoExcludeBelowThreshold && !showAllMachines
+    ? filteredMachines.filter(m => !meetsReliabilityThreshold(m))
+    : []
+
+  if (autoExcludeBelowThreshold && !showAllMachines) {
+    filteredMachines = filteredMachines.filter(meetsReliabilityThreshold)
+  }
+
+  // Count of excluded machines for display
+  const excludedCount = machinesExcludedByThreshold.length
 
   const totalGpuMem = activeMachines.reduce((acc, m) => acc + (m.gpu_ram || 24000), 0)
   const totalCostPerHour = activeMachines.reduce((acc, m) => acc + (m.total_dph || m.dph_total || 0), 0)
@@ -760,6 +875,79 @@ export default function Machines() {
                   {tab.label} ({tab.count})
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Reliability Sort & Filter Controls */}
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <div className="flex flex-wrap items-center gap-6">
+              {/* Sort by Reliability Toggle */}
+              <div className="flex items-center gap-3">
+                <ArrowUpDown className="w-4 h-4 text-gray-400" />
+                <Switch
+                  checked={sortByReliability}
+                  onCheckedChange={setSortByReliability}
+                  label="Ordenar por confiabilidade"
+                />
+              </div>
+
+              {/* Reliability Threshold Slider */}
+              <div className="flex items-center gap-3 min-w-[200px]">
+                <Filter className="w-4 h-4 text-gray-400" />
+                <div className="flex flex-col flex-1">
+                  <span className="text-xs text-gray-400 mb-1">
+                    Limite mínimo: <span className="text-white font-medium">{reliabilityThreshold}%</span>
+                  </span>
+                  <Slider
+                    value={[reliabilityThreshold]}
+                    onValueChange={(values) => setReliabilityThreshold(values[0])}
+                    min={0}
+                    max={100}
+                    step={5}
+                  />
+                </div>
+              </div>
+
+              {/* Auto-exclude Checkbox */}
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={autoExcludeBelowThreshold}
+                  onChange={(e) => {
+                    setAutoExcludeBelowThreshold(e.target.checked)
+                    // Reset show all when disabling auto-exclude
+                    if (!e.target.checked) {
+                      setShowAllMachines(false)
+                    }
+                  }}
+                  label="Ocultar abaixo do limite"
+                />
+              </div>
+
+              {/* Show All Machines Toggle (only visible when auto-exclude is enabled) */}
+              {autoExcludeBelowThreshold && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowAllMachines(!showAllMachines)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                      showAllMachines
+                        ? 'bg-brand-500/20 text-brand-400 border border-brand-500/30'
+                        : 'bg-gray-700/50 text-gray-400 border border-gray-600/30 hover:bg-gray-700'
+                    }`}
+                  >
+                    {showAllMachines ? (
+                      <>
+                        <Eye className="w-4 h-4" />
+                        Mostrando todas
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="w-4 h-4" />
+                        Mostrar todas ({excludedCount} ocultas)
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

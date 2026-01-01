@@ -6,6 +6,9 @@ Inclui:
 - ProviderReliability: Histórico de confiabilidade por host
 - PricePrediction: Previsões de preço geradas por ML
 - CostEfficiencyRanking: Rankings de custo-benefício
+- CostForecast: Previsões de custo para 7 dias
+- PredictionAccuracy: Rastreamento de precisão das previsões
+- BudgetAlert: Alertas de orçamento configuráveis por usuário
 """
 
 from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Index, Text
@@ -207,3 +210,158 @@ class CostEfficiencyRanking(Base):
 
     def __repr__(self):
         return f"<CostEfficiencyRanking {self.gpu_name} rank={self.rank_overall} score={self.efficiency_score:.1f}>"
+
+
+class CostForecast(Base):
+    """
+    Previsões de custo para os próximos 7 dias.
+    Armazena previsões horárias (168 horas) e custos diários agregados.
+    """
+    __tablename__ = "cost_forecasts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    # Identificação do usuário (para forecasts personalizados)
+    user_id = Column(Integer, nullable=True, index=True)
+
+    # Alvo da previsão
+    gpu_name = Column(String(100), nullable=False, index=True)
+    machine_type = Column(String(20), nullable=False, default="on-demand")
+
+    # Período da previsão
+    forecast_start = Column(DateTime, nullable=False)
+    forecast_end = Column(DateTime, nullable=False)
+
+    # Previsões horárias (168 horas = 7 dias)
+    # {"0": 0.45, "1": 0.42, ..., "167": 0.48}
+    hourly_prices = Column(JSONB, nullable=False)
+
+    # Custos diários agregados
+    # [{"date": "2024-01-01", "cost": 10.50, "hours": 24}, ...]
+    daily_costs = Column(JSONB, nullable=False)
+
+    # Intervalos de confiança por dia
+    # [{"date": "2024-01-01", "lower": 9.50, "upper": 11.50}, ...]
+    confidence_intervals = Column(JSONB)
+
+    # Custo total previsto para os 7 dias
+    total_forecasted_cost = Column(Float, nullable=False)
+
+    # Metadados do modelo
+    model_version = Column(String(50))
+    model_confidence = Column(Float)  # 0-1
+
+    # Padrões de uso do usuário considerados
+    # {"avg_hours_per_day": 8, "typical_start_hour": 9, "typical_end_hour": 17}
+    usage_pattern = Column(JSONB)
+
+    # Melhor janela de custo prevista
+    best_window_start = Column(DateTime)
+    best_window_end = Column(DateTime)
+    best_window_cost = Column(Float)
+
+    # Validade da previsão
+    valid_until = Column(DateTime, nullable=False)
+
+    __table_args__ = (
+        Index('idx_forecast_user', 'user_id'),
+        Index('idx_forecast_gpu_type', 'gpu_name', 'machine_type'),
+        Index('idx_forecast_validity', 'valid_until'),
+        Index('idx_forecast_period', 'forecast_start', 'forecast_end'),
+    )
+
+    def __repr__(self):
+        return f"<CostForecast {self.gpu_name} ${self.total_forecasted_cost:.2f} valid_until={self.valid_until}>"
+
+
+class PredictionAccuracy(Base):
+    """
+    Rastreamento de precisão das previsões de preço.
+    Armazena métricas de acurácia comparando previsões com valores reais.
+    """
+    __tablename__ = "prediction_accuracy"
+
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    # Identificação
+    gpu_name = Column(String(100), nullable=False, index=True)
+    machine_type = Column(String(20), nullable=False, default="on-demand")
+
+    # Período de avaliação
+    evaluation_start = Column(DateTime, nullable=False)
+    evaluation_end = Column(DateTime, nullable=False)
+
+    # Métricas de acurácia
+    mape = Column(Float, nullable=False)  # Mean Absolute Percentage Error (0-100%)
+    mae = Column(Float)  # Mean Absolute Error (em $/hora)
+    rmse = Column(Float)  # Root Mean Square Error
+    r_squared = Column(Float)  # Coeficiente de determinação R²
+
+    # Contagem de amostras
+    num_predictions = Column(Integer, nullable=False)
+    num_actual_values = Column(Integer, nullable=False)
+
+    # Metadados do modelo avaliado
+    model_version = Column(String(50))
+
+    # Detalhes por hora (opcional)
+    # {"0": {"mape": 5.2, "mae": 0.02}, "1": {"mape": 4.8, "mae": 0.018}, ...}
+    hourly_accuracy = Column(JSONB)
+
+    # Detalhes por dia (opcional)
+    # {"monday": {"mape": 5.5, "mae": 0.022}, "tuesday": {"mape": 4.9, "mae": 0.019}, ...}
+    daily_accuracy = Column(JSONB)
+
+    __table_args__ = (
+        Index('idx_accuracy_gpu_type', 'gpu_name', 'machine_type'),
+        Index('idx_accuracy_created', 'created_at'),
+        Index('idx_accuracy_mape', 'mape'),
+    )
+
+    def __repr__(self):
+        return f"<PredictionAccuracy {self.gpu_name}:{self.machine_type} MAPE={self.mape:.2f}%>"
+
+
+class BudgetAlert(Base):
+    """
+    Configuração de alertas de orçamento por usuário.
+    Dispara notificação quando custo previsto excede o limiar configurado.
+    """
+    __tablename__ = "budget_alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    # Identificação do usuário
+    user_id = Column(Integer, nullable=False, index=True)
+
+    # Configuração do alerta
+    gpu_name = Column(String(100), nullable=True, index=True)  # Null = todos os GPUs
+    machine_type = Column(String(20), nullable=False, default="on-demand")
+    threshold_amount = Column(Float, nullable=False)  # Limiar em $ para 7 dias
+
+    # Contato para notificação
+    email = Column(String(255), nullable=False)
+
+    # Estado do alerta
+    enabled = Column(Boolean, default=True, nullable=False)
+
+    # Histórico de disparo
+    last_triggered_at = Column(DateTime, nullable=True)
+    last_forecasted_cost = Column(Float, nullable=True)  # Último custo previsto que disparou alerta
+
+    # Metadados
+    alert_name = Column(String(100), nullable=True)  # Nome amigável (opcional)
+    notification_settings = Column(JSONB, nullable=True)  # Configurações extras (cooldown, frequência, etc)
+
+    __table_args__ = (
+        Index('idx_budget_alert_user', 'user_id'),
+        Index('idx_budget_alert_enabled', 'enabled'),
+        Index('idx_budget_alert_user_gpu', 'user_id', 'gpu_name'),
+    )
+
+    def __repr__(self):
+        gpu = self.gpu_name or "ALL"
+        return f"<BudgetAlert user={self.user_id} gpu={gpu} threshold=${self.threshold_amount:.2f}>"

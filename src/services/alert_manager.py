@@ -171,6 +171,36 @@ class AlertManager:
             message_template='Sistema degradado: status={value:.1f}',
             threshold=1.0
         ))
+
+        # Snapshot failed
+        self.add_rule(AlertRule(
+            name='snapshot_failed',
+            metric_name='dumont_snapshot_failure_total',
+            condition=lambda v: v > 0,
+            severity='critical',
+            message_template='Snapshot falhou: {value:.0f} falha(s) detectada(s)',
+            threshold=0
+        ))
+
+        # Snapshot stale (no snapshot in last 30 minutes)
+        self.add_rule(AlertRule(
+            name='snapshot_stale',
+            metric_name='dumont_snapshot_last_success_seconds_ago',
+            condition=lambda v: v > 1800,
+            severity='warning',
+            message_template='Snapshot desatualizado: último há {value:.0f}s (threshold: {threshold}s)',
+            threshold=1800
+        ))
+
+        # Snapshot duration too long
+        self.add_rule(AlertRule(
+            name='snapshot_slow',
+            metric_name='dumont_snapshot_duration_seconds',
+            condition=lambda v: v > 300,
+            severity='warning',
+            message_template='Snapshot lento: {value:.1f}s (threshold: {threshold}s)',
+            threshold=300
+        ))
     
     def add_rule(self, rule: AlertRule):
         """Adiciona regra de alerta"""

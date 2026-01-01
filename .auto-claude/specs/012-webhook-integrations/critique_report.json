@@ -1,0 +1,104 @@
+{
+  "critique_completed": true,
+  "issues_found": [
+    {
+      "severity": "high",
+      "category": "accuracy",
+      "description": "All file paths used incorrect prefix 'cli/src/' instead of 'src/'",
+      "location": "Lines 90-101 (Files to Modify table)",
+      "fix_applied": "Changed all file paths from 'cli/src/*' to 'src/*'. Updated service column from 'cli' to 'api' to reflect correct service name.",
+      "verified": true
+    },
+    {
+      "severity": "high",
+      "category": "accuracy",
+      "description": "Migration path incorrect - spec showed 'cli/alembic/versions/' but project uses 'src/migrations/'",
+      "location": "Line 94 (Files to Modify table)",
+      "fix_applied": "Changed 'cli/alembic/versions/xxx_add_webhooks.py' to 'src/migrations/add_webhooks.py'",
+      "verified": true
+    },
+    {
+      "severity": "medium",
+      "category": "consistency",
+      "description": "Database model ID column type mismatch - spec used String(100) but reference model (instance_status.py) uses Integer primary key",
+      "location": "Lines 130, 147 (WebhookConfig and WebhookLog model definitions)",
+      "fix_applied": "Changed ID columns from 'Column(String(100), primary_key=True)' to 'Column(Integer, primary_key=True, index=True)' to match existing pattern",
+      "verified": true
+    },
+    {
+      "severity": "medium",
+      "category": "consistency",
+      "description": "DateTime column pattern inconsistent with codebase - spec used DateTime(timezone=True) with server_default=func.now() but actual code uses DateTime with default=datetime.utcnow",
+      "location": "Lines 137-138, 155 (created_at, updated_at fields)",
+      "fix_applied": "Changed from 'Column(DateTime(timezone=True), server_default=func.now())' to 'Column(DateTime, default=datetime.utcnow, nullable=False)' and onupdate=datetime.utcnow for consistency",
+      "verified": true
+    },
+    {
+      "severity": "medium",
+      "category": "accuracy",
+      "description": "API routing structure unclear - spec suggested direct api/webhooks.py but project uses versioned endpoints in api/v1/endpoints/",
+      "location": "Line 92 (Files to Modify table)",
+      "fix_applied": "Changed 'src/api/webhooks.py' to 'src/api/v1/endpoints/webhooks.py' to match existing API structure",
+      "verified": true
+    },
+    {
+      "severity": "medium",
+      "category": "completeness",
+      "description": "Missing composite indexes and __table_args__ pattern from reference model",
+      "location": "Lines 127-152 (Model definitions)",
+      "fix_applied": "Added __table_args__ with Index definitions for composite indexes on user_id/enabled and webhook_id/created_at",
+      "verified": true
+    },
+    {
+      "severity": "low",
+      "category": "accuracy",
+      "description": "Reference file paths also used incorrect 'cli/src/' prefix",
+      "location": "Lines 109-114 (Files to Reference table)",
+      "fix_applied": "Changed reference paths from 'cli/src/*' to 'src/*' and updated to point to correct files (e.g., src/api/v1/endpoints/instances.py)",
+      "verified": true
+    },
+    {
+      "severity": "low",
+      "category": "completeness",
+      "description": "Missing datetime import in model pattern - code uses datetime.utcnow but doesn't show import",
+      "location": "Line 124 (imports section)",
+      "fix_applied": "Added 'from datetime import datetime' to the imports in the model pattern example",
+      "verified": true
+    },
+    {
+      "severity": "low",
+      "category": "accuracy",
+      "description": "Service naming inconsistency - spec called backend 'cli' but it's actually the 'api' service",
+      "location": "Lines 15-17, 36-52 (Service Context section)",
+      "fix_applied": "Renamed 'CLI (Backend Service)' to 'API (Backend Service)' and updated all references from 'cli' to 'api'",
+      "verified": true
+    },
+    {
+      "severity": "low",
+      "category": "accuracy",
+      "description": "Test file paths used incorrect prefix",
+      "location": "Lines 380-392 (Unit Tests and Integration Tests tables)",
+      "fix_applied": "Changed test paths from 'cli/tests/*' to 'tests/*' and updated service references from 'cli API' to 'api'",
+      "verified": true
+    },
+    {
+      "severity": "low",
+      "category": "completeness",
+      "description": "HMAC signature utility placement unclear - spec put it in utils/ but project has core/security/ pattern",
+      "location": "Line 93 (Files to Modify table)",
+      "fix_applied": "Changed from 'src/utils/hmac_signature.py' to 'src/core/security/hmac_signature.py' to match security-related code organization",
+      "verified": true
+    }
+  ],
+  "issues_fixed": true,
+  "no_issues_found": false,
+  "critique_summary": "Found 11 issues ranging from high to low severity. The most critical issues were incorrect file path prefixes throughout the spec ('cli/src/' instead of 'src/') and database model patterns that didn't match the actual codebase (String IDs vs Integer IDs, timezone-aware DateTime vs naive DateTime). All issues have been fixed. The spec now correctly reflects the project structure with 'src/' paths, FastAPI in src/main.py, versioned API endpoints in src/api/v1/endpoints/, and SQLAlchemy models following the exact pattern from src/models/instance_status.py.",
+  "confidence_level": "high",
+  "recommendations": [
+    "Before implementation, verify that src/services/cost_monitor.py exists, as it's marked '(if exists)' in the spec",
+    "Check if event trigger points (instance_manager, snapshot_service) need to be created or if they exist in different locations",
+    "Consider adding a to_dict() method to webhook models following the pattern in instance_status.py for consistent API responses",
+    "Ensure the webhook router is properly registered in src/api/v1/router.py following existing endpoint registration patterns"
+  ],
+  "created_at": "2025-12-31T22:30:00Z"
+}

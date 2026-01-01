@@ -1,0 +1,20 @@
+{
+  "discovered_files": {
+    "migrations/002_create_nps_tables.sql": {
+      "description": "NPS database migration creates 3 tables: nps_responses (survey data with score 0-10, category, followup tracking), nps_survey_config (trigger configs with defaults for first_deployment, monthly, issue_resolution), nps_user_interactions (rate limiting). Uses CHECK constraints for validation and indexes on user_id, created_at for performance.",
+      "category": "database",
+      "discovered_at": "2025-12-31T21:40:19.899064+00:00"
+    },
+    "src/domain/services/nps_service.py": {
+      "description": "NPSService domain service implements rate limiting via NPSUserInteraction table (checking for 'submitted' or 'dismissed' interactions within frequency_days window), category calculation using NPSResponse.get_category() static method, and comprehensive CRUD operations for NPS surveys. Service accepts optional session parameter per-method for flexibility with FastAPI dependency injection.",
+      "category": "service",
+      "discovered_at": "2025-12-31T21:48:42.805534+00:00"
+    },
+    "src/api/v1/endpoints/nps.py": {
+      "description": "NPS API endpoints following auth.py patterns. Provides 8 endpoints: /should-show (rate limiting check with optional auth), /submit (authenticated NPS submission), /dismiss (record dismissal), /trends (admin dashboard data), /detractors (follow-up list with pagination), /responses/{id}/followup (update follow-up), /config (list configs), /config/{trigger_type} (update config). Uses NPSService for business logic and get_db for database sessions.",
+      "category": "api",
+      "discovered_at": "2025-12-31T21:54:21.164684+00:00"
+    }
+  },
+  "last_updated": "2025-12-31T21:54:21.164720+00:00"
+}

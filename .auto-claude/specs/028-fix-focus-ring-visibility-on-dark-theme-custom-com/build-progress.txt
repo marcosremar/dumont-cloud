@@ -1,0 +1,34 @@
+# Build Progress: Fix Focus Ring Visibility on Dark Theme Custom Components
+
+## Overview
+Fix focus ring styles across custom components to use visible colors on dark backgrounds by changing focus:ring-offset-2 background color to match dark surface (#0a0d0a).
+
+## Problem Analysis
+The focus ring offset uses a white color by default which creates a jarring visual gap on dark theme backgrounds. Several components need updates:
+
+1. **Button (tailadmin-ui/index.jsx)**: Uses `focus:ring-offset-2` without dark mode color
+2. **Slider (ui/slider.jsx)**: References non-existent `dark-surface-bg` color
+3. **Switch (ui/switch.jsx)**: References non-existent `dark-surface-bg` color
+4. **Dialog (ui/dialog.jsx)**: Close button needs explicit dark mode handling
+
+## Current Status: COMPLETE ✅
+
+### Phase 1: Fix Button Component Focus Ring
+- [x] 1.1 Add dark mode ring-offset color to Button component
+
+### Phase 2: Fix Slider and Switch Invalid Color References
+- [x] 2.1 Fix Slider component invalid color reference
+- [x] 2.2 Fix Switch component invalid color reference
+
+### Phase 3: Fix Dialog Close Button Focus Ring
+- [x] 3.1 Fix Dialog close button focus ring for dark mode
+
+### Phase 4: Verification and Testing
+- [x] 4.1 Verify Tailwind classes are valid (manual verification - build commands restricted)
+
+## Summary of Changes
+All components now use `dark:focus:ring-offset-dark-surface` or `dark:focus-visible:ring-offset-dark-surface`
+which correctly references the `dark-surface` DEFAULT color (#0a0d0a) in tailwind.config.js.
+
+---
+Last Updated: 2026-01-01
