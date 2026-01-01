@@ -809,6 +809,7 @@ export default function MachineCard({
                 className="flex-1 text-[10px] h-7"
                 onClick={() => setShowFailoverMigration(true)}
                 title="Migrar para outro tipo de failover"
+                aria-label="Open failover migration options for this machine"
               >
                 Failover
               </Button>
@@ -820,6 +821,7 @@ export default function MachineCard({
                   className="flex-1 text-[10px] h-7"
                   onClick={() => onSimulateFailover(machine)}
                   title="Simular roubo de GPU e failover automático"
+                  aria-label="Test failover by simulating GPU interruption"
                 >
                   Testar
                 </Button>
@@ -835,13 +837,14 @@ export default function MachineCard({
               icon={ArrowLeftRight}
               className="flex-1 text-[10px] h-7"
               onClick={() => onMigrate && onMigrate(machine)}
+              aria-label="Migrate this machine from GPU to CPU instance"
             >
               CPU
             </Button>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" size="xs" icon={Pause} className="flex-1 text-[10px] h-7">
+                <Button variant="outline" size="xs" icon={Pause} className="flex-1 text-[10px] h-7" aria-label="Pause this machine. Running processes will be interrupted">
                   Pausar
                 </Button>
               </AlertDialogTrigger>
@@ -916,6 +919,7 @@ export default function MachineCard({
                     icon={ArrowLeftRight}
                     className="flex-1 text-[10px] h-7"
                     onClick={() => onMigrate && onMigrate(machine)}
+                    aria-label="Migrate this machine from CPU to GPU instance"
                   >
                     GPU
                   </Button>
@@ -927,6 +931,7 @@ export default function MachineCard({
                   icon={Play}
                   className={`text-[10px] h-7 ${machine.num_gpus === 0 ? 'flex-1' : 'w-full'}`}
                   onClick={() => onStart && onStart(machine.id)}
+                  aria-label={`Start ${gpuName} machine`}
                 >
                   Iniciar
                 </Button>
