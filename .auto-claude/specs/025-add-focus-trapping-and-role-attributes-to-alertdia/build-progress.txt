@@ -1,0 +1,33 @@
+# Build Progress: Add Focus Trapping and Role Attributes to AlertDialog
+
+## Status: PLANNING COMPLETE
+
+## Summary
+This task implements proper accessibility for the custom AlertDialog component in
+`web/src/components/tailadmin-ui/index.jsx` (lines 667-729).
+
+## Current Issues Identified
+1. No `role="dialog"` or `role="alertdialog"` on content container
+2. No `aria-modal="true"`
+3. No focus trap - Tab key can focus elements behind modal
+4. No auto-focus to first focusable element
+5. Escape key doesn't close the dialog
+6. Focus not returned to trigger element on close
+
+## Important Notes
+- The Radix UI AlertDialog (`web/src/components/ui/alert-dialog.jsx`) already has proper
+  accessibility built-in through @radix-ui/react-alert-dialog
+- This task focuses ONLY on the custom AlertDialog in tailadmin-ui
+
+## Implementation Plan Created
+- **Phase 1**: Create useFocusTrap hook (5 subtasks)
+- **Phase 2**: Update AlertDialog components (5 subtasks)
+- **Phase 3**: Testing and validation (3 subtasks)
+
+## Files to Modify
+- `web/src/hooks/useFocusTrap.ts` (new file)
+- `web/src/components/tailadmin-ui/index.jsx`
+- `tests/e2e-journeys/machine-details-actions.spec.js`
+
+## Session Log
+- 2026-01-01: Initial planning complete, implementation_plan.json created

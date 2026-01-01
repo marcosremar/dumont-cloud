@@ -1,0 +1,213 @@
+{
+  "feature": "Add focus trapping and role attributes to AlertDialog modal components",
+  "description": "Implement proper focus management in AlertDialog components including focus trapping, role=\"alertdialog\", aria-modal=\"true\", and automatic focus return to trigger element on close.",
+  "created_at": "2025-12-31T21:16:38.249Z",
+  "updated_at": "2026-01-01T06:15:00.000Z",
+  "status": "planned",
+  "planStatus": "ready",
+  "workflow_type": "development",
+  "services_involved": ["web"],
+  "spec_file": "spec.md",
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Create useFocusTrap Hook",
+      "description": "Create a reusable React hook for focus management in modal dialogs",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "1.1",
+          "title": "Create useFocusTrap hook file",
+          "description": "Create web/src/hooks/useFocusTrap.ts with the base hook structure that accepts a ref and isOpen boolean parameter",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Hook file created at web/src/hooks/useFocusTrap.ts",
+            "Hook accepts containerRef and isOpen parameters",
+            "Hook properly typed with TypeScript"
+          ],
+          "files": ["web/src/hooks/useFocusTrap.ts"]
+        },
+        {
+          "id": "1.2",
+          "title": "Implement focus trap logic",
+          "description": "Implement the core focus trapping logic: find all focusable elements, trap Tab/Shift+Tab within dialog, prevent focus escape",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Tab key cycles forward through focusable elements",
+            "Shift+Tab cycles backward through focusable elements",
+            "Focus cannot escape dialog boundaries",
+            "Handles dynamic content (elements added/removed)"
+          ],
+          "files": ["web/src/hooks/useFocusTrap.ts"]
+        },
+        {
+          "id": "1.3",
+          "title": "Implement auto-focus on open",
+          "description": "Auto-focus first focusable element when dialog opens, with option to specify a custom initial focus element",
+          "status": "pending",
+          "acceptance_criteria": [
+            "First focusable element receives focus when dialog opens",
+            "Optional initialFocusRef parameter to override default behavior",
+            "Focus applied after animation completes (requestAnimationFrame)"
+          ],
+          "files": ["web/src/hooks/useFocusTrap.ts"]
+        },
+        {
+          "id": "1.4",
+          "title": "Implement focus return on close",
+          "description": "Store the previously focused element and restore focus when dialog closes",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Previously focused element stored on dialog open",
+            "Focus returned to trigger element when dialog closes",
+            "Handles case where trigger element no longer exists"
+          ],
+          "files": ["web/src/hooks/useFocusTrap.ts"]
+        },
+        {
+          "id": "1.5",
+          "title": "Implement Escape key handler",
+          "description": "Add keyboard event listener for Escape key to close the dialog",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Pressing Escape triggers onClose callback",
+            "Event listener properly cleaned up on unmount",
+            "Only responds when dialog is open"
+          ],
+          "files": ["web/src/hooks/useFocusTrap.ts"]
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "Update AlertDialog Components",
+      "description": "Integrate focus management and ARIA attributes into the custom AlertDialog components in tailadmin-ui",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "2.1",
+          "title": "Update AlertDialog component with useFocusTrap",
+          "description": "Integrate the useFocusTrap hook into the main AlertDialog component wrapper",
+          "status": "pending",
+          "acceptance_criteria": [
+            "AlertDialog uses useFocusTrap hook",
+            "Focus trap activated when open=true",
+            "onOpenChange called with false when Escape pressed"
+          ],
+          "files": ["web/src/components/tailadmin-ui/index.jsx"]
+        },
+        {
+          "id": "2.2",
+          "title": "Add ARIA attributes to AlertDialogContent",
+          "description": "Add role=\"alertdialog\", aria-modal=\"true\", aria-labelledby, and aria-describedby attributes",
+          "status": "pending",
+          "acceptance_criteria": [
+            "role=\"alertdialog\" added to content container",
+            "aria-modal=\"true\" added to content container",
+            "aria-labelledby points to title element id",
+            "aria-describedby points to description element id"
+          ],
+          "files": ["web/src/components/tailadmin-ui/index.jsx"]
+        },
+        {
+          "id": "2.3",
+          "title": "Update AlertDialogTitle with id",
+          "description": "Add unique id to AlertDialogTitle for aria-labelledby reference",
+          "status": "pending",
+          "acceptance_criteria": [
+            "AlertDialogTitle has unique id attribute",
+            "id is accessible via context or passed to parent"
+          ],
+          "files": ["web/src/components/tailadmin-ui/index.jsx"]
+        },
+        {
+          "id": "2.4",
+          "title": "Update AlertDialogDescription with id",
+          "description": "Add unique id to AlertDialogDescription for aria-describedby reference",
+          "status": "pending",
+          "acceptance_criteria": [
+            "AlertDialogDescription has unique id attribute",
+            "id is accessible via context or passed to parent"
+          ],
+          "files": ["web/src/components/tailadmin-ui/index.jsx"]
+        },
+        {
+          "id": "2.5",
+          "title": "Create AlertDialogContext for state sharing",
+          "description": "Create a React Context to share dialog state, onOpenChange, and generated IDs between components",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Context provides open state, onOpenChange callback",
+            "Context provides titleId and descriptionId",
+            "All child components consume context properly"
+          ],
+          "files": ["web/src/components/tailadmin-ui/index.jsx"]
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "Testing and Validation",
+      "description": "Test accessibility improvements and verify WCAG compliance",
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": "3.1",
+          "title": "Manual accessibility testing",
+          "description": "Verify focus trap behavior, keyboard navigation, and screen reader compatibility",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Tab cannot escape dialog",
+            "Escape closes dialog",
+            "Focus returns to trigger on close",
+            "Screen readers announce dialog role and labels"
+          ],
+          "files": []
+        },
+        {
+          "id": "3.2",
+          "title": "Update E2E tests",
+          "description": "Update existing E2E tests to verify new accessibility attributes",
+          "status": "pending",
+          "acceptance_criteria": [
+            "Tests verify role=\"alertdialog\" presence",
+            "Tests verify focus behavior",
+            "Tests verify Escape key functionality"
+          ],
+          "files": ["tests/e2e-journeys/machine-details-actions.spec.js"]
+        },
+        {
+          "id": "3.3",
+          "title": "Build and verify no regressions",
+          "description": "Run full build and test suite to ensure no breaking changes",
+          "status": "pending",
+          "acceptance_criteria": [
+            "npm run build succeeds",
+            "All existing tests pass",
+            "No TypeScript errors"
+          ],
+          "files": []
+        }
+      ]
+    }
+  ],
+  "final_acceptance": [
+    "Focus is trapped within AlertDialog when open",
+    "Pressing Tab/Shift+Tab cycles through focusable elements without escaping",
+    "First focusable element receives focus when dialog opens",
+    "Focus returns to trigger element when dialog closes",
+    "Escape key closes the dialog",
+    "role=\"alertdialog\" attribute present on dialog content",
+    "aria-modal=\"true\" attribute present on dialog content",
+    "aria-labelledby references the dialog title",
+    "aria-describedby references the dialog description",
+    "WCAG 2.4.3 Focus Order compliance verified"
+  ],
+  "technical_notes": [
+    "The Radix UI AlertDialog (web/src/components/ui/alert-dialog.jsx) already has these features built-in",
+    "This task focuses on the custom AlertDialog in web/src/components/tailadmin-ui/index.jsx",
+    "Use useId() from React 18 for generating unique IDs",
+    "Consider using inert attribute on background content for better isolation",
+    "Focus trap must handle dynamic content (elements added/removed after dialog opens)"
+  ]
+}

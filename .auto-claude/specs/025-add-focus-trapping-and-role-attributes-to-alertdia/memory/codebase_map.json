@@ -1,0 +1,10 @@
+{
+  "discovered_files": {
+    "web/src/components/tailadmin-ui/index.jsx": {
+      "description": "Custom AlertDialog component (lines 667-729) uses createPortal but lacks focus trapping, ARIA attributes, and keyboard handling. Radix UI AlertDialog at web/src/components/ui/alert-dialog.jsx already has these features built-in.",
+      "category": "accessibility",
+      "discovered_at": "2026-01-01T06:02:16.423310+00:00"
+    }
+  },
+  "last_updated": "2026-01-01T06:02:16.423332+00:00"
+}
