@@ -450,6 +450,7 @@ export default function MachineCard({
               <button
                 type="button"
                 data-testid="failover-selector"
+                aria-label={`Failover strategy: ${strategyInfo.label}. Click to change strategy`}
                 className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 ${
                   currentStrategy === 'disabled' ? 'bg-gray-500/20 text-gray-400' :
                   currentStrategy === 'warm_pool' ? 'bg-green-500/20 text-green-400' :
@@ -532,6 +533,7 @@ export default function MachineCard({
                 variant={hasCpuStandby ? 'primary' : 'gray'}
                 className="cursor-pointer hover:opacity-80 text-[9px]"
                 onClick={() => setShowBackupInfo(!showBackupInfo)}
+                aria-label={hasCpuStandby ? 'View CPU backup details' : 'No backup configured. Click for details'}
               >
                 <Layers className="w-2.5 h-2.5 mr-0.5" />
                 {hasCpuStandby ? 'Backup' : 'Sem backup'}
@@ -620,7 +622,10 @@ export default function MachineCard({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded-lg hover:bg-gray-800/50 text-gray-500 hover:text-gray-300 flex-shrink-0">
+            <button
+              className="p-1.5 rounded-lg hover:bg-gray-800/50 text-gray-500 hover:text-gray-300 flex-shrink-0"
+              aria-label="More options menu"
+            >
               <MoreVertical className="w-4 h-4" />
             </button>
           </DropdownMenuTrigger>
