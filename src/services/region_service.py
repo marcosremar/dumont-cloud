@@ -7,12 +7,16 @@ This service provides a unified API for region operations including:
 - Checking region availability
 - Suggesting regions based on user location
 - Compliance tagging for GDPR/data residency
+- Multi-region failover for instance provisioning
 
 It wraps the VastService and RegionMapper to provide a cohesive region API.
 """
 
 import logging
+import time
+from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
 from typing import Dict, List, Optional, Any
 
 from .gpu.vast import VastService
@@ -20,6 +24,80 @@ from .region_mapper import RegionMapper, ParsedGeolocation, get_region_mapper
 from .geolocation_service import get_user_location, UserLocation
 
 logger = logging.getLogger(__name__)
+
+
+class ProvisioningPhase(str, Enum):
+    """Current phase of multi-region provisioning"""
+    IDLE = "idle"
+    PRIMARY_REGION_CHECK = "primary_region_check"
+    PRIMARY_REGION_PROVISION = "primary_region_provision"
+    FALLBACK_REGION_CHECK = "fallback_region_check"
+    FALLBACK_REGION_PROVISION = "fallback_region_provision"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+@dataclass
+class RegionalProvisioningResult:
+    """
+    Result of a multi-region provisioning attempt.
+
+    Follows the pattern from OrchestratedFailoverResult in failover_orchestrator.py.
+    """
+    success: bool
+    provisioning_id: str
+
+    # Region info
+    primary_region: str
+    attempted_regions: List[str] = field(default_factory=list)
+    successful_region: Optional[str] = None
+    fallback_regions: List[str] = field(default_factory=list)
+
+    # Selected offer info
+    offer_id: Optional[int] = None
+    offer_details: Optional[Dict[str, Any]] = None
+    gpu_name: Optional[str] = None
+    price_per_hour: Optional[float] = None
+
+    # Timing (milliseconds)
+    primary_attempt_ms: int = 0
+    fallback_attempts_ms: Dict[str, int] = field(default_factory=dict)
+    total_ms: int = 0
+
+    # Error info
+    error: Optional[str] = None
+    region_errors: Dict[str, str] = field(default_factory=dict)
+
+    # Phase tracking
+    phase_history: List[tuple] = field(default_factory=list)
+    current_phase: ProvisioningPhase = ProvisioningPhase.IDLE
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert result to dictionary for JSON serialization"""
+        return {
+            "success": self.success,
+            "provisioning_id": self.provisioning_id,
+            "primary_region": self.primary_region,
+            "attempted_regions": self.attempted_regions,
+            "successful_region": self.successful_region,
+            "fallback_regions": self.fallback_regions,
+            "offer_id": self.offer_id,
+            "offer_details": self.offer_details,
+            "gpu_name": self.gpu_name,
+            "price_per_hour": self.price_per_hour,
+            "timing": {
+                "primary_attempt_ms": self.primary_attempt_ms,
+                "fallback_attempts_ms": self.fallback_attempts_ms,
+                "total_ms": self.total_ms,
+            },
+            "error": self.error,
+            "region_errors": self.region_errors,
+            "current_phase": self.current_phase.value,
+            "phase_history": [
+                {"phase": phase, "timestamp": ts}
+                for phase, ts in self.phase_history
+            ],
+        }
 
 
 class RegionService:
@@ -499,3 +577,288 @@ class RegionService:
             "regions_cache_ttl": self.REGIONS_CACHE_TTL,
             "pricing_cache_ttl": self.PRICING_CACHE_TTL,
         }
+
+    def find_best_offer_in_region(
+        self,
+        region_id: str,
+        gpu_name: Optional[str] = None,
+        num_gpus: int = 1,
+        max_price: float = 10.0,
+        min_reliability: float = 0.90,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Find the best GPU offer in a specific region.
+
+        Follows the pattern from find_gpu_in_region in regional_volume_failover.py.
+
+        Args:
+            region_id: Standardized region ID (e.g., "eu-de", "na-us-ca")
+            gpu_name: Optional GPU name filter
+            num_gpus: Required number of GPUs
+            max_price: Maximum price per hour
+            min_reliability: Minimum reliability score
+
+        Returns:
+            Best matching offer or None if no offers found
+        """
+        try:
+            offers = self.vast_service.search_offers_by_region_id(
+                region_id=region_id,
+                gpu_name=gpu_name,
+                num_gpus=num_gpus,
+                max_price=max_price,
+                limit=20,
+            )
+
+            if not offers:
+                logger.debug(f"No offers found in region {region_id}")
+                return None
+
+            # Filter by reliability
+            reliable_offers = [
+                o for o in offers
+                if o.get("reliability2", 0) >= min_reliability
+            ]
+
+            if not reliable_offers:
+                # Fall back to all offers if none meet reliability threshold
+                logger.debug(
+                    f"No offers meet reliability threshold {min_reliability} "
+                    f"in region {region_id}, using all offers"
+                )
+                reliable_offers = offers
+
+            # Sort by reliability (desc) then price (asc)
+            reliable_offers.sort(
+                key=lambda o: (
+                    -o.get("reliability2", 0),
+                    o.get("dph_total", float("inf")),
+                )
+            )
+
+            best = reliable_offers[0]
+            logger.info(
+                f"Found best offer in {region_id}: "
+                f"GPU={best.get('gpu_name', 'Unknown')}, "
+                f"price=${best.get('dph_total', 0):.3f}/hr, "
+                f"reliability={best.get('reliability2', 0):.2f}"
+            )
+            return best
+
+        except Exception as e:
+            logger.error(f"Failed to find offer in region {region_id}: {e}")
+            return None
+
+    def provision_with_regional_failover(
+        self,
+        primary_region: str,
+        fallback_regions: Optional[List[str]] = None,
+        gpu_name: Optional[str] = None,
+        num_gpus: int = 1,
+        max_price: float = 2.0,
+        min_reliability: float = 0.90,
+        provisioning_id: Optional[str] = None,
+    ) -> RegionalProvisioningResult:
+        """
+        Find the best GPU offer with multi-region failover support.
+
+        This method attempts to find an offer in the primary region first,
+        then falls back to configured fallback regions if primary is unavailable.
+        Follows the pattern from execute_failover in failover_orchestrator.py.
+
+        Args:
+            primary_region: Primary region ID to try first
+            fallback_regions: List of fallback region IDs to try in order
+            gpu_name: Optional GPU name filter (e.g., "RTX 4090")
+            num_gpus: Number of GPUs required
+            max_price: Maximum price per hour
+            min_reliability: Minimum reliability score (0.0 to 1.0)
+            provisioning_id: Optional unique ID for tracking
+
+        Returns:
+            RegionalProvisioningResult with the best offer or error details
+        """
+        import uuid
+
+        start_time = time.time()
+
+        if not provisioning_id:
+            provisioning_id = f"prov-{uuid.uuid4().hex[:8]}"
+
+        fallback_regions = fallback_regions or []
+
+        logger.info(
+            f"[{provisioning_id}] Starting multi-region provisioning: "
+            f"primary={primary_region}, fallbacks={fallback_regions}"
+        )
+
+        result = RegionalProvisioningResult(
+            success=False,
+            provisioning_id=provisioning_id,
+            primary_region=primary_region,
+            fallback_regions=list(fallback_regions),
+            current_phase=ProvisioningPhase.IDLE,
+        )
+
+        # Track phase history
+        result.phase_history.append(("start", time.time()))
+
+        # ============================================================
+        # PHASE 1: Try Primary Region
+        # ============================================================
+        result.current_phase = ProvisioningPhase.PRIMARY_REGION_CHECK
+        result.phase_history.append((ProvisioningPhase.PRIMARY_REGION_CHECK.value, time.time()))
+        result.attempted_regions.append(primary_region)
+
+        logger.info(f"[{provisioning_id}] Checking primary region: {primary_region}")
+
+        primary_start = time.time()
+        primary_offer = self.find_best_offer_in_region(
+            region_id=primary_region,
+            gpu_name=gpu_name,
+            num_gpus=num_gpus,
+            max_price=max_price,
+            min_reliability=min_reliability,
+        )
+        result.primary_attempt_ms = int((time.time() - primary_start) * 1000)
+
+        if primary_offer:
+            logger.info(
+                f"[{provisioning_id}] Found offer in primary region {primary_region} "
+                f"in {result.primary_attempt_ms}ms"
+            )
+            result.success = True
+            result.successful_region = primary_region
+            result.offer_id = primary_offer.get("id")
+            result.offer_details = primary_offer
+            result.gpu_name = primary_offer.get("gpu_name")
+            result.price_per_hour = primary_offer.get("dph_total")
+            result.current_phase = ProvisioningPhase.COMPLETED
+            result.phase_history.append((ProvisioningPhase.COMPLETED.value, time.time()))
+            result.total_ms = int((time.time() - start_time) * 1000)
+            return result
+
+        # Primary region failed
+        result.region_errors[primary_region] = "No suitable offers found"
+        logger.warning(
+            f"[{provisioning_id}] Primary region {primary_region} unavailable, "
+            "attempting fallbacks..."
+        )
+
+        # ============================================================
+        # PHASE 2: Try Fallback Regions
+        # ============================================================
+        if not fallback_regions:
+            result.error = f"No offers in primary region {primary_region} and no fallbacks configured"
+            result.current_phase = ProvisioningPhase.FAILED
+            result.phase_history.append((ProvisioningPhase.FAILED.value, time.time()))
+            result.total_ms = int((time.time() - start_time) * 1000)
+            logger.error(f"[{provisioning_id}] {result.error}")
+            return result
+
+        result.current_phase = ProvisioningPhase.FALLBACK_REGION_CHECK
+        result.phase_history.append((ProvisioningPhase.FALLBACK_REGION_CHECK.value, time.time()))
+
+        for fallback_region in fallback_regions:
+            logger.info(f"[{provisioning_id}] Trying fallback region: {fallback_region}")
+            result.attempted_regions.append(fallback_region)
+
+            fallback_start = time.time()
+            fallback_offer = self.find_best_offer_in_region(
+                region_id=fallback_region,
+                gpu_name=gpu_name,
+                num_gpus=num_gpus,
+                max_price=max_price,
+                min_reliability=min_reliability,
+            )
+            fallback_ms = int((time.time() - fallback_start) * 1000)
+            result.fallback_attempts_ms[fallback_region] = fallback_ms
+
+            if fallback_offer:
+                logger.info(
+                    f"[{provisioning_id}] Found offer in fallback region {fallback_region} "
+                    f"in {fallback_ms}ms"
+                )
+                result.success = True
+                result.successful_region = fallback_region
+                result.offer_id = fallback_offer.get("id")
+                result.offer_details = fallback_offer
+                result.gpu_name = fallback_offer.get("gpu_name")
+                result.price_per_hour = fallback_offer.get("dph_total")
+                result.current_phase = ProvisioningPhase.COMPLETED
+                result.phase_history.append((ProvisioningPhase.COMPLETED.value, time.time()))
+                result.total_ms = int((time.time() - start_time) * 1000)
+                return result
+
+            # Fallback region failed
+            result.region_errors[fallback_region] = "No suitable offers found"
+            logger.warning(
+                f"[{provisioning_id}] Fallback region {fallback_region} unavailable"
+            )
+
+        # ============================================================
+        # FAILURE: All regions exhausted
+        # ============================================================
+        result.current_phase = ProvisioningPhase.FAILED
+        result.phase_history.append((ProvisioningPhase.FAILED.value, time.time()))
+        result.total_ms = int((time.time() - start_time) * 1000)
+
+        result.error = (
+            f"No suitable offers found in any region. "
+            f"Tried: {result.attempted_regions}. "
+            f"Errors: {result.region_errors}"
+        )
+
+        logger.error(f"[{provisioning_id}] All regions exhausted: {result.error}")
+        return result
+
+    def get_fallback_regions_for_primary(
+        self,
+        primary_region: str,
+        max_fallbacks: int = 3,
+    ) -> List[str]:
+        """
+        Suggest fallback regions for a primary region based on proximity.
+
+        Args:
+            primary_region: The primary region ID
+            max_fallbacks: Maximum number of fallback regions to suggest
+
+        Returns:
+            List of suggested fallback region IDs
+        """
+        # Define region proximity mappings
+        region_proximity = {
+            # North America
+            "na-us-ca": ["na-us-tx", "na-us-ny", "na-ca"],
+            "na-us-tx": ["na-us-ca", "na-us-ny", "na-ca"],
+            "na-us-ny": ["na-us-tx", "na-us-ca", "na-ca", "eu-gb"],
+            "na-ca": ["na-us-ny", "na-us-ca", "na-us-tx"],
+            # Europe
+            "eu-de": ["eu-nl", "eu-fr", "eu-pl", "eu-gb"],
+            "eu-gb": ["eu-nl", "eu-de", "eu-fr", "na-us-ny"],
+            "eu-fr": ["eu-de", "eu-nl", "eu-es", "eu-gb"],
+            "eu-nl": ["eu-de", "eu-gb", "eu-fr", "eu-be"],
+            "eu-pl": ["eu-de", "eu-cz", "eu-at", "eu-nl"],
+            "eu-se": ["eu-no", "eu-fi", "eu-de", "eu-dk"],
+            "eu-no": ["eu-se", "eu-fi", "eu-dk", "eu-de"],
+            "eu-es": ["eu-fr", "eu-pt", "eu-de", "eu-it"],
+            "eu-it": ["eu-de", "eu-at", "eu-fr", "eu-ch"],
+            # Asia Pacific
+            "ap-jp": ["ap-kr", "ap-tw", "ap-hk", "ap-sg"],
+            "ap-sg": ["ap-hk", "ap-jp", "ap-au", "ap-in"],
+            "ap-au": ["ap-sg", "ap-nz", "ap-jp", "ap-hk"],
+            "ap-in": ["ap-sg", "ap-ae", "ap-hk", "eu-gb"],
+            "ap-hk": ["ap-tw", "ap-jp", "ap-sg", "ap-kr"],
+            "ap-kr": ["ap-jp", "ap-tw", "ap-hk", "ap-cn"],
+        }
+
+        fallbacks = region_proximity.get(primary_region, [])[:max_fallbacks]
+
+        if not fallbacks:
+            # If no specific mapping, suggest popular regions
+            default_fallbacks = ["na-us-ca", "eu-de", "ap-sg"]
+            fallbacks = [r for r in default_fallbacks if r != primary_region][:max_fallbacks]
+
+        logger.debug(f"Suggested fallbacks for {primary_region}: {fallbacks}")
+        return fallbacks
