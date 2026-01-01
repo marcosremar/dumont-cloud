@@ -450,7 +450,9 @@
             "command": "grep -q 'reservationSlice' ./web/src/store/reservationSlice.js && echo 'Redux slice OK' || echo 'Missing'",
             "expected": "Redux slice OK"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Created reservationSlice.js following instancesSlice.js patterns. Implemented async thunks for fetchReservations, fetchReservationStats, createReservation, cancelReservation, checkAvailability, and fetchPricing. Added loading states, demo mode reducers, and computed selectors for filtering by status. Verification passed.",
+          "updated_at": "2026-01-01T06:44:31.428917+00:00"
         },
         {
           "id": "subtask-7-3",
@@ -473,7 +475,9 @@
               "Loading states work"
             ]
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Wired calendar component to Redux store: added reservationSlice to store config, created useReservations hook following existing hook patterns, refactored Reservations.jsx to use Redux state/dispatch instead of local useState/fetch",
+          "updated_at": "2026-01-01T06:47:41.438018+00:00"
         }
       ]
     },
@@ -507,7 +511,9 @@
               "Component renders"
             ]
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Added /app/reservations route to React Router. Import statement added for Reservations component and protected route configured following existing patterns.",
+          "updated_at": "2026-01-01T06:49:27.428209+00:00"
         },
         {
           "id": "subtask-8-2",
@@ -867,7 +873,7 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2026-01-01T06:42:26.628745+00:00",
+  "last_updated": "2026-01-01T06:49:27.428220+00:00",
   "status": "backlog",
   "planStatus": "pending",
   "updated_at": "2026-01-01T06:07:14.293Z",

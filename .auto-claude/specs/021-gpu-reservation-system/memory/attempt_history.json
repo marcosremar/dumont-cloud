@@ -119,11 +119,47 @@
         }
       ],
       "status": "completed"
+    },
+    "subtask-7-2": {
+      "attempts": [
+        {
+          "session": 11,
+          "timestamp": "2026-01-01T07:44:39.627819",
+          "approach": "Implemented: Create Redux slice for reservation state management",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-7-3": {
+      "attempts": [
+        {
+          "session": 12,
+          "timestamp": "2026-01-01T07:47:52.743242",
+          "approach": "Implemented: Wire calendar component to API and Redux store",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "subtask-8-1": {
+      "attempts": [
+        {
+          "session": 13,
+          "timestamp": "2026-01-01T07:49:35.653571",
+          "approach": "Implemented: Add /app/reservations route to React Router",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-01T07:07:18.341358",
-    "last_updated": "2026-01-01T07:42:41.213649"
+    "last_updated": "2026-01-01T07:49:35.653589"
   }
 }

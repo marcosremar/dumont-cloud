@@ -19,7 +19,12 @@
       "description": "Reservations page component integrates ReservationCalendar and ReservationForm. Uses page-container/page-header CSS patterns from existing pages. Supports demo mode via useLocation() checking for /demo-app prefix. Includes stats cards, loading states, error handling modal for reservation creation.",
       "category": "frontend",
       "discovered_at": "2026-01-01T06:39:56.461528+00:00"
+    },
+    "./web/src/store/hooks.js": {
+      "description": "useReservations hook provides Redux-based reservation management: reservations, stats, loading states, and actions (fetch, fetchStats, create, cancel, setDemo, clearError). Follows same pattern as useInstances hook. Supports isDemo parameter for demo mode.",
+      "category": "pattern",
+      "discovered_at": "2026-01-01T06:47:41.541704+00:00"
     }
   },
-  "last_updated": "2026-01-01T06:39:56.461540+00:00"
+  "last_updated": "2026-01-01T06:47:41.541725+00:00"
 }

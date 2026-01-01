@@ -121,6 +121,9 @@ export default function Layout({ user, onLogout, children, isDemo = false }) {
             <NavLink to={`${basePath}/machines`} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
               Machines
             </NavLink>
+            <NavLink to={`${basePath}/reservations`} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+              Reservations
+            </NavLink>
             <NavDropdown
               label="Analytics"
               icon={BarChart3}
