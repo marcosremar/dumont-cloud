@@ -774,7 +774,7 @@ export default function MachineCard({
           <div className="flex gap-1 mb-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" icon={Code}>
+                <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" icon={Code} aria-label="Abrir VS Code" aria-haspopup="menu">
                   VS Code
                   <ChevronDown className="w-2.5 h-2.5 opacity-50 ml-0.5" />
                 </Button>
@@ -784,10 +784,10 @@ export default function MachineCard({
                 <DropdownMenuItem onClick={() => openIDE('VS Code', 'vscode')}>Desktop (SSH)</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" onClick={() => openIDE('Cursor', 'cursor')}>
+            <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" onClick={() => openIDE('Cursor', 'cursor')} aria-label="Abrir Cursor IDE">
               Cursor
             </Button>
-            <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" onClick={() => openIDE('Windsurf', 'windsurf')}>
+            <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" onClick={() => openIDE('Windsurf', 'windsurf')} aria-label="Abrir Windsurf IDE">
               Windsurf
             </Button>
           </div>
