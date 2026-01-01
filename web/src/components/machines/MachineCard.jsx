@@ -693,6 +693,7 @@ export default function MachineCard({
                   <button
                     onClick={() => setShowBackupInfo(false)}
                     className="p-1 rounded-lg hover:bg-white/10 text-gray-500 hover:text-gray-300"
+                    aria-label="Fechar informações de backup"
                   >
                     <X className="w-4 h-4" />
                   </button>
