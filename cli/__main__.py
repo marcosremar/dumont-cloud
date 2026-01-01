@@ -9,8 +9,42 @@ Usage:
     dumont api GET /api/v1/health    # Direct API call
 """
 import argparse
+import gettext
 import sys
 import os
+from pathlib import Path
+
+# Get language from environment variable or default to English
+# This will be overridden by --language flag if provided
+_cli_language = os.getenv('LANGUAGE', 'en').split(':')[0]
+
+# Pre-parse for --language flag to initialize translations before argparse help text
+# This allows translated help text when user specifies --language
+for i, arg in enumerate(sys.argv):
+    if arg == '--language' and i + 1 < len(sys.argv):
+        _cli_language = sys.argv[i + 1]
+        break
+    elif arg.startswith('--language='):
+        _cli_language = arg.split('=', 1)[1]
+        break
+
+# Normalize language code (handle 'es_ES' -> 'es', etc.)
+if '_' in _cli_language:
+    _cli_language = _cli_language.split('_')[0]
+
+# Initialize gettext translations
+_translations_dir = Path(__file__).parent / 'translations'
+try:
+    _translation = gettext.translation(
+        'messages',
+        localedir=str(_translations_dir),
+        languages=[_cli_language],
+        fallback=True
+    )
+    _ = _translation.gettext
+except Exception:
+    # Fallback to NullTranslations if translation files not found
+    _ = gettext.gettext
 
 from .utils.api_client import APIClient
 from .commands.config import ConfigManager, ConfigCommands, ensure_configured
@@ -124,6 +158,13 @@ def main():
         "--debug",
         action="store_true",
         help="Modo debug"
+    )
+
+    parser.add_argument(
+        "--language", "-l",
+        choices=["en", "es"],
+        default=_cli_language,
+        help="Language for CLI output (default: en, or LANGUAGE env var)"
     )
 
     parser.add_argument("command", nargs="?", help="Comando ou recurso")
