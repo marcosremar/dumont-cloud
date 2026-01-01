@@ -28,3 +28,6 @@ export { default as AIWizardChat } from './AIWizardChat';
 // Form components
 export { default as AdvancedSearchForm } from './AdvancedSearchForm';
 export { default as WizardForm } from './WizardForm';
+
+// Economy widget
+export { default as EconomyWidget } from './EconomyWidget';
