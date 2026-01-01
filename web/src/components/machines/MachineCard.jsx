@@ -544,15 +544,23 @@ export default function MachineCard({
                 className="cursor-pointer hover:opacity-80 text-[9px]"
                 onClick={() => setShowBackupInfo(!showBackupInfo)}
                 aria-label={hasCpuStandby ? 'View CPU backup details' : 'No backup configured. Click for details'}
+                aria-expanded={showBackupInfo}
+                aria-haspopup="dialog"
+                aria-controls={showBackupInfo ? `backup-info-dialog-${machine.id}` : undefined}
               >
                 <Layers className="w-2.5 h-2.5 mr-0.5" />
                 {hasCpuStandby ? 'Backup' : 'Sem backup'}
               </Badge>
 
             {showBackupInfo && (
-              <div className="absolute top-full left-0 mt-2 z-50 w-72 p-4 bg-[#131713] border border-white/10 rounded-xl shadow-xl">
+              <div
+                id={`backup-info-dialog-${machine.id}`}
+                role="dialog"
+                aria-labelledby={`backup-info-title-${machine.id}`}
+                className="absolute top-full left-0 mt-2 z-50 w-72 p-4 bg-[#131713] border border-white/10 rounded-xl shadow-xl"
+              >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-white flex items-center gap-2">
+                  <span id={`backup-info-title-${machine.id}`} className="text-sm font-semibold text-white flex items-center gap-2">
                     <Layers className="w-4 h-4 text-brand-400" />
                     CPU Backup (Espelho)
                   </span>
