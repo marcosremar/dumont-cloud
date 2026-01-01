@@ -28,7 +28,6 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
-  Input,
   SelectCompound as Select,
   SelectTrigger,
   SelectValue,
@@ -40,6 +39,7 @@ import { ErrorState } from '../components/ErrorState';
 import { EmptyState } from '../components/EmptyState';
 import { SkeletonList } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
+import InviteMemberModal from '../components/InviteMemberModal';
 
 // Demo data for team details
 const DEMO_TEAM = {
@@ -133,9 +133,6 @@ export default function TeamDetailsPage() {
 
   // Invite modal state
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRoleId, setInviteRoleId] = useState('');
-  const [inviting, setInviting] = useState(false);
 
   // Role change state
   const [changingRole, setChangingRole] = useState(null);
@@ -198,61 +195,17 @@ export default function TeamDetailsPage() {
     }
   };
 
-  const handleInviteMember = async () => {
-    if (!inviteEmail.trim()) {
-      toast.error('Email is required');
-      return;
-    }
-    if (!inviteRoleId) {
-      toast.error('Please select a role');
-      return;
-    }
-
-    setInviting(true);
-    try {
-      if (isDemo) {
-        await new Promise(r => setTimeout(r, 1000));
-        const selectedRole = roles.find(r => r.id === parseInt(inviteRoleId));
-        const newInvitation = {
-          id: Date.now(),
-          team_id: parseInt(teamId),
-          email: inviteEmail,
-          role_id: parseInt(inviteRoleId),
-          role_name: selectedRole?.display_name || selectedRole?.name,
-          invited_by_user_id: 'demo@dumont.cloud',
-          token: 'demo-token',
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'pending',
-          created_at: new Date().toISOString(),
-        };
-        setInvitations(prev => [newInvitation, ...prev]);
-        toast.success(`Invitation sent to ${inviteEmail}`);
-        setInviteModalOpen(false);
-        setInviteEmail('');
-        setInviteRoleId('');
-        return;
-      }
-
-      const res = await apiPost(`/api/v1/teams/${teamId}/invitations`, {
-        email: inviteEmail,
-        role_id: parseInt(inviteRoleId),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || data.message || 'Failed to send invitation');
-      }
-
-      toast.success(`Invitation sent to ${inviteEmail}`);
-      setInviteModalOpen(false);
-      setInviteEmail('');
-      setInviteRoleId('');
+  const handleInviteSuccess = (invitation, message) => {
+    if (isDemo && invitation) {
+      setInvitations(prev => [invitation, ...prev]);
+    } else {
       fetchTeamDetails();
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setInviting(false);
     }
+    toast.success(message);
+  };
+
+  const handleInviteError = (message) => {
+    toast.error(message);
   };
 
   const handleRoleChange = async (memberId, memberEmail, newRoleId) => {
@@ -650,73 +603,14 @@ export default function TeamDetailsPage() {
       )}
 
       {/* Invite Member Modal */}
-      <AlertDialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
-        <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-brand-500" />
-              Invite Team Member
-            </AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-4 pt-4">
-                <Input
-                  label="Email Address"
-                  type="email"
-                  placeholder="user@example.com"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  disabled={inviting}
-                  data-testid="invite-email-input"
-                />
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Role
-                  </label>
-                  <Select
-                    value={inviteRoleId}
-                    onValueChange={setInviteRoleId}
-                  >
-                    <SelectTrigger data-testid="invite-role-select">
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roles.map((role) => (
-                        <SelectItem key={role.id} value={String(role.id)}>
-                          {role.display_name || role.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="p-3 rounded-lg border border-brand-500/20 bg-brand-500/5">
-                  <div className="flex items-start gap-2 text-brand-400 text-sm">
-                    <Mail className="w-4 h-4 mt-0.5" />
-                    <span>An invitation link will be sent to the email address. The link expires in 7 days.</span>
-                  </div>
-                </div>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={inviting} onClick={() => {
-              setInviteModalOpen(false);
-              setInviteEmail('');
-              setInviteRoleId('');
-            }}>
-              Cancel
-            </AlertDialogCancel>
-            <Button
-              variant="primary"
-              onClick={handleInviteMember}
-              loading={inviting}
-              disabled={inviting || !inviteEmail.trim() || !inviteRoleId}
-              data-testid="confirm-invite"
-            >
-              Send Invitation
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <InviteMemberModal
+        open={inviteModalOpen}
+        onOpenChange={setInviteModalOpen}
+        teamId={teamId}
+        roles={roles}
+        onSuccess={handleInviteSuccess}
+        onError={handleInviteError}
+      />
 
       {/* Remove Member Confirmation Modal */}
       <AlertDialog open={removeMemberModalOpen} onOpenChange={setRemoveMemberModalOpen}>
