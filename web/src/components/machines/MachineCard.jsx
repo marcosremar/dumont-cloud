@@ -471,6 +471,8 @@ export default function MachineCard({
                 <div
                   className="absolute top-full left-0 mt-1 z-50 w-64 p-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl"
                   data-testid="failover-dropdown-menu"
+                  role="menu"
+                  aria-label="Opções de estratégia de failover"
                 >
                   <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-700">
                     <span className="text-[10px] font-semibold text-gray-300">Estratégia de Failover</span>
@@ -478,6 +480,7 @@ export default function MachineCard({
                       onClick={() => setShowStrategyMenu(false)}
                       className="p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300"
                       data-testid="failover-dropdown-close"
+                      aria-label="Fechar menu de failover"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -498,6 +501,7 @@ export default function MachineCard({
                               ? 'bg-brand-500/20 border border-brand-500/30'
                               : 'hover:bg-gray-800 border border-transparent'
                           }`}
+                          role="menuitem"
                         >
                           <div className="flex items-center gap-1.5">
                             <Shield className={`w-3 h-3 ${

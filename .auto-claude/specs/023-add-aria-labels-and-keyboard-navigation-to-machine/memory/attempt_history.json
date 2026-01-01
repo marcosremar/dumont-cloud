@@ -35,11 +35,23 @@
         }
       ],
       "status": "completed"
+    },
+    "2.1": {
+      "attempts": [
+        {
+          "session": 5,
+          "timestamp": "2026-01-01T07:12:31.836635",
+          "approach": "Implemented: Add aria-expanded, aria-haspopup, and aria-label to the failover strategy badge/button that opens th",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-01T07:00:18.575852",
-    "last_updated": "2026-01-01T07:08:35.572539"
+    "last_updated": "2026-01-01T07:12:31.836655"
   }
 }
