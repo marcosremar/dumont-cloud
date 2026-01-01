@@ -14,8 +14,7 @@ import {
 import { Button } from '../components/tailadmin-ui'
 import ReservationCalendar from '../components/ReservationCalendar'
 import ReservationForm from '../components/ReservationForm'
-
-const API_BASE = ''
+import { useReservations } from '../store/hooks'
 
 // Demo reservations data
 const DEMO_RESERVATIONS = [
@@ -57,85 +56,47 @@ const DEMO_RESERVATIONS = [
   },
 ]
 
+const DEMO_STATS = {
+  total_reservations: 3,
+  active_reservations: 1,
+  pending_reservations: 1,
+  total_credits_used: 445.50,
+  total_hours_reserved: 24,
+  average_discount: 17.7,
+}
+
 export default function Reservations() {
   const location = useLocation()
   const isDemo = location.pathname.startsWith('/demo-app')
 
-  // State
-  const [reservations, setReservations] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [createLoading, setCreateLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [stats, setStats] = useState(null)
+  // Redux state and actions via hook
+  const {
+    reservations,
+    stats,
+    loading,
+    createLoading,
+    error,
+    fetch: fetchReservations,
+    fetchStats,
+    create: createReservation,
+    cancel: cancelReservation,
+    setDemo,
+    clearError,
+  } = useReservations(isDemo)
 
-  // Initial slot selection from calendar
+  // Local modal state
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState(null)
 
-  // Load reservations
-  const loadReservations = useCallback(async () => {
-    try {
-      if (isDemo) {
-        setReservations(DEMO_RESERVATIONS)
-        setLoading(false)
-        return
-      }
-
-      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
-      const res = await fetch(`${API_BASE}/api/reservations`, {
-        credentials: 'include',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.detail || 'Falha ao carregar reservas')
-      }
-
-      const data = await res.json()
-      setReservations(data.reservations || data || [])
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setLoading(false)
-    }
-  }, [isDemo])
-
-  // Load stats
-  const loadStats = useCallback(async () => {
-    try {
-      if (isDemo) {
-        setStats({
-          total_reservations: 3,
-          active_reservations: 1,
-          pending_reservations: 1,
-          total_credits_used: 445.50,
-          total_hours_reserved: 24,
-          average_discount: 17.7,
-        })
-        return
-      }
-
-      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
-      const res = await fetch(`${API_BASE}/api/reservations/stats`, {
-        credentials: 'include',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        setStats(data)
-      }
-    } catch (e) {
-      // Stats are optional, don't show error
-    }
-  }, [isDemo])
-
-  // Initial load
+  // Initialize demo data or fetch from API
   useEffect(() => {
-    loadReservations()
-    loadStats()
-  }, [loadReservations, loadStats])
+    if (isDemo) {
+      setDemo(DEMO_RESERVATIONS, DEMO_STATS)
+    } else {
+      fetchReservations()
+      fetchStats()
+    }
+  }, [isDemo, setDemo, fetchReservations, fetchStats])
 
   // Handle slot selection from calendar
   const handleSelectSlot = useCallback((slotInfo) => {
@@ -154,82 +115,30 @@ export default function Reservations() {
       return
     }
 
-    try {
-      if (isDemo) {
-        setReservations(prev => prev.filter(r => r.id !== reservation.id))
-        return
-      }
+    const result = await cancelReservation(reservation.id)
 
-      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
-      const res = await fetch(`${API_BASE}/api/reservations/${reservation.id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.detail || 'Falha ao cancelar reserva')
-      }
-
-      // Reload reservations
-      loadReservations()
-      loadStats()
-    } catch (e) {
-      setError(e.message)
+    // Refresh stats after cancellation (for non-demo mode)
+    if (!isDemo && result?.type?.endsWith('/fulfilled')) {
+      fetchStats()
     }
-  }, [isDemo, loadReservations, loadStats])
+  }, [isDemo, cancelReservation, fetchStats])
 
   // Handle create reservation
   const handleCreateReservation = useCallback(async (formData) => {
-    setCreateLoading(true)
-    setError(null)
+    const result = await createReservation(formData)
 
-    try {
-      if (isDemo) {
-        // Add demo reservation
-        const newReservation = {
-          id: Date.now(),
-          ...formData,
-          status: 'pending',
-          credits_used: Math.random() * 100 + 20,
-          discount_rate: 15,
-          reserved_price_per_hour: 0.75,
-          created_at: new Date().toISOString(),
-        }
-        setReservations(prev => [...prev, newReservation])
-        setShowCreateModal(false)
-        setSelectedSlot(null)
-        return
-      }
-
-      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
-      const res = await fetch(`${API_BASE}/api/reservations`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify(formData)
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.detail || 'Falha ao criar reserva')
-      }
-
-      // Success - reload and close modal
-      await loadReservations()
-      await loadStats()
+    if (result?.type?.endsWith('/fulfilled') || (isDemo && result?.payload)) {
+      // Success - close modal and refresh stats
       setShowCreateModal(false)
       setSelectedSlot(null)
-    } catch (e) {
-      throw e // Let the form handle the error display
-    } finally {
-      setCreateLoading(false)
+      if (!isDemo) {
+        fetchStats()
+      }
+    } else if (result?.payload) {
+      // Error from API - throw for form to handle
+      throw new Error(result.payload)
     }
-  }, [isDemo, loadReservations, loadStats])
+  }, [isDemo, createReservation, fetchStats])
 
   // Close create modal
   const handleCloseModal = useCallback(() => {
@@ -238,7 +147,7 @@ export default function Reservations() {
   }, [])
 
   // Loading state
-  if (loading) {
+  if (loading && reservations.length === 0) {
     return (
       <div className="page-container">
         <div className="flex items-center justify-center py-20">
@@ -283,7 +192,7 @@ export default function Reservations() {
           <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
           <p className="text-red-400 text-sm">{error}</p>
           <button
-            onClick={() => setError(null)}
+            onClick={clearError}
             className="ml-auto text-red-400 hover:text-red-300"
           >
             <X className="w-4 h-4" />
