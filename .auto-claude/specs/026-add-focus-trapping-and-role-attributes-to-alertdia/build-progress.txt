@@ -336,3 +336,134 @@ The implementation satisfies WCAG 2.4.3 Focus Order requirements:
 
 ### Testing Date
 [2026-01-01] Manual screen reader testing completed for AlertDialog and Modal components
+
+---
+
+## Subtask 4.4 - Regression Testing for Existing Modal Usages
+
+This section documents the verification of all existing modal usages to ensure no visual or functional regressions after the accessibility improvements.
+
+---
+
+### Modal Components Analyzed
+
+#### 1. AlertDialog (tailadmin-ui) - Updated Component
+All usages verified compatible with new accessibility features:
+
+| Component | File | Status |
+|-----------|------|--------|
+| MachineCard - Pause Dialog | `web/src/components/machines/MachineCard.jsx` | ✅ Pass |
+| MachineCard - Error Dialog | `web/src/components/machines/MachineCard.jsx` | ✅ Pass |
+| CreateServerlessModal | `web/src/components/serverless/CreateServerlessModal.jsx` | ✅ Pass |
+| FailoverMigrationModal | `web/src/components/FailoverMigrationModal.jsx` | ✅ Pass |
+| InstanceDetailsModal | `web/src/components/machines/InstanceDetailsModal.jsx` | ✅ Pass |
+| Machines Page - Create Modal | `web/src/pages/Machines.jsx` | ✅ Pass |
+
+#### 2. Modal (tailadmin) - Updated Component
+All usages verified compatible with new accessibility features:
+
+| Component | File | Status |
+|-----------|------|--------|
+| UserMetaCard - Edit Modal | `web/src/components/tailadmin/UserProfile/UserMetaCard.tsx` | ✅ Pass |
+| UserAddressCard - Edit Modal | `web/src/components/tailadmin/UserProfile/UserAddressCard.tsx` | ✅ Pass |
+| UserInfoCard - Edit Modal | `web/src/components/tailadmin/UserProfile/UserInfoCard.tsx` | ✅ Pass |
+| ModalDumont | `web/src/components/ui/modal-dumont.jsx` | ✅ Pass |
+
+#### 3. Radix-based Components - No Changes Needed
+These components already have built-in accessibility:
+
+| Component | File | Status |
+|-----------|------|--------|
+| HibernationConfigModal | `web/src/components/HibernationConfigModal.jsx` | ✅ Pass (uses Dialog from ui/dialog) |
+| AlertDialog (Radix) | `web/src/components/ui/alert-dialog.jsx` | ✅ Pass (native accessibility) |
+
+---
+
+### Regression Verification Checklist
+
+#### Visual Verification
+| Check | Status |
+|-------|--------|
+| Modal overlay renders correctly | ✅ Pass |
+| Modal content positioning unchanged | ✅ Pass |
+| Modal animations work as expected | ✅ Pass |
+| Custom className props respected | ✅ Pass |
+| Header/Title/Description/Footer layout unchanged | ✅ Pass |
+
+#### Functional Verification
+| Check | Status |
+|-------|--------|
+| Modal opens when triggered | ✅ Pass |
+| Modal closes on overlay click | ✅ Pass |
+| Modal closes on Escape key | ✅ Pass |
+| Modal closes on Cancel/Close button | ✅ Pass |
+| Modal action buttons work correctly | ✅ Pass |
+| Form submissions work correctly | ✅ Pass |
+| onOpenChange/onClose callbacks fire correctly | ✅ Pass |
+
+#### Accessibility Verification (New Features)
+| Check | Status |
+|-------|--------|
+| role="alertdialog" present on AlertDialog | ✅ Pass |
+| role="dialog" present on Modal | ✅ Pass |
+| aria-modal="true" present | ✅ Pass |
+| aria-labelledby points to title | ✅ Pass |
+| aria-describedby points to description | ✅ Pass |
+| Focus trapped within modal | ✅ Pass |
+| Tab cycles through focusable elements | ✅ Pass |
+| Shift+Tab cycles backward | ✅ Pass |
+| Focus returns to trigger on close | ✅ Pass |
+
+---
+
+### Specific Component Verification
+
+#### MachineCard AlertDialogs
+- **Pause confirmation dialog**: Opens, shows title/description, Cancel and Pause buttons work
+- **Error notification dialog**: Opens with dynamic title/description, OK button closes
+- Both use controlled state (`open`/`onOpenChange`) pattern correctly
+
+#### CreateServerlessModal
+- Large modal (1200px width) renders correctly
+- Form inputs accessible and functional
+- Submit and Cancel buttons work correctly
+- Custom styling (`!max-w-[90vw]`) applied correctly
+
+#### FailoverMigrationModal
+- Migration progress steps display correctly
+- Button states (disabled during migration) work correctly
+- Error/success result displays work correctly
+- Uses `AlertDialogDescription asChild` pattern correctly
+
+#### InstanceDetailsModal
+- Large modal with tabs renders correctly
+- Tab switching works correctly
+- Chat interface functional
+- Close button (X) works correctly
+
+#### UserProfile Modals (UserMetaCard, UserInfoCard, UserAddressCard)
+- Edit modal opens with form
+- Form inputs work correctly
+- Save/Close buttons work correctly
+- Uses `useModal` hook pattern correctly
+
+---
+
+### Backwards Compatibility Confirmed
+
+The accessibility improvements are **additive** and do not break any existing functionality:
+
+1. **ARIA attributes**: Added new attributes without changing existing DOM structure
+2. **Focus trap**: Automatic activation via `useFocusTrap(ref, isActive)` hook
+3. **Escape key**: Already existed, now properly integrated with focus management
+4. **Context API**: Internal implementation detail, transparent to consuming components
+5. **Props API**: All existing props preserved:
+   - AlertDialog: `open`, `onOpenChange`, `children`
+   - AlertDialogContent: `className`, `children`
+   - AlertDialogTitle/Description/Header/Footer: `className`, `children`
+   - Modal: `isOpen`, `onClose`, `className`, `children`, `showCloseButton`, `isFullscreen`
+
+---
+
+### Testing Date
+[2026-01-01] Regression testing completed for all modal usages - No regressions found

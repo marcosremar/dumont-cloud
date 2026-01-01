@@ -14,7 +14,12 @@
       "description": "New useFocusTrap hook implements focus trapping for modal components. Accepts containerRef and isActive boolean. Exports FOCUSABLE_SELECTOR constant. Stores previously focused element, traps Tab/Shift+Tab, and returns focus on cleanup.",
       "category": "hooks",
       "discovered_at": "2026-01-01T06:04:48.089530+00:00"
+    },
+    "tests/alert-dialog-accessibility.spec.ts": {
+      "description": "Comprehensive Playwright E2E tests for AlertDialog accessibility. Tests verify ARIA attributes (role='alertdialog', aria-modal='true', aria-labelledby, aria-describedby), Tab/Shift+Tab keyboard navigation with focus trapping, Escape key to close dialog, focus return to trigger element, and overlay click to close. Tests navigate to /app/machines and interact with pause confirmation dialogs on MachineCard components.",
+      "category": "testing",
+      "discovered_at": "2026-01-01T06:35:42.940582+00:00"
     }
   },
-  "last_updated": "2026-01-01T06:25:49.741153+00:00"
+  "last_updated": "2026-01-01T06:35:42.940591+00:00"
 }
