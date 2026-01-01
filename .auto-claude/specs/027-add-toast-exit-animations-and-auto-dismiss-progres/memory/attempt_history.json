@@ -83,11 +83,35 @@
         }
       ],
       "status": "completed"
+    },
+    "3.2": {
+      "attempts": [
+        {
+          "session": 9,
+          "timestamp": "2026-01-01T07:21:11.784464",
+          "approach": "Implemented: Ensure toasts with duration=0 don't show progress bar and handle exit animation correctly.",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
+    },
+    "4.1": {
+      "attempts": [
+        {
+          "session": 10,
+          "timestamp": "2026-01-01T07:24:38.991628",
+          "approach": "Implemented: Test success, error, warning, and info toasts with exit animation and progress bar.",
+          "success": true,
+          "error": null
+        }
+      ],
+      "status": "completed"
     }
   },
   "stuck_subtasks": [],
   "metadata": {
     "created_at": "2026-01-01T07:00:06.237160",
-    "last_updated": "2026-01-01T07:18:39.909533"
+    "last_updated": "2026-01-01T07:24:38.991638"
   }
 }

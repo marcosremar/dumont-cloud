@@ -1,10 +1,10 @@
 {
   "discovered_files": {
     "web/src/components/Toast.jsx": {
-      "description": "ToastItem now manages its own auto-dismiss timer with hover pause support. Timer uses refs (remainingTimeRef, startTimeRef, timerRef) to track remaining time. On hover: timer is cleared, elapsed time is calculated, remaining time is stored. On mouse leave: timer resumes with remaining time. ProgressBar accepts isPaused prop to pause CSS animation via animation-play-state.",
-      "category": "component-behavior",
-      "discovered_at": "2026-01-01T06:18:30.678551+00:00"
+      "description": "Persistent toasts (duration=0) are fully supported: ProgressBar returns null for duration <= 0, auto-dismiss timer is skipped with early return check, and exit animation uses isExiting prop which works independently of duration.",
+      "category": "feature_implementation",
+      "discovered_at": "2026-01-01T06:21:00.555909+00:00"
     }
   },
-  "last_updated": "2026-01-01T06:18:30.678572+00:00"
+  "last_updated": "2026-01-01T06:21:00.555931+00:00"
 }
