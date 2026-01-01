@@ -18,6 +18,7 @@ aiofiles==25.1.0
 # Database
 sqlalchemy==2.0.40
 psycopg2-binary==2.9.11
+alembic>=1.13.0
 
 # Google Cloud Platform
 google-api-python-client==2.187.0
