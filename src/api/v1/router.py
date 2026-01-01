@@ -6,6 +6,7 @@ from fastapi import APIRouter
 from .endpoints import auth, instances, snapshots, settings, metrics, ai_wizard, standby, agent, savings, advisor, hibernation, finetune, chat
 from .endpoints import warmpool, failover_settings, failover, serverless, spot_deploy, machine_history, jobs, models
 from .endpoints import market, hosts, teams, roles
+from . import audit
 from .endpoints.settings import balance_router
 from .endpoints.spot import router as spot_router
 
@@ -69,3 +70,6 @@ api_router.include_router(teams.router, tags=["Teams"])
 
 # Roles & Permissions - RBAC role and permission management
 api_router.include_router(roles.router, tags=["Roles & Permissions"])
+
+# Audit Logs - Team audit logging for compliance and security
+api_router.include_router(audit.router, tags=["Audit Logs"])
