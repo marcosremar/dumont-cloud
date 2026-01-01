@@ -45,8 +45,10 @@ import {
   Info,
   Clock,
   Hash,
+  Camera,
 } from 'lucide-react'
 import HibernationConfigModal from '../HibernationConfigModal'
+import SnapshotConfigModal from '../SnapshotConfigModal'
 import FailoverMigrationModal from '../FailoverMigrationModal'
 import SparklineChart from '../ui/SparklineChart'
 import InstanceDetailsModal from './InstanceDetailsModal'
@@ -102,6 +104,7 @@ export default function MachineCard({
   isNew = false, // Highlight animation for newly created machines
 }) {
   const [showConfigModal, setShowConfigModal] = useState(false)
+  const [showSnapshotConfigModal, setShowSnapshotConfigModal] = useState(false)
   const [showSSHInstructions, setShowSSHInstructions] = useState(false)
   const [alertDialog, setAlertDialog] = useState({ open: false, title: '', description: '', action: null })
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false)
@@ -648,6 +651,10 @@ export default function MachineCard({
               <Settings className="w-3.5 h-3.5 mr-2" />
               Auto-Hibernation
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowSnapshotConfigModal(true)}>
+              <Camera className="w-3.5 h-3.5 mr-2" />
+              Configure Snapshots
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={copySSHConfig}>
               {copiedField === 'ssh' ? (
                 <Check className="w-3.5 h-3.5 mr-2 text-green-400" />
@@ -940,6 +947,13 @@ export default function MachineCard({
         isOpen={showConfigModal}
         onClose={() => setShowConfigModal(false)}
         onSave={() => setShowConfigModal(false)}
+      />
+
+      <SnapshotConfigModal
+        instance={{ id: machine.id, name: gpuName }}
+        isOpen={showSnapshotConfigModal}
+        onClose={() => setShowSnapshotConfigModal(false)}
+        onSave={() => setShowSnapshotConfigModal(false)}
       />
 
       <FailoverMigrationModal
