@@ -7,7 +7,9 @@ Responsável por:
 - Criação e busca de códigos de referência
 - Aplicação de códigos durante cadastro
 - Rastreamento de referências
+- Integração com detecção de fraude
 """
+import logging
 import secrets
 import string
 from datetime import datetime
@@ -19,6 +21,10 @@ from src.models.referral import (
     ReferralCode, Referral, CreditTransaction, AffiliateTracking,
     TransactionType, ReferralStatus
 )
+from src.services.fraud_detection_service import FraudDetectionService
+
+
+logger = logging.getLogger(__name__)
 
 
 # Configurações de créditos (não hardcoded, pode ser movido para config)
@@ -211,18 +217,21 @@ class ReferralService:
         self,
         referred_user_id: str,
         code: str,
-        referred_ip: Optional[str] = None
+        referred_ip: Optional[str] = None,
+        skip_fraud_check: bool = False
     ) -> Dict:
         """
         Aplica um código de referência para um novo usuário.
 
         Cria o relacionamento de referência e registra $10 de welcome credit.
         O crédito só será ativado após verificação de email.
+        Inclui verificações anti-fraude (rate limiting, IP tracking, etc.)
 
         Args:
             referred_user_id: ID do usuário que está se cadastrando
             code: Código de referência
             referred_ip: IP do usuário (para anti-fraude)
+            skip_fraud_check: Pular verificações de fraude (uso interno apenas)
 
         Returns:
             Dict com resultado:
@@ -230,7 +239,9 @@ class ReferralService:
                 "success": bool,
                 "error": str ou None,
                 "referral": Referral ou None,
-                "welcome_credit": float ou None
+                "welcome_credit": float ou None,
+                "is_suspicious": bool,
+                "fraud_warnings": List[Dict] ou None
             }
         """
         # Validar código
@@ -240,10 +251,48 @@ class ReferralService:
                 "success": False,
                 "error": validation["error"],
                 "referral": None,
-                "welcome_credit": None
+                "welcome_credit": None,
+                "is_suspicious": False,
+                "fraud_warnings": None
             }
 
         referral_code = validation["referral_code"]
+
+        # Verificação anti-fraude
+        fraud_warnings = []
+        is_suspicious = False
+
+        if not skip_fraud_check:
+            fraud_service = FraudDetectionService(self.db)
+            should_block, fraud_results = fraud_service.perform_full_fraud_check(
+                referrer_user_id=referral_code.user_id,
+                referred_user_id=referred_user_id,
+                referred_ip=referred_ip,
+                referral_code_id=referral_code.id
+            )
+
+            if should_block:
+                # Bloquear referência por fraude
+                blocking_reasons = [
+                    r.reason for r in fraud_results if r.should_block
+                ]
+                logger.warning(
+                    f"Referral bloqueado por fraude: referred={referred_user_id}, "
+                    f"reasons={blocking_reasons}"
+                )
+                return {
+                    "success": False,
+                    "error": blocking_reasons[0] if blocking_reasons else "Suspicious activity detected",
+                    "referral": None,
+                    "welcome_credit": None,
+                    "is_suspicious": True,
+                    "fraud_warnings": [r.to_dict() for r in fraud_results]
+                }
+
+            # Verificar se há warnings não-bloqueantes
+            if fraud_results:
+                is_suspicious = True
+                fraud_warnings = [r.to_dict() for r in fraud_results]
 
         # Criar referência
         referral = Referral(
@@ -259,6 +308,8 @@ class ReferralService:
             reward_granted=False,
             welcome_credit_granted=False,
             referred_ip=referred_ip,
+            is_suspicious=is_suspicious,
+            fraud_reason="; ".join([w["reason"] for w in fraud_warnings]) if fraud_warnings else None,
             created_at=datetime.utcnow()
         )
 
@@ -271,11 +322,20 @@ class ReferralService:
         self.db.commit()
         self.db.refresh(referral)
 
+        # Log de sucesso
+        logger.info(
+            f"Referral aplicado: referred={referred_user_id}, "
+            f"referrer={referral_code.user_id}, code={code}, "
+            f"is_suspicious={is_suspicious}"
+        )
+
         return {
             "success": True,
             "error": None,
             "referral": referral,
-            "welcome_credit": REFERRED_WELCOME_CREDIT  # Crédito pendente de verificação
+            "welcome_credit": REFERRED_WELCOME_CREDIT,  # Crédito pendente de verificação
+            "is_suspicious": is_suspicious,
+            "fraud_warnings": fraud_warnings if fraud_warnings else None
         }
 
     def get_referral_by_referred(self, referred_user_id: str) -> Optional[Referral]:
