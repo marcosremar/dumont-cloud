@@ -391,14 +391,14 @@
     "qa_session": 2,
     "issues_found": [
       {
-        "description": "None - Investigation task completed successfully"
+        "description": "None - all deliverables completed successfully"
       }
     ],
     "tests_passed": {},
-    "timestamp": "2025-12-31T22:50:57.950611+00:00",
+    "timestamp": "2026-01-01T00:26:40.616742+00:00",
     "ready_for_qa_revalidation": false
   },
-  "last_updated": "2025-12-31T22:50:57.950619+00:00",
+  "last_updated": "2026-01-01T00:26:40.616766+00:00",
   "status": "human_review",
   "planStatus": "review",
   "updated_at": "2025-12-31T21:46:13.540Z",
@@ -421,11 +421,18 @@
       "timestamp": "2025-12-31T22:51:10.880872+00:00",
       "issues": [],
       "duration_seconds": 299.91
+    },
+    {
+      "iteration": 3,
+      "status": "approved",
+      "timestamp": "2026-01-01T00:26:53.258712+00:00",
+      "issues": [],
+      "duration_seconds": 253.45
     }
   ],
   "qa_stats": {
-    "total_iterations": 2,
-    "last_iteration": 2,
+    "total_iterations": 3,
+    "last_iteration": 3,
     "last_status": "approved",
     "issues_by_type": {
       "unknown": 1
