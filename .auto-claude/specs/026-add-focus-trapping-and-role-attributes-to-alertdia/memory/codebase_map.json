@@ -6,9 +6,9 @@
       "discovered_at": "2026-01-01T06:21:39.274925+00:00"
     },
     "web/src/components/tailadmin/ui/modal/index.tsx": {
-      "description": "Modal component now has role='dialog', aria-modal='true', and supports aria-labelledby/aria-describedby props. Close button has aria-label='Close modal'. TypeScript interface extended to include ARIA props.",
+      "description": "Modal component now uses useFocusTrap hook to trap focus when modal is open. Import added from @/hooks, and useFocusTrap(modalRef, isOpen) called after modalRef declaration. Combined with existing ARIA attributes (role='dialog', aria-modal='true'), the Modal now has full accessibility support for focus management.",
       "category": "accessibility",
-      "discovered_at": "2026-01-01T06:23:47.962062+00:00"
+      "discovered_at": "2026-01-01T06:25:49.741131+00:00"
     },
     "web/src/hooks/useFocusTrap.ts": {
       "description": "New useFocusTrap hook implements focus trapping for modal components. Accepts containerRef and isActive boolean. Exports FOCUSABLE_SELECTOR constant. Stores previously focused element, traps Tab/Shift+Tab, and returns focus on cleanup.",
@@ -16,5 +16,5 @@
       "discovered_at": "2026-01-01T06:04:48.089530+00:00"
     }
   },
-  "last_updated": "2026-01-01T06:23:47.962128+00:00"
+  "last_updated": "2026-01-01T06:25:49.741153+00:00"
 }
