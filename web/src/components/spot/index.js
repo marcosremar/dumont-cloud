@@ -8,3 +8,9 @@ export { default as InstantAvailability } from './InstantAvailability'
 export { default as ReliabilityScore } from './ReliabilityScore'
 export { default as TrainingCost } from './TrainingCost'
 export { default as FleetStrategy } from './FleetStrategy'
+
+// Cost Forecast components (re-exported from cost-forecast directory)
+export { default as CostForecastDashboard } from '../cost-forecast/CostForecastDashboard'
+export { default as OptimalTimingCard } from '../cost-forecast/OptimalTimingCard'
+export { default as BudgetAlertSettings } from '../cost-forecast/BudgetAlertSettings'
+export { default as AccuracyTracker } from '../cost-forecast/AccuracyTracker'

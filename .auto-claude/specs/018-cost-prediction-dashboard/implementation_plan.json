@@ -167,8 +167,9 @@
             "command": "python -c \"from src.api.v1.endpoints.spot import router; routes = [r.path for r in router.routes]; print('/cost-forecast/{gpu_name}' in routes)\"",
             "expected": "True"
           },
-          "notes": "Import cost_forecast router and include in spot endpoints.",
-          "status": "pending"
+          "notes": "Registered cost_forecast router in spot endpoints. Added import and include_router call. Routes available: /spot/cost-forecast/{gpu_name}, /spot/optimal-timing, /spot/forecast-accuracy/{gpu_name}",
+          "status": "completed",
+          "updated_at": "2025-12-31T22:46:54.322791+00:00"
         }
       ]
     },
@@ -198,8 +199,9 @@
             "command": "python -c \"from src.services.budget_alert_service import BudgetAlertService; print('send_alert' in dir(BudgetAlertService))\"",
             "expected": "True"
           },
-          "notes": "Use FastAPI BackgroundTasks for async email. Email template: predicted cost, threshold, time range, optimization recommendations. SMTP config from env vars.",
-          "status": "pending"
+          "notes": "Created BudgetAlertService with SMTP email sending. Features:\n- BudgetAlertData and SMTPConfig dataclasses following alert_manager.py patterns\n- SMTP configuration from environment variables (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, ALERT_EMAIL_FROM)\n- send_alert() method for sending budget threshold alerts via email\n- send_alert_async() method designed for FastAPI BackgroundTasks integration\n- check_budget_threshold() method to compare forecasts vs thresholds\n- HTML and text email templates with cost breakdown, recommendations, and optimal time windows\n- Cooldown mechanism to prevent alert spam (1 hour default)\n- Alert history tracking\n- Singleton pattern with get_budget_alert_service() helper\n- Helper function send_budget_alert_background() for easy FastAPI integration\n\nVerification passed: 'send_alert' in dir(BudgetAlertService) returns True",
+          "status": "completed",
+          "updated_at": "2025-12-31T22:50:48.870623+00:00"
         },
         {
           "id": "subtask-3-2",
@@ -217,8 +219,9 @@
             "command": "python -c \"from src.models.metrics import BudgetAlert; print('BudgetAlert' in dir())\"",
             "expected": "True"
           },
-          "notes": "BudgetAlert model: id, user_id, gpu_name, threshold_amount, email, enabled, created_at, last_triggered_at.",
-          "status": "pending"
+          "notes": "BudgetAlert model added to src/models/metrics.py with user_id, gpu_name, machine_type, threshold_amount, email, enabled flag, trigger history, and notification_settings. Verification passed. Committed as 436d2bb.",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:01:13.298602+00:00"
         },
         {
           "id": "subtask-3-3",
@@ -242,8 +245,9 @@
             },
             "expected_status": 201
           },
-          "notes": "Endpoints: POST /budget-alerts (create), GET /budget-alerts (list), PUT /budget-alerts/{id} (update), DELETE /budget-alerts/{id} (remove).",
-          "status": "pending"
+          "notes": "Created budget alert management endpoints in cost_forecast.py:\n\nEndpoints added:\n- POST /budget-alerts (create): Returns 201 on success\n- GET /budget-alerts (list): With user_id, gpu_name, enabled_only filters\n- GET /budget-alerts/{id} (get): Returns single alert details\n- PUT /budget-alerts/{id} (update): Partial update support\n- DELETE /budget-alerts/{id} (remove): Returns success confirmation\n\nSchemas added to cost_forecast.py schema file:\n- BudgetAlertCreate: Request validation with threshold > 0, email required\n- BudgetAlertUpdate: Optional fields for partial updates\n- BudgetAlertResponse: Full alert data with timestamps\n- BudgetAlertListResponse: List with total count\n- BudgetAlertDeleteResponse: Success confirmation\n\nVerification: Import verification passed - routes registered correctly, schemas validate. Commit 7e23748.",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:04:32.867579+00:00"
         },
         {
           "id": "subtask-3-4",
@@ -258,8 +262,9 @@
             "type": "manual",
             "instructions": "Verify .env contains: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, ALERT_EMAIL_FROM"
           },
-          "notes": "Add SMTP_HOST=smtp.gmail.com, SMTP_PORT=587, SMTP_USER, SMTP_PASSWORD (app-specific), ALERT_EMAIL_FROM.",
-          "status": "pending"
+          "notes": "Added SMTP environment variables to .env.example: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, ALERT_EMAIL_FROM. Used standard SMTP port 587 with placeholder values matching existing patterns.",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:05:57.991023+00:00"
         }
       ]
     },
@@ -287,8 +292,9 @@
             "command": "python -c \"from src.services.calendar_integration_service import CalendarIntegrationService; print('fetch_events' in dir(CalendarIntegrationService))\"",
             "expected": "True"
           },
-          "notes": "Methods: fetch_events(timeMin, timeMax), create_suggestion(event), handle OAuth refresh. Scopes: calendar.readonly + calendar.events.",
-          "status": "pending"
+          "notes": "Created CalendarIntegrationService with full OAuth flow implementation:\n\nKey Features:\n- fetch_events(): Fetches calendar events for time range using Google Calendar API\n- create_suggestion(): Creates scheduling suggestions based on optimal cost windows\n- get_suggestions_for_events(): Batch generates suggestions for compute-intensive events\n- _is_compute_intensive(): Identifies compute tasks via keyword analysis (gpu, training, ml, etc.)\n- OAuth token refresh handling with CalendarOAuthError for graceful degradation\n- is_connected and needs_reauthorization properties for status checks\n- get_oauth_authorization_url(): Generates auth URL for OAuth flow\n- disconnect(): Clears credentials and removes token file\n\nData Classes:\n- CalendarEvent: Event with metadata, is_compute_intensive flag, and duration calculation\n- CalendarSuggestion: Rescheduling suggestion with savings percentage and reason\n- OAuthCredentials: Token wrapper with expiry tracking\n\nScopes: calendar.readonly + calendar.events\nSingleton pattern: get_calendar_integration_service()\nAll timestamps stored in UTC\n\nVerification passed: fetch_events in dir(CalendarIntegrationService) = True\nCommit: efe8441",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:09:50.340949+00:00"
         },
         {
           "id": "subtask-4-2",
@@ -307,8 +313,9 @@
             "url": "http://localhost:8000/api/v1/metrics/spot/calendar-events",
             "expected_status": 200
           },
-          "notes": "Endpoints: GET /calendar-events (fetch), POST /calendar-suggestions (create optimization suggestions). Handle OAuth expiry gracefully.",
-          "status": "pending"
+          "notes": "Created 3 calendar sync endpoints in cost_forecast.py:\n- GET /calendar-events: Fetches events for next 7-14 days with compute-intensive identification\n- GET /calendar-status: Returns connection status and OAuth authorization URL if needed\n- POST /calendar-suggestions: Generates scheduling suggestions based on cost forecasts\n\nAdded 6 schema classes: CalendarEventItem, CalendarEventListResponse, CalendarStatusResponse, CalendarSuggestionItem, CalendarSuggestionsRequest, CalendarSuggestionsResponse.\n\nAll endpoints implement graceful degradation when OAuth fails.",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:13:48.284573+00:00"
         },
         {
           "id": "subtask-4-3",
@@ -323,8 +330,9 @@
             "type": "manual",
             "instructions": "Verify .env contains: GOOGLE_CALENDAR_CREDENTIALS_JSON, GOOGLE_CALENDAR_TOKEN_JSON"
           },
-          "notes": "Add GOOGLE_CALENDAR_CREDENTIALS_JSON=/path/to/credentials.json, GOOGLE_CALENDAR_TOKEN_JSON=/path/to/token.json.",
-          "status": "pending"
+          "notes": "Added Google Calendar OAuth environment variables to .env.example: GOOGLE_CALENDAR_CREDENTIALS_JSON and GOOGLE_CALENDAR_TOKEN_JSON. Also created local .env file with these variables. Commit d059ad3.",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:15:37.761836+00:00"
         }
       ]
     },
@@ -359,8 +367,9 @@
               "No console errors"
             ]
           },
-          "notes": "Register Chart.js components (CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler). Use area fill for confidence bands. Dark theme colors.",
-          "status": "pending"
+          "notes": "Created CostForecastDashboard component with Chart.js following SpotPrediction.jsx and SavingsHistoryGraph.jsx patterns:\n\n- Chart.js components registered (CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)\n- 7-day cost forecast chart with confidence interval bands (shaded area)\n- Summary stats: Total 7 Days, Lowest Day, Highest Day, Best Day\n- Dark theme styling matching existing patterns (#22c55e green, #9ca3af gray, #1f2937 grid)\n- Loading state with ta-spinner\n- Error handling for insufficient data with retry button\n- Best time window recommendation display\n- Model confidence and usage hours footer\n\nFiles created:\n- web/src/components/cost-forecast/CostForecastDashboard.jsx\n- web/src/components/cost-forecast/index.js\n\nCommit: ec89dc2\n\nNote: Browser verification requires routing (subtask-5-6) to be completed first.",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:19:19.957562+00:00"
         },
         {
           "id": "subtask-5-2",
@@ -382,8 +391,9 @@
               "Cost savings shown"
             ]
           },
-          "notes": "Input field for job duration, submit button. Display top 3 recommended time windows with estimated cost savings.",
-          "status": "pending"
+          "notes": "Created OptimalTimingCard component with:\n\nFeatures:\n- Job duration input field (0.5-168 hours with step 0.5)\n- \"Find Best Time\" button to trigger optimal timing search via POST /api/v1/metrics/spot/optimal-timing\n- Summary stats: Best Cost, Worst Cost, Max Savings\n- Top 3 time windows displayed with:\n  - Rank badge (1st=brand-500, 2nd=blue-500, 3rd=gray-500)\n  - Start/end datetime formatting (weekday, month, day, hour:minute)\n  - Recommendation badge (excellent/good/fair) with styled icons\n  - Estimated cost and savings percentage\n  - Visual savings progress bar\n- Loading and error states with retry button\n- Model confidence and current price footer\n\nFollows SpotPrediction.jsx patterns:\n- Same dark theme colors (#22c55e, bg-white/5, etc.)\n- Same card structure (ta-card, ta-card-header, ta-card-body)\n- Same stat-card patterns with icons\n- Same animation delays (animate-fade-in)\n- Uses lucide-react icons (Clock, Target, TrendingDown, Zap, DollarSign, AlertCircle)\n\nExport added to cost-forecast/index.js\n\nCommit: 2b4429e",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:22:45.421321+00:00"
         },
         {
           "id": "subtask-5-3",
@@ -405,8 +415,9 @@
               "Email input visible"
             ]
           },
-          "notes": "Use @radix-ui/react-slider for threshold, @radix-ui/react-switch for enable/disable. Email input field.",
-          "status": "pending"
+          "notes": "Created BudgetAlertSettings.jsx component with Radix UI Slider for threshold setting, Switch for enabling/disabling alerts, and email input for notifications. Features include: daily budget threshold ($10-$500), alerts toggle, email validation, daily digest option, save/load settings API integration, error/success feedback. Follows SpotPrediction.jsx patterns. Exported via index.js. Commit: e56e679",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:25:52.139108+00:00"
         },
         {
           "id": "subtask-5-4",
@@ -427,8 +438,9 @@
               "Last 30 days label visible"
             ]
           },
-          "notes": "Display: 'Prediction accuracy: X% MAPE over last 30 days'. Fetch from /forecast-accuracy endpoint.",
-          "status": "pending"
+          "notes": "Created AccuracyTracker.jsx component for displaying ML model prediction accuracy metrics:\n\nFeatures:\n- Displays accuracy percentage (100% - MAPE) with prominent \"X% accurate over last 30 days\" text\n- Grid of metrics: MAPE, R-Squared, MAE, RMSE with styled stat-cards\n- Accuracy level indicator (Excellent/Good/Fair/Needs Improvement) with color coding\n- Loading state with ta-spinner\n- Error state with retry button\n- Footer with sample count and model version\n\nAPI Integration:\n- GET /api/v1/metrics/spot/forecast-accuracy/{gpu_name}?days=30\n- Uses same auth pattern as SpotPrediction.jsx\n\nStyling follows SpotPrediction.jsx patterns: dark theme, stat-card classes, lucide-react icons.\n\nExported via cost-forecast/index.js.\n\nCommit: 3614ec5",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:28:51.996891+00:00"
         },
         {
           "id": "subtask-5-5",
@@ -449,8 +461,9 @@
               "Reconnect button if OAuth expired"
             ]
           },
-          "notes": "Display calendar events as vertical markers on forecast chart. Show 'Reconnect Calendar' button if OAuth fails.",
-          "status": "pending"
+          "notes": "Created calendar event overlay component in CostForecastDashboard.jsx:\n\nFeatures implemented:\n- Calendar status and events state management\n- loadCalendarData() to fetch from /calendar-status and /calendar-events APIs\n- Custom Chart.js plugin (calendarEventPlugin) draws vertical dashed lines on chart\n- Color-coded events: amber (#f59e0b) for compute-intensive, blue (#3b82f6) for regular\n- Tooltip integration shows event details on hover (afterTitle callback)\n- Calendar Integration Section UI with:\n  - Connected/disconnected status with icons\n  - Show/Hide toggle button\n  - \"Reconnect Calendar\" button (amber) when OAuth needs reauthorization\n  - \"Connect Calendar\" button (blue) when not connected\n  - Event list with title, date, GPU badge for compute-intensive\n- Graceful degradation when calendar API fails\n- Follows SavingsHistoryGraph.jsx dark theme patterns\n\nCommit: cf81e67\n\nVerification: Browser verification requires routing (subtask-5-6) to be completed.",
+          "status": "completed",
+          "updated_at": "2026-01-01T02:32:11.634999+00:00"
         },
         {
           "id": "subtask-5-6",
@@ -692,5 +705,5 @@
     }
   },
   "qa_signoff": null,
-  "last_updated": "2025-12-31T22:43:26.776732+00:00"
+  "last_updated": "2026-01-01T02:32:11.635007+00:00"
 }

@@ -14,7 +14,32 @@
       "description": "Cost forecast endpoint created at GET /cost-forecast/{gpu_name}. Returns 7-day cost predictions with daily aggregations and confidence intervals. Uses PricePredictionService.forecast_costs_7day(). Query params: usage_hours_per_day (default 8), machine_type (default interruptible). Schema file at src/api/v1/schemas/spot/cost_forecast.py.",
       "category": "api_endpoint",
       "discovered_at": "2025-12-31T22:36:17.466820+00:00"
+    },
+    "src/services/calendar_integration_service.py": {
+      "description": "CalendarIntegrationService created for Google Calendar integration. Uses OAuth with calendar.readonly and calendar.events scopes. Features: fetch_events(), create_suggestion(), OAuth token refresh, compute-intensive task detection via keywords. Follows singleton pattern like other services. Environment vars: GOOGLE_CALENDAR_TOKEN_JSON, GOOGLE_CALENDAR_CREDENTIALS_JSON.",
+      "category": "services",
+      "discovered_at": "2026-01-01T02:09:50.412953+00:00"
+    },
+    "web/src/components/cost-forecast/CostForecastDashboard.jsx": {
+      "description": "Added calendar event overlay using custom Chart.js plugin (calendarEventPlugin) that draws vertical dashed lines for calendar events. Uses getCalendarEventIndices() to map events to chart x-axis positions. Fetches from /api/v1/metrics/spot/calendar-status and /calendar-events APIs. Shows \"Reconnect Calendar\" button when calendarStatus.needs_reauthorization is true.",
+      "category": "frontend_component",
+      "discovered_at": "2026-01-01T02:32:11.682532+00:00"
+    },
+    "web/src/components/cost-forecast/OptimalTimingCard.jsx": {
+      "description": "OptimalTimingCard component for job timing optimization. Uses POST /api/v1/metrics/spot/optimal-timing API with gpu_name, job_duration_hours, and machine_type. Displays top 3 time windows with cost savings, recommendation badges (excellent/good/fair), and savings progress bars. Follows SpotPrediction.jsx patterns with dark theme and Tailwind classes.",
+      "category": "frontend_component",
+      "discovered_at": "2026-01-01T02:22:45.466182+00:00"
+    },
+    "web/src/components/cost-forecast/BudgetAlertSettings.jsx": {
+      "description": "BudgetAlertSettings component for budget alert configuration. Uses Radix UI Slider and Switch primitives. API endpoints: GET/POST /api/v1/metrics/spot/budget-settings. Features threshold slider, email notifications, daily digest toggle. Follows SpotPrediction.jsx patterns.",
+      "category": "frontend",
+      "discovered_at": "2026-01-01T02:25:52.199303+00:00"
+    },
+    "web/src/components/cost-forecast/AccuracyTracker.jsx": {
+      "description": "AccuracyTracker component for displaying ML prediction accuracy. Shows MAPE as accuracy percentage (100% - MAPE), with evaluation period label (Last 30 days). Includes metrics grid (MAPE, R\u00b2, MAE, RMSE), accuracy level badges, loading/error states. Uses GET /api/v1/metrics/spot/forecast-accuracy/{gpu_name} endpoint.",
+      "category": "frontend",
+      "discovered_at": "2026-01-01T02:28:52.039692+00:00"
     }
   },
-  "last_updated": "2025-12-31T22:36:17.466837+00:00"
+  "last_updated": "2026-01-01T02:32:11.682540+00:00"
 }
