@@ -1,15 +1,39 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Shield, Zap, Server, User, Lock, Eye, EyeOff } from 'lucide-react'
 import Logo from '../components/Logo'
 import '../styles/landing.css'
 
 export default function Login({ onLogin }) {
+  const [searchParams] = useSearchParams()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Auto-login via URL parameter
+  useEffect(() => {
+    const autoLogin = searchParams.get('auto_login')
+
+    if (autoLogin === 'demo') {
+      console.log('🔐 Auto-login detectado: modo demo')
+      // Fazer login automaticamente com credenciais demo
+      setUsername('marcosremar@gmail.com')
+      setPassword('dumont123')
+      setLoading(true)
+
+      // Aguardar um tick para garantir que o estado foi atualizado
+      setTimeout(async () => {
+        const result = await onLogin('marcosremar@gmail.com', 'dumont123')
+        if (result && result.error) {
+          console.error('❌ Erro no auto-login:', result.message)
+          setError(result)
+          setLoading(false)
+        }
+      }, 100)
+    }
+  }, [searchParams, onLogin])
 
   const handleSubmit = async (e) => {
     e.preventDefault()

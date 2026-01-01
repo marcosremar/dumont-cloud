@@ -14,7 +14,7 @@ module.exports = defineConfig({
 
   use: {
     headless: true,
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://dumontcloud.orb.local:4890',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

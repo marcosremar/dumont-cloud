@@ -1,6 +1,7 @@
 {
   "devDependencies": {
-    "@playwright/test": "^1.57.0"
+    "@playwright/test": "^1.57.0",
+    "playwright": "^1.57.0"
   },
   "name": "dumont-cloud",
   "version": "1.0.0",
@@ -24,6 +25,6 @@
   },
   "homepage": "https://github.com/marcosremar/dumont-cloud#readme",
   "dependencies": {
-    "puppeteer": "^24.33.0"
+    "puppeteer": "^24.34.0"
   }
 }

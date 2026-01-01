@@ -244,6 +244,26 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
             </div>
           )}
 
+          {/* CPU Standby Info */}
+          {estimate?.available && estimate?.uses_cpu_standby && !migrationStarted && (
+            <div className="bg-brand-500/10 border border-brand-500/30 rounded-lg p-4">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-brand-400 mt-0.5 flex-shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-brand-400 text-sm font-medium">
+                    Usando CPU Standby
+                  </p>
+                  <p className="text-gray-400 text-xs">
+                    Sua máquina já possui uma CPU em standby ({estimate.target?.standby_instance}). A migração será instantânea - apenas faremos o failover da GPU para a CPU que já está sincronizada.
+                  </p>
+                  <p className="text-gray-400 text-xs">
+                    Sem necessidade de snapshot ou provisionar nova instância.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Cost Comparison */}
           {estimate?.available && !migrationStarted && (
             <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
@@ -253,11 +273,11 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
               </div>
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Atual</p>
+                  <p className="text-xs text-gray-500 mb-1">Atual (GPU)</p>
                   <p className="text-lg font-bold text-white">${currentCost.toFixed(3)}/h</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Novo</p>
+                  <p className="text-xs text-gray-500 mb-1">{estimate.uses_cpu_standby ? 'CPU Standby' : 'Novo'}</p>
                   <p className="text-lg font-bold text-green-400">${targetCost.toFixed(3)}/h</p>
                 </div>
               </div>
@@ -279,8 +299,34 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
 
           {/* No offers available */}
           {estimate && !estimate.available && !migrationStarted && (
-            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
-              <p className="text-yellow-400 text-sm">{estimate.error || 'Nenhuma oferta disponível'}</p>
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 space-y-2">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-yellow-400 text-sm font-medium">
+                    {targetType === 'cpu'
+                      ? 'CPU Standby não configurado'
+                      : 'Nenhuma oferta disponível'}
+                  </p>
+                  {targetType === 'cpu' ? (
+                    <>
+                      <p className="text-gray-400 text-xs">
+                        Esta máquina não possui CPU Standby ativo. Para migrar para CPU, você precisa primeiro configurar o CPU Standby.
+                      </p>
+                      <p className="text-gray-400 text-xs">
+                        O CPU Standby mantém uma VM CPU sincronizada com a GPU, permitindo failover instantâneo.
+                      </p>
+                      <p className="text-gray-400 text-xs mt-2">
+                        <strong>Nota:</strong> O vast.ai não oferece instâncias CPU-only. Para workloads sem GPU, use o CPU Standby (GCP) ou configure manualmente no Google Cloud Platform ou AWS.
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-gray-400 text-xs">
+                      {estimate.error || 'Não há ofertas disponíveis no momento com os critérios selecionados.'}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 

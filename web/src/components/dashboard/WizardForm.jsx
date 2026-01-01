@@ -3,7 +3,7 @@ import {
   Search, Globe, MapPin, X, Cpu, MessageSquare, Lightbulb, Code, Zap,
   Sparkles, Gauge, Activity, Clock, Loader2, AlertCircle, Check, ChevronRight, ChevronLeft,
   Shield, Server, HardDrive, Cloud, Timer, DollarSign, Database, Filter, Star, TrendingUp,
-  ChevronDown, ChevronUp, Info, HelpCircle, Rocket, Hourglass
+  ChevronDown, ChevronUp, Info, HelpCircle, Rocket, Hourglass, Settings, Network, Plus, Trash2
 } from 'lucide-react';
 import { Button, Label, CardContent } from '../tailadmin-ui';
 import { WorldMap, GPUSelector } from './';
@@ -70,10 +70,20 @@ const WizardForm = ({
   const [provisioningStartTime, setProvisioningStartTime] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
 
+  // Advanced settings state
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [dockerImage, setDockerImage] = useState('pytorch/pytorch:latest');
+  const [exposedPorts, setExposedPorts] = useState([
+    { port: '22', protocol: 'TCP' },
+    { port: '8888', protocol: 'TCP' },
+    { port: '6006', protocol: 'TCP' },
+  ]);
+
   // Track elapsed time during provisioning
   useEffect(() => {
     if (currentStep === 4 && !provisioningWinner) {
       setProvisioningStartTime(Date.now());
+      setElapsedTime(0); // Reset timer when round changes
       const interval = setInterval(() => {
         setElapsedTime(prev => prev + 1);
       }, 1000);
@@ -84,7 +94,7 @@ const WizardForm = ({
       setElapsedTime(0);
       setProvisioningStartTime(null);
     }
-  }, [currentStep, provisioningWinner]);
+  }, [currentStep, provisioningWinner, currentRound]);
 
   // Format time as mm:ss
   const formatTime = (seconds) => {
@@ -411,21 +421,23 @@ const WizardForm = ({
     setBalanceError(null);
     try {
       const token = localStorage.getItem('auth_token');
-      const res = await fetch('/api/v1/auth/me', {
+      const res = await fetch('/api/v1/balance', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
-        // Try to get balance from user data or default to 10.00 for demo
-        const balance = data.user?.balance ?? data.balance ?? 10.00;
+        // Get credit from balance API
+        const balance = data.credit ?? data.balance ?? 10.00;
         setUserBalance(parseFloat(balance) || 10.00);
       } else {
         // Demo mode - assume $10 balance
         setUserBalance(10.00);
+        setBalanceError('Não foi possível verificar o saldo. Modo demo ativado.');
       }
     } catch (e) {
       // Demo mode fallback
       setUserBalance(10.00);
+      setBalanceError('Não foi possível verificar o saldo. Modo demo ativado.');
     } finally {
       setLoadingBalance(false);
     }
@@ -433,6 +445,7 @@ const WizardForm = ({
 
   const handleStartProvisioning = () => {
     const errors = [];
+    const MIN_BALANCE = 0.10; // Saldo mínimo necessário ($0.10)
 
     if (!selectedLocation) {
       errors.push('Por favor, selecione uma localização para sua máquina');
@@ -440,6 +453,11 @@ const WizardForm = ({
 
     if (!selectedTier) {
       errors.push('Por favor, selecione um tier de performance');
+    }
+
+    // Validar saldo mínimo
+    if (userBalance !== null && userBalance < MIN_BALANCE) {
+      errors.push(`Saldo insuficiente. Você precisa de pelo menos $${MIN_BALANCE.toFixed(2)} para criar uma máquina. Saldo atual: $${userBalance.toFixed(2)}`);
     }
 
     if (errors.length > 0) {
@@ -1037,6 +1055,7 @@ const WizardForm = ({
               </div>
             </div>
           )}
+
         </div>
       )}
 
@@ -1052,6 +1071,48 @@ const WizardForm = ({
             </div>
             <p className="text-xs text-gray-500 mt-1">Como recuperar automaticamente se a máquina falhar?</p>
           </div>
+
+          {/* Alerta de saldo */}
+          {!loadingBalance && userBalance !== null && (
+            <div className={`p-3 rounded-lg border ${
+              userBalance < 0.10
+                ? 'bg-red-500/10 border-red-500/30'
+                : userBalance < 1.00
+                ? 'bg-amber-500/10 border-amber-500/30'
+                : 'bg-emerald-500/10 border-emerald-500/30'
+            }`}>
+              <div className="flex items-start gap-2">
+                <DollarSign className={`w-4 h-4 mt-0.5 ${
+                  userBalance < 0.10
+                    ? 'text-red-400'
+                    : userBalance < 1.00
+                    ? 'text-amber-400'
+                    : 'text-emerald-400'
+                }`} />
+                <div className="flex-1">
+                  <p className={`text-xs font-medium ${
+                    userBalance < 0.10
+                      ? 'text-red-400'
+                      : userBalance < 1.00
+                      ? 'text-amber-400'
+                      : 'text-emerald-400'
+                  }`}>
+                    Saldo VAST.ai: ${userBalance.toFixed(2)}
+                  </p>
+                  {userBalance < 0.10 && (
+                    <p className="text-xs text-red-300 mt-1">
+                      Você precisa adicionar crédito para continuar. Saldo mínimo necessário: $0.10
+                    </p>
+                  )}
+                  {userBalance >= 0.10 && userBalance < 1.00 && (
+                    <p className="text-xs text-amber-300 mt-1">
+                      Saldo baixo. Considere adicionar crédito para evitar interrupções.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3">
             {failoverOptions.map((option) => {
@@ -1190,6 +1251,122 @@ const WizardForm = ({
               </div>
             </div>
           )}
+
+          {/* Configurações Avançadas */}
+          {failoverStrategy && (
+            <div className="space-y-2">
+              {/* Botão para expandir/recolher */}
+              <button
+                onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+                className="w-full p-2 text-xs text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded-lg transition-all flex items-center justify-center gap-1.5"
+                data-testid="toggle-advanced-settings"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                {showAdvancedSettings ? (
+                  <>
+                    <ChevronUp className="w-3.5 h-3.5" />
+                    Ocultar configurações avançadas
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-3.5 h-3.5" />
+                    Configurações avançadas
+                  </>
+                )}
+              </button>
+
+              {/* Conteúdo das configurações avançadas */}
+              {showAdvancedSettings && (
+                <div className="pt-3 border-t border-white/10 space-y-4 animate-fadeIn">
+                  {/* Docker Image / Template */}
+                  <div className="space-y-2">
+                    <Label className="text-gray-300 text-xs font-medium flex items-center gap-1.5">
+                      <Code className="w-3.5 h-3.5" />
+                      Template Docker
+                    </Label>
+                    <input
+                      type="text"
+                      value={dockerImage}
+                      onChange={(e) => setDockerImage(e.target.value)}
+                      placeholder="pytorch/pytorch:latest"
+                      className="w-full px-3 py-2 text-sm text-gray-200 bg-white/5 border border-white/10 rounded-lg focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500/50 placeholder:text-gray-500 transition-all font-mono"
+                      data-testid="docker-image-input"
+                    />
+                    <p className="text-[10px] text-gray-500">Imagem Docker que será usada na máquina</p>
+                  </div>
+
+                  {/* Exposed Ports */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-300 text-xs font-medium flex items-center gap-1.5">
+                        <Network className="w-3.5 h-3.5" />
+                        Portas Expostas
+                      </Label>
+                      <button
+                        onClick={() => setExposedPorts([...exposedPorts, { port: '', protocol: 'TCP' }])}
+                        className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1 transition-all"
+                        data-testid="add-port-button"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Adicionar porta
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {exposedPorts.map((portConfig, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          {/* Port number input */}
+                          <input
+                            type="text"
+                            value={portConfig.port}
+                            onChange={(e) => {
+                              const newPorts = [...exposedPorts];
+                              newPorts[index].port = e.target.value;
+                              setExposedPorts(newPorts);
+                            }}
+                            placeholder="8080"
+                            className="flex-1 px-3 py-2 text-sm text-gray-200 bg-white/5 border border-white/10 rounded-lg focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500/50 placeholder:text-gray-500 transition-all font-mono"
+                            data-testid={`port-input-${index}`}
+                          />
+
+                          {/* Protocol selector */}
+                          <select
+                            value={portConfig.protocol}
+                            onChange={(e) => {
+                              const newPorts = [...exposedPorts];
+                              newPorts[index].protocol = e.target.value;
+                              setExposedPorts(newPorts);
+                            }}
+                            className="px-3 py-2 text-sm text-gray-200 bg-white/5 border border-white/10 rounded-lg focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all font-mono"
+                            data-testid={`protocol-select-${index}`}
+                          >
+                            <option value="TCP">TCP</option>
+                            <option value="UDP">UDP</option>
+                          </select>
+
+                          {/* Remove button */}
+                          {exposedPorts.length > 1 && (
+                            <button
+                              onClick={() => {
+                                const newPorts = exposedPorts.filter((_, i) => i !== index);
+                                setExposedPorts(newPorts);
+                              }}
+                              className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all"
+                              data-testid={`remove-port-${index}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <p className="text-[10px] text-gray-500">Portas que estarão disponíveis para acesso externo. Escolha TCP ou UDP para cada porta.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -1219,12 +1396,12 @@ const WizardForm = ({
                 {/* Round indicator */}
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/30">
                   <Rocket className="w-3.5 h-3.5 text-purple-400" />
-                  <span className="text-purple-400 font-medium">Round {currentRound}/{maxRounds}</span>
+                  <span data-testid="wizard-round-indicator" className="text-purple-400 font-medium">Round {currentRound}/{maxRounds}</span>
                 </div>
                 {/* Timer */}
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
                   <Clock className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="text-gray-300 font-mono">{formatTime(elapsedTime)}</span>
+                  <span data-testid="wizard-timer" className="text-gray-300 font-mono">{formatTime(elapsedTime)}</span>
                 </div>
                 {/* ETA */}
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-500/10 border border-brand-500/30">
@@ -1327,7 +1504,7 @@ const WizardForm = ({
                       ) : (
                         <span className="inline-flex items-center gap-1.5 text-[10px] text-gray-400">
                           <Loader2 className="w-3 h-3 animate-spin" />
-                          Conectando...
+                          {candidate.statusMessage || 'Conectando...'}
                         </span>
                       )}
                     </div>
@@ -1430,13 +1607,18 @@ const WizardForm = ({
         ) : (
           <Button
             onClick={handleNext}
-            disabled={!isStepComplete(currentStep) || loading}
+            disabled={!isStepComplete(currentStep) || loading || (userBalance !== null && userBalance < 0.10)}
             className="px-5 py-2 bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 disabled:opacity-40"
           >
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Iniciando...
+              </>
+            ) : (userBalance !== null && userBalance < 0.10) ? (
+              <>
+                <AlertCircle className="w-4 h-4 mr-2" />
+                Saldo Insuficiente
               </>
             ) : (
               <>

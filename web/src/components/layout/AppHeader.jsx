@@ -108,6 +108,14 @@ const AppHeader = ({ user, onLogout, isDemo = false, dashboardStats = null }) =>
                 </div>
               </div>
 
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
+                <Cloud className="w-4 h-4 text-white" />
+                <div>
+                  <p className="text-[10px] text-gray-400 leading-none">VAST.ai</p>
+                  <p className="text-xs font-bold text-white leading-none mt-0.5">${dashboardStats.balance || '0.00'}</p>
+                </div>
+              </div>
+
               <div className="h-8 w-px bg-white/10 hidden lg:block" />
             </>
           )}

@@ -123,7 +123,9 @@ class InstanceService:
         logger.info(f"Creating instance from offer {offer_id}")
 
         # Prepare env vars for ports
-        env_vars = {}
+        # ALWAYS include port 8080 for VS Code (code-server)
+        env_vars = {"PORT_8080": "8080"}
+
         if ports:
             for port in ports:
                 env_vars[f"PORT_{port}"] = str(port)

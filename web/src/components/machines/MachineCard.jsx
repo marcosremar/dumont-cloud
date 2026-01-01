@@ -100,6 +100,7 @@ export default function MachineCard({
   syncStats,
   failoverProgress,
   isNew = false, // Highlight animation for newly created machines
+  isDeleting = false, // Loading animation for deleting machines
 }) {
   const [showConfigModal, setShowConfigModal] = useState(false)
   const [showSSHInstructions, setShowSSHInstructions] = useState(false)
@@ -297,8 +298,10 @@ export default function MachineCard({
 
   return (
     <Card
+      data-testid={`machine-card-${machine.id}`}
       className={`group relative transition-all
         ${isNew ? 'animate-highlight-new ring-2 ring-brand-400 ring-opacity-75' : ''}
+        ${isDeleting ? 'opacity-50 pointer-events-none' : ''}
         ${isInFailover
           ? getFailoverBorderColor()
           : isRunning
@@ -307,6 +310,14 @@ export default function MachineCard({
         }
       `}
     >
+      {/* Deleting overlay */}
+      {isDeleting && (
+        <div className="absolute inset-0 bg-gray-900/80 dark:bg-gray-950/80 rounded-lg z-50 flex flex-col items-center justify-center gap-3">
+          <RefreshCw className="w-8 h-8 text-red-500 animate-spin" />
+          <div className="text-sm text-gray-300">Destruindo máquina...</div>
+        </div>
+      )}
+
       {isInFailover && (
         <div className="mb-3 p-3 rounded-lg bg-white/5 border border-white/10" data-testid="failover-progress-panel">
           <div className="flex items-center gap-2 mb-3">
@@ -620,35 +631,42 @@ export default function MachineCard({
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded-lg hover:bg-gray-800/50 text-gray-500 hover:text-gray-300 flex-shrink-0">
+            <button
+              className="p-1.5 rounded-lg hover:bg-gray-800/50 text-gray-500 hover:text-gray-300 flex-shrink-0"
+              data-testid={`machine-menu-${machine.id}`}
+            >
               <MoreVertical className="w-4 h-4" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => setShowDetailsModal(true)}>
+          <DropdownMenuContent align="end" className="w-48" data-testid="machine-menu-content">
+            <DropdownMenuItem onClick={() => setShowDetailsModal(true)} data-testid="menu-details">
               <Info className="w-3.5 h-3.5 mr-2" />
               Ver Detalhes
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {isRunning && (
               <>
-                <DropdownMenuItem onClick={() => onSnapshot && onSnapshot(machine.id)} disabled={isCreatingSnapshot}>
+                <DropdownMenuItem
+                  onClick={() => onSnapshot && onSnapshot(machine.id)}
+                  disabled={isCreatingSnapshot}
+                  data-testid="menu-snapshot"
+                >
                   <Save className="w-3.5 h-3.5 mr-2" />
                   {isCreatingSnapshot ? 'Criando...' : 'Criar Snapshot'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
               </>
             )}
-            <DropdownMenuItem onClick={() => onRestoreToNew && onRestoreToNew(machine)}>
+            <DropdownMenuItem onClick={() => onRestoreToNew && onRestoreToNew(machine)} data-testid="menu-restore">
               <Upload className="w-3.5 h-3.5 mr-2" />
               Restaurar em Nova
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setShowConfigModal(true)}>
+            <DropdownMenuItem onClick={() => setShowConfigModal(true)} data-testid="menu-hibernation">
               <Settings className="w-3.5 h-3.5 mr-2" />
               Auto-Hibernation
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={copySSHConfig}>
+            <DropdownMenuItem onClick={copySSHConfig} data-testid="menu-ssh-config">
               {copiedField === 'ssh' ? (
                 <Check className="w-3.5 h-3.5 mr-2 text-green-400" />
               ) : (
@@ -657,7 +675,11 @@ export default function MachineCard({
               {copiedField === 'ssh' ? 'Copiado!' : 'Copiar SSH Config'}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onDestroy(machine.id)} className="text-red-400 focus:text-red-400">
+            <DropdownMenuItem
+              onClick={() => onDestroy(machine.id)}
+              className="text-red-400 focus:text-red-400"
+              data-testid={`destroy-button-${machine.id}`}
+            >
               <Trash2 className="w-3.5 h-3.5 mr-2" />
               Destruir
             </DropdownMenuItem>
@@ -771,23 +793,45 @@ export default function MachineCard({
           </div>
 
           {/* IDE Buttons */}
-          <div className="flex gap-1 mb-2">
+          <div className="flex gap-1 mb-2" data-testid="ide-buttons-container">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" icon={Code}>
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  className="flex-1 text-[10px] h-7"
+                  icon={Code}
+                  data-testid={`vscode-button-${machine.id}`}
+                >
                   VS Code
                   <ChevronDown className="w-2.5 h-2.5 opacity-50 ml-0.5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={openVSCodeOnline}>Online (Web)</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => openIDE('VS Code', 'vscode')}>Desktop (SSH)</DropdownMenuItem>
+              <DropdownMenuContent data-testid="vscode-dropdown-menu">
+                <DropdownMenuItem onClick={openVSCodeOnline} data-testid="vscode-option-web">
+                  Online (Web)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => openIDE('VS Code', 'vscode')} data-testid="vscode-option-desktop">
+                  Desktop (SSH)
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" onClick={() => openIDE('Cursor', 'cursor')}>
+            <Button
+              variant="ghost"
+              size="xs"
+              className="flex-1 text-[10px] h-7"
+              onClick={() => openIDE('Cursor', 'cursor')}
+              data-testid={`cursor-button-${machine.id}`}
+            >
               Cursor
             </Button>
-            <Button variant="ghost" size="xs" className="flex-1 text-[10px] h-7" onClick={() => openIDE('Windsurf', 'windsurf')}>
+            <Button
+              variant="ghost"
+              size="xs"
+              className="flex-1 text-[10px] h-7"
+              onClick={() => openIDE('Windsurf', 'windsurf')}
+              data-testid={`windsurf-button-${machine.id}`}
+            >
               Windsurf
             </Button>
           </div>

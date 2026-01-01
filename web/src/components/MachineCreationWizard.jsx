@@ -34,7 +34,7 @@ const REGIONS = [
   { id: 'ASIA', name: 'Asia', icon: 'flag', flag: 'asia' },
 ]
 
-export default function DeployWizard({ snapshots, machines, onRefresh }) {
+export default function MachineCreationWizard({ snapshots, machines, onRefresh }) {
   const [tab, setTab] = useState('new') // 'new' or 'existing'
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [offers, setOffers] = useState([])
@@ -167,18 +167,26 @@ export default function DeployWizard({ snapshots, machines, onRefresh }) {
   }, [offersByTier])
 
   const handleCreate = async () => {
+    // CRITICAL FIX: Prevent multiple simultaneous executions
+    // This fixes the bug where rapid clicks create multiple machines
+    if (creating) {
+      console.warn('Machine creation already in progress, ignoring duplicate click');
+      return;
+    }
+
+    setCreating(true);
+
     if (tab === 'new') {
       // Find best offer for selected tier
       const tierOffers = offersByTier[selectedSpeed] || []
       if (tierOffers.length === 0) {
         alert('Nenhuma oferta disponivel para este tier')
+        setCreating(false);
         return
       }
 
       // Sort by price and pick cheapest
       const bestOffer = [...tierOffers].sort((a, b) => a.dph_total - b.dph_total)[0]
-
-      setCreating(true)
       try {
         const res = await fetch(`${API_BASE}/api/instances`, {
           method: 'POST',
@@ -204,10 +212,9 @@ export default function DeployWizard({ snapshots, machines, onRefresh }) {
       // Restore to existing machine
       if (!selectedMachine) {
         alert('Selecione uma maquina')
+        setCreating(false);
         return
       }
-
-      setCreating(true)
       try {
         const res = await fetch(`${API_BASE}/api/instances/${selectedMachine.id}/restore`, {
           method: 'POST',

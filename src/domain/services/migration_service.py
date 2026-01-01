@@ -113,6 +113,42 @@ class MigrationService:
             result.steps_completed.append("validate_source")
             logger.info(f"[Migration] Source instance validated: {source.gpu_name} ({source.num_gpus} GPUs)")
 
+            # Special Case: CPU Standby Migration (Instant Failover)
+            if target_type == "cpu":
+                # Check if CPU Standby is configured for this instance
+                from ...services.standby.manager import get_standby_manager
+
+                standby_manager = get_standby_manager()
+                association = standby_manager.get_association(source_instance_id)
+
+                if association:
+                    logger.info(f"[Migration] CPU Standby detected - performing instant failover")
+                    result.steps_completed.append("cpu_standby_detected")
+
+                    # CPU Standby is already running and synced - just destroy GPU
+                    cpu_standby_info = association.get('cpu_standby', {})
+
+                    # Mark CPU as the "new instance" (it's already running)
+                    result.new_instance_id = source_instance_id  # Keep same ID for tracking
+                    result.steps_completed.append("cpu_standby_failover")
+
+                    # Destroy GPU if auto_destroy is enabled
+                    if auto_destroy_source:
+                        logger.info(f"[Migration] Destroying GPU instance {source_instance_id}")
+                        destroy_success = self.instances.destroy_instance(source_instance_id)
+                        if destroy_success:
+                            result.steps_completed.append("destroy_gpu")
+                            logger.info(f"[Migration] GPU instance destroyed")
+                        else:
+                            logger.warning(f"[Migration] Failed to destroy GPU instance")
+
+                    # Success - CPU Standby is now the active instance
+                    result.success = True
+                    result.snapshot_id = "cpu-standby-no-snapshot-needed"
+                    logger.info(f"[Migration] CPU Standby migration completed successfully!")
+                    logger.info(f"[Migration] CPU instance: {cpu_standby_info.get('name')} ({cpu_standby_info.get('ip')})")
+                    return result
+
             # Step 2: Create snapshot
             logger.info(f"[Migration] Step 2: Creating snapshot of source instance")
             snapshot_result = self.snapshots.create_snapshot(
@@ -280,14 +316,47 @@ class MigrationService:
         try:
             source = self.instances.get_instance(source_instance_id)
 
-            # Search target offers
+            # Special case: Migrating to CPU when CPU Standby is active
             if target_type == "cpu":
+                # Check if source instance has CPU Standby configured
+                # Import here to avoid circular dependency
+                from ...services.standby.manager import get_standby_manager
+
+                standby_manager = get_standby_manager()
+                association = standby_manager.get_association(source_instance_id)
+
+                if association:
+                    # CPU Standby is configured - use it instead of provisioning new instance
+                    cpu_standby_info = association.get('cpu_standby', {})
+                    cpu_cost = 0.01  # GCP e2-medium spot ~$0.01/h
+
+                    return {
+                        "available": True,
+                        "uses_cpu_standby": True,  # Flag to indicate this is using standby
+                        "source": {
+                            "id": source.id,
+                            "type": "gpu" if source.num_gpus > 0 else "cpu",
+                            "gpu_name": source.gpu_name,
+                            "cost_per_hour": source.dph_total,
+                        },
+                        "target": {
+                            "type": "cpu",
+                            "gpu_name": None,
+                            "cost_per_hour": cpu_cost,
+                            "standby_instance": cpu_standby_info.get('name', 'CPU Standby'),
+                        },
+                        "estimated_time_minutes": 1,  # Failover is instant
+                        "offers_available": 1,
+                    }
+
+                # No CPU Standby - try to search for CPU offers (will likely fail on vast.ai)
                 offers = self.vast.search_cpu_offers(
                     max_price=max_price,
                     region=region,
                     limit=5,
                 )
             else:
+                # Migrating to GPU - search GPU offers
                 offers = self.vast.search_offers(
                     gpu_name=gpu_name,
                     max_price=max_price,

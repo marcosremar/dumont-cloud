@@ -32,13 +32,14 @@ export default function Machines() {
   const [syncStatus, setSyncStatus] = useState({}) // machineId -> 'idle' | 'syncing' | 'synced'
   const [lastSyncTime, setLastSyncTime] = useState({}) // machineId -> timestamp
   const [destroyDialog, setDestroyDialog] = useState({ open: false, machineId: null, machineName: '' })
-  const [migrationTarget, setMigrationTarget] = useState(null) // machine to migrate
+  const [migrationTarget, setMigrationTarget] = useState(null)
   const [syncStats, setSyncStats] = useState({}) // machineId -> { files_new, files_changed, data_added, ... }
   const [demoToast, setDemoToast] = useState(null) // Toast message for demo actions
   const [failoverProgress, setFailoverProgress] = useState({}) // machineId -> { phase, message, newGpu, metrics }
   const [failoverHistory, setFailoverHistory] = useState([]) // Array of completed failover events
   const [newMachineIds, setNewMachineIds] = useState(new Set()) // Track newly created machines for highlight animation
   const [vastBalance, setVastBalance] = useState(null) // VAST.ai account balance
+  const [deletingMachines, setDeletingMachines] = useState(new Set()) // Track machines being deleted
 
   // Create machine modal state
   const [createModal, setCreateModal] = useState({ open: false, offer: null, creating: false, error: null })
@@ -151,14 +152,22 @@ export default function Machines() {
   }
 
   const confirmDestroy = async () => {
-    const { machineId, machineName } = destroyDialog
+    const { machineId, machineName} = destroyDialog
     setDestroyDialog({ open: false, machineId: null, machineName: '' })
+
+    // Add to deleting machines set for animation
+    setDeletingMachines(prev => new Set([...prev, machineId]))
 
     if (isDemo) {
       // Demo mode: simulate destruction with animation
       showDemoToast(`Destruindo ${machineName}...`, 'warning')
       await new Promise(r => setTimeout(r, 1500))
       setMachines(prev => prev.filter(m => m.id !== machineId))
+      setDeletingMachines(prev => {
+        const next = new Set(prev)
+        next.delete(machineId)
+        return next
+      })
       showDemoToast(`${machineName} destruída com sucesso!`, 'success')
       return
     }
@@ -166,9 +175,17 @@ export default function Machines() {
     try {
       const res = await apiDelete(`/api/v1/instances/${machineId}`)
       if (!res.ok) throw new Error('Erro ao destruir máquina')
+      showDemoToast(`${machineName} destruída com sucesso!`, 'success')
       fetchMachines()
     } catch (err) {
       alert(err.message)
+    } finally {
+      // Remove from deleting machines set
+      setDeletingMachines(prev => {
+        const next = new Set(prev)
+        next.delete(machineId)
+        return next
+      })
     }
   }
 
@@ -357,28 +374,45 @@ export default function Machines() {
     }
 
     try {
+      console.log(`[Snapshot] Starting for machine ${machineId}`)
       setSyncStatus(prev => ({ ...prev, [machineId]: 'syncing' }))
+
       // Use new sync endpoint with force=true for manual sync
       const res = await apiPost(`/api/v1/instances/${machineId}/sync?force=true`)
+      console.log(`[Snapshot] Response status:`, res.status)
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
+        console.error(`[Snapshot] Error:`, errorData)
         throw new Error(errorData.detail || errorData.error || 'Erro ao sincronizar')
       }
+
       const data = await res.json()
+      console.log(`[Snapshot] Success:`, data)
+
       setSyncStatus(prev => ({ ...prev, [machineId]: 'synced' }))
       setLastSyncTime(prev => ({ ...prev, [machineId]: Date.now() }))
       setSyncStats(prev => ({ ...prev, [machineId]: data }))
 
-      // Show sync result
+      // Show sync result with better visibility
       const syncType = data.is_incremental ? 'Sync incremental' : 'Sync inicial'
-      alert(`${syncType} concluído em ${data.duration_seconds.toFixed(1)}s!\n\n` +
+      const message = `${syncType} concluído em ${data.duration_seconds.toFixed(1)}s!\n\n` +
         `Arquivos novos: ${data.files_new}\n` +
         `Arquivos modificados: ${data.files_changed}\n` +
         `Arquivos inalterados: ${data.files_unmodified}\n` +
-        `Dados enviados: ${data.data_added}`)
+        `Dados enviados: ${data.data_added}`
+
+      console.log(`[Snapshot] ${message}`)
+      alert(message)
+
+      // Show success toast if in demo mode helper
+      if (showDemoToast) {
+        showDemoToast(`Snapshot concluído! ${data.data_added} sincronizados`, 'success')
+      }
     } catch (err) {
+      console.error(`[Snapshot] Error:`, err)
       setSyncStatus(prev => ({ ...prev, [machineId]: 'idle' }))
-      alert(err.message)
+      alert(`Erro ao criar snapshot: ${err.message}`)
     }
   }
 
@@ -420,12 +454,10 @@ export default function Machines() {
     window.location.href = `/?restore_from=${machine.id}`
   }
 
-  // Handle migration
   const handleMigrate = (machine) => {
     setMigrationTarget(machine)
   }
 
-  // Handle migration success
   const handleMigrationSuccess = (result) => {
     fetchMachines()
     setMigrationTarget(null)
@@ -775,6 +807,7 @@ export default function Machines() {
                   syncStats={syncStats[machine.id]}
                   failoverProgress={failoverProgress[machine.id] || { phase: 'idle' }}
                   isNew={newMachineIds.has(machine.id)}
+                  isDeleting={deletingMachines.has(machine.id)}
                 />
               ))}
             </div>

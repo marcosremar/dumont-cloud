@@ -8,7 +8,7 @@ import {
   Activity, Search, RotateCcw, Sliders, Wand2,
   Gauge, Globe, Zap, Monitor, ChevronDown, ChevronLeft, ChevronRight, Sparkles,
   Send, Bot, User, Loader2, Plus, Minus, X, Check, MapPin,
-  MessageSquare, Lightbulb, Code, Clock
+  MessageSquare, Lightbulb, Code, Clock, TrendingUp
 } from 'lucide-react';
 
 // Dashboard Components
@@ -23,7 +23,6 @@ import {
   OfferCard,
   FilterSection,
   ProvisioningRaceScreen,
-  AIWizardChat,
   AdvancedSearchForm,
   WizardForm,
   GPU_OPTIONS,
@@ -97,8 +96,13 @@ export default function Dashboard({ onStatsUpdate }) {
     totalMachines: 0,
     dailyCost: 0,
     savings: 0,
-    uptime: 0
+    uptime: 0,
+    balance: 0
   });
+  const [balance, setBalance] = useState(null);
+  const [loadingBalance, setLoadingBalance] = useState(true);
+  const [savingsData, setSavingsData] = useState(null);
+  const [loadingSavings, setLoadingSavings] = useState(true);
 
   // Refs to track intervals and timeouts for cleanup
   const raceIntervalsRef = useRef([]);
@@ -112,7 +116,29 @@ export default function Dashboard({ onStatsUpdate }) {
   useEffect(() => {
     checkOnboarding();
     fetchDashboardStats();
+    fetchBalance();
+    fetchSavings();
   }, []);
+
+  // Update dashboardStats when balance changes
+  useEffect(() => {
+    if (balance !== null && balance !== undefined) {
+      const formattedBalance = typeof balance === 'number' ? balance.toFixed(2) : '0.00';
+      console.log('[DASHBOARD] Updating dashboardStats.balance:', formattedBalance, 'from balance:', balance);
+      setDashboardStats(prev => ({
+        ...prev,
+        balance: formattedBalance
+      }));
+    }
+  }, [balance]);
+
+  // Notify parent whenever dashboardStats changes (including balance updates)
+  useEffect(() => {
+    if (onStatsUpdate && dashboardStats.balance !== undefined && dashboardStats.balance !== 0) {
+      console.log('[DASHBOARD] Calling onStatsUpdate with updated dashboardStats:', dashboardStats);
+      onStatsUpdate(dashboardStats);
+    }
+  }, [dashboardStats, onStatsUpdate]);
 
   // Cleanup on unmount - destroy any created instances
   useEffect(() => {
@@ -140,6 +166,56 @@ export default function Dashboard({ onStatsUpdate }) {
     };
   }, []);
 
+  const fetchBalance = async () => {
+    try {
+      setLoadingBalance(true);
+      const res = await fetch(`${API_BASE}/api/v1/instances/balance`, {
+        headers: { 'Authorization': `Bearer ${getToken()}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        console.log('[BALANCE v2 - FIXED] Received:', data);
+        // VAST.ai retorna dois campos: credit e balance
+        // balance é o saldo real (pode ser negativo)
+        const balanceValue = data.balance !== undefined && data.balance !== null ? data.balance :
+                            (data.credit !== undefined && data.credit !== null ? data.credit : 0);
+        console.log('[BALANCE v2 - FIXED] balanceValue =', balanceValue);
+        console.log('[BALANCE v2 - FIXED] formatted =', typeof balanceValue === 'number' ? balanceValue.toFixed(2) : balanceValue);
+        setBalance(balanceValue);
+      } else {
+        console.log('[BALANCE] API call failed:', res.status);
+        setBalance(0);
+      }
+    } catch (error) {
+      console.error('[BALANCE] Failed to fetch balance:', error);
+      setBalance(0);
+    } finally {
+      setLoadingBalance(false);
+    }
+  };
+
+  const fetchSavings = async () => {
+    try {
+      setLoadingSavings(true);
+      const res = await fetch(`${API_BASE}/api/v1/metrics/savings/real`, {
+        headers: { 'Authorization': `Bearer ${getToken()}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        console.log('[SAVINGS] Received:', data);
+        setSavingsData(data);
+      } else {
+        console.log('[SAVINGS] API call failed:', res.status);
+        setSavingsData(null);
+      }
+    } catch (error) {
+      console.error('[SAVINGS] Failed to fetch savings:', error);
+      setSavingsData(null);
+    } finally {
+      setLoadingSavings(false);
+    }
+  };
+
   const fetchDashboardStats = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/v1/instances`, {
@@ -159,7 +235,10 @@ export default function Dashboard({ onStatsUpdate }) {
           uptime: running.length > 0 ? 99.9 : 0
         };
         console.log('Dashboard stats:', stats);
-        setDashboardStats(stats);
+        setDashboardStats(prev => ({
+          ...stats,
+          balance: prev.balance // preserve the balance field
+        }));
         if (onStatsUpdate) {
           console.log('Calling onStatsUpdate with:', stats);
           onStatsUpdate(stats);
@@ -177,7 +256,10 @@ export default function Dashboard({ onStatsUpdate }) {
           uptime: 99.9
         };
         console.log('Dashboard stats (demo):', stats);
-        setDashboardStats(stats);
+        setDashboardStats(prev => ({
+          ...stats,
+          balance: prev.balance // preserve the balance field
+        }));
         if (onStatsUpdate) {
           console.log('Calling onStatsUpdate with (demo):', stats);
           onStatsUpdate(stats);
@@ -196,7 +278,10 @@ export default function Dashboard({ onStatsUpdate }) {
         uptime: 99.9
       };
       console.log('Dashboard stats (demo - catch):', stats);
-      setDashboardStats(stats);
+      setDashboardStats(prev => ({
+        ...stats,
+        balance: prev.balance // preserve the balance field
+      }));
       if (onStatsUpdate) {
         console.log('Calling onStatsUpdate with (demo - catch):', stats);
         onStatsUpdate(stats);
@@ -707,7 +792,7 @@ export default function Dashboard({ onStatsUpdate }) {
       return;
     }
 
-    // Poll for status updates every 3 seconds
+    // Poll for status updates every 2 seconds (reduced from 3s for faster detection)
     const pollInterval = setInterval(async () => {
       if (winnerFound) {
         clearInterval(pollInterval);
@@ -718,28 +803,59 @@ export default function Dashboard({ onStatsUpdate }) {
         const res = await fetch(`${API_BASE}/api/v1/instances`, {
           headers: { 'Authorization': `Bearer ${getToken()}` }
         });
-        if (!res.ok) return;
+        if (!res.ok) {
+          console.log(`[RACE R${round}] ⚠️ Failed to fetch instances: ${res.status}`);
+          return;
+        }
 
         const data = await res.json();
         const instances = data.instances || [];
 
+        console.log(`[RACE R${round}] 🔍 Polling ${createdInstanceIdsRef.current.length} instances...`);
+
         for (const created of createdInstanceIdsRef.current) {
           const instance = instances.find(i => i.id === created.instanceId);
-          if (!instance) continue;
+          if (!instance) {
+            console.log(`[RACE R${round}] ⚠️ Instance ${created.instanceId} not found in API response`);
+            continue;
+          }
 
           const status = instance.actual_status;
           const candidateIndex = created.index;
+          const hasSSH = !!(instance.ssh_host && instance.ssh_port);
 
+          console.log(`[RACE R${round}] Instance ${created.instanceId}: status="${status}", ssh=${hasSSH ? `${instance.ssh_host}:${instance.ssh_port}` : 'N/A'}`);
+
+          // Update UI with detailed status messages
           setRaceCandidates(prev => {
             const updated = [...prev];
             if (updated[candidateIndex]) {
               let progress = updated[candidateIndex].progress || 30;
-              if (status === 'loading') progress = Math.min(progress + 10, 90);
-              if (status === 'running') progress = 100;
+              let statusMessage = 'Conectando...';
+
+              if (status === 'loading') {
+                progress = Math.min(progress + 10, 90);
+                statusMessage = 'Iniciando sistema...';
+              } else if (status === 'running') {
+                if (hasSSH) {
+                  progress = 100;
+                  statusMessage = 'Verificando SSH...';
+                } else {
+                  progress = 95;
+                  statusMessage = 'Aguardando SSH...';
+                }
+              } else if (status === 'created') {
+                progress = 40;
+                statusMessage = 'Reservando máquina...';
+              } else {
+                statusMessage = `Status: ${status}`;
+              }
+
               updated[candidateIndex] = {
                 ...updated[candidateIndex],
                 progress,
                 actualStatus: status,
+                statusMessage,
                 sshHost: instance.ssh_host,
                 sshPort: instance.ssh_port
               };
@@ -747,7 +863,9 @@ export default function Dashboard({ onStatsUpdate }) {
             return updated;
           });
 
-          if (status === 'running' && !winnerFound) {
+          // Winner detection: must be running AND have SSH credentials
+          if (status === 'running' && hasSSH && !winnerFound) {
+            console.log(`[RACE R${round}] 🎯 WINNER FOUND! Instance ${created.instanceId} is running with SSH ${instance.ssh_host}:${instance.ssh_port}`);
             winnerFound = true;
             clearInterval(pollInterval);
 
@@ -788,15 +906,16 @@ export default function Dashboard({ onStatsUpdate }) {
           }
         }
       } catch (error) {
-        console.error('Error polling instance status:', error);
+        console.error('[RACE] ❌ Error polling instance status:', error);
       }
-    }, 3000);
+    }, 2000); // Poll every 2 seconds for faster winner detection
 
     raceIntervalsRef.current.push(pollInterval);
 
-    // Timeout after 3 minutes per round
+    // Timeout after 15 seconds per round (BATCH_TIMEOUT)
     const raceTimeout = setTimeout(async () => {
       if (!winnerFound) {
+        console.log(`[RACE R${round}] ⏱️ Timeout após 15s - nenhum vencedor encontrado`);
         clearInterval(pollInterval);
 
         // Clean up created instances
@@ -830,7 +949,7 @@ export default function Dashboard({ onStatsUpdate }) {
           toast.error(`Tempo esgotado após ${MAX_ROUNDS} tentativas.`);
         }
       }
-    }, 3 * 60 * 1000); // 3 minutes per round
+    }, 15 * 1000); // 15 seconds per round (BATCH_TIMEOUT)
 
     raceTimeoutsRef.current.push(raceTimeout);
   };
@@ -1034,9 +1153,9 @@ export default function Dashboard({ onStatsUpdate }) {
           }
         }
       } catch (error) {
-        console.error('Error polling instance status:', error);
+        console.error('[RACE] ❌ Error polling instance status:', error);
       }
-    }, 3000);
+    }, 2000); // Poll every 2 seconds for faster winner detection
 
     raceIntervalsRef.current.push(pollInterval);
 
@@ -1301,20 +1420,22 @@ export default function Dashboard({ onStatsUpdate }) {
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
         <Card>
           <CardHeader className="pb-6">
-            {/* Header com título */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center">
-                <Cpu className="w-5 h-5 text-brand-500" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Nova Instância GPU</CardTitle>
-                <CardDescription className="text-xs">Provisione sua máquina em minutos</CardDescription>
+            {/* Header com título e saldo */}
+            <div className="flex items-center justify-between gap-3 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center">
+                  <Cpu className="w-5 h-5 text-brand-500" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Nova Instância GPU</CardTitle>
+                  <CardDescription className="text-xs">Provisione sua máquina em minutos</CardDescription>
+                </div>
               </div>
             </div>
 
             {/* Seletor de Método Unificado */}
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {/* Opção 1: Configuração Guiada */}
                 <button
                   onClick={() => {
@@ -1330,26 +1451,26 @@ export default function Dashboard({ onStatsUpdate }) {
                     }
                   }}
                   data-testid="config-guided"
-                  className={`p-6 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:shadow-brand-500/10 active:scale-[0.98] ${
+                  className={`p-2 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.01] hover:shadow-md hover:shadow-brand-500/10 active:scale-[0.99] ${
                     deployMethod === 'manual' && mode === 'wizard'
-                      ? 'border-brand-500 ring-2 ring-brand-500/20 bg-brand-500/5'
+                      ? 'border-brand-500 ring-1 ring-brand-500/20 bg-brand-500/5'
                       : 'border-gray-700 hover:border-brand-400 hover:bg-gray-800/50'
                   }`}
                 >
                   {deployMethod === 'manual' && mode === 'wizard' && (
-                    <div className="absolute top-0 left-0 w-1 h-full bg-brand-500" />
+                    <div className="absolute top-0 left-0 w-0.5 h-full bg-brand-500" />
                   )}
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 flex-shrink-0 transition-colors ${
-                      deployMethod === 'manual' && mode === 'wizard' ? 'border-brand-500 bg-brand-500' : 'border-gray-600 group-hover:border-brand-400'
-                    }`}>
-                      {deployMethod === 'manual' && mode === 'wizard' && <Check className="w-3 h-3 text-white" />}
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <p className="font-semibold text-xs text-white group-hover:text-brand-300 transition-colors">Configuração Guiada</p>
+                        <span className="inline-block text-[8px] font-semibold text-brand-400 bg-brand-500/10 px-1 py-0.5 rounded">✓</span>
+                      </div>
+                      <p className="text-[10px] text-gray-400 leading-tight">Simples e intuitivo</p>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-brand-300 transition-colors">Configuração Guiada</p>
-                      <p className="text-xs text-gray-400 leading-relaxed mb-3">Escolha região, GPU e performance de forma simples e intuitiva</p>
-                      <span className="inline-block text-[10px] font-semibold text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-md border border-brand-800/20">✓ Recomendado</span>
-                    </div>
+                    {deployMethod === 'manual' && mode === 'wizard' && (
+                      <Check className="w-3.5 h-3.5 text-brand-500 flex-shrink-0" />
+                    )}
                   </div>
                 </button>
 
@@ -1365,85 +1486,80 @@ export default function Dashboard({ onStatsUpdate }) {
                     toast.info('Modo Avançado selecionado. Configure filtros detalhados.');
                   }}
                   data-testid="config-advanced"
-                  className={`p-6 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:shadow-brand-500/10 active:scale-[0.98] ${
+                  className={`p-2 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.01] hover:shadow-md hover:shadow-brand-500/10 active:scale-[0.99] ${
                     deployMethod === 'manual' && mode === 'advanced'
-                      ? 'border-brand-500 ring-2 ring-brand-500/20 bg-brand-500/5'
+                      ? 'border-brand-500 ring-1 ring-brand-500/20 bg-brand-500/5'
                       : 'border-gray-700 hover:border-brand-400 hover:bg-gray-800/50'
                   }`}
                 >
                   {deployMethod === 'manual' && mode === 'advanced' && (
-                    <div className="absolute top-0 left-0 w-1 h-full bg-brand-500" />
+                    <div className="absolute top-0 left-0 w-0.5 h-full bg-brand-500" />
                   )}
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 flex-shrink-0 transition-colors ${
-                      deployMethod === 'manual' && mode === 'advanced' ? 'border-brand-500 bg-brand-500' : 'border-gray-600 group-hover:border-brand-400'
-                    }`}>
-                      {deployMethod === 'manual' && mode === 'advanced' && <Check className="w-3 h-3 text-white" />}
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <p className="font-semibold text-xs text-white group-hover:text-brand-300 transition-colors">Configuração Avançada</p>
+                        <span className="inline-block text-[8px] font-semibold text-gray-500 bg-gray-800 px-1 py-0.5 rounded">Pro</span>
+                      </div>
+                      <p className="text-[10px] text-gray-400 leading-tight">Controle total</p>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-brand-300 transition-colors">Configuração Avançada</p>
-                      <p className="text-xs text-gray-400 leading-relaxed mb-3">Controle total com filtros detalhados de hardware e rede</p>
-                      <span className="inline-block text-[10px] font-semibold text-gray-500 bg-gray-800 px-2.5 py-1 rounded-md border border-gray-700">Para especialistas</span>
-                    </div>
+                    {deployMethod === 'manual' && mode === 'advanced' && (
+                      <Check className="w-3.5 h-3.5 text-brand-500 flex-shrink-0" />
+                    )}
                   </div>
                 </button>
 
-                {/* Opção 3: Assistente IA */}
-                <button
-                  onClick={() => {
-                    setDeployMethod('ai');
-                    setShowResults(false);
-                    setTimeout(() => {
-                      document.getElementById('wizard-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                    toast.info('Assistente IA ativado. Descreva o que você precisa.');
-                  }}
-                  data-testid="config-ai"
-                  className={`p-6 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/10 active:scale-[0.98] ${
-                    deployMethod === 'ai'
-                      ? 'border-purple-500 ring-2 ring-purple-500/20 bg-purple-500/5'
-                      : 'border-gray-700 hover:border-purple-400 hover:bg-gray-800/50'
-                  }`}
-                >
-                  {deployMethod === 'ai' && (
-                    <div className="absolute top-0 left-0 w-1 h-full bg-purple-500" />
-                  )}
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 flex-shrink-0 transition-colors ${
-                      deployMethod === 'ai' ? 'border-purple-500 bg-purple-500' : 'border-gray-600 group-hover:border-purple-400'
-                    }`}>
-                      {deployMethod === 'ai' && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-purple-300 transition-colors">Assistente IA</p>
-                      <p className="text-xs text-gray-400 leading-relaxed mb-3">Converse e deixe a IA recomendar a melhor configuração</p>
-                      <span className="inline-block text-[10px] font-semibold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-md border border-purple-500/20">✨ Inteligente</span>
-                    </div>
-                  </div>
-                </button>
               </div>
             </div>
           </CardHeader>
 
-          {/* AI MODE */}
-          {deployMethod === 'ai' && (
-            <CardContent id="wizard-form-section" className="h-[600px] p-0 relative animate-fadeIn">
-              <AIWizardChat
-                compact={false}
-                onRecommendation={(rec) => {}}
-                onSearchWithFilters={(filters) => {
-                  // Logic to jump to search results
-                  setDeployMethod('manual');
-                  setMode('advanced');
-                  // Apply filters...
-                }}
-              />
-            </CardContent>
-          )}
-
           {/* WIZARD MODE (MANUAL) */}
           {deployMethod === 'manual' && mode === 'wizard' && !showResults && (
-            <div id="wizard-form-section" className="animate-fadeIn">
+            (() => {
+              console.log('[WIZARD RENDER] loadingBalance:', loadingBalance, 'balance:', balance);
+              if (loadingBalance) {
+                console.log('[WIZARD RENDER] Showing loading...');
+                return (
+                  <div data-testid="balance-loading" className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
+                  </div>
+                );
+              }
+              if (balance !== null && balance <= 0) {
+                console.log('[WIZARD RENDER] No balance, showing error message');
+                return (
+              <div data-testid="insufficient-balance-message" className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center mb-4">
+                  <DollarSign className="w-8 h-8 text-red-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">Saldo Insuficiente</h3>
+                <p className="text-gray-400 mb-6 max-w-md">
+                  Você não possui créditos para provisionar novas máquinas. Adicione saldo para continuar.
+                </p>
+                <div className="flex items-center gap-3">
+                  <Button
+                    data-testid="add-credits-button"
+                    onClick={() => window.open('https://vast.ai/console/billing/', '_blank')}
+                    className="bg-brand-500 hover:bg-brand-600"
+                  >
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    Adicionar Créditos
+                  </Button>
+                  <Button
+                    data-testid="check-balance-button"
+                    onClick={fetchBalance}
+                    variant="outline"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Verificar Novamente
+                  </Button>
+                </div>
+              </div>
+                );
+              }
+              console.log('[WIZARD RENDER] Has balance, showing wizard');
+              return (
+            <div id="wizard-form-section" data-testid="wizard-form-container" className="animate-fadeIn">
               <WizardForm
                 searchCountry={searchCountry}
                 selectedLocation={selectedLocation}
@@ -1472,6 +1588,8 @@ export default function Dashboard({ onStatsUpdate }) {
                 maxRounds={MAX_ROUNDS}
               />
             </div>
+              );
+            })()
           )}
 
           {/* ADVANCED MODE (MANUAL) */}

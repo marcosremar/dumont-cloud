@@ -36,6 +36,25 @@ module.exports = defineConfig({
       },
       dependencies: ['setup'],
     },
+    // Midscene.js AI tests (no auth setup dependency, does its own auth)
+    {
+      name: 'midscene',
+      testMatch: /dumont-midscene\.spec\.js/,
+      use: {
+        ...devices['Desktop Chrome'],
+        // No storageState - Midscene tests do their own login
+      },
+    },
+    // Hybrid tests (Playwright + Midscene, uses saved auth)
+    {
+      name: 'hybrid',
+      testMatch: /dumont-hybrid\.spec\.js/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: '.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
   ],
 
   outputDir: 'test-results/',

@@ -199,13 +199,8 @@ export default function App() {
           }
         }
 
-        // Check if demo user and set demo_mode flag
-        const isDemoUser = username === 'test@test.com' || username === 'demo@dumont.cloud'
-        if (isDemoUser) {
-          localStorage.setItem('demo_mode', 'true')
-        } else {
-          localStorage.removeItem('demo_mode')
-        }
+        // Demo mode disabled - always use real data
+        localStorage.removeItem('demo_mode')
 
         setUser(data.user)
         return { success: true }

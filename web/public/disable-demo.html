@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Desabilitar Modo Demo - Dumont Cloud</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        p { color: #666; margin-bottom: 30px; }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover { background: #5568d3; transform: translateY(-2px); }
+        .success {
+            background: #10b981;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Dumont Cloud</h1>
+        <p>Clique no botão abaixo para <strong>desabilitar o modo demonstração</strong> e conectar com seus dados reais do Vast.ai.</p>
+
+        <button onclick="disableDemo()">Desabilitar Modo Demo</button>
+
+        <div class="success" id="success">
+            ✅ Modo demo desabilitado!<br>
+            <small>Redirecionando para o dashboard...</small>
+        </div>
+    </div>
+
+    <script>
+        function disableDemo() {
+            // Remove demo mode from localStorage
+            localStorage.removeItem('demo_mode');
+
+            // Show success message
+            document.getElementById('success').style.display = 'block';
+
+            // Redirect to dashboard after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

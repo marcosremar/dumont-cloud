@@ -909,10 +909,20 @@ class VastProvider(IGpuProvider):
         try:
             resp = self._make_request("GET", "users/current/")
             data = resp.json()
+
+            # Preserve negative values - only default to 0 if key is missing or None
+            credit_value = data.get("credit")
+            if credit_value is None:
+                credit_value = 0
+
+            balance_value = data.get("balance")
+            if balance_value is None:
+                balance_value = 0
+
             return {
-                "credit": data.get("credit", 0),
-                "balance": data.get("balance", 0),
-                "balance_threshold": data.get("balance_threshold", 0),
+                "credit": credit_value,
+                "balance": balance_value,
+                "balance_threshold": data.get("balance_threshold") or 0,
                 "email": data.get("email", ""),
             }
         except Exception as e:
@@ -1048,9 +1058,13 @@ class VastProvider(IGpuProvider):
         regions = {
             "EU": ["ES", "DE", "FR", "NL", "IT", "PL", "CZ", "BG", "UK", "GB",
                    "Spain", "Germany", "France", "Netherlands", "Poland",
-                   "Czechia", "Bulgaria", "Sweden", "Norway", "Finland"],
-            "US": ["US", "United States", "CA", "Canada"],
-            "ASIA": ["JP", "Japan", "KR", "Korea", "SG", "Singapore", "TW", "Taiwan"],
+                   "Czechia", "Bulgaria", "Sweden", "Norway", "Finland", "SE",
+                   "Belgium", "BE", "Austria", "AT", "Switzerland", "CH",
+                   "Portugal", "PT", "Ireland", "IE", "Denmark", "DK"],
+            "US": ["US", "United States", "CA", "Canada", "North America"],
+            "ASIA": ["JP", "Japan", "KR", "Korea", "SG", "Singapore", "TW", "Taiwan",
+                     "CN", "China", "Shaanxi", "HK", "Hong Kong", "IN", "India",
+                     "TH", "Thailand", "MY", "Malaysia", "ID", "Indonesia"],
         }
         return regions.get(region.upper(), [])
 

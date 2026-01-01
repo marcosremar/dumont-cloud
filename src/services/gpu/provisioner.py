@@ -88,7 +88,7 @@ ollama serve &
         onstart: str = None,  # Uses DEFAULT_ONSTART if not specified
         disk: int = 50,
         gpus_per_round: int = 5,
-        timeout_per_round: int = 120,  # 2min to wait for deps install
+        timeout_per_round: int = 15,  # 15s timeout por round (passa rapido pro proximo)
         max_rounds: int = 4,
         check_interval: float = 2.0,
     ) -> ProvisionResult:

@@ -11,32 +11,40 @@ export default defineConfig({
   },
   server: {
     host: "0.0.0.0",
-    port: 4890,
+    port: 4892,
     strictPort: false,
-    allowedHosts: ["dumontcloud-local.orb.local", ".orb.local", "localhost"],
+    allowedHosts: ["dumontcloud.orb.local", "dumontcloud-local.orb.local", ".orb.local"],
     // HMR config - automatically use the same port as the server
     hmr: {
       protocol: "ws",
+      host: "dumontcloud.orb.local",
+      clientPort: 4892,
     },
     watch: {
       usePolling: false,
     },
+    // Disable cache completely
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0",
+    },
     proxy: {
       "/admin/doc/live": {
-        target: "http://192.168.139.80:8081",
+        target: "http://dumontcloud.orb.local:8081",
         changeOrigin: true,
       },
       "/api/docs": {
-        target: "http://192.168.139.80:8081",
+        target: "http://dumontcloud.orb.local:8081",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/docs/, "/api"),
       },
       "/api": {
-        target: "http://192.168.139.80:8000",
+        target: "http://dumontcloud.orb.local:8767",
         changeOrigin: true,
       },
       "/admin": {
-        target: "http://192.168.139.80:8000",
+        target: "http://dumontcloud.orb.local:8767",
         changeOrigin: true,
       },
     },

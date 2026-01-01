@@ -34,8 +34,80 @@ from ..dependencies_usage import get_usage_service
 from ....services.usage_service import UsageService
 from ....services.standby.manager import get_standby_manager
 from ....services.machine_history_service import get_machine_history_service
+from ....services.machine_setup_service import MachineSetupService, MachineSetupConfig
+from ....core.config import settings
+import time
 
 router = APIRouter(prefix="/instances", tags=["Instances"], dependencies=[Depends(require_auth)])
+
+
+async def setup_machine_components(instance_id: int, ssh_host: str, ssh_port: int):
+    """
+    Background task to setup code-server + DumontAgent on newly created machine.
+
+    This runs after the machine is created and waits for SSH to be available.
+    """
+    logger.info(f"[SETUP] Starting component setup for instance {instance_id}")
+
+    # Wait for machine to be fully ready (max 2 minutes)
+    max_wait = 120
+    wait_interval = 10
+    elapsed = 0
+
+    while elapsed < max_wait:
+        try:
+            # Try to connect
+            import subprocess
+            result = subprocess.run(
+                ["ssh", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=5",
+                 "-p", str(ssh_port), f"root@{ssh_host}", "echo READY"],
+                capture_output=True,
+                timeout=10
+            )
+            if result.returncode == 0 and "READY" in result.stdout.decode():
+                logger.info(f"[SETUP] Machine {instance_id} SSH is ready")
+                break
+        except Exception as e:
+            logger.debug(f"[SETUP] SSH not ready yet: {e}")
+
+        time.sleep(wait_interval)
+        elapsed += wait_interval
+
+    if elapsed >= max_wait:
+        logger.error(f"[SETUP] Timeout waiting for SSH on instance {instance_id}")
+        return
+
+    # Setup code-server + agent
+    try:
+        setup_service = MachineSetupService(ssh_host, ssh_port)
+
+        # Check if R2 credentials are configured
+        has_r2_creds = bool(settings.r2.access_key_id and settings.r2.secret_access_key)
+
+        config = MachineSetupConfig(
+            workspace="/workspace",
+            setup_codeserver=True,
+            setup_agent=has_r2_creds,  # Only setup agent if R2 is configured
+            dumont_server=f"http://{settings.app.host}:{settings.app.port}" if has_r2_creds else "",
+            instance_id=str(instance_id),
+            aws_access_key_id=settings.r2.access_key_id if has_r2_creds else "",
+            aws_secret_access_key=settings.r2.secret_access_key if has_r2_creds else "",
+            restic_password=settings.restic_password if has_r2_creds else "",
+            restic_repository=f"s3:{settings.r2.endpoint}/{settings.r2.bucket}/restic" if has_r2_creds else "",
+        )
+
+        logger.info(f"[SETUP] Installing components on instance {instance_id}")
+        result = setup_service.setup_full(config)
+
+        if result.get("success"):
+            logger.info(f"[SETUP] ✅ Instance {instance_id} setup completed successfully")
+            if not has_r2_creds:
+                logger.warning(f"[SETUP] ⚠️  DumontAgent NOT installed - R2 credentials missing")
+        else:
+            logger.error(f"[SETUP] ❌ Instance {instance_id} setup failed: {result.get('error')}")
+
+    except Exception as e:
+        logger.error(f"[SETUP] Exception setting up instance {instance_id}: {e}")
 
 
 @router.get("/offers", response_model=SearchOffersResponse)
@@ -191,6 +263,7 @@ async def get_account_balance(
 
     try:
         balance = instance_service.get_account_balance()
+        logger.info(f"[BALANCE ENDPOINT] Returning balance: {balance}")
         return balance
     except Exception as e:
         logger.error(f"Error fetching account balance: {e}")
@@ -523,6 +596,14 @@ async def create_instance(
                     gpu_instance_id=instance.id,
                     label=request.label
                 )
+
+        # Auto-setup code-server + DumontAgent in background
+        background_tasks.add_task(
+            setup_machine_components,
+            instance_id=instance.id,
+            ssh_host=instance.ssh_host,
+            ssh_port=instance.ssh_port,
+        )
 
         return InstanceResponse(
             id=instance.id,

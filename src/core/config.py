@@ -58,7 +58,7 @@ class AppSettings(BaseSettings):
 
     # Security
     secret_key: str = Field(default="dumont-cloud-secret-key-2024", validation_alias=AliasChoices("secret_key", "SECRET_KEY"))
-    demo_mode: bool = Field(default=True, validation_alias=AliasChoices("demo_mode", "DEMO_MODE"))  # Default True until VAST.ai credits
+    demo_mode: bool = Field(default=False, validation_alias=AliasChoices("demo_mode", "DEMO_MODE"))  # DISABLED - Always use real Vast.ai data
 
     # CORS
     cors_origins: list[str] = Field(

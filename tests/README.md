@@ -45,7 +45,11 @@ tests/
 │   └── test_vibe.py               # 15 testes UX
 │
 └── browser-use/                    🤖 Bonus - IA Visual
-    └── (opcional - browser-use agent)
+│   └── (opcional - browser-use agent)
+│
+└── UI-TARS/                        🤖 AI Visual Testing
+    ├── ui-tars.config.js          # Configuração OpenRouter
+    └── dumont-uitars.spec.js      # Testes com IA multimodal
 ```
 
 ---
@@ -243,6 +247,100 @@ await expect(page.locator('text="Online"')).toBeVisible();
 
 ---
 
+## 🤖 UI-TARS - AI Visual Testing (Novo!)
+
+### O que é UI-TARS?
+
+**UI-TARS** (ByteDance) é um agente de IA multimodal que interage com interfaces gráficas usando visão computacional e linguagem natural, como um humano faria.
+
+### Por que UI-TARS + OpenRouter?
+
+| Aspecto | UI-TARS + OpenRouter | Alternativas Proprietárias |
+|---------|---------------------|---------------------------|
+| Licença | Open Source (Apache 2.0) | Proprietário |
+| Custo | GRÁTIS (tier free) | $15/1M tokens (GPT-4o) |
+| Vendor Lock-in | Não | Sim |
+| API | OpenRouter (400+ modelos) | Somente um provider |
+
+### Instalação
+
+```bash
+cd tests
+npm install --save-dev @ui-tars/sdk @ui-tars/operator-browser
+```
+
+### Configuração
+
+**OpenRouter API Key** já configurada em `.env`:
+```bash
+OPENROUTER_API_KEY=sk-or-v1-...
+```
+
+**Modelo usado**: `bytedance/ui-tars-1.5-7b` (tier gratuito disponível)
+
+### Como Usar
+
+```bash
+# Rodar testes UI-TARS (com browser visível)
+npm run test:uitars
+
+# Debug mode
+npm run test:uitars:debug
+```
+
+### Testes Disponíveis
+
+1. **Criar Máquina GPU** - Fluxo completo de criação
+2. **VS Code Button** - Verificar integração VS Code
+3. **Filtro de Região** - Validar filtro Europa
+4. **Display de Ofertas** - Verificar informações
+5. **Deletar Máquina** - Testar destruição com animação
+
+### Exemplo de Código
+
+```javascript
+const { GUIAgent } = require('@ui-tars/sdk');
+const { BrowserOperator } = require('@ui-tars/operator-browser');
+
+// Inicializar agente
+const operator = new BrowserOperator({ page });
+const guiAgent = new GUIAgent({
+  model: {
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey: process.env.OPENROUTER_API_KEY,
+    model: 'bytedance/ui-tars-1.5-7b',
+  },
+  operator,
+});
+
+// Executar ações em linguagem natural
+await guiAgent.run('Click on the "Europa" region on the map');
+await guiAgent.run('Verify that all offers are from European countries');
+```
+
+### Comparação de Custos
+
+| Framework | Provider | Custo/1M tokens |
+|-----------|----------|-----------------|
+| **UI-TARS** | **OpenRouter (7B)** | **GRÁTIS** |
+| UI-TARS | OpenRouter (72B) | $0.40 |
+| Midscene.js | OpenAI GPT-4o | $15.00 |
+
+### Como Funciona
+
+1. **Screenshot**: Captura tela do browser
+2. **Visão**: IA "vê" a interface visualmente
+3. **Raciocínio**: Entende o que precisa fazer
+4. **Ação**: Executa cliques, digitação, scroll
+
+### Documentação
+
+- [UI-TARS GitHub](https://github.com/bytedance/UI-TARS)
+- [UI-TARS Desktop](https://github.com/bytedance/UI-TARS-desktop)
+- [OpenRouter - UI-TARS Models](https://openrouter.ai/bytedance/ui-tars-1.5-7b)
+
+---
+
 **Última atualização**: Dezembro 2024
-**Status**: ✅ Testes E2E Realistas implementados
-**Cobertura**: Ações críticas (Iniciar, Pausar, Navegar, Métricas)
+**Status**: ✅ Testes E2E Realistas implementados + UI-TARS AI Visual Testing
+**Cobertura**: Ações críticas (Iniciar, Pausar, Navegar, Métricas) + Testes com IA

@@ -47,16 +47,20 @@ GPU_OPTIONS = [
 
 REGIONS = {
     "global": [],
-    "US": ["US", "United States", "CA", "Canada"],
+    "US": ["US", "United States", "CA", "Canada", "North America"],
     "EU": ["ES", "DE", "FR", "NL", "IT", "PL", "CZ", "BG", "UK", "GB",
            "Spain", "Germany", "France", "Netherlands", "Poland",
-           "Czechia", "Bulgaria", "Sweden", "Norway", "Finland"],
-    "ASIA": ["JP", "Japan", "KR", "Korea", "SG", "Singapore", "TW", "Taiwan"],
+           "Czechia", "Bulgaria", "Sweden", "Norway", "Finland", "SE",
+           "Belgium", "BE", "Austria", "AT", "Switzerland", "CH",
+           "Portugal", "PT", "Ireland", "IE", "Denmark", "DK"],
+    "ASIA": ["JP", "Japan", "KR", "Korea", "SG", "Singapore", "TW", "Taiwan",
+             "CN", "China", "Shaanxi", "HK", "Hong Kong", "IN", "India",
+             "TH", "Thailand", "MY", "Malaysia", "ID", "Indonesia"],
 }
 
 # Configuracoes de timeout e batches - OTIMIZADO
-BATCH_TIMEOUT = 60   # 60s timeout (ollama/ollama e leve!)
-CHECK_INTERVAL = 2   # 2s para resposta mais rapida
+BATCH_TIMEOUT = 15   # 15s timeout por batch para SSH ficar pronto
+CHECK_INTERVAL = 2   # 2s entre verificacoes
 BATCH_SIZE = 5       # maquinas por batch
 MAX_BATCHES = 3      # maximo de batches (15 maquinas total)
 
@@ -108,7 +112,7 @@ class DeployConfig:
     target_path: str = "/workspace"
     hot_start: bool = False
     docker_options: Optional[str] = None
-    setup_codeserver: bool = False  # OTIMIZADO: desabilitado por padrao
+    setup_codeserver: bool = True  # Instalar VS Code (code-server) automaticamente
     use_ollama_image: bool = True   # usar ollama/ollama + SSH install
     image: Optional[str] = None     # imagem customizada
     model: Optional[str] = None     # modelo LLM para instalar (ex: qwen2.5:0.5b)
@@ -520,6 +524,10 @@ class DeployWizardService:
             if excluded:
                 logger.info(f"Excluded {len(excluded)} problematic machines from search")
 
+            # LOG DETALHADO: Ofertas encontradas
+            print(f"[DEPLOY] Total de ofertas encontradas: {len(offers)}", flush=True)
+            print(f"[DEPLOY] Batches que serao tentados: {min(MAX_BATCHES, (len(offers) + BATCH_SIZE - 1) // BATCH_SIZE)}", flush=True)
+
             if not offers:
                 job.status = "failed"
                 job.error = "Nenhuma oferta disponivel com os filtros especificados"
@@ -539,42 +547,67 @@ class DeployWizardService:
 
             # Multi-start em batches
             for batch_num in range(MAX_BATCHES):
+                print(f"\n{'='*60}", flush=True)
+                print(f"[BATCH {batch_num + 1}/{MAX_BATCHES}] INICIANDO...", flush=True)
+                print(f"{'='*60}", flush=True)
+
                 if winner:
+                    print(f"[BATCH {batch_num + 1}] WINNER ja encontrado, pulando batch", flush=True)
                     break
 
                 job.batch = batch_num + 1
                 start_idx = batch_num * BATCH_SIZE
                 batch_offers = offers[start_idx:start_idx + BATCH_SIZE]
 
+                print(f"[BATCH {batch_num + 1}] Ofertas totais: {len(offers)}", flush=True)
+                print(f"[BATCH {batch_num + 1}] Indice inicial: {start_idx}", flush=True)
+                print(f"[BATCH {batch_num + 1}] Ofertas neste batch: {len(batch_offers)}", flush=True)
+
                 if not batch_offers:
+                    print(f"[BATCH {batch_num + 1}] ❌ SEM OFERTAS DISPONIVEIS - Parando aqui", flush=True)
+                    print(f"[BATCH {batch_num + 1}] Motivo: offers[{start_idx}:{start_idx + BATCH_SIZE}] = vazio", flush=True)
                     break
+
+                print(f"[BATCH {batch_num + 1}] ✓ Iniciando com {len(batch_offers)} ofertas", flush=True)
 
                 # Criar maquinas em paralelo
                 job.status = "creating"
                 job.message = f"Batch {batch_num + 1}: Criando {len(batch_offers)} maquinas..."
 
+                batch_created_count = 0
                 with ThreadPoolExecutor(max_workers=BATCH_SIZE) as executor:
                     create_futures = {
                         executor.submit(self._create_instance, offer, job.config): offer
                         for offer in batch_offers
                     }
 
-                    for future in as_completed(create_futures, timeout=30):
-                        try:
-                            instance_id, start_time = future.result()
-                            offer = create_futures[future]
-                            job.machines_tried += 1
+                    try:
+                        for future in as_completed(create_futures, timeout=30):
+                            try:
+                                instance_id, start_time = future.result()
+                                offer = create_futures[future]
+                                job.machines_tried += 1
 
-                            if instance_id:
-                                all_created.append((instance_id, offer, start_time))
-                                job.machines_created.append(instance_id)
-                                job.message = f"Criada maquina {instance_id}"
-                        except Exception:
-                            pass
+                                if instance_id:
+                                    all_created.append((instance_id, offer, start_time))
+                                    job.machines_created.append(instance_id)
+                                    batch_created_count += 1
+                                    job.message = f"Criada maquina {instance_id}"
+                                    print(f"[BATCH {batch_num + 1}] Maquina {instance_id} criada com sucesso ({batch_created_count}/{len(batch_offers)})", flush=True)
+                                else:
+                                    print(f"[BATCH {batch_num + 1}] Falha ao criar maquina (retornou None)", flush=True)
+                            except Exception as e:
+                                print(f"[BATCH {batch_num + 1}] Erro ao processar resultado: {e}", flush=True)
+                    except TimeoutError:
+                        print(f"[BATCH {batch_num + 1}] Timeout de 30s ao criar maquinas", flush=True)
+
+                print(f"[BATCH {batch_num + 1}] Criacao finalizada: {batch_created_count} maquinas criadas de {len(batch_offers)} tentativas", flush=True)
+                print(f"[BATCH {batch_num + 1}] Total acumulado: {len(all_created)} maquinas criadas", flush=True)
 
                 # Monitorar todas as maquinas do batch
                 job.status = "waiting"
                 batch_start = time.time()
+                print(f"[BATCH {batch_num + 1}] Iniciando monitoramento por {BATCH_TIMEOUT}s...", flush=True)
 
                 while time.time() - batch_start < BATCH_TIMEOUT:
                     elapsed = int(time.time() - deploy_start)
@@ -598,8 +631,35 @@ class DeployWizardService:
 
                     time.sleep(CHECK_INTERVAL)
 
+                batch_elapsed = time.time() - batch_start
+                print(f"\n{'='*60}", flush=True)
+                print(f"[BATCH {batch_num + 1}/{MAX_BATCHES}] RESULTADO:", flush=True)
+                print(f"{'='*60}", flush=True)
+                print(f"[BATCH {batch_num + 1}] Tempo decorrido: {batch_elapsed:.1f}s (limite: {BATCH_TIMEOUT}s)", flush=True)
+                print(f"[BATCH {batch_num + 1}] Maquinas criadas: {len(all_created)}", flush=True)
+                print(f"[BATCH {batch_num + 1}] Winner: {winner is not None}", flush=True)
+
                 if not winner:
+                    print(f"[BATCH {batch_num + 1}] ❌ TIMEOUT - Nenhuma maquina ficou pronta em {BATCH_TIMEOUT}s", flush=True)
                     job.message = f"Batch {batch_num + 1}: Nenhuma maquina ficou pronta em {BATCH_TIMEOUT}s"
+
+                    # Verificar se ainda ha batches para tentar
+                    batches_restantes = MAX_BATCHES - (batch_num + 1)
+                    ofertas_restantes = len(offers) - (start_idx + BATCH_SIZE)
+
+                    print(f"[BATCH {batch_num + 1}] Batches restantes: {batches_restantes}", flush=True)
+                    print(f"[BATCH {batch_num + 1}] Ofertas restantes: {ofertas_restantes}", flush=True)
+
+                    if batches_restantes > 0 and ofertas_restantes > 0:
+                        print(f"[BATCH {batch_num + 1}] ✓ Continuando para BATCH {batch_num + 2}...\n", flush=True)
+                    elif batches_restantes > 0:
+                        print(f"[BATCH {batch_num + 1}] ❌ SEM OFERTAS para proximos batches\n", flush=True)
+                    else:
+                        print(f"[BATCH {batch_num + 1}] ❌ ULTIMO BATCH - Sem mais tentativas\n", flush=True)
+                else:
+                    print(f"[BATCH {batch_num + 1}] ✅ SUCCESS! WINNER encontrado em {batch_elapsed:.1f}s!", flush=True)
+                    print(f"[BATCH {batch_num + 1}] Instance ID: {winner.get('instance_id')}", flush=True)
+                    print(f"{'='*60}\n", flush=True)
 
             # Cleanup - destruir todas as maquinas nao utilizadas
             print(f"[CLEANUP] winner={winner}", flush=True)
@@ -630,7 +690,14 @@ class DeployWizardService:
 
             if not winner:
                 job.status = "failed"
-                job.error = f"Nenhuma maquina ficou pronta em {BATCH_TIMEOUT}s apos {job.machines_tried} tentativas"
+                total_time = int(time.time() - deploy_start)
+                job.error = (
+                    f"Deploy falhou: Nenhuma máquina ficou pronta após {job.machines_tried} tentativas "
+                    f"em {total_time}s. Todas as {len(all_created)} máquinas criadas excederam o timeout "
+                    f"de {BATCH_TIMEOUT}s por batch. Isso pode indicar problemas nas máquinas ou na rede."
+                )
+                job.message = job.error
+                logger.error(f"[DEPLOY FAILED] {job.error}")
                 return
 
             # Setup code-server se habilitado

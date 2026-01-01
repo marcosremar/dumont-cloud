@@ -134,6 +134,41 @@ pytest -v --timeout=600
 addopts = ["-n", "10", "-v", "--tb=short", "--dist=loadscope"]
 ```
 
+### Auto-Login para Testes e Desenvolvimento
+
+O sistema suporta auto-login via parâmetro de URL para facilitar testes automatizados e desenvolvimento:
+
+**Como usar**:
+```bash
+# Acesso direto com login automático (modo demo)
+http://localhost:4890/login?auto_login=demo
+
+# Ou qualquer URL do app
+http://localhost:4890/?auto_login=demo
+```
+
+**Funcionamento**:
+- Detecta o parâmetro `?auto_login=demo` na URL
+- Faz login automaticamente com as credenciais demo
+- Redireciona para `/app` após autenticação
+- Ideal para testes Playwright, Selenium, e desenvolvimento
+
+**Implementação**:
+- Arquivo: `web/src/pages/Login.jsx` (linhas 16-36)
+- Usa `useSearchParams` do React Router
+- Executa `onLogin()` automaticamente se parâmetro presente
+
+**Uso em testes**:
+```javascript
+// Playwright
+await page.goto('http://localhost:4890/login?auto_login=demo');
+await page.waitForURL('**/app**');
+
+// Cypress
+cy.visit('/?auto_login=demo');
+cy.url().should('include', '/app');
+```
+
 ### Important Notes
 - Tests provision **real GPU instances** on Vast.ai (costs money)
 - Each test is self-contained: provisions its own instance and destroys it
