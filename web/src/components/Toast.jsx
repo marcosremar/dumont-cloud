@@ -130,6 +130,19 @@ export function ToastProvider({ children }) {
         .animate-toast-in {
           animation: toast-in 0.3s ease-out;
         }
+        @keyframes toast-out {
+          0% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-100%) scale(0.95);
+          }
+        }
+        .animate-toast-out {
+          animation: toast-out 0.3s ease-in forwards;
+        }
       `}</style>
     </ToastContext.Provider>
   )
