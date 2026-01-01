@@ -245,10 +245,9 @@ async def send_test_email(
     """
     try:
         from ....services.email_sender import send_weekly_report
-        from ....services.email_analytics_aggregator import EmailAnalyticsAggregator
+        from ....services.email_analytics_aggregator import aggregate_user_usage
         from ....services.email_recommendations import generate_recommendations
         from ....services.email_composer import compose_weekly_report
-        from datetime import timedelta
 
         # Get user preferences
         preference = db.query(EmailPreference).filter(
@@ -268,37 +267,35 @@ async def send_test_email(
             db.commit()
             db.refresh(preference)
 
-        # Aggregate usage data
-        aggregator = EmailAnalyticsAggregator()
-        today = datetime.utcnow().date()
-        week_start = today - timedelta(days=7)
-        week_end = today - timedelta(days=1)
+        # Aggregate usage data - function handles week bounds internally
+        analytics_data = aggregate_user_usage(db, user_email)
 
-        metrics = aggregator.aggregate_user_usage(user_email, week_start, week_end, db)
-        comparison = aggregator.calculate_week_over_week(user_email, week_start, db)
-
-        # Generate recommendations
-        recommendations = generate_recommendations(metrics)
+        # Generate recommendations based on analytics
+        recommendations = generate_recommendations(
+            current_week=analytics_data.get('current_week', {}),
+            previous_week=analytics_data.get('previous_week', {}),
+            week_over_week=analytics_data.get('week_over_week', {}),
+            gpu_breakdown=analytics_data.get('gpu_breakdown', [])
+        )
 
         # Compose email
         email_content = compose_weekly_report(
+            user_id=user_email,
             user_email=user_email,
-            metrics=metrics,
-            comparison=comparison,
+            user_name=None,  # Could be fetched from user profile
+            analytics_data=analytics_data,
             recommendations=recommendations,
-            week_start=week_start,
-            week_end=week_end,
         )
 
-        # Send email
+        # Send email with logging
         result = send_weekly_report(
-            to_email=user_email,
-            subject=email_content.subject,
-            html_body=email_content.html_body,
+            db_session=db,
             user_id=user_email,
-            week_start=week_start,
-            week_end=week_end,
-            db=db,
+            to=user_email,
+            subject=email_content.subject,
+            html=email_content.html_body,
+            week_start=email_content.week_start,
+            week_end=email_content.week_end,
         )
 
         if result.success:
