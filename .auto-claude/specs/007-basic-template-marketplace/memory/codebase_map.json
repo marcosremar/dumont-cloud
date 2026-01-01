@@ -1,0 +1,15 @@
+{
+  "discovered_files": {
+    "services/": {
+      "description": "Root-level services/ directory contains legacy services (vast_service.py, template_service.py, deploy_wizard.py). These are separate from src/services/ which contains the main app services. When importing from root services/, use relative imports within that package.",
+      "category": "architecture",
+      "discovered_at": "2025-12-31T22:11:24.663005+00:00"
+    },
+    "web/src/pages/TemplateDetailPage.jsx": {
+      "description": "TemplateDetailPage implements template detail view with deployment form. Uses Redux templateSlice for state management (fetchTemplateBySlug, fetchTemplateOffers, deployTemplate). Supports demo mode with DEMO_TEMPLATES and DEMO_GPU_OFFERS. GPU selection filters offers by template's gpu_min_vram requirement.",
+      "category": "frontend_pages",
+      "discovered_at": "2025-12-31T22:50:03.191835+00:00"
+    }
+  },
+  "last_updated": "2025-12-31T22:50:03.191871+00:00"
+}

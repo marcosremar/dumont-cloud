@@ -2,8 +2,11 @@
 Service para interacao com a API do vast.ai
 """
 import requests
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, TYPE_CHECKING
 from dataclasses import dataclass
+
+if TYPE_CHECKING:
+    from src.modules.marketplace.models import Template
 
 
 @dataclass
@@ -374,5 +377,248 @@ tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &
                 "email": data.get("email", ""),
             }
         except Exception as e:
-            print(f"Erro ao buscar saldo: {e}")
             return {"error": str(e), "credit": 0}
+
+    # ========================================================================
+    # Template-Aware Instance Creation
+    # ========================================================================
+
+    def search_offers_for_template(
+        self,
+        template: "Template",
+        num_gpus: int = 1,
+        max_price: float = 1.0,
+        region: Optional[str] = None,
+        verified_only: bool = False,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """
+        Busca ofertas de GPU compativeis com um template.
+
+        Filtra automaticamente por:
+        - VRAM minimo do template
+        - Versao CUDA minima do template
+        - Espaco em disco para volumes do template
+
+        Args:
+            template: Template do marketplace com requisitos de GPU
+            num_gpus: Numero de GPUs desejado
+            max_price: Preco maximo por hora ($/h)
+            region: Regiao (EU, US, ASIA)
+            verified_only: Apenas ofertas verificadas
+            limit: Limite de resultados
+
+        Returns:
+            Lista de ofertas compativeis ordenadas por preco
+        """
+        # Calcular disco minimo baseado nos volumes do template
+        min_disk = max(50, len(template.volumes) * 20)  # 20GB por volume + base
+
+        offers = self.search_offers(
+            num_gpus=num_gpus,
+            min_gpu_ram=template.gpu_min_vram,
+            max_price=max_price,
+            region=region,
+            verified_only=verified_only,
+            min_disk=min_disk,
+            limit=limit,
+        )
+
+        # Filtrar por VRAM do template (double-check)
+        compatible_offers = [
+            offer for offer in offers
+            if offer.get("gpu_ram", 0) >= template.gpu_min_vram
+        ]
+
+        return compatible_offers
+
+    def create_instance_from_template(
+        self,
+        offer_id: int,
+        template: "Template",
+        disk: int = 50,
+        tailscale_authkey: Optional[str] = None,
+        instance_id_hint: Optional[int] = None,
+        env_overrides: Optional[Dict[str, str]] = None,
+    ) -> Optional[int]:
+        """
+        Cria uma instancia usando configuracao de um template do marketplace.
+
+        Esta funcao extrai todas as configuracoes do template:
+        - Imagem Docker
+        - Portas a expor
+        - Comando de inicializacao
+        - Variaveis de ambiente
+
+        Args:
+            offer_id: ID da oferta de GPU
+            template: Template do marketplace
+            disk: Espaco em disco (GB)
+            tailscale_authkey: Chave do Tailscale (opcional)
+            instance_id_hint: Hint para hostname
+            env_overrides: Variaveis de ambiente para sobrescrever as do template
+
+        Returns:
+            ID da instancia criada ou None em caso de erro
+        """
+        # Preparar script de startup com:
+        # 1. Tailscale (opcional)
+        # 2. Variaveis de ambiente do template
+        # 3. Comando de inicializacao do template
+        hostname = f"gpu-{instance_id_hint or 'new'}"
+        onstart_parts = ["#!/bin/bash", "touch ~/.no_auto_tmux"]
+
+        # Adicionar Tailscale se configurado
+        if tailscale_authkey:
+            onstart_parts.extend([
+                "curl -fsSL https://tailscale.com/install.sh | sh",
+                f"tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &",
+            ])
+
+        # Adicionar variaveis de ambiente do template
+        merged_env = dict(template.env_vars)
+        if env_overrides:
+            merged_env.update(env_overrides)
+
+        for key, value in merged_env.items():
+            if value:  # Ignorar variaveis vazias
+                onstart_parts.append(f'export {key}="{value}"')
+
+        # Adicionar comando de inicializacao do template (em background)
+        if template.launch_command:
+            onstart_parts.append(f"nohup {template.launch_command} &")
+
+        onstart_script = "\n".join(onstart_parts)
+
+        try:
+            # Montar extra_env com portas no formato vast.ai
+            extra_env = []
+            for port in template.ports:
+                extra_env.append([f"-p {port}:{port}", "1"])
+
+            # Adicionar volumes como mounts
+            for volume in template.volumes:
+                extra_env.append([f"-v {volume}:{volume}", "1"])
+
+            payload = {
+                "client_id": "me",
+                "image": template.docker_image,
+                "disk": disk,
+                "onstart": onstart_script,
+                "extra_env": extra_env,
+            }
+
+            resp = requests.put(
+                f"{self.API_URL}/asks/{offer_id}/",
+                json=payload,
+                headers=self.headers,
+                timeout=30,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            instance_id = data.get("new_contract")
+            return instance_id
+
+        except requests.exceptions.RequestException as e:
+            return None
+        except Exception:
+            return None
+
+    def validate_gpu_for_template(
+        self,
+        offer: Dict[str, Any],
+        template: "Template",
+    ) -> Dict[str, Any]:
+        """
+        Valida se uma oferta de GPU atende aos requisitos de um template.
+
+        Args:
+            offer: Oferta de GPU do vast.ai
+            template: Template do marketplace
+
+        Returns:
+            Dicionario com resultado da validacao:
+            - is_compatible: bool - Se atende requisitos minimos
+            - is_recommended: bool - Se atende requisitos recomendados
+            - gpu_vram: float - VRAM da GPU
+            - missing_vram: float - VRAM faltando (0 se compativel)
+            - messages: List[str] - Mensagens de validacao
+        """
+        gpu_vram = offer.get("gpu_ram", 0)
+        min_vram = template.gpu_min_vram
+        rec_vram = template.gpu_recommended_vram
+
+        is_compatible = gpu_vram >= min_vram
+        is_recommended = gpu_vram >= rec_vram
+
+        messages = []
+
+        if not is_compatible:
+            missing = min_vram - gpu_vram
+            messages.append(
+                f"GPU incompativel: {gpu_vram}GB VRAM < {min_vram}GB minimo. "
+                f"Faltam {missing}GB."
+            )
+        elif not is_recommended:
+            messages.append(
+                f"GPU compativel mas abaixo do recomendado: "
+                f"{gpu_vram}GB VRAM < {rec_vram}GB recomendado."
+            )
+        else:
+            messages.append(
+                f"GPU atende requisitos recomendados: "
+                f"{gpu_vram}GB VRAM >= {rec_vram}GB."
+            )
+
+        return {
+            "is_compatible": is_compatible,
+            "is_recommended": is_recommended,
+            "gpu_vram": gpu_vram,
+            "required_vram": min_vram,
+            "recommended_vram": rec_vram,
+            "missing_vram": max(0, min_vram - gpu_vram),
+            "messages": messages,
+        }
+
+    def get_template_deployment_config(
+        self,
+        template: "Template",
+        offer: Dict[str, Any],
+        disk: int = 50,
+    ) -> Dict[str, Any]:
+        """
+        Gera a configuracao de deployment para preview antes de criar a instancia.
+
+        Args:
+            template: Template do marketplace
+            offer: Oferta de GPU selecionada
+            disk: Espaco em disco
+
+        Returns:
+            Dicionario com configuracao completa do deployment
+        """
+        return {
+            "template": {
+                "id": template.id,
+                "name": template.name,
+                "slug": template.slug,
+            },
+            "gpu": {
+                "id": offer.get("id"),
+                "name": offer.get("gpu_name"),
+                "vram": offer.get("gpu_ram"),
+                "num_gpus": offer.get("num_gpus"),
+            },
+            "container": {
+                "image": template.docker_image,
+                "ports": template.ports,
+                "volumes": template.volumes,
+                "launch_command": template.launch_command,
+                "env_vars": list(template.env_vars.keys()),
+            },
+            "resources": {
+                "disk_gb": disk,
+                "estimated_cost_per_hour": offer.get("dph_total", 0),
+            },
+            "validation": self.validate_gpu_for_template(offer, template),
+        }

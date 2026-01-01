@@ -8,6 +8,7 @@ import userSlice from './slices/userSlice'
 import instancesSlice from './slices/instancesSlice'
 import uiSlice from './slices/uiSlice'
 import economySlice from './slices/economySlice'
+import templateReducer from './slices/templateSlice'
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     instances: instancesSlice,
     ui: uiSlice,
     economy: economySlice,
+    templates: templateReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -1,0 +1,81 @@
+{
+  "critique_completed": true,
+  "issues_found": [
+    {
+      "severity": "high",
+      "category": "completeness",
+      "description": "Missing Template Seed Data Specification - Spec referenced seed data but didn't specify actual Docker images, launch commands, ports, volumes, or environment variables for the 4 templates",
+      "location": "Requirements section, line 237 (original: 'Seed data populates 4 official templates with accurate GPU specs from research phase')",
+      "fix_applied": "Added comprehensive seed data table with all 4 templates showing exact configurations from research.json: Docker images (jupyter/pytorch-notebook:latest, ghcr.io/absolutelyludicrous/automatic1111-webui:latest, yanwk/comfyui-boot:latest, vllm/vllm-openai:latest), launch commands with flags, ports (8888, 7860, 8188, 8000), volume mounts, environment variables, GPU VRAM requirements (min/recommended), and CUDA 11.8 version",
+      "verified": true
+    },
+    {
+      "severity": "high",
+      "category": "feasibility",
+      "description": "Vast.ai Integration Treated as Solved Problem - Spec assumed 'Backend calls Vast.ai API' would work, but research.json explicitly flagged this as HIGH RISK with critical unknowns about how instances are provisioned, whether programmatic API exists, what image formats are supported, and how templates are managed",
+      "location": "Template Deployment API section, lines 252-254 (acceptance criteria)",
+      "fix_applied": "Added CRITICAL CAVEAT section documenting that Vast.ai integration is UNVERIFIED per research phase. Listed specific unknowns (provisioning mechanism, API availability, image format support, template management). Added implementation requirements: 1) Investigate existing Vast.ai code, 2) Verify API endpoints/auth, 3) Test deployment with simple container first, 4) Document actual API patterns found",
+      "verified": true
+    },
+    {
+      "severity": "medium",
+      "category": "accuracy",
+      "description": "Missing Unverified Research Acknowledgment - Research.json explicitly states all findings are 'not verified live' and based on 'industry standard knowledge', but spec treated Docker images and API patterns as verified facts without acknowledgment",
+      "location": "Throughout spec (no acknowledgment of unverified claims)",
+      "fix_applied": "Added two acknowledgments: 1) In seed data table, marked Docker images as '(unverified)' with note 'Docker images and commands marked (unverified) are based on research phase findings but were NOT verified against live documentation. Implementation must validate these work correctly before deployment.' 2) In Implementation Notes DO section, added 'Verify Docker images during implementation - All Docker images from research are UNVERIFIED (based on industry knowledge, not tested). Validate images exist, test launch commands, and confirm API patterns work before finalizing seed data'",
+      "verified": true
+    },
+    {
+      "severity": "medium",
+      "category": "completeness",
+      "description": "Missing Volume Mount Specifications - Spec mentioned volumes field in template model but didn't specify actual volume paths from research",
+      "location": "Template model definition (line 98) and seed data",
+      "fix_applied": "Added volume specifications to seed data table from research.json: JupyterLab (/home/jovyan/work), Stable Diffusion WebUI (/app/models, /app/outputs), ComfyUI (/app/models, /app/output, /app/input), vLLM (/root/.cache/huggingface)",
+      "verified": true
+    },
+    {
+      "severity": "medium",
+      "category": "completeness",
+      "description": "Missing Environment Variable Specifications - Spec mentioned env vars generically but didn't specify which ones needed for each template",
+      "location": "Template model definition and seed data sections",
+      "fix_applied": "Added env_vars column to seed data table and added env_vars (JSON) field to template model schema. Specified: JupyterLab (JUPYTER_ENABLE_LAB=yes), Stable Diffusion (COMMANDLINE_ARGS=--medvram), ComfyUI (empty object), vLLM (HUGGING_FACE_HUB_TOKEN with empty value for user to configure)",
+      "verified": true
+    },
+    {
+      "severity": "medium",
+      "category": "accuracy",
+      "description": "Missing CUDA Version Standardization - Spec didn't specify which CUDA version to use, but research.json explicitly recommended 'Standardize on CUDA 11.8 for all templates' for maximum compatibility across PyTorch 2.0+, TensorFlow, and ML libraries",
+      "location": "Implementation Notes section, DO subsection",
+      "fix_applied": "Added to Implementation Notes DO section: 'Standardize on CUDA 11.8 - Per research recommendations, use CUDA 11.8 for maximum compatibility across PyTorch 2.0+, TensorFlow, and ML libraries (avoid version conflicts)'. Also added CUDA 11.8 to seed data table for all 4 templates",
+      "verified": true
+    },
+    {
+      "severity": "low",
+      "category": "consistency",
+      "description": "Inconsistent Template Naming - Spec used 'Jupyter Lab' (two words) throughout document, but research.json and official branding uses 'JupyterLab' (one word)",
+      "location": "Throughout document (overview, task scope, requirements, success criteria, QA sections)",
+      "fix_applied": "Standardized all instances to 'JupyterLab' (one word) across entire spec: Overview line 5, Task scope line 21, Requirements section line 233, Documentation section line 301, Success criteria line 387, QA sections (lines 421, 422, 453)",
+      "verified": true
+    },
+    {
+      "severity": "medium",
+      "category": "completeness",
+      "description": "Model Download Warning Not Prominent Enough - Boot time caveat about model downloads was buried in edge cases and success criteria, but research shows Stable Diffusion WebUI takes '5+ minutes first boot' and vLLM '120-180 seconds depends on model size and download'. This critical constraint should be more visible",
+      "location": "Edge cases section (line 291) and success criteria (line 365)",
+      "fix_applied": "Made boot time warning more prominent in two locations: 1) Updated Success Criteria item #5 to explicitly mention 'First-boot downloads for Stable Diffusion (4GB models) and vLLM (14-130GB models) will exceed this target; implement model pre-loading or display clear warnings to users', 2) Added IMPORTANT BOOT TIME CAVEAT section in Performance Verification with specifics: SD WebUI 5+ minutes (4GB downloads), vLLM 2-5 minutes (7B models ~14GB, 70B models ~130GB), and research recommendation to pre-build images",
+      "verified": true
+    }
+  ],
+  "issues_fixed": true,
+  "no_issues_found": false,
+  "critique_summary": "Found and fixed 8 issues across completeness (4), accuracy (2), feasibility (1), and consistency (1) categories. Most critical fixes: (1) Added comprehensive seed data table with specific Docker images, launch commands, ports, volumes, env vars, and CUDA versions for all 4 templates from research.json, (2) Added CRITICAL CAVEAT about Vast.ai integration being HIGH RISK and unverified with implementation validation requirements, (3) Added acknowledgments that research findings are unverified and must be validated during implementation, (4) Standardized CUDA 11.8 across all templates per research recommendation, (5) Made boot time constraints more prominent with specific model download size warnings, (6) Standardized 'JupyterLab' naming throughout. Spec now provides actionable implementation details with appropriate risk acknowledgment.",
+  "confidence_level": "high",
+  "recommendations": [
+    "Implementation phase should prioritize Vast.ai integration investigation FIRST before building template CRUD - this is the highest risk unknown that could invalidate the entire approach",
+    "Verify at least one Docker image and launch command works in actual deployment before implementing all 4 templates - catch configuration issues early",
+    "Consider building a simple 'hello world' container deployment test to validate the Vast.ai integration mechanism before proceeding with complex ML template deployments",
+    "Document actual boot times achieved during implementation to validate whether pre-built images with embedded models are necessary to meet <2 minute SLA",
+    "Add template version field to database schema even though versioning is out of scope - this future-proofs the data model for inevitable updates to Docker images and launch commands"
+  ],
+  "created_at": "2025-12-31T23:30:00Z"
+}

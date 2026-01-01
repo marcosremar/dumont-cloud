@@ -24,6 +24,8 @@ import Savings from './pages/Savings'
 import Documentation from './pages/Documentation'
 import ButtonShowcase from './pages/ButtonShowcase'
 import ForgotPassword from './pages/ForgotPassword'
+import TemplatePage from './pages/TemplatePage'
+import TemplateDetailPage from './pages/TemplateDetailPage'
 import { ToastProvider } from './components/Toast'
 import ErrorBoundary from './components/ErrorBoundary'
 import './styles/landing.css'
@@ -389,6 +391,20 @@ export default function App() {
                 </AppLayout>
               </ProtectedRoute>
             } />
+            <Route path="/app/templates" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <TemplatePage />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/app/templates/:slug" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <TemplateDetailPage />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
 
             {/* Documentation Routes */}
             <Route path="/docs" element={
@@ -498,6 +514,20 @@ export default function App() {
               <DemoRoute>
                 <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
                   <Savings user={user || demoUser} onLogout={handleDemoLogout} />
+                </AppLayout>
+              </DemoRoute>
+            } />
+            <Route path="/demo-app/templates" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <TemplatePage />
+                </AppLayout>
+              </DemoRoute>
+            } />
+            <Route path="/demo-app/templates/:slug" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <TemplateDetailPage />
                 </AppLayout>
               </DemoRoute>
             } />

@@ -17,8 +17,8 @@ from typing import Optional, Dict, List, Any
 from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from src.services.vast_service import VastService
-from src.services.codeserver_service import CodeServerService, CodeServerConfig
+from .vast_service import VastService
+from .codeserver_service import CodeServerService, CodeServerConfig
 
 
 # Configuracoes do Wizard
