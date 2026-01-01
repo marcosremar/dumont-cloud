@@ -20,6 +20,7 @@ import GpuOffers from './pages/GpuOffers'
 import Jobs from './pages/Jobs'
 import ChatArena from './pages/ChatArena'
 import Models from './pages/Models'
+import Savings from './pages/Savings'
 import Documentation from './pages/Documentation'
 import ButtonShowcase from './pages/ButtonShowcase'
 import ForgotPassword from './pages/ForgotPassword'
@@ -381,6 +382,13 @@ export default function App() {
                 </AppLayout>
               </ProtectedRoute>
             } />
+            <Route path="/app/savings" element={
+              <ProtectedRoute user={user}>
+                <AppLayout user={user} onLogout={handleLogout}>
+                  <Savings user={user} onLogout={handleLogout} />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
 
             {/* Documentation Routes */}
             <Route path="/docs" element={
@@ -483,6 +491,13 @@ export default function App() {
               <DemoRoute>
                 <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
                   <Models />
+                </AppLayout>
+              </DemoRoute>
+            } />
+            <Route path="/demo-app/savings" element={
+              <DemoRoute>
+                <AppLayout user={user || demoUser} onLogout={handleDemoLogout} isDemo={true}>
+                  <Savings user={user || demoUser} onLogout={handleDemoLogout} />
                 </AppLayout>
               </DemoRoute>
             } />
