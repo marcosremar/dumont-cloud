@@ -8,6 +8,11 @@ from datetime import datetime, timedelta
 from typing import List
 
 from ...schemas.spot.cost_forecast import (
+    BudgetAlertCreate,
+    BudgetAlertDeleteResponse,
+    BudgetAlertListResponse,
+    BudgetAlertResponse,
+    BudgetAlertUpdate,
     CostForecastResponse,
     DailyCostForecastItem,
     ForecastAccuracyResponse,
@@ -18,7 +23,7 @@ from ...schemas.spot.cost_forecast import (
 )
 from .....services.price_prediction_service import PricePredictionService
 from .....config.database import SessionLocal
-from .....models.metrics import MarketSnapshot
+from .....models.metrics import BudgetAlert, MarketSnapshot
 
 router = APIRouter(tags=["Cost Forecast"])
 
@@ -342,3 +347,254 @@ async def get_forecast_accuracy(
         model_version=accuracy["model_version"],
         generated_at=datetime.utcnow().isoformat(),
     )
+
+
+# ============================================================================
+# Budget Alert Management Endpoints
+# ============================================================================
+
+
+@router.post("/budget-alerts", response_model=BudgetAlertResponse, status_code=201)
+async def create_budget_alert(request: BudgetAlertCreate):
+    """
+    Criar alerta de orcamento.
+
+    Configura um novo alerta que sera disparado quando o custo
+    previsto para os proximos 7 dias exceder o limite configurado.
+
+    - **gpu_name**: Nome da GPU (opcional, null = todos os GPUs)
+    - **threshold**: Limite de orcamento em $ para 7 dias
+    - **email**: Email para receber notificacoes
+    - **machine_type**: Tipo de maquina (interruptible ou on-demand)
+    - **alert_name**: Nome amigavel do alerta (opcional)
+    - **enabled**: Alerta ativo (padrao: true)
+    """
+    db = SessionLocal()
+    try:
+        # Criar alerta no banco
+        # TODO: Substituir user_id por valor do token de autenticacao
+        alert = BudgetAlert(
+            user_id=1,  # Placeholder - deve vir do token JWT
+            gpu_name=request.gpu_name,
+            machine_type=request.machine_type,
+            threshold_amount=request.threshold,
+            email=request.email,
+            enabled=request.enabled,
+            alert_name=request.alert_name,
+        )
+
+        db.add(alert)
+        db.commit()
+        db.refresh(alert)
+
+        return BudgetAlertResponse(
+            id=alert.id,
+            user_id=alert.user_id,
+            gpu_name=alert.gpu_name,
+            machine_type=alert.machine_type,
+            threshold_amount=alert.threshold_amount,
+            email=alert.email,
+            enabled=alert.enabled,
+            alert_name=alert.alert_name,
+            last_triggered_at=alert.last_triggered_at.isoformat() if alert.last_triggered_at else None,
+            last_forecasted_cost=alert.last_forecasted_cost,
+            created_at=alert.created_at.isoformat(),
+        )
+    finally:
+        db.close()
+
+
+@router.get("/budget-alerts", response_model=BudgetAlertListResponse)
+async def list_budget_alerts(
+    user_id: int = Query(
+        default=1,
+        description="ID do usuario (placeholder para autenticacao)"
+    ),
+    gpu_name: str = Query(
+        default=None,
+        description="Filtrar por GPU especifica"
+    ),
+    enabled_only: bool = Query(
+        default=False,
+        description="Retornar apenas alertas ativos"
+    ),
+):
+    """
+    Listar alertas de orcamento do usuario.
+
+    Retorna todos os alertas configurados, com opcao de filtrar
+    por GPU ou status ativo.
+
+    - **user_id**: ID do usuario (placeholder para autenticacao)
+    - **gpu_name**: Filtrar por GPU especifica
+    - **enabled_only**: Retornar apenas alertas ativos
+    """
+    db = SessionLocal()
+    try:
+        query = db.query(BudgetAlert).filter(BudgetAlert.user_id == user_id)
+
+        if gpu_name:
+            query = query.filter(BudgetAlert.gpu_name == gpu_name)
+
+        if enabled_only:
+            query = query.filter(BudgetAlert.enabled == True)
+
+        alerts = query.order_by(BudgetAlert.created_at.desc()).all()
+
+        alert_responses = [
+            BudgetAlertResponse(
+                id=alert.id,
+                user_id=alert.user_id,
+                gpu_name=alert.gpu_name,
+                machine_type=alert.machine_type,
+                threshold_amount=alert.threshold_amount,
+                email=alert.email,
+                enabled=alert.enabled,
+                alert_name=alert.alert_name,
+                last_triggered_at=alert.last_triggered_at.isoformat() if alert.last_triggered_at else None,
+                last_forecasted_cost=alert.last_forecasted_cost,
+                created_at=alert.created_at.isoformat(),
+            )
+            for alert in alerts
+        ]
+
+        return BudgetAlertListResponse(
+            alerts=alert_responses,
+            total=len(alert_responses),
+        )
+    finally:
+        db.close()
+
+
+@router.get("/budget-alerts/{alert_id}", response_model=BudgetAlertResponse)
+async def get_budget_alert(alert_id: int):
+    """
+    Obter detalhes de um alerta de orcamento especifico.
+
+    - **alert_id**: ID do alerta
+    """
+    db = SessionLocal()
+    try:
+        alert = db.query(BudgetAlert).filter(BudgetAlert.id == alert_id).first()
+
+        if not alert:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error": "Budget alert not found",
+                    "alert_id": alert_id,
+                }
+            )
+
+        return BudgetAlertResponse(
+            id=alert.id,
+            user_id=alert.user_id,
+            gpu_name=alert.gpu_name,
+            machine_type=alert.machine_type,
+            threshold_amount=alert.threshold_amount,
+            email=alert.email,
+            enabled=alert.enabled,
+            alert_name=alert.alert_name,
+            last_triggered_at=alert.last_triggered_at.isoformat() if alert.last_triggered_at else None,
+            last_forecasted_cost=alert.last_forecasted_cost,
+            created_at=alert.created_at.isoformat(),
+        )
+    finally:
+        db.close()
+
+
+@router.put("/budget-alerts/{alert_id}", response_model=BudgetAlertResponse)
+async def update_budget_alert(alert_id: int, request: BudgetAlertUpdate):
+    """
+    Atualizar alerta de orcamento existente.
+
+    Atualiza apenas os campos fornecidos no request.
+    Campos omitidos ou null mantem o valor atual.
+
+    - **alert_id**: ID do alerta a atualizar
+    - **gpu_name**: Nome da GPU (null = todos os GPUs)
+    - **threshold**: Limite de orcamento em $
+    - **email**: Email para notificacoes
+    - **machine_type**: Tipo de maquina
+    - **alert_name**: Nome amigavel
+    - **enabled**: Alerta ativo
+    """
+    db = SessionLocal()
+    try:
+        alert = db.query(BudgetAlert).filter(BudgetAlert.id == alert_id).first()
+
+        if not alert:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error": "Budget alert not found",
+                    "alert_id": alert_id,
+                }
+            )
+
+        # Atualizar apenas campos fornecidos
+        if request.gpu_name is not None:
+            alert.gpu_name = request.gpu_name
+        if request.threshold is not None:
+            alert.threshold_amount = request.threshold
+        if request.email is not None:
+            alert.email = request.email
+        if request.machine_type is not None:
+            alert.machine_type = request.machine_type
+        if request.alert_name is not None:
+            alert.alert_name = request.alert_name
+        if request.enabled is not None:
+            alert.enabled = request.enabled
+
+        db.commit()
+        db.refresh(alert)
+
+        return BudgetAlertResponse(
+            id=alert.id,
+            user_id=alert.user_id,
+            gpu_name=alert.gpu_name,
+            machine_type=alert.machine_type,
+            threshold_amount=alert.threshold_amount,
+            email=alert.email,
+            enabled=alert.enabled,
+            alert_name=alert.alert_name,
+            last_triggered_at=alert.last_triggered_at.isoformat() if alert.last_triggered_at else None,
+            last_forecasted_cost=alert.last_forecasted_cost,
+            created_at=alert.created_at.isoformat(),
+        )
+    finally:
+        db.close()
+
+
+@router.delete("/budget-alerts/{alert_id}", response_model=BudgetAlertDeleteResponse)
+async def delete_budget_alert(alert_id: int):
+    """
+    Excluir alerta de orcamento.
+
+    Remove permanentemente um alerta de orcamento.
+
+    - **alert_id**: ID do alerta a excluir
+    """
+    db = SessionLocal()
+    try:
+        alert = db.query(BudgetAlert).filter(BudgetAlert.id == alert_id).first()
+
+        if not alert:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error": "Budget alert not found",
+                    "alert_id": alert_id,
+                }
+            )
+
+        db.delete(alert)
+        db.commit()
+
+        return BudgetAlertDeleteResponse(
+            success=True,
+            deleted_id=alert_id,
+            message=f"Budget alert {alert_id} deleted successfully",
+        )
+    finally:
+        db.close()

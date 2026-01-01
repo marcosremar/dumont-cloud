@@ -133,3 +133,103 @@ class ForecastAccuracyResponse(BaseModel):
     daily_accuracy: dict = Field(default_factory=dict, description="Acuracia por dia da semana")
     model_version: str = Field(..., description="Versao do modelo")
     generated_at: str = Field(..., description="Timestamp de geracao")
+
+
+# ============================================================================
+# Budget Alert Schemas
+# ============================================================================
+
+
+class BudgetAlertCreate(BaseModel):
+    """Request para criar alerta de orcamento."""
+    gpu_name: Optional[str] = Field(
+        None,
+        description="Nome da GPU (opcional, null = todos os GPUs)"
+    )
+    threshold: float = Field(
+        ...,
+        gt=0,
+        description="Valor limite de orcamento em $ para 7 dias"
+    )
+    email: str = Field(
+        ...,
+        min_length=5,
+        max_length=255,
+        description="Email para receber alertas"
+    )
+    machine_type: str = Field(
+        default="interruptible",
+        description="Tipo de maquina (interruptible ou on-demand)"
+    )
+    alert_name: Optional[str] = Field(
+        None,
+        max_length=100,
+        description="Nome amigavel do alerta (opcional)"
+    )
+    enabled: bool = Field(
+        default=True,
+        description="Alerta ativo"
+    )
+
+
+class BudgetAlertUpdate(BaseModel):
+    """Request para atualizar alerta de orcamento."""
+    gpu_name: Optional[str] = Field(
+        None,
+        description="Nome da GPU (null = todos os GPUs)"
+    )
+    threshold: Optional[float] = Field(
+        None,
+        gt=0,
+        description="Valor limite de orcamento em $ para 7 dias"
+    )
+    email: Optional[str] = Field(
+        None,
+        min_length=5,
+        max_length=255,
+        description="Email para receber alertas"
+    )
+    machine_type: Optional[str] = Field(
+        None,
+        description="Tipo de maquina (interruptible ou on-demand)"
+    )
+    alert_name: Optional[str] = Field(
+        None,
+        max_length=100,
+        description="Nome amigavel do alerta"
+    )
+    enabled: Optional[bool] = Field(
+        None,
+        description="Alerta ativo"
+    )
+
+
+class BudgetAlertResponse(BaseModel):
+    """Resposta com dados do alerta de orcamento."""
+    id: int = Field(..., description="ID do alerta")
+    user_id: int = Field(..., description="ID do usuario")
+    gpu_name: Optional[str] = Field(None, description="Nome da GPU (null = todos)")
+    machine_type: str = Field(default="interruptible", description="Tipo de maquina")
+    threshold_amount: float = Field(..., gt=0, description="Limite de orcamento em $")
+    email: str = Field(..., description="Email para notificacoes")
+    enabled: bool = Field(default=True, description="Alerta ativo")
+    alert_name: Optional[str] = Field(None, description="Nome amigavel")
+    last_triggered_at: Optional[str] = Field(None, description="Ultimo disparo (ISO)")
+    last_forecasted_cost: Optional[float] = Field(None, description="Ultimo custo previsto")
+    created_at: str = Field(..., description="Data de criacao (ISO)")
+
+
+class BudgetAlertListResponse(BaseModel):
+    """Resposta com lista de alertas de orcamento."""
+    alerts: List[BudgetAlertResponse] = Field(
+        default_factory=list,
+        description="Lista de alertas"
+    )
+    total: int = Field(..., ge=0, description="Total de alertas")
+
+
+class BudgetAlertDeleteResponse(BaseModel):
+    """Resposta de exclusao de alerta."""
+    success: bool = Field(..., description="Exclusao bem-sucedida")
+    deleted_id: int = Field(..., description="ID do alerta excluido")
+    message: str = Field(..., description="Mensagem de confirmacao")
