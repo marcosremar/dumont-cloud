@@ -5,9 +5,10 @@ import json
 import os
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 
 from ..schemas.request import CreateSnapshotRequest, RestoreSnapshotRequest, DeleteSnapshotRequest, SetKeepForeverRequest, UpdateRetentionPolicyRequest
 from ..schemas.response import (
@@ -29,6 +30,50 @@ from ....config.snapshot_lifecycle_config import (
     RetentionPolicyConfig,
     InstanceSnapshotConfig,
 )
+from ....services.snapshot_cleanup_agent import SnapshotCleanupAgent
+
+
+# ============================================================================
+# Request/Response Schemas for Cleanup
+# ============================================================================
+
+class TriggerCleanupRequest(BaseModel):
+    """Request to trigger manual snapshot cleanup"""
+    dry_run: bool = Field(False, description="If True, only simulate cleanup without deleting")
+
+
+class CleanupResponse(BaseModel):
+    """Response from snapshot cleanup operation"""
+    success: bool = Field(..., description="Whether cleanup completed successfully")
+    dry_run: bool = Field(..., description="Whether this was a dry run")
+    snapshots_identified: int = Field(0, description="Number of expired snapshots identified")
+    snapshots_deleted: int = Field(0, description="Number of snapshots deleted")
+    snapshots_failed: int = Field(0, description="Number of snapshots that failed to delete")
+    storage_freed_bytes: int = Field(0, description="Bytes of storage freed")
+    storage_freed_mb: float = Field(0.0, description="MB of storage freed")
+    started_at: Optional[str] = Field(None, description="Cleanup start timestamp")
+    completed_at: Optional[str] = Field(None, description="Cleanup completion timestamp")
+    message: str = Field(..., description="Summary message")
+
+
+# ============================================================================
+# Cleanup Agent Dependency
+# ============================================================================
+
+# Global cleanup agent instance
+_cleanup_agent: Optional[SnapshotCleanupAgent] = None
+
+
+def get_cleanup_agent() -> SnapshotCleanupAgent:
+    """Get or create the cleanup agent instance."""
+    global _cleanup_agent
+    if _cleanup_agent is None:
+        _cleanup_agent = SnapshotCleanupAgent(
+            interval_hours=24,
+            dry_run=False,
+            batch_size=100,
+        )
+    return _cleanup_agent
 
 
 class SnapshotMetadataStore:
@@ -477,4 +522,75 @@ async def update_retention_policy(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update retention policy: {str(e)}",
+        )
+
+
+@router.post("/cleanup", response_model=CleanupResponse)
+async def trigger_cleanup(
+    request: TriggerCleanupRequest,
+    user_email: str = Depends(get_current_user_email),
+    cleanup_agent: SnapshotCleanupAgent = Depends(get_cleanup_agent),
+):
+    """
+    Manually trigger snapshot cleanup
+
+    Triggers an immediate cleanup cycle to delete expired snapshots.
+    Use dry_run=true to preview what would be deleted without actually deleting.
+
+    The cleanup respects:
+    - keep_forever flag on individual snapshots
+    - Retention policy settings (global and per-instance)
+    - Minimum snapshots to keep per instance
+    """
+    try:
+        # Log the manual trigger
+        audit_logger = get_snapshot_audit_logger()
+        audit_logger.log_cleanup_started(
+            snapshots_to_process=0,  # Will be determined during cleanup
+            metadata={
+                'triggered_by': user_email,
+                'trigger_type': 'manual',
+                'dry_run': request.dry_run,
+            },
+        )
+
+        # Trigger manual cleanup
+        stats = cleanup_agent.trigger_manual_cleanup(dry_run=request.dry_run)
+
+        # Calculate storage freed in MB
+        storage_freed_bytes = stats.get('storage_freed_bytes', 0)
+        storage_freed_mb = storage_freed_bytes / (1024 * 1024)
+
+        # Determine success and build message
+        snapshots_deleted = stats.get('snapshots_deleted', 0)
+        snapshots_failed = stats.get('snapshots_failed', 0)
+        snapshots_identified = stats.get('snapshots_identified', 0)
+        success = snapshots_failed == 0
+
+        if request.dry_run:
+            message = f"Dry run completed: {snapshots_identified} snapshots would be deleted"
+        elif snapshots_identified == 0:
+            message = "No expired snapshots found"
+        elif success:
+            message = f"Cleanup completed: {snapshots_deleted} snapshots deleted, {storage_freed_mb:.2f} MB freed"
+        else:
+            message = f"Cleanup completed with errors: {snapshots_deleted} deleted, {snapshots_failed} failed"
+
+        return CleanupResponse(
+            success=success,
+            dry_run=request.dry_run,
+            snapshots_identified=snapshots_identified,
+            snapshots_deleted=snapshots_deleted,
+            snapshots_failed=snapshots_failed,
+            storage_freed_bytes=storage_freed_bytes,
+            storage_freed_mb=storage_freed_mb,
+            started_at=stats.get('started_at'),
+            completed_at=stats.get('completed_at'),
+            message=message,
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to trigger cleanup: {str(e)}",
         )
