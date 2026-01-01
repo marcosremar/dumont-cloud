@@ -1,0 +1,10 @@
+{
+  "discovered_files": {
+    "web/src/components/Toast.jsx": {
+      "description": "Persistent toasts (duration=0) are fully supported: ProgressBar returns null for duration <= 0, auto-dismiss timer is skipped with early return check, and exit animation uses isExiting prop which works independently of duration.",
+      "category": "feature_implementation",
+      "discovered_at": "2026-01-01T06:21:00.555909+00:00"
+    }
+  },
+  "last_updated": "2026-01-01T06:21:00.555931+00:00"
+}

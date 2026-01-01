@@ -50,6 +50,11 @@
   "subtasks": {
     "completed": 14,
     "total": 15,
+  "spec": "027-add-toast-exit-animations-and-auto-dismiss-progres",
+  "state": "building",
+  "subtasks": {
+    "completed": 9,
+    "total": 10,
     "in_progress": 1,
     "failed": 0
   },
@@ -96,6 +101,9 @@
     "current": "",
     "id": 0,
     "total": 0
+    "current": "Testing and Verification",
+    "id": null,
+    "total": 2
   },
   "workers": {
     "active": 0,
@@ -146,4 +154,8 @@
     "started_at": "2026-01-01T07:00:10.499713"
   },
   "last_update": "2026-01-01T07:38:07.271554"
+    "number": 11,
+    "started_at": "2026-01-01T07:00:06.244360"
+  },
+  "last_update": "2026-01-01T07:24:59.381817"
 }
