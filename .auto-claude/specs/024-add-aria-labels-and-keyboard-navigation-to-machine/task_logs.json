@@ -1,7 +1,7 @@
 {
   "spec_id": "024-add-aria-labels-and-keyboard-navigation-to-machine",
   "created_at": "2026-01-01T06:00:16.525059+00:00",
-  "updated_at": "2026-01-01T06:05:49.453838+00:00",
+  "updated_at": "2026-01-01T06:12:55.531284+00:00",
   "phases": {
     "planning": {
       "phase": "planning",
@@ -894,6 +894,806 @@
           "tool_input": "git add . && git commit -m \"$(cat <<'EOF'\nauto-...",
           "subtask_id": "1.2",
           "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:05:51.521621+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.2",
+          "session": 3,
+          "detail": "[auto-claude/024-add-aria-labels-and-keyboard-navigation-to-machine ce1e240] auto-claude: 1.2 - Add aria-label to copy IP button and copy SSH button\n 11 files changed, 1273 insertions(+)\n create mode 100644 .auto-claude-status\n create mode 100644 .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/implementation_plan.json\n create mode 100644 .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/attempt_history.json\n create mode 100644 .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/build_commits.json\n create mode 100644 .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/codebase_map.json\n create mode 100644 .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_002.json\n create mode 100644 .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/spec.md\n create mode 100644 .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/task_logs.json\n create mode 100644 .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/task_metadata.json\n create mode 100644 .claude_settings.json",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:05:57.096559+00:00",
+          "type": "text",
+          "content": "Now let me update the subtask status to \"completed\" in the implementation plan:",
+          "phase": "coding",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:00.469039+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__update_subtask_status]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:02.865578+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__record_discovery] web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__record_discovery",
+          "tool_input": "web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:02.950519+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__record_discovery] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__record_discovery",
+          "subtask_id": "1.2",
+          "session": 3,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:06:11.752667+00:00",
+          "type": "text",
+          "content": "✅ **Subtask 1.2 completed successfully!**\n\n## Summary\n\nAdded descriptive `aria-label` attributes to the copy buttons in the specs row of MachineCard:\n\n### Copy IP Button (line 683)\n```jsx\naria-label={copiedField === 'ip' ? 'IP copiado para a área de transferência' : `Copiar endereço IP ${machine.public_ipaddr}`}\n```\n- Before copy: \"Copiar endereço IP 192.168.1.1\" (includes actual IP)\n- After copy: \"IP copiado para a área de transferência\"\n\n### Copy SSH Button (line 726)\n```jsx\naria-label={copiedField === 'ssh' ? 'Comando SSH copiado para a área de transferência' : `Copiar comando SSH para conectar na porta ${machine.ssh_port || 22}`}\n```\n- Before copy: \"Copiar comando SSH para conectar na porta 22\" (includes port)\n- After copy: \"Comando SSH copiado para a área de transferência\"\n\n### Key Features\n- **Dynamic labels** that change based on copy state\n- **Context-aware** - includes actual IP address/port number\n- **Portuguese language** - consistent with the rest of the UI\n- **Screen reader feedback** - announces when copy succeeds\n\n**Commit:** `ce1e240`",
+          "phase": "coding",
+          "subtask_id": "1.2",
+          "session": 3
+        },
+        {
+          "timestamp": "2026-01-01T06:06:31.257913+00:00",
+          "type": "text",
+          "content": "I'll start by reading the spec and implementation plan to understand the context, then find the relevant files to modify.",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:06:32.062812+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...bels-and-keyboard-navigation-to-machine/spec.md",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...bels-and-keyboard-navigation-to-machine/spec.md",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:06:33.182129+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...-navigation-to-machine/implementation_plan.json",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...-navigation-to-machine/implementation_plan.json",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:06:33.353697+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_session_context]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:06:33.418002+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__get_session_context] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "1.3",
+          "session": 4,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:06:38.125943+00:00",
+          "type": "text",
+          "content": "Let me read the MachineCard.jsx file, specifically around the IDE buttons area:",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:06:39.242988+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:06:39.278715+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "1.3",
+          "session": 4,
+          "detail": "   750→          {/* Metrics Grid - Compact */}\n   751→          <div className=\"grid grid-cols-5 gap-0.5 mb-2 p-2 rounded-lg bg-white/5 border border-white/10\">\n   752→            <div className=\"text-center\">\n   753→              <div className=\"text-brand-400 font-mono text-xs font-bold\">{gpuUtil}%</div>\n   754→              <div className=\"text-[8px] text-gray-500 uppercase\">GPU</div>\n   755→            </div>\n   756→            <div className=\"text-center\">\n   757→              <div className=\"text-white font-mono text-xs font-bold\">{memUtil}%</div>\n   758→              <div className=\"text-[8px] text-gray-500 uppercase\">VRAM</div>\n   759→            </div>\n   760→            <div className=\"text-center\">\n   761→              <div className={`font-mono text-xs font-bold ${temp > 75 ? 'text-red-400' : temp > 65 ? 'text-gray-300' : 'text-brand-400'}`}>\n   762→                {temp}°C\n   763→              </div>\n   764→              <div className=\"text-[8px] text-gray-500 uppercase\">TEMP</div>\n   765→            </div>\n   766→            <div className=\"text-center\">\n   767→              <div className=\"text-brand-400 font-mono text-xs font-bold\" title={hasCpuStandby ? `GPU: $${costPerHour.toFixed(2)} + CPU: $${cpuCostPerHour.toFixed(3)}` : ''}>\n   768→                ${totalCostPerHour.toFixed(2)}\n   769→              </div>\n   770→              <div className=\"text-[8px] text-gray-500 uppercase\">/hora</div>\n   771→            </div>\n   772→            {uptime && (\n   773→              <div className=\"text-center\">\n   774→                <div className=\"text-white font-mono text-xs font-bold\">{uptime}</div>\n   775→                <div className=\"text-[8px] text-gray-500 uppercase\">UP</div>\n   776→              </div>\n   777→            )}\n   778→          </div>\n   779→\n   780→          {/* IDE Buttons */}\n   781→          <div className=\"flex gap-1 mb-2\">\n   782→            <DropdownMenu>\n   783→              <DropdownMenuTrigger asChild>\n   784→                <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" icon={Code}>\n   785→                  VS Code\n   786→                  <ChevronDown className=\"w-2.5 h-2.5 opacity-50 ml-0.5\" />\n   787→                </Button>\n   788→              </DropdownMenuTrigger>\n   789→              <DropdownMenuContent>\n   790→                <DropdownMenuItem onClick={openVSCodeOnline}>Online (Web)</DropdownMenuItem>\n   791→                <DropdownMenuItem onClick={() => openIDE('VS Code', 'vscode')}>Desktop (SSH)</DropdownMenuItem>\n   792→              </DropdownMenuContent>\n   793→            </DropdownMenu>\n   794→            <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" onClick={() => openIDE('Cursor', 'cursor')}>\n   795→              Cursor\n   796→            </Button>\n   797→            <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" onClick={() => openIDE('Windsurf', 'windsurf')}>\n   798→              Windsurf\n   799→            </Button>\n   800→          </div>\n   801→\n   802→          {/* Action Buttons - Row 1: Failover actions */}\n   803→          {hasCpuStandby && !isInFailover && (\n   804→            <div className=\"flex gap-1 mb-1.5\">\n   805→              <Button\n   806→                variant=\"outline\"\n   807→                size=\"xs\"\n   808→                icon={Shield}\n   809→                className=\"flex-1 text-[10px] h-7\"\n   810→                onClick={() => setShowFailoverMigration(true)}\n   811→                title=\"Migrar para outro tipo de failover\"\n   812→              >\n   813→                Failover\n   814→              </Button>\n   815→              {onSimulateFailover && (\n   816→                <Button\n   817→                  variant=\"outline\"\n   818→                  size=\"xs\"\n   819→                  icon={Zap}\n   820→                  className=\"flex-1 text-[10px] h-7\"\n   821→                  onClick={() => onSimulateFailover(machine)}\n   822→                  title=\"Simular roubo de GPU e failover automático\"\n   823→                >\n   824→                  Testar\n   825→                </Button>\n   826→              )}\n   827→            </div>\n   828→          )}\n   829→\n   830→          {/* Action Buttons - Row 2: Machine actions */}\n   831→          <div className=\"flex gap-1\">\n   832→            <Button\n   833→              variant=\"secondary\"\n   834→              size=\"xs\"\n   835→              icon={ArrowLeftRight}\n   836→              className=\"flex-1 text-[10px] h-7\"\n   837→              onClick={() => onMigrate && onMigrate(machine)}\n   838→            >\n   839→              CPU\n   840→            </Button>\n   841→\n   842→            <AlertDialog>\n   843→              <AlertDialogTrigger asChild>\n   844→                <Button variant=\"outline\" size=\"xs\" icon={Pause} className=\"flex-1 text-[10px] h-7\">\n   845→                  Pausar\n   846→                </Button>\n   847→              </AlertDialogTrigger>\n   848→              <AlertDialogContent>\n   849→                <AlertDialogHeader>\n\n<system-reminder>\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\n</system-reminder>\n",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:06:44.763283+00:00",
+          "type": "text",
+          "content": "Now let me look at the patterns used in completed subtasks (1.1 and 1.2) to maintain consistency:",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:06:45.951584+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:06:45.992701+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "1.3",
+          "session": 4,
+          "detail": "   670→        </DropdownMenu>\n   671→      </div>\n   672→\n   673→      {/* Specs Row */}\n   674→      <div className=\"flex items-center gap-1 mb-2 text-[9px] text-gray-400 flex-wrap\">\n   675→        {machine.public_ipaddr && (\n   676→          <button\n   677→            onClick={() => copyToClipboard(machine.public_ipaddr, 'ip')}\n   678→            className={`px-1.5 py-0.5 rounded border transition-all ${copiedField === 'ip'\n   679→              ? 'bg-brand-500/20 text-brand-400 border-brand-500/30'\n   680→              : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'\n   681→              }`}\n   682→            title=\"Clique para copiar IP\"\n   683→            aria-label={copiedField === 'ip' ? 'IP copiado para a área de transferência' : `Copiar endereço IP ${machine.public_ipaddr}`}\n   684→          >\n   685→            {copiedField === 'ip' ? 'Copiado!' : machine.public_ipaddr}\n   686→          </button>\n   687→        )}\n   688→\n   689→        <span\n   690→          className=\"px-1.5 py-0.5 rounded bg-gray-700/30 border border-gray-700/30\"\n   691→          title={`${gpuRam}GB VRAM - ${machine.gpu_name || 'GPU'}`}\n   692→        >\n   693→          {gpuRam}GB VRAM\n   694→        </span>\n   695→\n   696→        <span\n   697→          className=\"px-1.5 py-0.5 rounded bg-gray-700/30 border border-gray-700/30\"\n   698→          title={`${cpuCores} núcleos de CPU`}\n   699→        >\n   700→          {cpuCores} CPU\n   701→        </span>\n   702→\n   703→        <span\n   704→          className=\"px-1.5 py-0.5 rounded bg-gray-700/30 border border-gray-700/30\"\n   705→          title={`${ram}GB de memória do sistema`}\n   706→        >\n   707→          {ram}GB RAM\n   708→        </span>\n   709→\n   710→        <span\n   711→          className=\"px-1.5 py-0.5 rounded bg-gray-700/30 border border-gray-700/30\"\n   712→          title={`${disk}GB de armazenamento`}\n   713→        >\n   714→          {disk}GB Disk\n   715→        </span>\n   716→\n   717→        {/* SSH Info - clickable to copy */}\n   718→        {isRunning && machine.ssh_host && (\n   719→          <button\n   720→            onClick={() => copyToClipboard(`ssh root@${machine.ssh_host} -p ${machine.ssh_port || 22}`, 'ssh')}\n   721→            className={`px-1.5 py-0.5 rounded border transition-all ${copiedField === 'ssh'\n   722→              ? 'bg-brand-500/20 text-brand-400 border-brand-500/30'\n   723→              : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'\n   724→              }`}\n   725→            title={`SSH: root@${machine.ssh_host}:${machine.ssh_port || 22} (clique para copiar)`}\n   726→            aria-label={copiedField === 'ssh' ? 'Comando SSH copiado para a área de transferência' : `Copiar comando SSH para conectar na porta ${machine.ssh_port || 22}`}\n   727→          >\n   728→            {copiedField === 'ssh' ? 'Copiado!' : `SSH :${machine.ssh_port || 22}`}\n   729→          </button>\n   730→        )}\n   731→\n   732→        {isRunning && syncStatus && (\n   733→          <span\n   734→            className={`flex items-center gap-1 px-1.5 py-0.5 rounded border ${syncStatus === 'syncing'\n   735→              ? 'bg-brand-500/10 text-brand-400 border-brand-500/20'\n   736→              : syncStatus === 'synced'\n   737→                ? 'bg-brand-500/10 text-brand-400 border-brand-500/20'\n   738→                : 'bg-gray-700/30 text-gray-400 border-gray-700/30'\n   739→              }`}\n\n<system-reminder>\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\n</system-reminder>\n",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:06:52.255833+00:00",
+          "type": "text",
+          "content": "Let me also check the header buttons pattern from subtask 1.1:",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:06:53.336159+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:06:53.374740+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "1.3",
+          "session": 4,
+          "detail": "   400→                {failoverProgress.phase === 'complete' ? '✓' : '6'}\n   401→              </div>\n   402→              <span>Recuperação Completa</span>\n   403→              {failoverProgress.metrics?.total_time_ms && failoverProgress.phase === 'complete' && (\n   404→                <span className=\"ml-auto text-brand-400 font-medium\">{(failoverProgress.metrics.total_time_ms / 1000).toFixed(1)}s total</span>\n   405→              )}\n   406→            </div>\n   407→          </div>\n   408→\n   409→          {failoverProgress.message && (\n   410→            <div className=\"mt-3 pt-2 border-t border-gray-700/50\">\n   411→              <p className=\"text-xs text-gray-300\" data-testid=\"failover-message\">{failoverProgress.message}</p>\n   412→            </div>\n   413→          )}\n   414→\n   415→          {failoverProgress.phase === 'complete' && failoverProgress.metrics && (\n   416→            <div className=\"mt-3 pt-2 border-t border-gray-700/50 grid grid-cols-3 gap-2 text-[10px]\">\n   417→              <div className=\"text-center\">\n   418→                <div className=\"text-gray-500\">Arquivos</div>\n   419→                <div className=\"text-white font-medium\">{failoverProgress.metrics.files_synced?.toLocaleString() || '0'}</div>\n   420→              </div>\n   421→              <div className=\"text-center\">\n   422→                <div className=\"text-gray-500\">Dados</div>\n   423→                <div className=\"text-white font-medium\">{failoverProgress.metrics.data_restored_mb || '0'} MB</div>\n   424→              </div>\n   425→              <div className=\"text-center\">\n   426→                <div className=\"text-gray-500\">Status</div>\n   427→                <div className=\"text-green-400 font-medium\">Sucesso</div>\n   428→              </div>\n   429→            </div>\n   430→          )}\n   431→        </div>\n   432→      )}\n   433→\n   434→      {/* Card Header */}\n   435→      <div className=\"flex items-start justify-between mb-2\">\n   436→        <div className=\"min-w-0 flex-1\">\n   437→          <div className=\"flex items-center gap-1.5 mb-1\">\n   438→            <span className=\"text-gray-900 dark:text-white font-semibold text-sm truncate\">{gpuName}</span>\n   439→            <Badge variant={statusDisplay.variant} dot className={`text-[9px] ${statusDisplay.animate ? 'animate-pulse' : ''}`}>\n   440→              {statusDisplay.label}\n   441→            </Badge>\n   442→          </div>\n   443→          <div className=\"flex items-center gap-1 flex-wrap\">\n   444→            <Badge variant=\"primary\" className=\"text-[9px]\">\n   445→              Vast.ai\n   446→            </Badge>\n   447→\n   448→            {/* Failover Strategy Badge with Dropdown */}\n   449→            <div className=\"relative\" data-testid=\"failover-strategy-container\">\n   450→              <button\n   451→                type=\"button\"\n   452→                data-testid=\"failover-selector\"\n   453→                aria-label={`Failover strategy: ${strategyInfo.label}. Click to change strategy`}\n   454→                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 ${\n   455→                  currentStrategy === 'disabled' ? 'bg-gray-500/20 text-gray-400' :\n   456→                  currentStrategy === 'warm_pool' ? 'bg-green-500/20 text-green-400' :\n   457→                  'bg-brand-500/20 text-brand-400'\n   458→                }`}\n   459→                onClick={() => setShowStrategyMenu(!showStrategyMenu)}\n   460→              >\n   461→                <Shield className=\"w-2.5 h-2.5 mr-0.5\" />\n   462→                {strategyInfo.label}\n   463→                {currentStrategyCost > 0 && (\n   464→                  <span className=\"ml-0.5 text-[8px] opacity-70\">+${currentStrategyCost.toFixed(3)}/h</span>\n   465→                )}\n   466→              </button>\n   467→\n   468→              {showStrategyMenu && (\n   469→                <div\n   470→                  className=\"absolute top-full left-0 mt-1 z-50 w-64 p-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl\"\n   471→                  data-testid=\"failover-dropdown-menu\"\n   472→                >\n   473→                  <div className=\"flex items-center justify-between mb-2 pb-1 border-b border-gray-700\">\n   474→                    <span className=\"text-[10px] font-semibold text-gray-300\">Estratégia de Failover</span>\n   475→                    <button\n   476→                      onClick={() => setShowStrategyMenu(false)}\n   477→                      className=\"p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300\"\n   478→                      data-testid=\"failover-dropdown-close\"\n   479→                    >\n\n<system-reminder>\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\n</system-reminder>\n",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:06:59.070732+00:00",
+          "type": "text",
+          "content": "Now I understand the patterns. I'll add descriptive aria-labels to the IDE buttons. Let me make the edits:",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:09.803295+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:09.862013+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "1.3",
+          "session": 4,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   776→              </div>\n   777→            )}\n   778→          </div>\n   779→\n   780→          {/* IDE Buttons */}\n   781→          <div className=\"flex gap-1 mb-2\">\n   782→            <DropdownMenu>\n   783→              <DropdownMenuTrigger asChild>\n   784→                <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" icon={Code} aria-label=\"Open VS Code IDE. Choose between web browser or desktop application via SSH\">\n   785→                  VS Code\n   786→                  <ChevronDown className=\"w-2.5 h-2.5 opacity-50 ml-0.5\" />\n   787→                </Button>\n   788→              </DropdownMenuTrigger>\n   789→              <DropdownMenuContent>\n   790→                <DropdownMenuItem onClick={openVSCodeOnline}>Online (Web)</DropdownMenuItem>\n   791→                <DropdownMenuItem onClick={() => openIDE('VS Code', 'vscode')}>Desktop (SSH)</DropdownMenuItem>\n   792→              </DropdownMenuContent>\n   793→            </DropdownMenu>\n   794→            <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" onClick={() => openIDE('Cursor', 'cursor')} aria-label=\"Open machine in Cursor IDE via SSH remote connection\">\n   795→              Cursor\n   796→            </Button>\n   797→            <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" onClick={() => openIDE('Windsurf', 'windsurf')} aria-label=\"Open machine in Windsurf IDE via SSH remote connection\">\n   798→              Windsurf\n   799→            </Button>\n   800→          </div>\n   801→\n   802→          {/* Action Buttons - Row 1: Failover actions */}\n   803→          {hasCpuStandby && !isInFailover && (\n   804→            <div className=\"flex gap-1 mb-1.5\">",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:07:14.043154+00:00",
+          "type": "text",
+          "content": "The aria-labels have been added to all three IDE buttons. Now let me commit the changes and update the subtask status:",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:16.309686+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git add . && git diff --staged",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git add . && git diff --staged",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:18.428224+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.3",
+          "session": 4,
+          "detail": "diff --git a/.auto-claude-status b/.auto-claude-status\nindex 1adbb96..e1621f9 100644\n--- a/.auto-claude-status\n+++ b/.auto-claude-status\n@@ -3,7 +3,7 @@\n   \"spec\": \"024-add-aria-labels-and-keyboard-navigation-to-machine\",\n   \"state\": \"building\",\n   \"subtasks\": {\n-    \"completed\": 1,\n+    \"completed\": 2,\n     \"total\": 13,\n     \"in_progress\": 1,\n     \"failed\": 0\n@@ -18,8 +18,8 @@\n     \"max\": 1\n   },\n   \"session\": {\n-    \"number\": 3,\n+    \"number\": 4,\n     \"started_at\": \"2026-01-01T07:00:16.514572\"\n   },\n-  \"last_update\": \"2026-01-01T07:04:47.131530\"\n+  \"last_update\": \"2026-01-01T07:06:24.381842\"\n }\n\\ No newline at end of file\ndiff --git a/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/implementation_plan.json b/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/implementation_plan.json\nindex d658497..6e36eae 100644\n--- a/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/implementation_plan.json\n+++ b/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/implementation_plan.json\n@@ -31,11 +31,12 @@\n           \"id\": \"1.2\",\n           \"title\": \"Add aria-labels to specs row copy buttons\",\n           \"description\": \"Add aria-label to the copy IP button and copy SSH button with descriptive text explaining the action\",\n-          \"status\": \"pending\",\n+          \"status\": \"completed\",\n           \"files\": [\n             \"web/src/components/machines/MachineCard.jsx\"\n           ],\n-          \"notes\": \"Copy IP button (lines 671-681), Copy SSH button (lines 713-723)\"\n+          \"notes\": \"Added dynamic aria-labels to copy IP button (line 683) and copy SSH button (line 726). Labels include specific values (IP address/port) and change to confirm successful copy action. Committed as ce1e240.\",\n+          \"updated_at\": \"2026-01-01T06:06:02.884299+00:00\"\n         },\n         {\n           \"id\": \"1.3\",\n@@ -184,5 +185,5 @@\n     \"issues\": \"\",\n     \"tests_passed\": \"\"\n   },\n-  \"last_updated\": \"2026-01-01T06:04:21.100833+00:00\"\n+  \"last_updated\": \"2026-01-01T06:06:02.884315+00:00\"\n }\n\\ No newline at end of file\ndiff --git a/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/attempt_history.json b/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/attempt_history.json\nindex d39d999..500dede 100644\n--- a/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/attempt_history.json\n+++ b/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/attempt_history.json\n@@ -11,11 +11,23 @@\n         }\n       ],\n       \"status\": \"completed\"\n+    },\n+    \"1.2\": {\n+      \"attempts\": [\n+        {\n+          \"session\": 3,\n+          \"timestamp\": \"2026-01-01T07:06:11.986978\",\n+          \"approach\": \"Implemented: Add aria-label to the copy IP button and copy SSH button with descriptive text explaining the action\",\n+          \"success\": true,\n+          \"error\": null\n+        }\n+      ],\n+      \"status\": \"completed\"\n     }\n   },\n   \"stuck_subtasks\": [],\n   \"metadata\": {\n     \"created_at\": \"2026-01-01T07:00:16.500210\",\n-    \"last_updated\": \"2026-01-01T07:04:35.286368\"\n+    \"last_updated\": \"2026-01-01T07:06:11.986991\"\n   }\n }\n\\ No newline at end of file\ndiff --git a/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/build_commits.json b/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/build_commits.json\nindex 9bd799c..8e400b4 100644\n--- a/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/build_commits.json\n+++ b/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/build_commits.json\n@@ -4,11 +4,16 @@\n       \"hash\": \"0ec29b40135edb798e4115e2b9387ce7c8f5880e\",\n       \"subtask_id\": \"1.1\",\n       \"timestamp\": \"2026-01-01T07:04:35.290366\"\n+    },\n+    {\n+      \"hash\": \"ce1e24007c9a8b6d8ff40850b8923b37793e738a\",\n+      \"subtask_id\": \"1.2\",\n+      \"timestamp\": \"2026-01-01T07:06:11.998570\"\n     }\n   ],\n-  \"last_good_commit\": \"0ec29b40135edb798e4115e2b9387ce7c8f5880e\",\n+  \"last_good_commit\": \"ce1e24007c9a8b6d8ff40850b8923b37793e738a\",\n   \"metadata\": {\n     \"created_at\": \"2026-01-01T07:00:16.505299\",\n-    \"last_updated\": \"2026-01-01T07:04:35.290397\"\n+    \"last_updated\": \"2026-01-01T07:06:11.998587\"\n   }\n }\n\\ No newline at end of file\ndiff --git a/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/codebase_map.json b/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/codebase_map.json\nindex 1be5353..efff2f9 100644\n--- a/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/codebase_map.json\n+++ b/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/codebase_map.json\n@@ -1,9 +1,9 @@\n {\n   \"discovered_files\": {\n     \"web/src/components/machines/MachineCard.jsx\": {\n-      \"description\": \"Added aria-labels to header buttons: failover selector uses dynamic label with strategyInfo.label, backup badge uses conditional label based on hasCpuStandby, more options button has static aria-label. Badge component supports aria-label prop.\",\n+      \"description\": \"Added aria-labels to copy buttons in specs row: Copy IP button has dynamic label with actual IP address (changes on copy), Copy SSH button has dynamic label with port number (changes on copy). Both provide screen reader feedback.\",\n       \"category\": \"accessibility\",\n-      \"discovered_at\": \"2026-01-01T06:04:27.215543+00:00\"\n+      \"discovered_at\": \"2026-01-01T06:06:02.983255+00:00\"\n     },\n     \"web/src/components/tailadmin-ui/index.jsx\": {\n       \"description\": \"DropdownMenu component (lines 577-664) is custom implementation lacking ARIA attributes. Used for main options menu and VS Code IDE dropdown. Needs aria-expanded, aria-haspopup, role='menu', role='menuitem', and keyboard navigation.\",\n@@ -11,5 +11,5 @@\n       \"discovered_at\": \"2026-01-01T06:02:42.275880+00:00\"\n     }\n   },\n-  \"last_updated\": \"2026-01-01T06:04:27.215559+00:00\"\n+  \"last_updated\": \"2026-01-01T06:06:02.983271+00:00\"\n }\n\\ No newline at end of file\ndiff --git a/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_003.json b/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_003.json\nnew file mode 100644\nindex 0000000..2ba400b\n--- /dev/null\n+++ b/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_003.json\n@@ -0,0 +1,60 @@\n+{\n+  \"session_number\": 3,\n+  \"timestamp\": \"2026-01-01T06:06:20.365147+00:00\",\n+  \"subtasks_completed\": [\n+    \"1.2\"\n+  ],\n+  \"discoveries\": {\n+    \"file_insights\": [\n+      {\n+        \"file_path\": \"web/src/components/machines/MachineCard.jsx\",\n+        \"lines_modified\": null,\n+        \"components_updated\": [\n+          \"CopyIPButton\",\n+          \"CopySSHButton\"\n+        ]\n+      }\n+    ],\n+    \"patterns_discovered\": [\n+      \"Adding descriptive aria-labels to interactive elements\",\n+      \"Incrementally improving accessibility attributes\"\n+    ],\n+    \"gotchas_discovered\": [\n+      \"Some interactive buttons were missing descriptive accessibility labels\",\n+      \"Potential accessibility barriers for screen reader users\"\n+    ],\n+    \"approach_outcome\": {\n+      \"status\": \"SUCCESS\",\n+      \"subtask_id\": \"1.2\",\n+      \"changes_made\": \"Added aria-labels to copy IP and copy SSH buttons\",\n+      \"complexity\": \"LOW\"\n+    },\n+    \"recommendations\": [\n+      \"Continue adding descriptive aria-labels to all interactive elements\",\n+      \"Perform comprehensive keyboard navigation and screen reader testing\",\n+      \"Systematically audit remaining buttons and components for accessibility\",\n+      \"Consider implementing automated accessibility testing\"\n+    ],\n+    \"subtask_id\": \"1.2\",\n+    \"session_num\": 3,\n+    \"success\": true,\n+    \"changed_files\": [\n+      \".auto-claude-status\",\n+      \".auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/implementation_plan.json\",\n+      \".auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/attempt_history.json\",\n+      \".auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/build_commits.json\",\n+      \".auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/codebase_map.json\",\n+      \".auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_002.json\",\n+      \".auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/spec.md\",\n+      \".auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/task_logs.json\",\n+      \".auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/task_metadata.json\",\n+      \".claude_settings.json\",\n+      \"web/src/components/machines/MachineCard.jsx\"\n+    ]\n+  },\n+  \"what_worked\": [\n+    \"Implemented subtask: 1.2\"\n+  ],\n+  \"what_failed\": [],\n+  \"recommendations_for_next_session\": []\n+}\n\\ No newline at end of file\ndiff --git a/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/task_logs.json b/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/task_logs.json\nindex 054a19d..f98ecec 100644\n--- a/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/task_logs.json\n+++ b/.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/task_logs.json\n@@ -1,7 +1,7 @@\n {\n   \"spec_id\": \"024-add-aria-labels-and-keyboard-navigation-to-machine\",\n   \"created_at\": \"2026-01-01T06:00:16.525059+00:00\",\n-  \"updated_at\": \"2026-01-01T06:05:49.453838+00:00\",\n+  \"updated_at\": \"2026-01-01T06:07:16.309944+00:00\",\n   \"phases\": {\n     \"planning\": {\n       \"phase\": \"planning\",\n@@ -894,6 +894,243 @@\n           \"tool_input\": \"git add . && git commit -m \\\"$(cat <<'EOF'\\nauto-...\",\n           \"subtask_id\": \"1.2\",\n           \"session\": 3\n+        },\n+        {\n+          \"timestamp\": \"2026-01-01T06:05:51.521621+00:00\",\n+          \"type\": \"tool_end\",\n+          \"content\": \"[Bash] Done\",\n+          \"phase\": \"coding\",\n+          \"tool_name\": \"Bash\",\n+          \"subtask_id\": \"1.2\",\n+          \"sessi\n\n... [truncated - full output was 30030 chars]",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:07:24.748458+00:00",
+          "type": "text",
+          "content": "I see there are stale changes in the staging area from the previous session. Let me reset and just stage my changes:",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:25.491070+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git reset HEAD && git status",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git reset HEAD && git status",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:27.447219+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.3",
+          "session": 4,
+          "detail": "Unstaged changes after reset:\nM\t.auto-claude-status\nM\t.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/implementation_plan.json\nM\t.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/attempt_history.json\nM\t.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/build_commits.json\nM\t.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/codebase_map.json\nM\t.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/task_logs.json\nM\tweb/src/components/machines/MachineCard.jsx\nOn branch auto-claude/024-add-aria-labels-and-keyboard-navigation-to-machine\nChanges not staged for commit:\n  (use \"git add <file>...\" to update what will be committed)\n  (use \"git restore <file>...\" to discard changes in working directory)\n\tmodified:   .auto-claude-status\n\tmodified:   .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/implementation_plan.json\n\tmodified:   .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/attempt_history.json\n\tmodified:   .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/build_commits.json\n\tmodified:   .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/codebase_map.json\n\tmodified:   .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/task_logs.json\n\tmodified:   web/src/components/machines/MachineCard.jsx\n\nUntracked files:\n  (use \"git add <file>...\" to include in what will be committed)\n\t.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_003.json\n\nno changes added to commit (use \"git add\" and/or \"git commit -a\")",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:07:31.302470+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git diff web/src/components/machines/MachineCar...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git diff web/src/components/machines/MachineCar...",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:31.416323+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.3",
+          "session": 4,
+          "detail": "diff --git a/web/src/components/machines/MachineCard.jsx b/web/src/components/machines/MachineCard.jsx\nindex 64638e8..bca2595 100644\n--- a/web/src/components/machines/MachineCard.jsx\n+++ b/web/src/components/machines/MachineCard.jsx\n@@ -781,7 +781,7 @@ export default function MachineCard({\n           <div className=\"flex gap-1 mb-2\">\n             <DropdownMenu>\n               <DropdownMenuTrigger asChild>\n-                <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" icon={Code}>\n+                <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" icon={Code} aria-label=\"Open VS Code IDE. Choose between web browser or desktop application via SSH\">\n                   VS Code\n                   <ChevronDown className=\"w-2.5 h-2.5 opacity-50 ml-0.5\" />\n                 </Button>\n@@ -791,10 +791,10 @@ export default function MachineCard({\n                 <DropdownMenuItem onClick={() => openIDE('VS Code', 'vscode')}>Desktop (SSH)</DropdownMenuItem>\n               </DropdownMenuContent>\n             </DropdownMenu>\n-            <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" onClick={() => openIDE('Cursor', 'cursor')}>\n+            <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" onClick={() => openIDE('Cursor', 'cursor')} aria-label=\"Open machine in Cursor IDE via SSH remote connection\">\n               Cursor\n             </Button>\n-            <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" onClick={() => openIDE('Windsurf', 'windsurf')}>\n+            <Button variant=\"ghost\" size=\"xs\" className=\"flex-1 text-[10px] h-7\" onClick={() => openIDE('Windsurf', 'windsurf')} aria-label=\"Open machine in Windsurf IDE via SSH remote connection\">\n               Windsurf\n             </Button>\n           </div>",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:07:34.024257+00:00",
+          "type": "text",
+          "content": "The changes look correct. Now let me commit the changes:",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:38.890635+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git add web/src/components/machines/MachineCard...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git add web/src/components/machines/MachineCard...",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:40.563649+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.3",
+          "session": 4,
+          "detail": "[auto-claude/024-add-aria-labels-and-keyboard-navigation-to-machine 6b4a8fc] auto-claude: 1.3 - Add aria-labels to IDE buttons\n 1 file changed, 3 insertions(+), 3 deletions(-)",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:07:44.044199+00:00",
+          "type": "text",
+          "content": "Now let me update the subtask status to \"completed\":",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:45.899108+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__update_subtask_status]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:47.822041+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__record_discovery] web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__record_discovery",
+          "tool_input": "web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:48.608221+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__record_discovery] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__record_discovery",
+          "subtask_id": "1.3",
+          "session": 4,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:07:52.076827+00:00",
+          "type": "text",
+          "content": "Let me verify the commit was successful:",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:53.211720+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git log -1 --oneline && git status",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git log -1 --oneline && git status",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:07:53.492067+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.3",
+          "session": 4,
+          "detail": "6b4a8fc auto-claude: 1.3 - Add aria-labels to IDE buttons\nOn branch auto-claude/024-add-aria-labels-and-keyboard-navigation-to-machine\nChanges not staged for commit:\n  (use \"git add <file>...\" to update what will be committed)\n  (use \"git restore <file>...\" to discard changes in working directory)\n\tmodified:   .auto-claude-status\n\tmodified:   .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/implementation_plan.json\n\tmodified:   .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/attempt_history.json\n\tmodified:   .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/build_commits.json\n\tmodified:   .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/codebase_map.json\n\tmodified:   .auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/task_logs.json\n\nUntracked files:\n  (use \"git add <file>...\" to include in what will be committed)\n\t.auto-claude/specs/024-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_003.json\n\nno changes added to commit (use \"git add\" and/or \"git commit -a\")",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:08:01.671006+00:00",
+          "type": "text",
+          "content": "✅ **Subtask 1.3 completed successfully!**\n\n## Summary\n\nAdded descriptive `aria-label` attributes to all three IDE buttons in the MachineCard component:\n\n### VS Code Dropdown Trigger (line 784)\n```jsx\naria-label=\"Open VS Code IDE. Choose between web browser or desktop application via SSH\"\n```\nDescribes that this is a dropdown with two options (web and desktop).\n\n### Cursor Button (line 794)\n```jsx\naria-label=\"Open machine in Cursor IDE via SSH remote connection\"\n```\nExplains the SSH remote connection functionality.\n\n### Windsurf Button (line 797)\n```jsx\naria-label=\"Open machine in Windsurf IDE via SSH remote connection\"\n```\nExplains the SSH remote connection functionality.\n\n### Key Features\n- **Descriptive labels** that explain the action and connection method\n- **English language** - consistent with the header button patterns from subtask 1.1\n- **Screen reader friendly** - users can understand what each button does before activation\n\n**Commit:** `6b4a8fc`",
+          "phase": "coding",
+          "subtask_id": "1.3",
+          "session": 4
+        },
+        {
+          "timestamp": "2026-01-01T06:08:20.857712+00:00",
+          "type": "text",
+          "content": "I'll start by reading the spec, implementation plan, and getting session context to understand what needs to be done.",
+          "phase": "coding",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:08:21.948591+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...bels-and-keyboard-navigation-to-machine/spec.md",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...bels-and-keyboard-navigation-to-machine/spec.md",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:08:22.707799+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...-navigation-to-machine/implementation_plan.json",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...-navigation-to-machine/implementation_plan.json",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:08:22.815887+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_session_context]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:08:22.890116+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__get_session_context] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "1.4",
+          "session": 5,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:08:28.115192+00:00",
+          "type": "text",
+          "content": "Now let me read the MachineCard.jsx file to find the action buttons that need aria-labels:",
+          "phase": "coding",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:08:28.796904+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:08:29.204912+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "1.4",
+          "session": 5,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:08:37.575782+00:00",
+          "type": "text",
+          "content": "Now I can see all the action buttons that need aria-labels. Let me add them:\n\n1. **Failover button** (line 805-814)\n2. **Test (Testar) button** (line 815-826)\n3. **CPU Migration button** (line 832-840)\n4. **Pause button** (line 844)\n5. **Start button** (line 924-932)\n6. **GPU Migration button** (line 912-921)\n\nLet me add aria-labels to each of these buttons:",
+          "phase": "coding",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:08:41.589437+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:08:44.748307+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:08:47.576889+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:08:50.366785+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:08:54.030655+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:08:57.980360+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:08:59.619868+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "1.4",
+          "session": 5,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   801→\n   802→          {/* Action Buttons - Row 1: Failover actions */}\n   803→          {hasCpuStandby && !isInFailover && (\n   804→            <div className=\"flex gap-1 mb-1.5\">\n   805→              <Button\n   806→                variant=\"outline\"\n   807→                size=\"xs\"\n   808→                icon={Shield}\n   809→                className=\"flex-1 text-[10px] h-7\"\n   810→                onClick={() => setShowFailoverMigration(true)}\n   811→                title=\"Migrar para outro tipo de failover\"\n   812→                aria-label=\"Open failover migration options for this machine\"\n   813→              >\n   814→                Failover\n   815→              </Button>\n   816→              {onSimulateFailover && (\n   817→                <Button\n   818→                  variant=\"outline\"\n   819→                  size=\"xs\"",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:09:08.332243+00:00",
+          "type": "text",
+          "content": "All aria-labels have been added to the action buttons. Let me verify the changes by checking the modified file:",
+          "phase": "coding",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:09:09.648787+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git diff --no-color web/src/components/machines...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git diff --no-color web/src/components/machines...",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:09:10.126482+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.4",
+          "session": 5,
+          "detail": "diff --git a/web/src/components/machines/MachineCard.jsx b/web/src/components/machines/MachineCard.jsx\nindex bca2595..75d7eba 100644\n--- a/web/src/components/machines/MachineCard.jsx\n+++ b/web/src/components/machines/MachineCard.jsx\n@@ -809,6 +809,7 @@ export default function MachineCard({\n                 className=\"flex-1 text-[10px] h-7\"\n                 onClick={() => setShowFailoverMigration(true)}\n                 title=\"Migrar para outro tipo de failover\"\n+                aria-label=\"Open failover migration options for this machine\"\n               >\n                 Failover\n               </Button>\n@@ -820,6 +821,7 @@ export default function MachineCard({\n                   className=\"flex-1 text-[10px] h-7\"\n                   onClick={() => onSimulateFailover(machine)}\n                   title=\"Simular roubo de GPU e failover automático\"\n+                  aria-label=\"Test failover by simulating GPU interruption\"\n                 >\n                   Testar\n                 </Button>\n@@ -835,13 +837,14 @@ export default function MachineCard({\n               icon={ArrowLeftRight}\n               className=\"flex-1 text-[10px] h-7\"\n               onClick={() => onMigrate && onMigrate(machine)}\n+              aria-label=\"Migrate this machine from GPU to CPU instance\"\n             >\n               CPU\n             </Button>\n \n             <AlertDialog>\n               <AlertDialogTrigger asChild>\n-                <Button variant=\"outline\" size=\"xs\" icon={Pause} className=\"flex-1 text-[10px] h-7\">\n+                <Button variant=\"outline\" size=\"xs\" icon={Pause} className=\"flex-1 text-[10px] h-7\" aria-label=\"Pause this machine. Running processes will be interrupted\">\n                   Pausar\n                 </Button>\n               </AlertDialogTrigger>\n@@ -916,6 +919,7 @@ export default function MachineCard({\n                     icon={ArrowLeftRight}\n                     className=\"flex-1 text-[10px] h-7\"\n                     onClick={() => onMigrate && onMigrate(machine)}\n+                    aria-label=\"Migrate this machine from CPU to GPU instance\"\n                   >\n                     GPU\n                   </Button>\n@@ -927,6 +931,7 @@ export default function MachineCard({\n                   icon={Play}\n                   className={`text-[10px] h-7 ${machine.num_gpus === 0 ? 'flex-1' : 'w-full'}`}\n                   onClick={() => onStart && onStart(machine.id)}\n+                  aria-label={`Start ${gpuName} machine`}\n                 >\n                   Iniciar\n                 </Button>",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:09:15.637536+00:00",
+          "type": "text",
+          "content": "All 6 aria-labels have been added. Now let me commit the changes:",
+          "phase": "coding",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:09:21.959417+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git add web/src/components/machines/MachineCard...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git add web/src/components/machines/MachineCard...",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:10:01.885789+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "1.4",
+          "session": 5,
+          "detail": "[auto-claude/024-add-aria-labels-and-keyboard-navigation-to-machine ebd491a] auto-claude: 1.4 - Add aria-labels to action buttons\n 1 file changed, 6 insertions(+), 1 deletion(-)",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:10:09.273302+00:00",
+          "type": "text",
+          "content": "Now let me update the subtask status to completed:",
+          "phase": "coding",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:10:11.942151+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__update_subtask_status]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:10:17.704502+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__update_subtask_status] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "1.4",
+          "session": 5,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:10:26.158411+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__record_discovery] web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__record_discovery",
+          "tool_input": "web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:10:31.865900+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__record_discovery] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__record_discovery",
+          "subtask_id": "1.4",
+          "session": 5,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:10:42.401291+00:00",
+          "type": "text",
+          "content": "## ✅ Subtask 1.4 Completed\n\nI've successfully added aria-labels to all 6 action buttons in MachineCard:\n\n| Button | aria-label |\n|--------|------------|\n| **Failover** | \"Open failover migration options for this machine\" |\n| **Testar** (Test) | \"Test failover by simulating GPU interruption\" |\n| **CPU Migration** | \"Migrate this machine from GPU to CPU instance\" |\n| **Pause** | \"Pause this machine. Running processes will be interrupted\" |\n| **GPU Migration** | \"Migrate this machine from CPU to GPU instance\" |\n| **Start** | Dynamic: `Start ${gpuName} machine` (e.g., \"Start RTX 4090 machine\") |\n\n**Commit:** `ebd491a`\n\nThe subtask status has been updated to \"completed\" in the implementation plan.",
+          "phase": "coding",
+          "subtask_id": "1.4",
+          "session": 5
+        },
+        {
+          "timestamp": "2026-01-01T06:12:14.994141+00:00",
+          "type": "text",
+          "content": "I'll start by reading the spec and implementation plan to understand the task, then find the relevant files to modify.",
+          "phase": "coding",
+          "subtask_id": "1.5",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:12:17.176510+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...bels-and-keyboard-navigation-to-machine/spec.md",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...bels-and-keyboard-navigation-to-machine/spec.md",
+          "subtask_id": "1.5",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:12:17.874571+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...-navigation-to-machine/implementation_plan.json",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...-navigation-to-machine/implementation_plan.json",
+          "subtask_id": "1.5",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:12:18.438060+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_session_context]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "1.5",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:12:19.638969+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__get_session_context] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "1.5",
+          "session": 6,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:12:27.519328+00:00",
+          "type": "text",
+          "content": "Let me read the MachineCard.jsx file to find the close buttons that need aria-labels:",
+          "phase": "coding",
+          "subtask_id": "1.5",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:12:29.425359+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.5",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:12:30.385476+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "1.5",
+          "session": 6,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:12:38.301555+00:00",
+          "type": "text",
+          "content": "I found the two close buttons that need aria-labels:\n\n1. **Failover dropdown close button** (lines 475-481) - missing aria-label\n2. **Backup info popup close button** (lines 549-554) - missing aria-label\n\nLet me add the aria-labels to both close buttons:",
+          "phase": "coding",
+          "subtask_id": "1.5",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:12:41.492228+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.5",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:12:44.956540+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "1.5",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:12:47.812318+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "1.5",
+          "session": 6,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   471→                  data-testid=\"failover-dropdown-menu\"\n   472→                >\n   473→                  <div className=\"flex items-center justify-between mb-2 pb-1 border-b border-gray-700\">\n   474→                    <span className=\"text-[10px] font-semibold text-gray-300\">Estratégia de Failover</span>\n   475→                    <button\n   476→                      onClick={() => setShowStrategyMenu(false)}\n   477→                      className=\"p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300\"\n   478→                      data-testid=\"failover-dropdown-close\"\n   479→                      aria-label=\"Close failover strategy menu\"\n   480→                    >\n   481→                      <X className=\"w-3 h-3\" />\n   482→                    </button>\n   483→                  </div>\n   484→                  <div className=\"space-y-1\" data-testid=\"failover-options-list\">\n   485→                    {Object.entries(FAILOVER_STRATEGIES_BASE).map(([key, strategy]) => {\n   486→                      const cost = strategyCosts[key] || 0",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:12:54.875646+00:00",
+          "type": "text",
+          "content": "Both aria-labels have been added successfully. Now let me commit the changes and update the subtask status:",
+          "phase": "coding",
+          "subtask_id": "1.5",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:12:55.531239+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git add . && git status",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git add . && git status",
+          "subtask_id": "1.5",
+          "session": 6
         }
       ]
     },

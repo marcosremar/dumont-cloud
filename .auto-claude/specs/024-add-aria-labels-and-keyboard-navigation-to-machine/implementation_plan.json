@@ -31,31 +31,34 @@
           "id": "1.2",
           "title": "Add aria-labels to specs row copy buttons",
           "description": "Add aria-label to the copy IP button and copy SSH button with descriptive text explaining the action",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/machines/MachineCard.jsx"
           ],
-          "notes": "Copy IP button (lines 671-681), Copy SSH button (lines 713-723)"
+          "notes": "Added dynamic aria-labels to copy IP button (line 683) and copy SSH button (line 726). Labels include specific values (IP address/port) and change to confirm successful copy action. Committed as ce1e240.",
+          "updated_at": "2026-01-01T06:06:02.884299+00:00"
         },
         {
           "id": "1.3",
           "title": "Add aria-labels to IDE buttons",
           "description": "Add aria-label to VS Code dropdown trigger, Cursor button, and Windsurf button",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/machines/MachineCard.jsx"
           ],
-          "notes": "IDE buttons (lines 775-792)"
+          "notes": "Added aria-labels to IDE buttons: VS Code dropdown trigger (describes web/desktop options), Cursor button (SSH remote connection), and Windsurf button (SSH remote connection). Committed as 6b4a8fc.",
+          "updated_at": "2026-01-01T06:07:47.899975+00:00"
         },
         {
           "id": "1.4",
           "title": "Add aria-labels to action buttons",
           "description": "Add aria-label to Failover button, Test (Testar) button, CPU Migration button, Pause button, Start button, and GPU Migration button",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/machines/MachineCard.jsx"
           ],
-          "notes": "Action buttons in running state (lines 798-857) and stopped state (lines 906-926)"
+          "notes": "Added aria-labels to 6 action buttons: Failover button (opens migration modal), Testar button (simulates GPU failover), CPU Migration button (GPU to CPU), Pause button (with interruption warning), GPU Migration button (CPU to GPU), and Start button (dynamic label with machine name). Committed as ebd491a.",
+          "updated_at": "2026-01-01T06:10:13.410000+00:00"
         },
         {
           "id": "1.5",
@@ -184,5 +187,5 @@
     "issues": "",
     "tests_passed": ""
   },
-  "last_updated": "2026-01-01T06:04:21.100833+00:00"
+  "last_updated": "2026-01-01T06:10:13.410131+00:00"
 }

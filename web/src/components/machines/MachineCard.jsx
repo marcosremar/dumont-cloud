@@ -476,6 +476,7 @@ export default function MachineCard({
                       onClick={() => setShowStrategyMenu(false)}
                       className="p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300"
                       data-testid="failover-dropdown-close"
+                      aria-label="Close failover strategy menu"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -549,6 +550,7 @@ export default function MachineCard({
                   <button
                     onClick={() => setShowBackupInfo(false)}
                     className="p-1 rounded-lg hover:bg-white/10 text-gray-500 hover:text-gray-300"
+                    aria-label="Close backup info popup"
                   >
                     <X className="w-4 h-4" />
                   </button>
