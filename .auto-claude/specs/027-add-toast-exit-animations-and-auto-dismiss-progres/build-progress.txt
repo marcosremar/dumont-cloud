@@ -1,0 +1,23 @@
+# Build Progress: Toast Exit Animations & Progress Indicator
+
+## Summary
+Enhancing Toast component with smooth exit animations and visual progress bar for auto-dismiss timing.
+
+## Current Status
+Planning complete - Ready to implement
+
+## Phase Overview
+- Phase 1: Exit Animation Implementation (3 subtasks)
+- Phase 2: Progress Indicator Implementation (3 subtasks)
+- Phase 3: Polish and Edge Cases (2 subtasks)
+- Phase 4: Testing and Verification (2 subtasks)
+
+## Implementation Notes
+- Target file: web/src/components/Toast.jsx
+- Current animation: toast-in (slide down + fade in)
+- Needed: toast-out (slide up + fade out)
+- Progress bar: CSS animation for smooth performance
+- Must support hover-to-pause functionality
+
+## Progress Log
+- [2026-01-01] Created implementation plan with 4 phases and 10 subtasks

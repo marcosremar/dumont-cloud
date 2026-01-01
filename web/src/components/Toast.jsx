@@ -31,7 +31,7 @@ const variants = {
   }
 }
 
-function ToastItem({ id, message, type = 'info', onClose }) {
+function ToastItem({ id, message, type = 'info', isExiting = false, onClose }) {
   const variant = variants[type] || variants.info
   const Icon = variant.icon
 
@@ -61,11 +61,21 @@ function ToastItem({ id, message, type = 'info', onClose }) {
   )
 }
 
+const EXIT_ANIMATION_DURATION = 300
+
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
 
   const removeToast = useCallback((id) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id))
+    // First, mark the toast as exiting to trigger exit animation
+    setToasts(prev => prev.map(toast =>
+      toast.id === id ? { ...toast, isExiting: true } : toast
+    ))
+
+    // After animation completes, actually remove from DOM
+    setTimeout(() => {
+      setToasts(prev => prev.filter(toast => toast.id !== id))
+    }, EXIT_ANIMATION_DURATION)
   }, [])
 
   const addToast = useCallback((message, type = 'info', duration = 4000) => {
@@ -100,6 +110,7 @@ export function ToastProvider({ children }) {
               id={t.id}
               message={t.message}
               type={t.type}
+              isExiting={t.isExiting}
               onClose={removeToast}
             />
           </div>

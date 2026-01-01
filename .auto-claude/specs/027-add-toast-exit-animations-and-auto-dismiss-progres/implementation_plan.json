@@ -1,0 +1,175 @@
+{
+  "feature": "Add toast exit animations and auto-dismiss progress indicator",
+  "description": "Enhance Toast component with smooth exit animation (slide up + fade out) and a visual progress bar showing time remaining before auto-dismiss.",
+  "created_at": "2025-12-31T21:16:41.558Z",
+  "updated_at": "2026-01-01T07:00:00.000Z",
+  "status": "in_progress",
+  "planStatus": "approved",
+  "workflow_type": "development",
+  "services_involved": ["web"],
+  "spec_file": "spec.md",
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Exit Animation Implementation",
+      "description": "Add smooth exit animation when toasts are dismissed",
+      "subtasks": [
+        {
+          "id": "1.1",
+          "title": "Add exit animation state tracking",
+          "description": "Modify ToastProvider to track which toasts are in 'exiting' state. When removeToast is called, mark toast as exiting instead of immediately removing, then remove after animation completes.",
+          "status": "pending",
+          "file_paths": ["web/src/components/Toast.jsx"],
+          "acceptance_criteria": [
+            "Toast state includes 'isExiting' boolean",
+            "removeToast triggers exit state instead of immediate removal",
+            "Toast is removed from DOM after animation duration (300ms)"
+          ]
+        },
+        {
+          "id": "1.2",
+          "title": "Create toast-out CSS animation",
+          "description": "Add @keyframes for toast-out animation that slides up and fades out. Create animate-toast-out class.",
+          "status": "pending",
+          "file_paths": ["web/src/components/Toast.jsx"],
+          "acceptance_criteria": [
+            "toast-out keyframes defined with translateY(-100%) and opacity 0",
+            "animate-toast-out class applies the exit animation",
+            "Animation duration matches entrance animation (0.3s)"
+          ]
+        },
+        {
+          "id": "1.3",
+          "title": "Apply exit animation conditionally",
+          "description": "Update ToastItem to apply animate-toast-out class when isExiting is true.",
+          "status": "pending",
+          "file_paths": ["web/src/components/Toast.jsx"],
+          "acceptance_criteria": [
+            "ToastItem receives isExiting prop",
+            "Exit animation class applied when isExiting is true",
+            "Both manual dismiss and auto-dismiss trigger exit animation"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "Progress Indicator Implementation",
+      "description": "Add visual progress bar showing time remaining before auto-dismiss",
+      "subtasks": [
+        {
+          "id": "2.1",
+          "title": "Create ProgressBar component",
+          "description": "Build a thin progress bar that shrinks from 100% to 0% over the toast duration. Use CSS animation for smooth performance.",
+          "status": "pending",
+          "file_paths": ["web/src/components/Toast.jsx"],
+          "acceptance_criteria": [
+            "ProgressBar component renders at bottom of toast",
+            "Bar starts at 100% width and shrinks to 0%",
+            "Animation uses CSS linear timing over toast duration",
+            "Bar color matches toast variant accent color"
+          ]
+        },
+        {
+          "id": "2.2",
+          "title": "Integrate progress bar into ToastItem",
+          "description": "Add ProgressBar to ToastItem, passing duration and variant props. Position at bottom of toast.",
+          "status": "pending",
+          "file_paths": ["web/src/components/Toast.jsx"],
+          "acceptance_criteria": [
+            "Progress bar visible at bottom of toast",
+            "Progress bar uses variant-specific color",
+            "Duration prop flows from addToast through to ProgressBar"
+          ]
+        },
+        {
+          "id": "2.3",
+          "title": "Pass duration to ToastItem",
+          "description": "Update toast state to include duration, pass to ToastItem for progress bar timing.",
+          "status": "pending",
+          "file_paths": ["web/src/components/Toast.jsx"],
+          "acceptance_criteria": [
+            "Toast object includes duration property",
+            "ToastItem receives and uses duration prop",
+            "Toasts with duration=0 (persistent) show no progress bar"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "Polish and Edge Cases",
+      "description": "Handle edge cases and add UX improvements",
+      "subtasks": [
+        {
+          "id": "3.1",
+          "title": "Pause progress on hover",
+          "description": "When user hovers over a toast, pause the auto-dismiss timer and progress bar animation. Resume on mouse leave.",
+          "status": "pending",
+          "file_paths": ["web/src/components/Toast.jsx"],
+          "acceptance_criteria": [
+            "Hovering pauses the auto-dismiss countdown",
+            "Progress bar animation pauses on hover",
+            "Timer resumes from same position on mouse leave",
+            "Manual close button still works during hover"
+          ]
+        },
+        {
+          "id": "3.2",
+          "title": "Handle persistent toasts",
+          "description": "Ensure toasts with duration=0 don't show progress bar and handle exit animation correctly.",
+          "status": "pending",
+          "file_paths": ["web/src/components/Toast.jsx"],
+          "acceptance_criteria": [
+            "Persistent toasts (duration=0) show no progress bar",
+            "Exit animation still works for persistent toasts",
+            "Manual dismiss is the only way to close persistent toasts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "name": "Testing and Verification",
+      "description": "Test all functionality and verify acceptance criteria",
+      "subtasks": [
+        {
+          "id": "4.1",
+          "title": "Manual testing of all toast variants",
+          "description": "Test success, error, warning, and info toasts with exit animation and progress bar.",
+          "status": "pending",
+          "file_paths": [],
+          "acceptance_criteria": [
+            "All variants display correct progress bar color",
+            "Exit animation works for all variants",
+            "No visual glitches or layout issues"
+          ]
+        },
+        {
+          "id": "4.2",
+          "title": "Test hover pause functionality",
+          "description": "Verify hover pause works correctly for progress bar and auto-dismiss timer.",
+          "status": "pending",
+          "file_paths": [],
+          "acceptance_criteria": [
+            "Progress bar pauses visually on hover",
+            "Toast does not auto-dismiss while hovered",
+            "Countdown resumes correctly after hover ends"
+          ]
+        }
+      ]
+    }
+  ],
+  "final_acceptance": [
+    "Toast exit animation is smooth (slide up + fade out)",
+    "Progress bar shows time remaining with variant-matched color",
+    "Hover pauses auto-dismiss timer and progress bar",
+    "Persistent toasts work correctly without progress bar",
+    "All four toast variants (success, error, warning, info) work correctly"
+  ],
+  "qa_signoff": {
+    "status": "pending",
+    "issues": "",
+    "tests_passed": ""
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "sourceType": "ideation",
+  "ideationType": "ui_ux_improvements",
+  "ideaId": "uiux-003",
+  "rationale": "Toast notifications only have an entrance animation (toast-in). When dismissed, they instantly disappear which is jarring. Users also have no indication of how long the toast will remain visible, leading to anxiety about missing important messages.",
+  "category": "ui_ux",
+  "uiuxCategory": "interaction",
+  "affectedFiles": [
+    "web/src/components/Toast.jsx"
+  ],
+  "problemSolved": "Toast.jsx has animate-toast-in animation (lines 109-121) but no exit animation. ToastItem component (line 34-61) renders immediately and disappears instantly when removed from toasts array. No visual indication of auto-dismiss duration (default 4000ms)."
+}
