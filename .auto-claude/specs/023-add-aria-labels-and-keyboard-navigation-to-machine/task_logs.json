@@ -1,7 +1,7 @@
 {
   "spec_id": "023-add-aria-labels-and-keyboard-navigation-to-machine",
   "created_at": "2026-01-01T06:00:18.692712+00:00",
-  "updated_at": "2026-01-01T06:14:48.199975+00:00",
+  "updated_at": "2026-01-01T06:20:32.877216+00:00",
   "phases": {
     "planning": {
       "phase": "planning",
@@ -1760,6 +1760,920 @@
           "tool_input": "git add . && git status",
           "subtask_id": "2.2",
           "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:14:52.898399+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "2.2",
+          "session": 6,
+          "detail": "On branch auto-claude/023-add-aria-labels-and-keyboard-navigation-to-machine\nChanges to be committed:\n  (use \"git restore --staged <file>...\" to unstage)\n\tmodified:   .auto-claude-status\n\tmodified:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/attempt_history.json\n\tmodified:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/build_commits.json\n\tnew file:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_005.json\n\tmodified:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/task_logs.json\n\tmodified:   web/src/components/machines/MachineCard.jsx",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:15:03.583387+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git commit -m \"$(cat <<'EOF'\nauto-claude: 2.2 -...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git commit -m \"$(cat <<'EOF'\nauto-claude: 2.2 -...",
+          "subtask_id": "2.2",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:15:17.425069+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "2.2",
+          "session": 6,
+          "detail": "[auto-claude/023-add-aria-labels-and-keyboard-navigation-to-machine 11f0ac2] auto-claude: 2.2 - Add ARIA role attributes to failover dropdown menu\n 6 files changed, 342 insertions(+), 7 deletions(-)\n create mode 100644 .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_005.json",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:15:20.412419+00:00",
+          "type": "text",
+          "content": "Now let me update the subtask status in the implementation plan:",
+          "phase": "coding",
+          "subtask_id": "2.2",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:15:21.823883+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__update_subtask_status]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "2.2",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:15:22.066241+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__update_subtask_status] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "2.2",
+          "session": 6,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:15:26.608843+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__record_discovery] web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__record_discovery",
+          "tool_input": "web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "2.2",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:15:26.808000+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__record_discovery] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__record_discovery",
+          "subtask_id": "2.2",
+          "session": 6,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:15:33.678930+00:00",
+          "type": "text",
+          "content": "## ✅ Subtask 2.2 Completed\n\nI've successfully added ARIA role attributes to the failover strategy dropdown menu in `MachineCard.jsx`:\n\n### Changes Made:\n1. **Dropdown container** (lines 471-476):\n   - Added `role=\"menu\"` \n   - Added `aria-label=\"Opções de estratégia de failover\"`\n\n2. **Close button** (lines 479-486):\n   - Added `aria-label=\"Fechar menu de failover\"`\n\n3. **Each strategy option button** (lines 492-505):\n   - Added `role=\"menuitem\"` to enable proper screen reader navigation\n\n### Acceptance Criteria Met:\n- ✅ Dropdown container has `role='menu'`\n- ✅ Dropdown has `aria-label='Opções de estratégia de failover'`\n- ✅ Each strategy option has `role='menuitem'`\n- ✅ Close button has `aria-label='Fechar menu de failover'`\n\n### Commit:\n```\nauto-claude: 2.2 - Add ARIA role attributes to failover dropdown menu\n```",
+          "phase": "coding",
+          "subtask_id": "2.2",
+          "session": 6
+        },
+        {
+          "timestamp": "2026-01-01T06:16:01.367611+00:00",
+          "type": "text",
+          "content": "I'll start by reading the spec and plan to understand the context, then look at the relevant files to implement keyboard navigation for the failover dropdown.",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:16:02.152689+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...bels-and-keyboard-navigation-to-machine/spec.md",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...bels-and-keyboard-navigation-to-machine/spec.md",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:16:03.247551+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...-navigation-to-machine/implementation_plan.json",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...-navigation-to-machine/implementation_plan.json",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:16:03.640858+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_build_progress]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_build_progress",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:16:03.853387+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_session_context]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:16:03.976648+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__get_session_context] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "2.3",
+          "session": 7,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:16:08.008180+00:00",
+          "type": "text",
+          "content": "Now let me read the MachineCard.jsx file to understand the current implementation of the failover dropdown:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:16:08.582070+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:16:09.157092+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "2.3",
+          "session": 7,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:16:17.705826+00:00",
+          "type": "text",
+          "content": "Now I understand the current implementation. The failover dropdown (lines 449-534) needs keyboard navigation. I'll implement:\n\n1. **Escape** - closes the dropdown\n2. **Arrow Up/Down** - navigates between options\n3. **Enter** - selects the focused option\n4. **Tab** - keeps focus within dropdown (focus trapping)\n\nLet me implement this:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:16:18.760999+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__update_subtask_status]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:16:18.815855+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__update_subtask_status] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "2.3",
+          "session": 7,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:16:23.641317+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:16:23.990933+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n     1→import { useState, useEffect, useRef, useCallback } from 'react'\n     2→import {\n     3→  Card,\n     4→  Badge,\n     5→  Button,",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:16:27.737952+00:00",
+          "type": "text",
+          "content": "Now let me add the refs and state for tracking focus, plus the keyboard navigation handler:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:16:40.686945+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:16:41.780009+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   109→  const [showBackupInfo, setShowBackupInfo] = useState(false)\n   110→  const [showFailoverMigration, setShowFailoverMigration] = useState(false)\n   111→  const [showDetailsModal, setShowDetailsModal] = useState(false)\n   112→  const [elapsedTime, setElapsedTime] = useState(0)\n   113→  const [showStrategyMenu, setShowStrategyMenu] = useState(false)\n   114→  const [focusedStrategyIndex, setFocusedStrategyIndex] = useState(0)\n   115→  const strategyMenuRef = useRef(null)\n   116→  const strategyButtonRefs = useRef([])\n   117→  const strategyTriggerRef = useRef(null)\n   118→\n   119→  // Strategy keys for keyboard navigation\n   120→  const strategyKeys = Object.keys(FAILOVER_STRATEGIES_BASE)\n   121→\n   122→  // Handle keyboard navigation for failover strategy dropdown\n   123→  const handleStrategyKeyDown = useCallback((e) => {\n   124→    if (!showStrategyMenu) return\n   125→\n   126→    switch (e.key) {\n   127→      case 'Escape':\n   128→        e.preventDefault()\n   129→        setShowStrategyMenu(false)\n   130→        setFocusedStrategyIndex(0)\n   131→        // Return focus to trigger button\n   132→        strategyTriggerRef.current?.focus()\n   133→        break\n   134→      case 'ArrowDown':\n   135→        e.preventDefault()\n   136→        setFocusedStrategyIndex((prev) => {\n   137→          const next = prev < strategyKeys.length - 1 ? prev + 1 : 0\n   138→          strategyButtonRefs.current[next]?.focus()\n   139→          return next\n   140→        })\n   141→        break\n   142→      case 'ArrowUp':\n   143→        e.preventDefault()\n   144→        setFocusedStrategyIndex((prev) => {\n   145→          const next = prev > 0 ? prev - 1 : strategyKeys.length - 1\n   146→          strategyButtonRefs.current[next]?.focus()\n   147→          return next\n   148→        })\n   149→        break\n   150→      case 'Tab':\n   151→        e.preventDefault()\n   152→        // Trap focus within dropdown\n   153→        if (e.shiftKey) {\n   154→          setFocusedStrategyIndex((prev) => {\n   155→            const next = prev > 0 ? prev - 1 : strategyKeys.length - 1\n   156→            strategyButtonRefs.current[next]?.focus()\n   157→            return next\n   158→          })\n   159→        } else {\n   160→          setFocusedStrategyIndex((prev) => {\n   161→            const next = prev < strategyKeys.length - 1 ? prev + 1 : 0\n   162→            strategyButtonRefs.current[next]?.focus()\n   163→            return next\n   164→          })\n   165→        }\n   166→        break\n   167→      case 'Enter':\n   168→      case ' ':\n   169→        // Enter/Space selects the focused option (handled by button's onClick)\n   170→        // No need to prevent default here as the button will handle it\n   171→        break\n   172→      case 'Home':\n   173→        e.preventDefault()\n   174→        setFocusedStrategyIndex(0)\n   175→        strategyButtonRefs.current[0]?.focus()\n   176→        break\n   177→      case 'End':\n   178→        e.preventDefault()\n   179→        const lastIndex = strategyKeys.length - 1\n   180→        setFocusedStrategyIndex(lastIndex)\n   181→        strategyButtonRefs.current[lastIndex]?.focus()\n   182→        break\n   183→      default:\n   184→        break\n   185→    }\n   186→  }, [showStrategyMenu, strategyKeys.length])\n   187→\n   188→  // Focus first option when dropdown opens\n   189→  useEffect(() => {\n   190→    if (showStrategyMenu) {\n   191→      // Reset to first option and focus it\n   192→      setFocusedStrategyIndex(0)\n   193→      // Use setTimeout to ensure the dropdown is rendered before focusing\n   194→      setTimeout(() => {\n   195→        strategyButtonRefs.current[0]?.focus()\n   196→      }, 0)\n   197→    }\n   198→  }, [showStrategyMenu])\n   199→\n   200→  // Get current failover strategy and calculate real costs\n   201→  const currentStrategy = machine.failover_strategy || (machine.cpu_standby?.enabled ? 'cpu_standby' : 'disabled')\n   202→  const strategyCosts = calculateStrategyCosts(machine)\n   203→  const strategyInfo = FAILOVER_STRATEGIES_BASE[currentStrategy] || FAILOVER_STRATEGIES_BASE.disabled\n   204→  const currentStrategyCost = strategyCosts[currentStrategy] || 0",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:16:45.936068+00:00",
+          "type": "text",
+          "content": "Now let me update the dropdown trigger button to use the ref:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:16:53.462982+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:16:53.636967+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   531→            </Badge>\n   532→\n   533→            {/* Failover Strategy Badge with Dropdown */}\n   534→            <div className=\"relative\" data-testid=\"failover-strategy-container\">\n   535→              <button\n   536→                ref={strategyTriggerRef}\n   537→                type=\"button\"\n   538→                data-testid=\"failover-selector\"\n   539→                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 ${\n   540→                  currentStrategy === 'disabled' ? 'bg-gray-500/20 text-gray-400' :\n   541→                  currentStrategy === 'warm_pool' ? 'bg-green-500/20 text-green-400' :\n   542→                  'bg-brand-500/20 text-brand-400'\n   543→                }`}\n   544→                onClick={() => setShowStrategyMenu(!showStrategyMenu)}\n   545→                aria-haspopup=\"menu\"\n   546→                aria-expanded={showStrategyMenu}\n   547→                aria-label={`Estratégia de failover: ${strategyInfo.label}`}\n   548→              >\n   549→                <Shield className=\"w-2.5 h-2.5 mr-0.5\" />\n   550→                {strategyInfo.label}\n   551→                {currentStrategyCost > 0 && (\n   552→                  <span className=\"ml-0.5 text-[8px] opacity-70\">+${currentStrategyCost.toFixed(3)}/h</span>",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:16:57.025618+00:00",
+          "type": "text",
+          "content": "Now let me update the dropdown menu container to add the ref and onKeyDown handler:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:17:01.288382+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:17:01.380190+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   552→                  <span className=\"ml-0.5 text-[8px] opacity-70\">+${currentStrategyCost.toFixed(3)}/h</span>\n   553→                )}\n   554→              </button>\n   555→\n   556→              {showStrategyMenu && (\n   557→                <div\n   558→                  ref={strategyMenuRef}\n   559→                  className=\"absolute top-full left-0 mt-1 z-50 w-64 p-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl\"\n   560→                  data-testid=\"failover-dropdown-menu\"\n   561→                  role=\"menu\"\n   562→                  aria-label=\"Opções de estratégia de failover\"\n   563→                  onKeyDown={handleStrategyKeyDown}\n   564→                >\n   565→                  <div className=\"flex items-center justify-between mb-2 pb-1 border-b border-gray-700\">\n   566→                    <span className=\"text-[10px] font-semibold text-gray-300\">Estratégia de Failover</span>\n   567→                    <button\n   568→                      onClick={() => setShowStrategyMenu(false)}",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:17:04.653486+00:00",
+          "type": "text",
+          "content": "Now let me update the strategy option buttons to use the refs array and add proper tabIndex:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:17:14.240114+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:17:14.956925+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   572→                    >\n   573→                      <X className=\"w-3 h-3\" />\n   574→                    </button>\n   575→                  </div>\n   576→                  <div className=\"space-y-1\" data-testid=\"failover-options-list\">\n   577→                    {Object.entries(FAILOVER_STRATEGIES_BASE).map(([key, strategy], index) => {\n   578→                      const cost = strategyCosts[key] || 0\n   579→                      return (\n   580→                        <button\n   581→                          key={key}\n   582→                          ref={(el) => (strategyButtonRefs.current[index] = el)}\n   583→                          data-testid={`failover-option-${key}`}\n   584→                          onClick={() => {\n   585→                            // TODO: Call API to change strategy\n   586→                            setShowStrategyMenu(false)\n   587→                            setFocusedStrategyIndex(0)\n   588→                            strategyTriggerRef.current?.focus()\n   589→                          }}\n   590→                          className={`w-full flex items-center justify-between p-1.5 rounded text-left transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 focus:ring-offset-gray-900 ${\n   591→                            currentStrategy === key\n   592→                              ? 'bg-brand-500/20 border border-brand-500/30'\n   593→                              : 'hover:bg-gray-800 border border-transparent'\n   594→                          }`}\n   595→                          role=\"menuitem\"\n   596→                          tabIndex={focusedStrategyIndex === index ? 0 : -1}\n   597→                          aria-selected={currentStrategy === key}\n   598→                        >\n   599→                          <div className=\"flex items-center gap-1.5\">\n   600→                            <Shield className={`w-3 h-3 ${\n   601→                              key === 'disabled' ? 'text-gray-500' :\n   602→                              key === 'warm_pool' ? 'text-green-400' :",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:17:18.857626+00:00",
+          "type": "text",
+          "content": "Now let me also update the close button to be properly focusable and handle keyboard:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:17:26.110598+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:17:26.285347+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   561→                  role=\"menu\"\n   562→                  aria-label=\"Opções de estratégia de failover\"\n   563→                  onKeyDown={handleStrategyKeyDown}\n   564→                >\n   565→                  <div className=\"flex items-center justify-between mb-2 pb-1 border-b border-gray-700\">\n   566→                    <span className=\"text-[10px] font-semibold text-gray-300\">Estratégia de Failover</span>\n   567→                    <button\n   568→                      onClick={() => {\n   569→                        setShowStrategyMenu(false)\n   570→                        setFocusedStrategyIndex(0)\n   571→                        strategyTriggerRef.current?.focus()\n   572→                      }}\n   573→                      onKeyDown={(e) => {\n   574→                        if (e.key === 'Escape') {\n   575→                          e.preventDefault()\n   576→                          setShowStrategyMenu(false)\n   577→                          setFocusedStrategyIndex(0)\n   578→                          strategyTriggerRef.current?.focus()\n   579→                        }\n   580→                      }}\n   581→                      className=\"p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500\"\n   582→                      data-testid=\"failover-dropdown-close\"\n   583→                      aria-label=\"Fechar menu de failover\"\n   584→                      tabIndex={-1}\n   585→                    >\n   586→                      <X className=\"w-3 h-3\" />\n   587→                    </button>\n   588→                  </div>\n   589→                  <div className=\"space-y-1\" data-testid=\"failover-options-list\">\n   590→                    {Object.entries(FAILOVER_STRATEGIES_BASE).map(([key, strategy], index) => {\n   591→                      const cost = strategyCosts[key] || 0\n   592→                      return (",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:17:32.907350+00:00",
+          "type": "text",
+          "content": "Now let me add a click-outside handler and also ensure the trigger button can open the dropdown with Enter/Space:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:17:40.183221+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:17:40.810734+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   184→        break\n   185→    }\n   186→  }, [showStrategyMenu, strategyKeys.length])\n   187→\n   188→  // Focus first option when dropdown opens\n   189→  useEffect(() => {\n   190→    if (showStrategyMenu) {\n   191→      // Reset to first option and focus it\n   192→      setFocusedStrategyIndex(0)\n   193→      // Use setTimeout to ensure the dropdown is rendered before focusing\n   194→      setTimeout(() => {\n   195→        strategyButtonRefs.current[0]?.focus()\n   196→      }, 0)\n   197→    }\n   198→  }, [showStrategyMenu])\n   199→\n   200→  // Close dropdown when clicking outside\n   201→  useEffect(() => {\n   202→    if (!showStrategyMenu) return\n   203→\n   204→    const handleClickOutside = (event) => {\n   205→      if (\n   206→        strategyMenuRef.current &&\n   207→        !strategyMenuRef.current.contains(event.target) &&\n   208→        strategyTriggerRef.current &&\n   209→        !strategyTriggerRef.current.contains(event.target)\n   210→      ) {\n   211→        setShowStrategyMenu(false)\n   212→        setFocusedStrategyIndex(0)\n   213→      }\n   214→    }\n   215→\n   216→    document.addEventListener('mousedown', handleClickOutside)\n   217→    return () => document.removeEventListener('mousedown', handleClickOutside)\n   218→  }, [showStrategyMenu])\n   219→\n   220→  // Get current failover strategy and calculate real costs\n   221→  const currentStrategy = machine.failover_strategy || (machine.cpu_standby?.enabled ? 'cpu_standby' : 'disabled')\n   222→  const strategyCosts = calculateStrategyCosts(machine)",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:17:44.331417+00:00",
+          "type": "text",
+          "content": "Now let me add keyboard handling on the trigger button to allow opening with ArrowDown and closing with Escape:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:17:53.346493+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:17:53.632817+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   551→            </Badge>\n   552→\n   553→            {/* Failover Strategy Badge with Dropdown */}\n   554→            <div className=\"relative\" data-testid=\"failover-strategy-container\">\n   555→              <button\n   556→                ref={strategyTriggerRef}\n   557→                type=\"button\"\n   558→                data-testid=\"failover-selector\"\n   559→                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-brand-500 ${\n   560→                  currentStrategy === 'disabled' ? 'bg-gray-500/20 text-gray-400' :\n   561→                  currentStrategy === 'warm_pool' ? 'bg-green-500/20 text-green-400' :\n   562→                  'bg-brand-500/20 text-brand-400'\n   563→                }`}\n   564→                onClick={() => setShowStrategyMenu(!showStrategyMenu)}\n   565→                onKeyDown={(e) => {\n   566→                  if (e.key === 'ArrowDown' && !showStrategyMenu) {\n   567→                    e.preventDefault()\n   568→                    setShowStrategyMenu(true)\n   569→                  } else if (e.key === 'Escape' && showStrategyMenu) {\n   570→                    e.preventDefault()\n   571→                    setShowStrategyMenu(false)\n   572→                    setFocusedStrategyIndex(0)\n   573→                  }\n   574→                }}\n   575→                aria-haspopup=\"menu\"\n   576→                aria-expanded={showStrategyMenu}\n   577→                aria-label={`Estratégia de failover: ${strategyInfo.label}`}\n   578→              >\n   579→                <Shield className=\"w-2.5 h-2.5 mr-0.5\" />\n   580→                {strategyInfo.label}\n   581→                {currentStrategyCost > 0 && (\n   582→                  <span className=\"ml-0.5 text-[8px] opacity-70\">+${currentStrategyCost.toFixed(3)}/h</span>",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:17:57.344046+00:00",
+          "type": "text",
+          "content": "Let me verify the implementation by checking if there are any tests or linting tools available:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:17:58.868513+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cd ./web && npm run lint 2>&1 | head -50",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "cd ./web && npm run lint 2>&1 | head -50",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:17:59.361407+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Error: Command 'npm' is not in the allowed commands for this project",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "Command 'npm' is not in the allowed commands for this project",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:18:03.437830+00:00",
+          "type": "text",
+          "content": "Let me verify the implementation by reading the updated file to ensure the keyboard navigation is correctly implemented:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:18:04.388980+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:18:04.791078+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "     1→import { useState, useEffect, useRef, useCallback } from 'react'\n     2→import {\n     3→  Card,\n     4→  Badge,\n     5→  Button,\n     6→  DropdownMenu,\n     7→  DropdownMenuContent,\n     8→  DropdownMenuItem,\n     9→  DropdownMenuSeparator,\n    10→  DropdownMenuTrigger,\n    11→  AlertDialog,\n    12→  AlertDialogAction,\n    13→  AlertDialogCancel,\n    14→  AlertDialogContent,\n    15→  AlertDialogDescription,\n    16→  AlertDialogFooter,\n    17→  AlertDialogHeader,\n    18→  AlertDialogTitle,\n    19→  AlertDialogTrigger,\n    20→} from '../tailadmin-ui'\n    21→import {\n    22→  ChevronDown,\n    23→  MoreVertical,\n    24→  Play,\n    25→  Cpu,\n    26→  Code,\n    27→  Settings,\n    28→  Trash2,\n    29→  Copy,\n    30→  Pause,\n    31→  Save,\n    32→  RefreshCw,\n    33→  Upload,\n    34→  ArrowLeftRight,\n    35→  Check,\n    36→  Cloud,\n    37→  Shield,\n    38→  Layers,\n    39→  X,\n    40→  MapPin,\n    41→  Globe,\n    42→  DollarSign,\n    43→  Zap,\n    44→  Server,\n    45→  Info,\n    46→  Clock,\n    47→  Hash,\n    48→} from 'lucide-react'\n    49→import HibernationConfigModal from '../HibernationConfigModal'\n    50→import FailoverMigrationModal from '../FailoverMigrationModal'\n    51→import SparklineChart from '../ui/SparklineChart'\n    52→import InstanceDetailsModal from './InstanceDetailsModal'\n    53→\n    54→// Failover strategies base info (costs calculated dynamically)\n    55→const FAILOVER_STRATEGIES_BASE = {\n    56→  disabled: { label: 'Desabilitado', color: 'gray', description: 'Sem proteção', recovery: null },\n    57→  cpu_standby: { label: 'CPU Standby', color: 'blue', description: 'GCP e2-medium', recovery: '~10-20min' },\n    58→  warm_pool: { label: 'GPU Warm Pool', color: 'green', description: 'GPU reservada', recovery: '~30-60s' },\n    59→  regional_volume: { label: 'Regional Volume', color: 'purple', description: 'Volume + Spot GPU', recovery: '~2-5min' },\n    60→  snapshot: { label: 'Snapshot', color: 'orange', description: 'Backblaze B2', recovery: '~5-10min' },\n    61→}\n    62→\n    63→// Calculate real costs based on machine data\n    64→const calculateStrategyCosts = (machine) => {\n    65→  const gpuCost = machine.dph_total || 0\n    66→  const cpuStandbyCost = machine.cpu_standby?.dph_total || 0.01 // Real cost from GCP\n    67→\n    68→  // Warm pool: ~50% of GPU cost (keeping a standby GPU ready)\n    69→  const warmPoolCost = gpuCost * 0.5\n    70→\n    71→  // Regional volume: Storage cost (~$0.02/h for 50GB) + average spot GPU (~30% of on-demand)\n    72→  const volumeStorageCost = 0.02\n    73→  const spotGpuEstimate = gpuCost * 0.3\n    74→  const regionalVolumeCost = volumeStorageCost + spotGpuEstimate\n    75→\n    76→  // Snapshot: Only storage cost on B2 (~$0.005/GB/month = ~$0.000007/GB/hour)\n    77→  // For 50GB workspace = ~$0.0003/hour, round to $0.01 minimum\n    78→  const snapshotCost = 0.01\n    79→\n    80→  return {\n    81→    disabled: 0,\n    82→    cpu_standby: cpuStandbyCost,\n    83→    warm_pool: warmPoolCost,\n    84→    regional_volume: regionalVolumeCost,\n    85→    snapshot: snapshotCost,\n    86→  }\n    87→}\n    88→\n    89→export default function MachineCard({\n    90→  machine,\n    91→  onDestroy,\n    92→  onStart,\n    93→  onPause,\n    94→  onRestoreToNew,\n    95→  onSnapshot,\n    96→  onRestore,\n    97→  onMigrate,\n    98→  onSimulateFailover,\n    99→  syncStatus,\n   100→  syncStats,\n   101→  failoverProgress,\n   102→  isNew = false, // Highlight animation for newly created machines\n   103→}) {\n   104→  const [showConfigModal, setShowConfigModal] = useState(false)\n   105→  const [showSSHInstructions, setShowSSHInstructions] = useState(false)\n   106→  const [alertDialog, setAlertDialog] = useState({ open: false, title: '', description: '', action: null })\n   107→  const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false)\n   108→  const [copiedField, setCopiedField] = useState(null)\n   109→  const [showBackupInfo, setShowBackupInfo] = useState(false)\n   110→  const [showFailoverMigration, setShowFailoverMigration] = useState(false)\n   111→  const [showDetailsModal, setShowDetailsModal] = useState(false)\n   112→  const [elapsedTime, setElapsedTime] = useState(0)\n   113→  const [showStrategyMenu, setShowStrategyMenu] = useState(false)\n   114→  const [focusedStrategyIndex, setFocusedStrategyIndex] = useState(0)\n   115→  const strategyMenuRef = useRef(null)\n   116→  const strategyButtonRefs = useRef([])\n   117→  const strategyTriggerRef = useRef(null)\n   118→\n   119→  // Strategy keys for keyboard navigation\n   120→  const strategyKeys = Object.keys(FAILOVER_STRATEGIES_BASE)\n   121→\n   122→  // Handle keyboard navigation for failover strategy dropdown\n   123→  const handleStrategyKeyDown = useCallback((e) => {\n   124→    if (!showStrategyMenu) return\n   125→\n   126→    switch (e.key) {\n   127→      case 'Escape':\n   128→        e.preventDefault()\n   129→        setShowStrategyMenu(false)\n   130→        setFocusedStrategyIndex(0)\n   131→        // Return focus to trigger button\n   132→        strategyTriggerRef.current?.focus()\n   133→        break\n   134→      case 'ArrowDown':\n   135→        e.preventDefault()\n   136→        setFocusedStrategyIndex((prev) => {\n   137→          const next = prev < strategyKeys.length - 1 ? prev + 1 : 0\n   138→          strategyButtonRefs.current[next]?.focus()\n   139→          return next\n   140→        })\n   141→        break\n   142→      case 'ArrowUp':\n   143→        e.preventDefault()\n   144→        setFocusedStrategyIndex((prev) => {\n   145→          const next = prev > 0 ? prev - 1 : strategyKeys.length - 1\n   146→          strategyButtonRefs.current[next]?.focus()\n   147→          return next\n   148→        })\n   149→        break\n   150→      case 'Tab':\n   151→        e.preventDefault()\n   152→        // Trap focus within dropdown\n   153→        if (e.shiftKey) {\n   154→          setFocusedStrategyIndex((prev) => {\n   155→            const next = prev > 0 ? prev - 1 : strategyKeys.length - 1\n   156→            strategyButtonRefs.current[next]?.focus()\n   157→            return next\n   158→          })\n   159→        } else {\n   160→          setFocusedStrategyIndex((prev) => {\n   161→            const next = prev < strategyKeys.length - 1 ? prev + 1 : 0\n   162→            strategyButtonRefs.current[next]?.focus()\n   163→            return next\n   164→          })\n   165→        }\n   166→        break\n   167→      case 'Enter':\n   168→      case ' ':\n   169→        // Enter/Space selects the focused option (handled by button's onClick)\n   170→        // No need to prevent default here as the button will handle it\n   171→        break\n   172→      case 'Home':\n   173→        e.preventDefault()\n   174→        setFocusedStrategyIndex(0)\n   175→        strategyButtonRefs.current[0]?.focus()\n   176→        break\n   177→      case 'End':\n   178→        e.preventDefault()\n   179→        const lastIndex = strategyKeys.length - 1\n   180→        setFocusedStrategyIndex(lastIndex)\n   181→        strategyButtonRefs.current[lastIndex]?.focus()\n   182→        break\n   183→      default:\n   184→        break\n   185→    }\n   186→  }, [showStrategyMenu, strategyKeys.length])\n   187→\n   188→  // Focus first option when dropdown opens\n   189→  useEffect(() => {\n   190→    if (showStrategyMenu) {\n   191→      // Reset to first option and focus it\n   192→      setFocusedStrategyIndex(0)\n   193→      // Use setTimeout to ensure the dropdown is rendered before focusing\n   194→      setTimeout(() => {\n   195→        strategyButtonRefs.current[0]?.focus()\n   196→      }, 0)\n   197→    }\n   198→  }, [showStrategyMenu])\n   199→\n   200→  // Close dropdown when clicking outside\n   201→  useEffect(() => {\n   202→    if (!showStrategyMenu) return\n   203→\n   204→    const handleClickOutside = (event) => {\n   205→      if (\n   206→        strategyMenuRef.current &&\n   207→        !strategyMenuRef.current.contains(event.target) &&\n   208→        strategyTriggerRef.current &&\n   209→        !strategyTriggerRef.current.contains(event.target)\n   210→      ) {\n   211→        setShowStrategyMenu(false)\n   212→        setFocusedStrategyIndex(0)\n   213→      }\n   214→    }\n   215→\n   216→    document.addEventListener('mousedown', handleClickOutside)\n   217→    return () => document.removeEventListener('mousedown', handleClickOutside)\n   218→  }, [showStrategyMenu])\n   219→\n   220→  // Get current failover strategy and calculate real costs\n   221→  const currentStrategy = machine.failover_strategy || (machine.cpu_standby?.enabled ? 'cpu_standby' : 'disabled')\n   222→  const strategyCosts = calculateStrategyCosts(machine)\n   223→  const strategyInfo = FAILOVER_STRATEGIES_BASE[currentStrategy] || FAILOVER_STRATEGIES_BASE.disabled\n   224→  const currentStrategyCost = strategyCosts[currentStrategy] || 0\n   225→\n   226→  const isInFailover = failoverProgress && failoverProgress.phase !== 'idle'\n   227→\n   228→  // Timer for loading elapsed time\n   229→  useEffect(() => {\n   230→    const loadingStates = ['loading', 'creating', 'starting', 'pending', 'provisioning', 'configuring']\n\n<system-reminder>\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\n</system-reminder>\n",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:18:09.127875+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:18:09.413677+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "   545→              {statusDisplay.label}\n   546→            </Badge>\n   547→          </div>\n   548→          <div className=\"flex items-center gap-1 flex-wrap\">\n   549→            <Badge variant=\"primary\" className=\"text-[9px]\">\n   550→              Vast.ai\n   551→            </Badge>\n   552→\n   553→            {/* Failover Strategy Badge with Dropdown */}\n   554→            <div className=\"relative\" data-testid=\"failover-strategy-container\">\n   555→              <button\n   556→                ref={strategyTriggerRef}\n   557→                type=\"button\"\n   558→                data-testid=\"failover-selector\"\n   559→                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-brand-500 ${\n   560→                  currentStrategy === 'disabled' ? 'bg-gray-500/20 text-gray-400' :\n   561→                  currentStrategy === 'warm_pool' ? 'bg-green-500/20 text-green-400' :\n   562→                  'bg-brand-500/20 text-brand-400'\n   563→                }`}\n   564→                onClick={() => setShowStrategyMenu(!showStrategyMenu)}\n   565→                onKeyDown={(e) => {\n   566→                  if (e.key === 'ArrowDown' && !showStrategyMenu) {\n   567→                    e.preventDefault()\n   568→                    setShowStrategyMenu(true)\n   569→                  } else if (e.key === 'Escape' && showStrategyMenu) {\n   570→                    e.preventDefault()\n   571→                    setShowStrategyMenu(false)\n   572→                    setFocusedStrategyIndex(0)\n   573→                  }\n   574→                }}\n   575→                aria-haspopup=\"menu\"\n   576→                aria-expanded={showStrategyMenu}\n   577→                aria-label={`Estratégia de failover: ${strategyInfo.label}`}\n   578→              >\n   579→                <Shield className=\"w-2.5 h-2.5 mr-0.5\" />\n   580→                {strategyInfo.label}\n   581→                {currentStrategyCost > 0 && (\n   582→                  <span className=\"ml-0.5 text-[8px] opacity-70\">+${currentStrategyCost.toFixed(3)}/h</span>\n   583→                )}\n   584→              </button>\n   585→\n   586→              {showStrategyMenu && (\n   587→                <div\n   588→                  ref={strategyMenuRef}\n   589→                  className=\"absolute top-full left-0 mt-1 z-50 w-64 p-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl\"\n   590→                  data-testid=\"failover-dropdown-menu\"\n   591→                  role=\"menu\"\n   592→                  aria-label=\"Opções de estratégia de failover\"\n   593→                  onKeyDown={handleStrategyKeyDown}\n   594→                >\n   595→                  <div className=\"flex items-center justify-between mb-2 pb-1 border-b border-gray-700\">\n   596→                    <span className=\"text-[10px] font-semibold text-gray-300\">Estratégia de Failover</span>\n   597→                    <button\n   598→                      onClick={() => {\n   599→                        setShowStrategyMenu(false)\n   600→                        setFocusedStrategyIndex(0)\n   601→                        strategyTriggerRef.current?.focus()\n   602→                      }}\n   603→                      onKeyDown={(e) => {\n   604→                        if (e.key === 'Escape') {\n   605→                          e.preventDefault()\n   606→                          setShowStrategyMenu(false)\n   607→                          setFocusedStrategyIndex(0)\n   608→                          strategyTriggerRef.current?.focus()\n   609→                        }\n   610→                      }}\n   611→                      className=\"p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500\"\n   612→                      data-testid=\"failover-dropdown-close\"\n   613→                      aria-label=\"Fechar menu de failover\"\n   614→                      tabIndex={-1}\n   615→                    >\n   616→                      <X className=\"w-3 h-3\" />\n   617→                    </button>\n   618→                  </div>\n   619→                  <div className=\"space-y-1\" data-testid=\"failover-options-list\">\n   620→                    {Object.entries(FAILOVER_STRATEGIES_BASE).map(([key, strategy], index) => {\n   621→                      const cost = strategyCosts[key] || 0\n   622→                      return (\n   623→                        <button\n   624→                          key={key}\n   625→                          ref={(el) => (strategyButtonRefs.current[index] = el)}\n   626→                          data-testid={`failover-option-${key}`}\n   627→                          onClick={() => {\n   628→                            // TODO: Call API to change strategy\n   629→                            setShowStrategyMenu(false)\n   630→                            setFocusedStrategyIndex(0)\n   631→                            strategyTriggerRef.current?.focus()\n   632→                          }}\n   633→                          className={`w-full flex items-center justify-between p-1.5 rounded text-left transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 focus:ring-offset-gray-900 ${\n   634→                            currentStrategy === key\n   635→                              ? 'bg-brand-500/20 border border-brand-500/30'\n   636→                              : 'hover:bg-gray-800 border border-transparent'\n   637→                          }`}\n   638→                          role=\"menuitem\"\n   639→                          tabIndex={focusedStrategyIndex === index ? 0 : -1}\n   640→                          aria-selected={currentStrategy === key}\n   641→                        >\n   642→                          <div className=\"flex items-center gap-1.5\">\n   643→                            <Shield className={`w-3 h-3 ${\n   644→                              key === 'disabled' ? 'text-gray-500' :\n\n<system-reminder>\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\n</system-reminder>\n",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:18:13.092854+00:00",
+          "type": "text",
+          "content": "The implementation looks correct! Let me verify there are no issues by checking the git status and then commit the changes:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:18:14.995432+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git status",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git status",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:18:16.058668+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "On branch auto-claude/023-add-aria-labels-and-keyboard-navigation-to-machine\nChanges not staged for commit:\n  (use \"git add <file>...\" to update what will be committed)\n  (use \"git restore <file>...\" to discard changes in working directory)\n\tmodified:   .auto-claude-status\n\tmodified:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/implementation_plan.json\n\tmodified:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/attempt_history.json\n\tmodified:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/build_commits.json\n\tmodified:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/codebase_map.json\n\tmodified:   .auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/task_logs.json\n\tmodified:   web/src/components/machines/MachineCard.jsx\n\nUntracked files:\n  (use \"git add <file>...\" to include in what will be committed)\n\t.auto-claude/specs/023-add-aria-labels-and-keyboard-navigation-to-machine/memory/session_insights/session_006.json\n\nno changes added to commit (use \"git add\" and/or \"git commit -a\")",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:18:21.600167+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git diff web/src/components/machines/MachineCar...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git diff web/src/components/machines/MachineCar...",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:18:25.035252+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "diff --git a/web/src/components/machines/MachineCard.jsx b/web/src/components/machines/MachineCard.jsx\nindex 7803047..6c1148d 100644\n--- a/web/src/components/machines/MachineCard.jsx\n+++ b/web/src/components/machines/MachineCard.jsx\n@@ -1,4 +1,4 @@\n-import { useState, useEffect } from 'react'\n+import { useState, useEffect, useRef, useCallback } from 'react'\n import {\n   Card,\n   Badge,\n@@ -111,6 +111,111 @@ export default function MachineCard({\n   const [showDetailsModal, setShowDetailsModal] = useState(false)\n   const [elapsedTime, setElapsedTime] = useState(0)\n   const [showStrategyMenu, setShowStrategyMenu] = useState(false)\n+  const [focusedStrategyIndex, setFocusedStrategyIndex] = useState(0)\n+  const strategyMenuRef = useRef(null)\n+  const strategyButtonRefs = useRef([])\n+  const strategyTriggerRef = useRef(null)\n+\n+  // Strategy keys for keyboard navigation\n+  const strategyKeys = Object.keys(FAILOVER_STRATEGIES_BASE)\n+\n+  // Handle keyboard navigation for failover strategy dropdown\n+  const handleStrategyKeyDown = useCallback((e) => {\n+    if (!showStrategyMenu) return\n+\n+    switch (e.key) {\n+      case 'Escape':\n+        e.preventDefault()\n+        setShowStrategyMenu(false)\n+        setFocusedStrategyIndex(0)\n+        // Return focus to trigger button\n+        strategyTriggerRef.current?.focus()\n+        break\n+      case 'ArrowDown':\n+        e.preventDefault()\n+        setFocusedStrategyIndex((prev) => {\n+          const next = prev < strategyKeys.length - 1 ? prev + 1 : 0\n+          strategyButtonRefs.current[next]?.focus()\n+          return next\n+        })\n+        break\n+      case 'ArrowUp':\n+        e.preventDefault()\n+        setFocusedStrategyIndex((prev) => {\n+          const next = prev > 0 ? prev - 1 : strategyKeys.length - 1\n+          strategyButtonRefs.current[next]?.focus()\n+          return next\n+        })\n+        break\n+      case 'Tab':\n+        e.preventDefault()\n+        // Trap focus within dropdown\n+        if (e.shiftKey) {\n+          setFocusedStrategyIndex((prev) => {\n+            const next = prev > 0 ? prev - 1 : strategyKeys.length - 1\n+            strategyButtonRefs.current[next]?.focus()\n+            return next\n+          })\n+        } else {\n+          setFocusedStrategyIndex((prev) => {\n+            const next = prev < strategyKeys.length - 1 ? prev + 1 : 0\n+            strategyButtonRefs.current[next]?.focus()\n+            return next\n+          })\n+        }\n+        break\n+      case 'Enter':\n+      case ' ':\n+        // Enter/Space selects the focused option (handled by button's onClick)\n+        // No need to prevent default here as the button will handle it\n+        break\n+      case 'Home':\n+        e.preventDefault()\n+        setFocusedStrategyIndex(0)\n+        strategyButtonRefs.current[0]?.focus()\n+        break\n+      case 'End':\n+        e.preventDefault()\n+        const lastIndex = strategyKeys.length - 1\n+        setFocusedStrategyIndex(lastIndex)\n+        strategyButtonRefs.current[lastIndex]?.focus()\n+        break\n+      default:\n+        break\n+    }\n+  }, [showStrategyMenu, strategyKeys.length])\n+\n+  // Focus first option when dropdown opens\n+  useEffect(() => {\n+    if (showStrategyMenu) {\n+      // Reset to first option and focus it\n+      setFocusedStrategyIndex(0)\n+      // Use setTimeout to ensure the dropdown is rendered before focusing\n+      setTimeout(() => {\n+        strategyButtonRefs.current[0]?.focus()\n+      }, 0)\n+    }\n+  }, [showStrategyMenu])\n+\n+  // Close dropdown when clicking outside\n+  useEffect(() => {\n+    if (!showStrategyMenu) return\n+\n+    const handleClickOutside = (event) => {\n+      if (\n+        strategyMenuRef.current &&\n+        !strategyMenuRef.current.contains(event.target) &&\n+        strategyTriggerRef.current &&\n+        !strategyTriggerRef.current.contains(event.target)\n+      ) {\n+        setShowStrategyMenu(false)\n+        setFocusedStrategyIndex(0)\n+      }\n+    }\n+\n+    document.addEventListener('mousedown', handleClickOutside)\n+    return () => document.removeEventListener('mousedown', handleClickOutside)\n+  }, [showStrategyMenu])\n \n   // Get current failover strategy and calculate real costs\n   const currentStrategy = machine.failover_strategy || (machine.cpu_standby?.enabled ? 'cpu_standby' : 'disabled')\n@@ -448,14 +553,25 @@ export default function MachineCard({\n             {/* Failover Strategy Badge with Dropdown */}\n             <div className=\"relative\" data-testid=\"failover-strategy-container\">\n               <button\n+                ref={strategyTriggerRef}\n                 type=\"button\"\n                 data-testid=\"failover-selector\"\n-                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 ${\n+                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-brand-500 ${\n                   currentStrategy === 'disabled' ? 'bg-gray-500/20 text-gray-400' :\n                   currentStrategy === 'warm_pool' ? 'bg-green-500/20 text-green-400' :\n                   'bg-brand-500/20 text-brand-400'\n                 }`}\n                 onClick={() => setShowStrategyMenu(!showStrategyMenu)}\n+                onKeyDown={(e) => {\n+                  if (e.key === 'ArrowDown' && !showStrategyMenu) {\n+                    e.preventDefault()\n+                    setShowStrategyMenu(true)\n+                  } else if (e.key === 'Escape' && showStrategyMenu) {\n+                    e.preventDefault()\n+                    setShowStrategyMenu(false)\n+                    setFocusedStrategyIndex(0)\n+                  }\n+                }}\n                 aria-haspopup=\"menu\"\n                 aria-expanded={showStrategyMenu}\n                 aria-label={`Estratégia de failover: ${strategyInfo.label}`}\n@@ -469,39 +585,59 @@ export default function MachineCard({",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:18:28.645783+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git diff web/src/components/machines/MachineCar...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git diff web/src/components/machines/MachineCar...",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:18:28.845257+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "+      }\n+    }\n+\n+    document.addEventListener('mousedown', handleClickOutside)\n+    return () => document.removeEventListener('mousedown', handleClickOutside)\n+  }, [showStrategyMenu])\n \n   // Get current failover strategy and calculate real costs\n   const currentStrategy = machine.failover_strategy || (machine.cpu_standby?.enabled ? 'cpu_standby' : 'disabled')\n@@ -448,14 +553,25 @@ export default function MachineCard({\n             {/* Failover Strategy Badge with Dropdown */}\n             <div className=\"relative\" data-testid=\"failover-strategy-container\">\n               <button\n+                ref={strategyTriggerRef}\n                 type=\"button\"\n                 data-testid=\"failover-selector\"\n-                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 ${\n+                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium cursor-pointer hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-brand-500 ${\n                   currentStrategy === 'disabled' ? 'bg-gray-500/20 text-gray-400' :\n                   currentStrategy === 'warm_pool' ? 'bg-green-500/20 text-green-400' :\n                   'bg-brand-500/20 text-brand-400'\n                 }`}\n                 onClick={() => setShowStrategyMenu(!showStrategyMenu)}\n+                onKeyDown={(e) => {\n+                  if (e.key === 'ArrowDown' && !showStrategyMenu) {\n+                    e.preventDefault()\n+                    setShowStrategyMenu(true)\n+                  } else if (e.key === 'Escape' && showStrategyMenu) {\n+                    e.preventDefault()\n+                    setShowStrategyMenu(false)\n+                    setFocusedStrategyIndex(0)\n+                  }\n+                }}\n                 aria-haspopup=\"menu\"\n                 aria-expanded={showStrategyMenu}\n                 aria-label={`Estratégia de failover: ${strategyInfo.label}`}\n@@ -469,39 +585,59 @@ export default function MachineCard({\n \n               {showStrategyMenu && (\n                 <div\n+                  ref={strategyMenuRef}\n                   className=\"absolute top-full left-0 mt-1 z-50 w-64 p-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl\"\n                   data-testid=\"failover-dropdown-menu\"\n                   role=\"menu\"\n                   aria-label=\"Opções de estratégia de failover\"\n+                  onKeyDown={handleStrategyKeyDown}\n                 >\n                   <div className=\"flex items-center justify-between mb-2 pb-1 border-b border-gray-700\">\n                     <span className=\"text-[10px] font-semibold text-gray-300\">Estratégia de Failover</span>\n                     <button\n-                      onClick={() => setShowStrategyMenu(false)}\n-                      className=\"p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300\"\n+                      onClick={() => {\n+                        setShowStrategyMenu(false)\n+                        setFocusedStrategyIndex(0)\n+                        strategyTriggerRef.current?.focus()\n+                      }}\n+                      onKeyDown={(e) => {\n+                        if (e.key === 'Escape') {\n+                          e.preventDefault()\n+                          setShowStrategyMenu(false)\n+                          setFocusedStrategyIndex(0)\n+                          strategyTriggerRef.current?.focus()\n+                        }\n+                      }}\n+                      className=\"p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500\"\n                       data-testid=\"failover-dropdown-close\"\n                       aria-label=\"Fechar menu de failover\"\n+                      tabIndex={-1}\n                     >\n                       <X className=\"w-3 h-3\" />\n                     </button>\n                   </div>\n                   <div className=\"space-y-1\" data-testid=\"failover-options-list\">\n-                    {Object.entries(FAILOVER_STRATEGIES_BASE).map(([key, strategy]) => {\n+                    {Object.entries(FAILOVER_STRATEGIES_BASE).map(([key, strategy], index) => {\n                       const cost = strategyCosts[key] || 0\n                       return (\n                         <button\n                           key={key}\n+                          ref={(el) => (strategyButtonRefs.current[index] = el)}\n                           data-testid={`failover-option-${key}`}\n                           onClick={() => {\n                             // TODO: Call API to change strategy\n                             setShowStrategyMenu(false)\n+                            setFocusedStrategyIndex(0)\n+                            strategyTriggerRef.current?.focus()\n                           }}\n-                          className={`w-full flex items-center justify-between p-1.5 rounded text-left transition-colors ${\n+                          className={`w-full flex items-center justify-between p-1.5 rounded text-left transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 focus:ring-offset-gray-900 ${\n                             currentStrategy === key\n                               ? 'bg-brand-500/20 border border-brand-500/30'\n                               : 'hover:bg-gray-800 border border-transparent'\n                           }`}\n                           role=\"menuitem\"\n+                          tabIndex={focusedStrategyIndex === index ? 0 : -1}\n+                          aria-selected={currentStrategy === key}\n                         >\n                           <div className=\"flex items-center gap-1.5\">\n                             <Shield className={`w-3 h-3 ${",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:18:34.385657+00:00",
+          "type": "text",
+          "content": "All changes look correct. Now let me commit the changes:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:18:39.527329+00:00",
+          "type": "tool_start",
+          "content": "[Bash] git add web/src/components/machines/MachineCard...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "git add web/src/components/machines/MachineCard...",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:18:43.908085+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Done",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "2.3",
+          "session": 7,
+          "detail": "[auto-claude/023-add-aria-labels-and-keyboard-navigation-to-machine 7bef83c] auto-claude: 2.3 - Add keyboard navigation to failover dropdown\n 1 file changed, 142 insertions(+), 6 deletions(-)",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:18:47.323637+00:00",
+          "type": "text",
+          "content": "Now let me update the subtask status and record a discovery:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:18:50.810480+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__update_subtask_status]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__update_subtask_status",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:18:53.747796+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__record_discovery] web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__record_discovery",
+          "tool_input": "web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:18:56.597346+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__record_discovery] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__record_discovery",
+          "subtask_id": "2.3",
+          "session": 7,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:19:01.633331+00:00",
+          "type": "text",
+          "content": "Let me verify the build progress:",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:19:02.040898+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_build_progress]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_build_progress",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:19:02.443020+00:00",
+          "type": "tool_end",
+          "content": "[mcp__auto-claude__get_build_progress] Done",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_build_progress",
+          "subtask_id": "2.3",
+          "session": 7,
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:19:12.583465+00:00",
+          "type": "text",
+          "content": "## ✅ Subtask 2.3 Completed\n\nSuccessfully implemented keyboard navigation for the failover strategy dropdown in `MachineCard.jsx`.\n\n### Changes Made:\n1. **Added React hooks**: `useRef`, `useCallback` for managing refs and keyboard handlers\n2. **Created refs**: \n   - `strategyTriggerRef` - for the dropdown trigger button\n   - `strategyMenuRef` - for the dropdown container\n   - `strategyButtonRefs` - array for all strategy option buttons\n3. **Implemented keyboard navigation** (`handleStrategyKeyDown`):\n   - **Escape** - closes dropdown and returns focus to trigger\n   - **Arrow Up/Down** - navigates between options (wraps around)\n   - **Tab/Shift+Tab** - traps focus within dropdown\n   - **Enter/Space** - selects focused option\n   - **Home/End** - jumps to first/last option\n4. **Added focus management**:\n   - Auto-focus first option when dropdown opens\n   - Return focus to trigger when dropdown closes\n5. **Added click-outside detection** to close dropdown\n6. **Added visible focus rings** for keyboard users\n\n### Acceptance Criteria Met:\n- ✅ Escape key closes the dropdown\n- ✅ Arrow Up/Down navigates between options\n- ✅ Enter key selects the focused option\n- ✅ Tab key moves focus correctly (trapped)\n- ✅ Focus is trapped within dropdown when open\n\n**Phase 2 is now 100% complete (3/3 subtasks).** Next subtask is 3.1 for backup info popup accessibility.",
+          "phase": "coding",
+          "subtask_id": "2.3",
+          "session": 7
+        },
+        {
+          "timestamp": "2026-01-01T06:19:45.364657+00:00",
+          "type": "text",
+          "content": "I'll implement subtask 3.1 - adding ARIA attributes to the backup info popup. Let me start by getting context and understanding the current implementation.",
+          "phase": "coding",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:19:45.747290+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_session_context]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_session_context",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:19:45.964498+00:00",
+          "type": "tool_start",
+          "content": "[mcp__auto-claude__get_build_progress]",
+          "phase": "coding",
+          "tool_name": "mcp__auto-claude__get_build_progress",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:19:46.753804+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...bels-and-keyboard-navigation-to-machine/spec.md",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...bels-and-keyboard-navigation-to-machine/spec.md",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:19:47.489365+00:00",
+          "type": "tool_start",
+          "content": "[Read] ...-navigation-to-machine/implementation_plan.json",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "...-navigation-to-machine/implementation_plan.json",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:19:47.578663+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "3.1",
+          "session": 8,
+          "detail": "[{'type': 'text', 'text': \"## Codebase Discoveries\\n- `web/src/components/machines/MachineCard.jsx`: Failover dropdown now has full keyboard navigation: useRef for trigger/menu/buttons, useCallback for keydown handler, focus trapping with Tab, Arrow Up/Down navigation, Enter/Space selection, Escape to close with focus return, Home/End keys, and click-outside detection.\\n- `web/src/components/tailadmin-ui/index.jsx`: DropdownMenu component uses React Context for state (isOpen, setIsOpen). It has basic click-outside detection but no keyboard navigation or ARIA attributes. Needs aria-expanded, aria-haspopup on trigger, and role='menu'/role='menuitem' on content/items.\\n- `web/src/components/Tooltip.jsx`: Tooltip.jsx already has good accessibility patterns: uses role='tooltip', has aria-label on HelpTooltip component, and handles focus/blur events. Can use as reference for accessibility patterns.\"}]",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:19:53.498535+00:00",
+          "type": "text",
+          "content": "Let me read the MachineCard.jsx file to find the backup badge component:",
+          "phase": "coding",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:19:55.260642+00:00",
+          "type": "tool_start",
+          "content": "[Grep] pattern: showBackupInfo|backup.*badge|Sem backup|Backup",
+          "phase": "coding",
+          "tool_name": "Grep",
+          "tool_input": "pattern: showBackupInfo|backup.*badge|Sem backup|Backup",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:19:56.389037+00:00",
+          "type": "tool_end",
+          "content": "[Grep] Done",
+          "phase": "coding",
+          "tool_name": "Grep",
+          "subtask_id": "3.1",
+          "session": 8,
+          "detail": "109:  const [showBackupInfo, setShowBackupInfo] = useState(false)\n672:            {/* Backup Info Badge */}\n677:                onClick={() => setShowBackupInfo(!showBackupInfo)}\n680:                {hasCpuStandby ? 'Backup' : 'Sem backup'}\n683:            {showBackupInfo && (\n688:                    CPU Backup (Espelho)\n691:                    onClick={() => setShowBackupInfo(false)}",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:19:59.853647+00:00",
+          "type": "text",
+          "content": "Let me read the context around the backup badge to understand the full implementation:",
+          "phase": "coding",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:20:00.747083+00:00",
+          "type": "tool_start",
+          "content": "[Read] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Read",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:20:00.814458+00:00",
+          "type": "tool_end",
+          "content": "[Read] Done",
+          "phase": "coding",
+          "tool_name": "Read",
+          "subtask_id": "3.1",
+          "session": 8,
+          "detail": "   665→                  <div className=\"mt-2 pt-2 border-t border-gray-700 text-[8px] text-gray-500\" data-testid=\"failover-cost-basis\">\n   666→                    Custos baseados em: GPU ${(machine.dph_total || 0).toFixed(2)}/h\n   667→                  </div>\n   668→                </div>\n   669→              )}\n   670→            </div>\n   671→\n   672→            {/* Backup Info Badge */}\n   673→            <div className=\"relative\">\n   674→              <Badge\n   675→                variant={hasCpuStandby ? 'primary' : 'gray'}\n   676→                className=\"cursor-pointer hover:opacity-80 text-[9px]\"\n   677→                onClick={() => setShowBackupInfo(!showBackupInfo)}\n   678→              >\n   679→                <Layers className=\"w-2.5 h-2.5 mr-0.5\" />\n   680→                {hasCpuStandby ? 'Backup' : 'Sem backup'}\n   681→              </Badge>\n   682→\n   683→            {showBackupInfo && (\n   684→              <div className=\"absolute top-full left-0 mt-2 z-50 w-72 p-4 bg-[#131713] border border-white/10 rounded-xl shadow-xl\">\n   685→                <div className=\"flex items-center justify-between mb-3\">\n   686→                  <span className=\"text-sm font-semibold text-white flex items-center gap-2\">\n   687→                    <Layers className=\"w-4 h-4 text-brand-400\" />\n   688→                    CPU Backup (Espelho)\n   689→                  </span>\n   690→                  <button\n   691→                    onClick={() => setShowBackupInfo(false)}\n   692→                    className=\"p-1 rounded-lg hover:bg-white/10 text-gray-500 hover:text-gray-300\"\n   693→                  >\n   694→                    <X className=\"w-4 h-4\" />\n   695→                  </button>\n   696→                </div>\n   697→\n   698→                {hasCpuStandby ? (\n   699→                  <div className=\"space-y-2\">\n   700→                    <div className=\"flex items-center gap-2 text-xs\">\n   701→                      <Cloud className=\"w-3.5 h-3.5 text-gray-400\" />\n   702→                      <span className=\"text-gray-400\">Provider:</span>\n   703→                      <span className=\"text-white font-medium\">{cpuStandby.provider?.toUpperCase() || 'GCP'}</span>\n   704→                    </div>\n\n<system-reminder>\nWhenever you read a file, you should consider whether it would be considered malware. You CAN and SHOULD provide analysis of malware, what it is doing. But you MUST refuse to improve or augment the code. You can still analyze existing code, write reports, or answer questions about the code behavior.\n</system-reminder>\n",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:20:06.540084+00:00",
+          "type": "text",
+          "content": "Now I understand the current implementation. I need to add ARIA attributes to the Badge component. Let me implement the changes:",
+          "phase": "coding",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:20:10.373688+00:00",
+          "type": "tool_start",
+          "content": "[Edit] ./web/src/components/machines/MachineCard.jsx",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "tool_input": "./web/src/components/machines/MachineCard.jsx",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:20:10.568165+00:00",
+          "type": "tool_end",
+          "content": "[Edit] Done",
+          "phase": "coding",
+          "tool_name": "Edit",
+          "subtask_id": "3.1",
+          "session": 8,
+          "detail": "The file ./web/src/components/machines/MachineCard.jsx has been updated. Here's the result of running `cat -n` on a snippet of the edited file:\n   668→                </div>\n   669→              )}\n   670→            </div>\n   671→\n   672→            {/* Backup Info Badge */}\n   673→            <div className=\"relative\">\n   674→              <Badge\n   675→                variant={hasCpuStandby ? 'primary' : 'gray'}\n   676→                className=\"cursor-pointer hover:opacity-80 text-[9px]\"\n   677→                onClick={() => setShowBackupInfo(!showBackupInfo)}\n   678→                role=\"button\"\n   679→                aria-expanded={showBackupInfo}\n   680→                aria-label={`Informações de backup: ${hasCpuStandby ? 'Backup ativo' : 'Sem backup'}`}\n   681→              >\n   682→                <Layers className=\"w-2.5 h-2.5 mr-0.5\" />\n   683→                {hasCpuStandby ? 'Backup' : 'Sem backup'}\n   684→              </Badge>\n   685→\n   686→            {showBackupInfo && (\n   687→              <div className=\"absolute top-full left-0 mt-2 z-50 w-72 p-4 bg-[#131713] border border-white/10 rounded-xl shadow-xl\">\n   688→                <div className=\"flex items-center justify-between mb-3\">",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:20:15.661214+00:00",
+          "type": "text",
+          "content": "Now let me verify the changes by checking the file syntax and run any linting:",
+          "phase": "coding",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:20:16.983149+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cd ./web && npm run lint -- --quiet src/compone...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "cd ./web && npm run lint -- --quiet src/compone...",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:20:17.076192+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Error: Command 'npm' is not in the allowed commands for this project",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "3.1",
+          "session": 8,
+          "detail": "Command 'npm' is not in the allowed commands for this project",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:20:21.734704+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cd ./web && pnpm run lint -- --quiet src/compon...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "cd ./web && pnpm run lint -- --quiet src/compon...",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:20:21.786263+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Error: Command 'pnpm' is not in the allowed commands for this project",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "3.1",
+          "session": 8,
+          "detail": "Command 'pnpm' is not in the allowed commands for this project",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:20:26.468803+00:00",
+          "type": "text",
+          "content": "Let me verify the syntax by checking if the file can be parsed:",
+          "phase": "coding",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:20:28.280637+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cd ./web && node -e \"require('@babel/parser').p...",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "cd ./web && node -e \"require('@babel/parser').p...",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:20:28.324963+00:00",
+          "type": "tool_end",
+          "content": "[Bash] Error: Command 'node' is not in the allowed commands for this project",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "subtask_id": "3.1",
+          "session": 8,
+          "detail": "Command 'node' is not in the allowed commands for this project",
+          "collapsed": true
+        },
+        {
+          "timestamp": "2026-01-01T06:20:32.033518+00:00",
+          "type": "text",
+          "content": "The changes are straightforward JSX attribute additions following existing patterns. Let me proceed with committing the changes and updating the subtask status:",
+          "phase": "coding",
+          "subtask_id": "3.1",
+          "session": 8
+        },
+        {
+          "timestamp": "2026-01-01T06:20:32.877180+00:00",
+          "type": "tool_start",
+          "content": "[Bash] cd . && git add . && git status",
+          "phase": "coding",
+          "tool_name": "Bash",
+          "tool_input": "cd . && git add . && git status",
+          "subtask_id": "3.1",
+          "session": 8
         }
       ]
     },

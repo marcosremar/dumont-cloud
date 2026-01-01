@@ -675,6 +675,9 @@ export default function MachineCard({
                 variant={hasCpuStandby ? 'primary' : 'gray'}
                 className="cursor-pointer hover:opacity-80 text-[9px]"
                 onClick={() => setShowBackupInfo(!showBackupInfo)}
+                role="button"
+                aria-expanded={showBackupInfo}
+                aria-label={`Informações de backup: ${hasCpuStandby ? 'Backup ativo' : 'Sem backup'}`}
               >
                 <Layers className="w-2.5 h-2.5 mr-0.5" />
                 {hasCpuStandby ? 'Backup' : 'Sem backup'}

@@ -93,7 +93,7 @@
           "id": "2.2",
           "title": "Add role and aria attributes to failover dropdown menu",
           "description": "Add role='menu' to the dropdown container and role='menuitem' to each strategy option.",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/machines/MachineCard.jsx"
           ],
@@ -102,13 +102,15 @@
             "Dropdown has aria-label='Op\u00e7\u00f5es de estrat\u00e9gia de failover'",
             "Each strategy option has role='menuitem'",
             "Close button has aria-label='Fechar menu de failover'"
-          ]
+          ],
+          "notes": "Added role=\"menu\" and aria-label=\"Op\u00e7\u00f5es de estrat\u00e9gia de failover\" to the dropdown container, role=\"menuitem\" to each strategy option button, and aria-label=\"Fechar menu de failover\" to the close button.",
+          "updated_at": "2026-01-01T06:15:21.960601+00:00"
         },
         {
           "id": "2.3",
           "title": "Add keyboard navigation to failover dropdown",
           "description": "Implement arrow key navigation, Enter to select, and Escape to close for the failover dropdown.",
-          "status": "pending",
+          "status": "completed",
           "files": [
             "web/src/components/machines/MachineCard.jsx"
           ],
@@ -118,7 +120,9 @@
             "Enter key selects the focused option",
             "Tab key moves focus correctly",
             "Focus is trapped within dropdown when open"
-          ]
+          ],
+          "notes": "Implemented full keyboard navigation for failover dropdown: Escape closes, Arrow Up/Down navigates, Enter/Space selects, Tab traps focus, Home/End jump to first/last option. Added focus rings and click-outside handling.",
+          "updated_at": "2026-01-01T06:18:54.665499+00:00"
         }
       ]
     },
@@ -321,5 +325,5 @@
     "issues": "",
     "tests_passed": ""
   },
-  "last_updated": "2026-01-01T06:11:33.316220+00:00"
+  "last_updated": "2026-01-01T06:18:54.665544+00:00"
 }
