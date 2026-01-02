@@ -220,9 +220,18 @@ def search_cheapest_rtx4090(token: str) -> Optional[Dict[str, Any]]:
         resp.raise_for_status()
         return resp.json()
 
-    offers = call_with_retry(search)
+    result = call_with_retry(search)
 
-    if not offers or not isinstance(offers, list):
+    # A resposta pode ser {"offers": [...]} ou lista direta
+    if isinstance(result, dict) and "offers" in result:
+        offers = result["offers"]
+    elif isinstance(result, list):
+        offers = result
+    else:
+        print(f"❌ Resposta inesperada: {type(result)}")
+        return None
+
+    if not offers:
         print("❌ Nenhuma oferta encontrada!")
         return None
 
@@ -518,7 +527,6 @@ def test_b2_snapshot_upload():
     Provisiona GPU, cria arquivos de teste, faz snapshot e upload para B2.
     """
     metrics = SnapshotMetrics()
-    token = None
     ssh = None
     instance_id = None
     local_snapshot = None
@@ -534,55 +542,52 @@ def test_b2_snapshot_upload():
         print("TEST 1.1: B2 SNAPSHOT UPLOAD")
         print("=" * 70)
 
-        # 1. Login
-        token = login_api()
-
-        # 2. Buscar oferta mais barata
+        # 1. Buscar oferta mais barata (usa VAST_API_KEY diretamente)
         start = time.time()
-        offer = search_cheapest_rtx4090(token)
+        offer = search_cheapest_rtx4090(None)  # Token não é mais necessário
         assert offer is not None, "Nenhuma oferta RTX 4090 disponível"
 
         metrics.gpu_name = f"{offer['gpu_name']} x{offer['num_gpus']}"
         metrics.gpu_cost_per_hour = offer['dph_total']
 
-        # 3. Provisionar instância
-        instance = provision_instance(token, offer['id'])
+        # 2. Provisionar instância
+        instance = provision_instance(None, offer['id'])  # Token não é mais necessário
         instance_id = instance['id']
         metrics.instance_id = str(instance_id)
 
-        # 4. Aguardar running
+        # 3. Aguardar running
         instance_info = wait_for_instance_running(instance_id)
         metrics.time_to_provision = time.time() - start
 
-        # 5. Aguardar SSH
+        # 4. Aguardar SSH
         start = time.time()
         ssh = wait_for_ssh_ready(instance_info)
         metrics.time_to_ssh_ready = time.time() - start
 
-        # 6. Criar arquivos de teste
+        # 5. Criar arquivos de teste
         start = time.time()
         checksums = create_test_files(ssh)
         metrics.time_to_create_files = time.time() - start
         metrics.file_checksums = checksums
         metrics.snapshot_files_count = len(checksums)
 
-        # 7. Criar snapshot
+        # 6. Criar snapshot
         start = time.time()
         remote_snapshot, snapshot_name, size_mb = create_snapshot(ssh)
         metrics.time_to_create_snapshot = time.time() - start
         metrics.snapshot_name = snapshot_name
         metrics.snapshot_size_mb = size_mb
 
-        # 8. Download snapshot
+        # 7. Download snapshot
         local_snapshot = f"/tmp/{snapshot_name}"
         download_snapshot(ssh, remote_snapshot, local_snapshot)
 
-        # 9. Upload para B2
+        # 8. Upload para B2
         start = time.time()
         b2_info = upload_to_b2(local_snapshot, f"phase1-tests/{snapshot_name}")
         metrics.time_to_upload_b2 = time.time() - start
 
-        # 10. Destruir instância
+        # 9. Destruir instância
         start = time.time()
         destroy_instance(instance_id)
         metrics.time_to_destroy = time.time() - start
