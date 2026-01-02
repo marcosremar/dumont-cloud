@@ -1,0 +1,56 @@
+
+==============================================
+[0;34mTeste: Backup/Restore[0m
+==============================================
+Inicio: Sat Dec 20 00:38:51 CET 2025
+
+[0;32m[PASS][0m CLI encontrado: /home/marcos/.local/bin/dumont
+[0;32m[PASS][0m Backend acessivel em http://localhost:8767
+[1;33m[STEP][0m Fazendo login com marcosremar@gmail.com...
+[0;32m[PASS][0m Login realizado
+[1;33m[STEP][0m 1. Listando snapshots existentes...
+[0;32m[PASS][0m Listagem de snapshots deve estar autenticada
+[0;34m[INFO][0m Snapshots: 🔄 GET /api/snapshots
+✅ Success (200)
+{
+  "snapshots": [],
+  "count": 0
+}
+[1;33m[STEP][0m 2. Verificando status do backup...
+[0;34m[INFO][0m Status backup: ❌ Unknown action 'status' for snapshot
+
+💡 Available actions: list, create, restore, delete
+Status nao disponivel
+[1;33m[STEP][0m 3. Testando criacao de snapshot em instancia inexistente...
+[0;32m[PASS][0m Snapshot em instancia inexistente deve falhar
+[1;33m[STEP][0m 4. Listando snapshots de instancia...
+[0;34m[INFO][0m Snapshots da instancia: usage: cli.py [-h] [--base-url BASE_URL] [resource] [action] [args ...]
+cli.py: error: unrecognized arguments: --instance
+🔄 GET /api/snapshots
+✅ Success (200)
+{
+  "snapshots": [],
+  "count": 0
+}
+[1;33m[STEP][0m 5. Testando restore de snapshot inexistente...
+[0;32m[PASS][0m Restore de snapshot inexistente deve falhar
+[1;33m[STEP][0m 6. Verificando endpoint de snapshots...
+[0;32m[PASS][0m Endpoint de snapshots acessivel (status: 200)
+[1;33m[STEP][0m 7. Testando delete de snapshot inexistente...
+[0;32m[PASS][0m Delete de snapshot inexistente deve falhar
+[1;33m[STEP][0m 8. Verificando formato de resposta...
+[0;32m[PASS][0m Resposta formatada recebida
+[1;33m[STEP][0m Fazendo logout...
+🔄 POST /api/auth/logout
+✅ Logged out successfully.
+[0;32m[PASS][0m Logout realizado
+
+----------------------------------------------
+Resumo dos Asserts:
+  [0;32mPassed: 6[0m
+  [0;31mFailed: 0[0m
+----------------------------------------------
+
+[0;32m[PASS][0m Teste 'Backup/Restore' completado com sucesso!
+Fim: Sat Dec 20 00:38:52 CET 2025
+==============================================

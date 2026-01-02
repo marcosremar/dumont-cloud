@@ -1,0 +1,30 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:4894",
+      "localStorage": [
+        {
+          "name": "auth_login_time",
+          "value": "1767378012416"
+        },
+        {
+          "name": "auth_token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtYXJjb3NyZW1hckBnbWFpbC5jb20iLCJleHAiOjE3NzEyNjYwMTIsImlhdCI6MTc2NzM3ODAxMn0.Jgcaq9nbWw7ym_l9xPZEPUG--7VUUISfMoFjMPPaSL0"
+        },
+        {
+          "name": "theme",
+          "value": "dark"
+        },
+        {
+          "name": "demo_mode",
+          "value": "true"
+        },
+        {
+          "name": "auth_user",
+          "value": "\"marcosremar@gmail.com\""
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+
+==============================================
+[0;34mTeste: Migration[0m
+==============================================
+Inicio: Sat Dec 20 00:39:15 CET 2025
+
+[0;32m[PASS][0m CLI encontrado: /home/marcos/.local/bin/dumont
+[0;32m[PASS][0m Backend acessivel em http://localhost:8767
+[1;33m[STEP][0m Fazendo login com marcosremar@gmail.com...
+[0;32m[PASS][0m Login realizado
+[1;33m[STEP][0m 1. Verificando hibernation status...
+[0;34m[INFO][0m Hibernation: ❌ Unknown action 'status' for hibernation
+
+💡 Available actions: stats
+Hibernation status
+[1;33m[STEP][0m 2. Verificando agent status...
+[0;34m[INFO][0m Agent: 🔄 POST /api/v1/agent/status
+❌ Error (422)
+{
+  "error": "Validation error",
+  "details": [
+    {
+      "type": "missing",
+      "loc": [
+        "body"
+      ],
+      "msg": "Field required",
+      "input": null
+    }
+  ]
+}
+[1;33m[STEP][0m 3. Verificando standby associations...
+[0;34m[INFO][0m Associations: 🔄 GET /api/standby/associations
+✅ Success (200)
+{
+  "associations": {},
+  "count": 0
+}
+[1;33m[STEP][0m 4. Verificando sync...
+[0;34m[INFO][0m Standby: 🔄 GET /api/standby/status
+✅ Success (200)
+{
+  "configured": false,
+  "auto_standby_enabled": false,
+  "active_associations": 0,
+  "associations": {},
+  "config": {
+    "gcp_zone": "europe-west1-b",
+    "gcp_machine_type": "e2-medium",
+    "auto_failover": true
+  }
+}
+[1;33m[STEP][0m 5. Verificando metricas...
+[0;34m[INFO][0m Metrics: ❌ Unknown action 'None' for metrics
+
+💡 Available actions: market, providers, efficiency, predictions, compare, gpus, types, savings, hibernation, spot
+Metrics
+[1;33m[STEP][0m 6. Verificando health...
+[0;34m[INFO][0m Health: ❌ Unknown action 'None' for health
+
+💡 Available actions: list
+Health
+[1;33m[STEP][0m 7. Verificando admin...
+[0;34m[INFO][0m Admin: ❌ Unknown action 'None' for admin
+
+💡 Available actions: doc
+Admin
+[1;33m[STEP][0m 8. Verificando balance...
+[0;34m[INFO][0m Balance: ❌ Unknown action 'None' for balance
+
+💡 Available actions: list
+Balance
+[0;32m[PASS][0m Migration verificada
+[1;33m[STEP][0m Fazendo logout...
+🔄 POST /api/auth/logout
+✅ Logged out successfully.
+[0;32m[PASS][0m Logout realizado
+
+----------------------------------------------
+Resumo dos Asserts:
+  [0;32mPassed: 1[0m
+  [0;31mFailed: 0[0m
+----------------------------------------------
+
+[0;32m[PASS][0m Teste 'Migration' completado com sucesso!
+Fim: Sat Dec 20 00:39:16 CET 2025
+==============================================

@@ -1,0 +1,100 @@
+
+==============================================
+[0;34mTeste: Health Check[0m
+==============================================
+Inicio: Sat Dec 20 00:39:16 CET 2025
+
+[0;32m[PASS][0m CLI encontrado: /home/marcos/.local/bin/dumont
+[1;33m[STEP][0m 1. Verificando health do backend...
+[0;32m[PASS][0m Backend health: OK (200)
+[1;33m[STEP][0m 2. Verificando versao da API...
+[0;34m[INFO][0m Version: <!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dumont Cloud - GPU Cloud Intelligence</title>
+    <meta name="description" content="Economize até 89% em GPU Cloud com a Dumont. Mesmas GPUs da AWS, preços muito menores. Deploy em 2 minutos com nossa IA." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/assets/index-C0Ote3Wp.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DahB0Tjm.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+[1;33m[STEP][0m 3. Verificando versao do CLI...
+[0;34m[INFO][0m CLI Version: usage: cli.py [-h] [--base-url BASE_URL] [resource] [action] [args ...]
+cli.py: error: unrecognized arguments: --version
+❌ Unknown resource: version
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+Version
+[1;33m[STEP][0m 4. Verificando conectividade com providers...
+[0;34m[INFO][0m Providers: ❌ Unknown action 'providers' for health
+
+💡 Available actions: list
+Providers check
+[1;33m[STEP][0m Fazendo login com marcosremar@gmail.com...
+[0;32m[PASS][0m Login realizado
+[1;33m[STEP][0m 5. Verificando metricas do sistema...
+[0;34m[INFO][0m Metrics: ❌ Unknown action 'system' for metrics
+
+💡 Available actions: market, providers, efficiency, predictions, compare, gpus, types, savings, hibernation, spot
+❌ Unknown action 'metrics' for health
+
+💡 Available actions: list
+Metricas
+[1;33m[STEP][0m 6. Verificando status dos agentes...
+[0;34m[INFO][0m Agents: 🔄 POST /api/v1/agent/status
+❌ Error (422)
+{
+  "error": "Validation error",
+  "details": [
+    {
+      "type": "missing",
+      "loc": [
+        "body"
+      ],
+      "msg": "Field required",
+      "input": null
+    }
+  ]
+}
+[1;33m[STEP][0m 7. Verificando alertas ativos...
+[0;34m[INFO][0m Alerts: ❌ Unknown resource: alerts
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+❌ Unknown action 'alerts' for health
+
+💡 Available actions: list
+Alertas
+[1;33m[STEP][0m 8. Verificando latencia da API...
+[0;34m[INFO][0m Latencia: 11ms
+[0;32m[PASS][0m Latencia aceitavel (<1s)
+[1;33m[STEP][0m 9. Verificando endpoints principais...
+[0;34m[INFO][0m   /api/v1/instances: 200
+[0;34m[INFO][0m   /api/v1/gpu/offers: 200
+[0;34m[INFO][0m   /api/v1/snapshots: 200
+[0;34m[INFO][0m Endpoints OK: 3/3
+[1;33m[STEP][0m 10. Verificando recursos do sistema...
+[0;34m[INFO][0m Resources: ❌ Unknown action 'resources' for health
+
+💡 Available actions: list
+Resources check
+[1;33m[STEP][0m Fazendo logout...
+🔄 POST /api/auth/logout
+✅ Logged out successfully.
+[0;32m[PASS][0m Logout realizado
+
+----------------------------------------------
+Resumo dos Asserts:
+  [0;32mPassed: 2[0m
+  [0;31mFailed: 0[0m
+----------------------------------------------
+
+[0;32m[PASS][0m Teste 'Health Check' completado com sucesso!
+Fim: Sat Dec 20 00:39:20 CET 2025
+==============================================

@@ -1,0 +1,2 @@
+[console_scripts]
+dumont = dumont_cli:main

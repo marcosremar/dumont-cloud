@@ -1,0 +1,42 @@
+{
+  "name": "teste",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "npx playwright test",
+    "test:ui": "npx playwright test --ui",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "test:ai": "BASE_URL=http://dumontcloud.orb.local:4890 npx playwright test dumont-midscene.spec.js --project=midscene",
+    "test:ai:headed": "BASE_URL=http://dumontcloud.orb.local:4890 npx playwright test dumont-midscene.spec.js --headed --project=midscene",
+    "test:ai:debug": "BASE_URL=http://dumontcloud.orb.local:4890 npx playwright test dumont-midscene.spec.js --debug --project=midscene",
+    "test:hybrid": "BASE_URL=http://dumontcloud.orb.local:4890 npx playwright test --project=hybrid",
+    "test:hybrid:headed": "BASE_URL=http://dumontcloud.orb.local:4890 npx playwright test --headed --project=hybrid",
+    "test:deploy": "BASE_URL=http://dumontcloud.orb.local:4890 npx playwright test deploy-wizard-timing.spec.js",
+    "test:deploy:headed": "BASE_URL=http://dumontcloud.orb.local:4890 npx playwright test deploy-wizard-timing.spec.js --headed"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcosremar/snapbpu.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/marcosremar/snapbpu/issues"
+  },
+  "homepage": "https://github.com/marcosremar/snapbpu#readme",
+  "devDependencies": {
+    "@midscene/web": "^0.14.0",
+    "@playwright/test": "^1.57.0",
+    "dotenv": "^17.2.3",
+    "playwright": "^1.57.0",
+    "uuid": "^13.0.0",
+    "ws": "^8.18.3"
+  }
+}

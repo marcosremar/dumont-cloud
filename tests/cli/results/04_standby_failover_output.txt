@@ -1,0 +1,89 @@
+
+==============================================
+[0;34mTeste: Standby/Failover[0m
+==============================================
+Inicio: Sat Dec 20 00:38:52 CET 2025
+
+[0;32m[PASS][0m CLI encontrado: /home/marcos/.local/bin/dumont
+[0;32m[PASS][0m Backend acessivel em http://localhost:8767
+[1;33m[STEP][0m Fazendo login com marcosremar@gmail.com...
+[0;32m[PASS][0m Login realizado
+[1;33m[STEP][0m 1. Verificando status do standby...
+[0;32m[PASS][0m Status standby deve estar autenticado
+[0;34m[INFO][0m Status standby: 🔄 GET /api/standby/status
+✅ Success (200)
+{
+  "configured": false,
+  "auto_standby_enabled": false,
+  "active_associations": 0,
+  "associations": {},
+  "config": {
+    "gcp_zone": "europe-west1-b",
+    "gcp_machine_type": "e2-medium",
+    "auto_failover": true
+  }
+}
+[1;33m[STEP][0m 2. Listando configuracoes de standby...
+[0;34m[INFO][0m Configuracoes: ❌ Unknown action 'list' for standby
+
+💡 Available actions: status, configure, associations, sync-start, sync-stop, pricing
+Nenhuma configuracao
+[1;33m[STEP][0m 3. Verificando pricing do standby...
+[0;34m[INFO][0m Pricing: 🔄 GET /api/v1/standby/pricing
+✅ Success (200)
+{
+  "machine_type": "e2-medium",
+  "disk_gb": 100,
+  "spot": true,
+  "estimated_hourly_usd": 0.01,
+  "estimated_monthly_usd": 11.2,
+  "breakdown": {
+    "vm_monthly": 7.2,
+    "disk_monthly": 4.0
+  },
+  "note": "Prices are estimates and may vary by region."
+}
+[1;33m[STEP][0m 4. Verificando associations...
+[0;34m[INFO][0m Associations: 🔄 GET /api/standby/associations
+✅ Success (200)
+{
+  "associations": {},
+  "count": 0
+}
+[1;33m[STEP][0m 5. Testando configure...
+[0;34m[INFO][0m Configure: 🔄 POST /api/standby/configure
+❌ Error (422)
+{
+  "error": "Validation error",
+  "details": [
+    {
+      "type": "missing",
+      "loc": [
+        "body"
+      ],
+      "msg": "Field required",
+      "input": null
+    }
+  ]
+}
+[1;33m[STEP][0m 6. Testando sync-start...
+[0;34m[INFO][0m Sync-start: ❌ Missing required parameter: gpu_instance_id
+[1;33m[STEP][0m 7. Testando sync-stop...
+[0;34m[INFO][0m Sync-stop: ❌ Missing required parameter: gpu_instance_id
+[1;33m[STEP][0m 8. Verificando endpoint de standby...
+[0;34m[INFO][0m Status HTTP do endpoint: 200
+[0;32m[PASS][0m Endpoint de standby respondeu
+[1;33m[STEP][0m Fazendo logout...
+🔄 POST /api/auth/logout
+✅ Logged out successfully.
+[0;32m[PASS][0m Logout realizado
+
+----------------------------------------------
+Resumo dos Asserts:
+  [0;32mPassed: 2[0m
+  [0;31mFailed: 0[0m
+----------------------------------------------
+
+[0;32m[PASS][0m Teste 'Standby/Failover' completado com sucesso!
+Fim: Sat Dec 20 00:39:01 CET 2025
+==============================================

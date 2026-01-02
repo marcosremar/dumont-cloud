@@ -1,0 +1,72 @@
+
+==============================================
+[0;34mTeste: AI Deploy Wizard[0m
+==============================================
+Inicio: Sat Dec 20 00:39:13 CET 2025
+
+[0;32m[PASS][0m CLI encontrado: /home/marcos/.local/bin/dumont
+[0;32m[PASS][0m Backend acessivel em http://localhost:8767
+[1;33m[STEP][0m Fazendo login com marcosremar@gmail.com...
+[0;32m[PASS][0m Login realizado
+[1;33m[STEP][0m 1. Verificando wizard de deploy...
+[0;34m[INFO][0m Wizard: ❌ Unknown resource: deploy
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+❌ Unknown action 'start' for ai-wizard
+
+💡 Available actions: analyze
+Wizard iniciado
+[0;32m[PASS][0m Wizard deve estar autenticado
+[1;33m[STEP][0m 2. Obtendo recomendacao para 'treinar llama 7b'...
+[0;34m[INFO][0m Recomendacao: ❌ Unknown resource: deploy
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+❌ Unknown action 'recommend' for ai-wizard
+
+💡 Available actions: analyze
+Recomendacao
+[1;33m[STEP][0m 3. Verificando opcoes de deploy...
+[0;34m[INFO][0m Options: ❌ Unknown resource: deploy
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+Opcoes disponiveis
+[1;33m[STEP][0m 4. Verificando templates disponiveis...
+[0;34m[INFO][0m Templates: ❌ Unknown resource: deploy
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+❌ Unknown action 'templates' for ai-wizard
+
+💡 Available actions: analyze
+Templates
+[1;33m[STEP][0m 5. Testando validacao de configuracao...
+[0;34m[INFO][0m Validate: usage: cli.py [-h] [--base-url BASE_URL] [resource] [action] [args ...]
+cli.py: error: unrecognized arguments: --gpu --memory 24
+Validacao
+[1;33m[STEP][0m 6. Verificando estimativa de custo...
+[0;34m[INFO][0m Estimate: usage: cli.py [-h] [--base-url BASE_URL] [resource] [action] [args ...]
+cli.py: error: unrecognized arguments: --gpu --hours 24
+Estimativa
+[1;33m[STEP][0m 7. Verificando Code Server...
+[0;34m[INFO][0m Code Server: ❌ Unknown resource: deploy
+
+💡 Available resources: auth, instance, snapshot, setting, standby, finetune, spot, menu, content, settings, balance, metrics, ai-wizard, advisor, hibernation, agent, saving, health, admin, {full_path}
+Code Server disponivel
+[1;33m[STEP][0m 8. Verificando quick deploy...
+[0;34m[INFO][0m Quick deploy: usage: cli.py [-h] [--base-url BASE_URL] [resource] [action] [args ...]
+cli.py: error: unrecognized arguments: --dry-run
+Quick deploy
+[0;32m[PASS][0m AI Deploy Wizard verificado
+[1;33m[STEP][0m Fazendo logout...
+🔄 POST /api/auth/logout
+✅ Logged out successfully.
+[0;32m[PASS][0m Logout realizado
+
+----------------------------------------------
+Resumo dos Asserts:
+  [0;32mPassed: 2[0m
+  [0;31mFailed: 0[0m
+----------------------------------------------
+
+[0;32m[PASS][0m Teste 'AI Deploy Wizard' completado com sucesso!
+Fim: Sat Dec 20 00:39:15 CET 2025
+==============================================
