@@ -7,8 +7,8 @@ import {
 } from 'lucide-react';
 import { Button, Label, CardContent } from '../tailadmin-ui';
 import { WorldMap, GPUSelector } from './';
-import { COUNTRY_DATA, PERFORMANCE_TIERS } from './constants';
-import { apiGet } from '../../utils/api';
+import { COUNTRY_DATA, PERFORMANCE_TIERS, DEMO_OFFERS } from './constants';
+import { apiGet, isDemoMode } from '../../utils/api';
 
 // Componente Tooltip simples
 const Tooltip = ({ children, text }) => (
@@ -119,6 +119,7 @@ const WizardForm = ({
   const [loadingMachines, setLoadingMachines] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState(null);
   const [gpuSearchQuery, setGpuSearchQuery] = useState('');
+  const [apiError, setApiError] = useState(null);
 
   // Lista completa de GPUs disponíveis
   const allGPUs = [
@@ -289,29 +290,95 @@ const WizardForm = ({
       }
 
       setLoadingMachines(true);
+      setApiError(null);
+
       try {
-        // Get tier config for price range
+        // Get tier config for price range and build filter params
         const tier = tiers.find(t => t.name === selectedTier);
         const regionCode = selectedLocation?.codes?.[0] || '';
 
-        // Try to fetch from API (with authentication)
-        const response = await apiGet(`/api/v1/instances/offers?limit=3&order_by=dph_total&region=${regionCode}`);
+        // In demo mode, use DEMO_OFFERS instead of real API
+        if (isDemoMode()) {
+          // Filter demo offers by tier
+          let filteredOffers = [...DEMO_OFFERS];
+
+          if (tier?.filter) {
+            if (tier.filter.min_gpu_ram) {
+              filteredOffers = filteredOffers.filter(o => o.gpu_ram >= tier.filter.min_gpu_ram);
+            }
+            if (tier.filter.max_price) {
+              filteredOffers = filteredOffers.filter(o => o.dph_total <= tier.filter.max_price);
+            }
+          }
+
+          // Filter by region if specified
+          if (regionCode) {
+            filteredOffers = filteredOffers.filter(o =>
+              o.geolocation === regionCode ||
+              (regionCode === 'US' && ['US', 'CA', 'MX'].includes(o.geolocation)) ||
+              (regionCode === 'EU' && ['GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL'].includes(o.geolocation))
+            );
+          }
+
+          // Sort by price
+          filteredOffers.sort((a, b) => a.dph_total - b.dph_total);
+
+          // Add metadata and labels
+          const labeled = filteredOffers.slice(0, 3).map((offer, idx) => ({
+            ...offer,
+            provider: 'Vast.ai',
+            location: offer.geolocation === 'US' ? 'Estados Unidos' :
+                      offer.geolocation === 'EU' ? 'Europa' : offer.geolocation,
+            reliability: offer.verified ? 99 : 95,
+            label: idx === 0 ? 'Mais econômico' : idx === 1 ? 'Melhor custo-benefício' : 'Mais rápido'
+          }));
+
+          if (labeled.length > 0) {
+            setRecommendedMachines(labeled);
+          } else {
+            setApiError('api_empty');
+            setRecommendedMachines([]);
+          }
+          setLoadingMachines(false);
+          return;
+        }
+
+        // Build query params based on tier filter (for real API)
+        const params = new URLSearchParams();
+        params.append('limit', '5');
+        params.append('order_by', 'dph_total');
+        if (regionCode) params.append('region', regionCode);
+
+        // Apply tier-specific filters
+        if (tier?.filter) {
+          if (tier.filter.min_gpu_ram) params.append('min_gpu_ram', tier.filter.min_gpu_ram);
+          if (tier.filter.max_price) params.append('max_price', tier.filter.max_price);
+          if (tier.filter.verified_only) params.append('verified_only', 'true');
+        }
+
+        // Fetch offers from API
+        const response = await apiGet(`/api/v1/instances/offers?${params}`);
 
         if (response.ok) {
           const data = await response.json();
           if (data.offers && data.offers.length > 0) {
-            setRecommendedMachines(data.offers.slice(0, 3));
+            // Add labels to first 3 offers
+            const labeled = data.offers.slice(0, 3).map((offer, idx) => ({
+              ...offer,
+              label: idx === 0 ? 'Mais econômico' : idx === 1 ? 'Melhor custo-benefício' : 'Mais rápido'
+            }));
+            setRecommendedMachines(labeled);
             return;
           }
         }
 
-        // Fallback to mock data based on tier
-        const mockMachines = getMockMachinesForTier(selectedTier);
-        setRecommendedMachines(mockMachines);
-      } catch {
-        // Use mock data on error
-        const mockMachines = getMockMachinesForTier(selectedTier);
-        setRecommendedMachines(mockMachines);
+        // No offers available
+        setApiError('api_empty');
+        setRecommendedMachines([]);
+      } catch (err) {
+        console.error('Failed to fetch offers:', err);
+        setApiError('api_error');
+        setRecommendedMachines([]);
       } finally {
         setLoadingMachines(false);
       }
@@ -319,38 +386,6 @@ const WizardForm = ({
 
     fetchRecommendedMachines();
   }, [selectedTier, selectedLocation]);
-
-  // Mock machines based on tier
-  const getMockMachinesForTier = (tierName) => {
-    const mockData = {
-      'CPU': [
-        { id: 'cpu1', gpu_name: 'CPU Only', gpu_ram: 0, num_gpus: 0, cpu_cores: 4, cpu_ram: 16, dph_total: 0.02, reliability: 99.9, location: 'GCP', provider: 'GCP', label: 'Mais econômico', isCPU: true },
-        { id: 'cpu2', gpu_name: 'CPU Only', gpu_ram: 0, num_gpus: 0, cpu_cores: 8, cpu_ram: 32, dph_total: 0.04, reliability: 99.9, location: 'GCP', provider: 'GCP', label: 'Melhor custo-benefício', isCPU: true },
-        { id: 'cpu3', gpu_name: 'CPU Only', gpu_ram: 0, num_gpus: 0, cpu_cores: 16, cpu_ram: 64, dph_total: 0.08, reliability: 99.9, location: 'GCP', provider: 'GCP', label: 'Mais rápido', isCPU: true },
-      ],
-      'Lento': [
-        { id: 'eco1', gpu_name: 'RTX 3060', gpu_ram: 12, num_gpus: 1, dph_total: 0.15, reliability: 98.5, location: 'US-West', provider: 'vast.ai', label: 'Mais econômico' },
-        { id: 'eco2', gpu_name: 'RTX 3070', gpu_ram: 8, num_gpus: 1, dph_total: 0.18, reliability: 99.1, location: 'EU-West', provider: 'vast.ai', label: 'Melhor custo-benefício' },
-        { id: 'eco3', gpu_name: 'GTX 1080 Ti', gpu_ram: 11, num_gpus: 1, dph_total: 0.12, reliability: 97.8, location: 'US-East', provider: 'vast.ai', label: 'Mais rápido' },
-      ],
-      'Medio': [
-        { id: 'med1', gpu_name: 'RTX 3080', gpu_ram: 10, num_gpus: 1, dph_total: 0.25, reliability: 99.2, location: 'US-West', provider: 'vast.ai', label: 'Mais econômico' },
-        { id: 'med2', gpu_name: 'RTX 3090', gpu_ram: 24, num_gpus: 1, dph_total: 0.35, reliability: 99.5, location: 'EU-West', provider: 'vast.ai', label: 'Melhor custo-benefício' },
-        { id: 'med3', gpu_name: 'RTX 4070', gpu_ram: 12, num_gpus: 1, dph_total: 0.30, reliability: 99.8, location: 'US-East', provider: 'tensordock', label: 'Mais rápido' },
-      ],
-      'Rapido': [
-        { id: 'rap1', gpu_name: 'RTX 4080', gpu_ram: 16, num_gpus: 1, dph_total: 0.45, reliability: 99.5, location: 'US-West', provider: 'vast.ai', label: 'Mais econômico' },
-        { id: 'rap2', gpu_name: 'RTX 4090', gpu_ram: 24, num_gpus: 1, dph_total: 0.65, reliability: 99.7, location: 'EU-West', provider: 'vast.ai', label: 'Melhor custo-benefício' },
-        { id: 'rap3', gpu_name: 'A100 40GB', gpu_ram: 40, num_gpus: 1, dph_total: 0.85, reliability: 99.9, location: 'US-East', provider: 'vast.ai', label: 'Mais rápido' },
-      ],
-      'Ultra': [
-        { id: 'ult1', gpu_name: 'A100 80GB', gpu_ram: 80, num_gpus: 1, dph_total: 1.20, reliability: 99.8, location: 'US-West', provider: 'vast.ai', label: 'Mais econômico' },
-        { id: 'ult2', gpu_name: 'H100 80GB', gpu_ram: 80, num_gpus: 1, dph_total: 2.50, reliability: 99.9, location: 'EU-West', provider: 'vast.ai', label: 'Melhor custo-benefício' },
-        { id: 'ult3', gpu_name: 'A100 80GB', gpu_ram: 80, num_gpus: 2, dph_total: 2.40, reliability: 99.9, location: 'US-East', provider: 'vast.ai', label: 'Mais rápido' },
-      ],
-    };
-    return mockData[tierName] || mockData['Medio'];
-  };
 
   // Verifica se os dados do step estão preenchidos
   const isStepDataComplete = (stepId) => {
@@ -384,7 +419,6 @@ const WizardForm = ({
 
   const handleNext = () => {
     if (currentStep < steps.length && isStepComplete(currentStep)) {
-      // Se está no step 3 e vai para o step 4, iniciar provisioning
       if (currentStep === 3) {
         handleStartProvisioning();
       } else {
@@ -419,25 +453,31 @@ const WizardForm = ({
   const fetchUserBalance = async () => {
     setLoadingBalance(true);
     setBalanceError(null);
+
     try {
+      // In demo mode, use mock balance
+      if (isDemoMode()) {
+        setUserBalance(10.00); // Mock sufficient balance for demo
+        setLoadingBalance(false);
+        return;
+      }
+
       const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/v1/balance', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
-        // Get credit from balance API
-        const balance = data.credit ?? data.balance ?? 10.00;
-        setUserBalance(parseFloat(balance) || 10.00);
+        const balance = data.credit ?? data.balance ?? 0;
+        setUserBalance(parseFloat(balance) || 0);
       } else {
-        // Demo mode - assume $10 balance
-        setUserBalance(10.00);
-        setBalanceError('Não foi possível verificar o saldo. Modo demo ativado.');
+        setUserBalance(0);
+        setBalanceError('Erro ao buscar saldo');
       }
-    } catch (e) {
-      // Demo mode fallback
-      setUserBalance(10.00);
-      setBalanceError('Não foi possível verificar o saldo. Modo demo ativado.');
+    } catch (err) {
+      console.error('Failed to fetch balance:', err);
+      setUserBalance(0);
+      setBalanceError('Erro ao buscar saldo');
     } finally {
       setLoadingBalance(false);
     }
@@ -455,8 +495,8 @@ const WizardForm = ({
       errors.push('Por favor, selecione um tier de performance');
     }
 
-    // Validar saldo mínimo
-    if (userBalance !== null && userBalance < MIN_BALANCE) {
+    // Validar saldo mínimo (skip in demo mode)
+    if (!isDemoMode() && userBalance !== null && userBalance < MIN_BALANCE) {
       errors.push(`Saldo insuficiente. Você precisa de pelo menos $${MIN_BALANCE.toFixed(2)} para criar uma máquina. Saldo atual: $${userBalance.toFixed(2)}`);
     }
 
@@ -1072,47 +1112,6 @@ const WizardForm = ({
             <p className="text-xs text-gray-500 mt-1">Como recuperar automaticamente se a máquina falhar?</p>
           </div>
 
-          {/* Alerta de saldo */}
-          {!loadingBalance && userBalance !== null && (
-            <div className={`p-3 rounded-lg border ${
-              userBalance < 0.10
-                ? 'bg-red-500/10 border-red-500/30'
-                : userBalance < 1.00
-                ? 'bg-amber-500/10 border-amber-500/30'
-                : 'bg-emerald-500/10 border-emerald-500/30'
-            }`}>
-              <div className="flex items-start gap-2">
-                <DollarSign className={`w-4 h-4 mt-0.5 ${
-                  userBalance < 0.10
-                    ? 'text-red-400'
-                    : userBalance < 1.00
-                    ? 'text-amber-400'
-                    : 'text-emerald-400'
-                }`} />
-                <div className="flex-1">
-                  <p className={`text-xs font-medium ${
-                    userBalance < 0.10
-                      ? 'text-red-400'
-                      : userBalance < 1.00
-                      ? 'text-amber-400'
-                      : 'text-emerald-400'
-                  }`}>
-                    Saldo VAST.ai: ${userBalance.toFixed(2)}
-                  </p>
-                  {userBalance < 0.10 && (
-                    <p className="text-xs text-red-300 mt-1">
-                      Você precisa adicionar crédito para continuar. Saldo mínimo necessário: $0.10
-                    </p>
-                  )}
-                  {userBalance >= 0.10 && userBalance < 1.00 && (
-                    <p className="text-xs text-amber-300 mt-1">
-                      Saldo baixo. Considere adicionar crédito para evitar interrupções.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
 
           <div className="space-y-3">
             {failoverOptions.map((option) => {
@@ -1578,55 +1577,56 @@ const WizardForm = ({
 
         {/* Right button: Próximo, Iniciar, or Usar Esta Máquina */}
         {currentStep === 4 ? (
-          <Button
+          <button
             onClick={() => provisioningWinner && onCompleteProvisioning && onCompleteProvisioning(provisioningWinner)}
             disabled={!provisioningWinner}
-            className="px-5 py-2 bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 disabled:opacity-40"
+            className="group relative px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 hover:scale-[1.02] active:scale-[0.98]"
           >
-            {provisioningWinner ? (
-              <>
-                <Check className="w-4 h-4 mr-2" />
-                Usar Esta Máquina
-              </>
-            ) : (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Conectando...
-              </>
-            )}
-          </Button>
+            <span className="flex items-center gap-2">
+              {provisioningWinner ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  Usar Esta Máquina
+                </>
+              ) : (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Conectando...
+                </>
+              )}
+            </span>
+          </button>
         ) : currentStep < 3 ? (
-          <Button
+          <button
             onClick={handleNext}
             disabled={!isStepComplete(currentStep)}
-            className="px-5 py-2 bg-white/10 hover:bg-white/15 text-gray-200 border border-white/10 disabled:opacity-40"
+            className="group relative px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 hover:scale-[1.02] active:scale-[0.98]"
           >
-            Próximo
-            <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
+            <span className="flex items-center gap-2">
+              Próximo
+              <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+            </span>
+          </button>
         ) : (
-          <Button
+          <button
             onClick={handleNext}
-            disabled={!isStepComplete(currentStep) || loading || (userBalance !== null && userBalance < 0.10)}
-            className="px-5 py-2 bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 disabled:opacity-40"
+            disabled={!isStepComplete(currentStep) || loading}
+            className="group relative px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 hover:scale-[1.02] active:scale-[0.98]"
           >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Iniciando...
-              </>
-            ) : (userBalance !== null && userBalance < 0.10) ? (
-              <>
-                <AlertCircle className="w-4 h-4 mr-2" />
-                Saldo Insuficiente
-              </>
-            ) : (
-              <>
-                <Zap className="w-4 h-4 mr-2" />
-                Iniciar
-              </>
-            )}
-          </Button>
+            <span className="flex items-center gap-2">
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Iniciando...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4" />
+                  Iniciar
+                </>
+              )}
+            </span>
+          </button>
         )}
       </div>
     </CardContent>

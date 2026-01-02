@@ -421,6 +421,28 @@ def get_auth_service(
     return AuthService(user_repository=user_repo)
 
 
+def get_instance_service_public() -> InstanceService:
+    """Get instance service for public endpoints (no auth required).
+    Uses system API key from environment variables."""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    settings = get_settings()
+
+    # Use system API key only
+    api_key = settings.vast.api_key
+
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Vast.ai API key not configured on server.",
+        )
+
+    logger.info(f"get_instance_service_public: using system API key")
+    gpu_provider = VastProvider(api_key=api_key)
+    return InstanceService(gpu_provider=gpu_provider)
+
+
 def get_instance_service(
     user_email: str = Depends(get_current_user_email),
     user_repo: SQLAlchemyUserRepository = Depends(get_user_repository),

@@ -27,6 +27,7 @@ api_router.include_router(auth.router)
 
 # OIDC SSO - Enterprise Single Sign-On via OpenID Connect
 api_router.include_router(oidc.router)
+api_router.include_router(instances.public_router)  # Public endpoints first (no auth required)
 api_router.include_router(instances.router)
 api_router.include_router(snapshots.router)
 api_router.include_router(settings.router)

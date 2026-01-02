@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import OnboardingWizard from '../components/onboarding/OnboardingWizard';
-import SnapshotStatus from '../components/SnapshotStatus';
 import {
   Cpu, Server, Wifi, DollarSign, Shield, HardDrive,
   Activity, Search, RotateCcw, Sliders, Wand2,
   Gauge, Globe, Zap, Monitor, ChevronDown, ChevronLeft, ChevronRight, Sparkles,
   Send, Bot, User, Loader2, Plus, Minus, X, Check, MapPin,
-  MessageSquare, Lightbulb, Code, Clock, TrendingUp
+  MessageSquare, Lightbulb, Code, Clock
 } from 'lucide-react';
 
 // Dashboard Components
@@ -25,9 +23,9 @@ import {
   OfferCard,
   FilterSection,
   ProvisioningRaceScreen,
+  AIWizardChat,
   AdvancedSearchForm,
   WizardForm,
-  EconomyWidget,
   GPU_OPTIONS,
   GPU_CATEGORIES,
   REGION_OPTIONS,
@@ -85,7 +83,6 @@ export default function Dashboard({ onStatsUpdate }) {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const { t } = useTranslation();
 
   // Determine base path for routing (demo vs real)
   const basePath = location.pathname.startsWith('/demo-app') ? '/demo-app' : '/app';
@@ -100,13 +97,8 @@ export default function Dashboard({ onStatsUpdate }) {
     totalMachines: 0,
     dailyCost: 0,
     savings: 0,
-    uptime: 0,
-    balance: 0
+    uptime: 0
   });
-  const [balance, setBalance] = useState(null);
-  const [loadingBalance, setLoadingBalance] = useState(true);
-  const [savingsData, setSavingsData] = useState(null);
-  const [loadingSavings, setLoadingSavings] = useState(true);
 
   // Refs to track intervals and timeouts for cleanup
   const raceIntervalsRef = useRef([]);
@@ -120,29 +112,7 @@ export default function Dashboard({ onStatsUpdate }) {
   useEffect(() => {
     checkOnboarding();
     fetchDashboardStats();
-    fetchBalance();
-    fetchSavings();
   }, []);
-
-  // Update dashboardStats when balance changes
-  useEffect(() => {
-    if (balance !== null && balance !== undefined) {
-      const formattedBalance = typeof balance === 'number' ? balance.toFixed(2) : '0.00';
-      console.log('[DASHBOARD] Updating dashboardStats.balance:', formattedBalance, 'from balance:', balance);
-      setDashboardStats(prev => ({
-        ...prev,
-        balance: formattedBalance
-      }));
-    }
-  }, [balance]);
-
-  // Notify parent whenever dashboardStats changes (including balance updates)
-  useEffect(() => {
-    if (onStatsUpdate && dashboardStats.balance !== undefined && dashboardStats.balance !== 0) {
-      console.log('[DASHBOARD] Calling onStatsUpdate with updated dashboardStats:', dashboardStats);
-      onStatsUpdate(dashboardStats);
-    }
-  }, [dashboardStats, onStatsUpdate]);
 
   // Cleanup on unmount - destroy any created instances
   useEffect(() => {
@@ -170,56 +140,6 @@ export default function Dashboard({ onStatsUpdate }) {
     };
   }, []);
 
-  const fetchBalance = async () => {
-    try {
-      setLoadingBalance(true);
-      const res = await fetch(`${API_BASE}/api/v1/instances/balance`, {
-        headers: { 'Authorization': `Bearer ${getToken()}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        console.log('[BALANCE v2 - FIXED] Received:', data);
-        // VAST.ai retorna dois campos: credit e balance
-        // balance é o saldo real (pode ser negativo)
-        const balanceValue = data.balance !== undefined && data.balance !== null ? data.balance :
-                            (data.credit !== undefined && data.credit !== null ? data.credit : 0);
-        console.log('[BALANCE v2 - FIXED] balanceValue =', balanceValue);
-        console.log('[BALANCE v2 - FIXED] formatted =', typeof balanceValue === 'number' ? balanceValue.toFixed(2) : balanceValue);
-        setBalance(balanceValue);
-      } else {
-        console.log('[BALANCE] API call failed:', res.status);
-        setBalance(0);
-      }
-    } catch (error) {
-      console.error('[BALANCE] Failed to fetch balance:', error);
-      setBalance(0);
-    } finally {
-      setLoadingBalance(false);
-    }
-  };
-
-  const fetchSavings = async () => {
-    try {
-      setLoadingSavings(true);
-      const res = await fetch(`${API_BASE}/api/v1/metrics/savings/real`, {
-        headers: { 'Authorization': `Bearer ${getToken()}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        console.log('[SAVINGS] Received:', data);
-        setSavingsData(data);
-      } else {
-        console.log('[SAVINGS] API call failed:', res.status);
-        setSavingsData(null);
-      }
-    } catch (error) {
-      console.error('[SAVINGS] Failed to fetch savings:', error);
-      setSavingsData(null);
-    } finally {
-      setLoadingSavings(false);
-    }
-  };
-
   const fetchDashboardStats = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/v1/instances`, {
@@ -239,10 +159,7 @@ export default function Dashboard({ onStatsUpdate }) {
           uptime: running.length > 0 ? 99.9 : 0
         };
         console.log('Dashboard stats:', stats);
-        setDashboardStats(prev => ({
-          ...stats,
-          balance: prev.balance // preserve the balance field
-        }));
+        setDashboardStats(stats);
         if (onStatsUpdate) {
           console.log('Calling onStatsUpdate with:', stats);
           onStatsUpdate(stats);
@@ -260,10 +177,7 @@ export default function Dashboard({ onStatsUpdate }) {
           uptime: 99.9
         };
         console.log('Dashboard stats (demo):', stats);
-        setDashboardStats(prev => ({
-          ...stats,
-          balance: prev.balance // preserve the balance field
-        }));
+        setDashboardStats(stats);
         if (onStatsUpdate) {
           console.log('Calling onStatsUpdate with (demo):', stats);
           onStatsUpdate(stats);
@@ -282,10 +196,7 @@ export default function Dashboard({ onStatsUpdate }) {
         uptime: 99.9
       };
       console.log('Dashboard stats (demo - catch):', stats);
-      setDashboardStats(prev => ({
-        ...stats,
-        balance: prev.balance // preserve the balance field
-      }));
+      setDashboardStats(stats);
       if (onStatsUpdate) {
         console.log('Calling onStatsUpdate with (demo - catch):', stats);
         onStatsUpdate(stats);
@@ -558,7 +469,7 @@ export default function Dashboard({ onStatsUpdate }) {
     if (isDemoMode()) {
       await new Promise(r => setTimeout(r, 500)); // Simular delay
       setOffers(DEMO_OFFERS);
-      toast.success(t('dashboard.toasts.machinesFound', { count: DEMO_OFFERS.length }));
+      toast.success(`${DEMO_OFFERS.length} máquinas encontradas!`);
       setLoading(false);
       return;
     }
@@ -573,22 +484,22 @@ export default function Dashboard({ onStatsUpdate }) {
       const response = await fetch(`${API_BASE}/api/v1/instances/offers?${params}`, {
         headers: { 'Authorization': `Bearer ${getToken()}` }
       });
-      if (!response.ok) throw new Error(t('dashboard.errors.fetchOffers'));
+      if (!response.ok) throw new Error('Falha ao buscar ofertas');
       const data = await response.json();
       const realOffers = data.offers || [];
 
       // Use demo offers as fallback when API returns empty (e.g., no VAST_API_KEY)
       if (realOffers.length === 0) {
         setOffers(DEMO_OFFERS);
-        toast.info(t('dashboard.toasts.showingDemoOffers'));
+        toast.info('Mostrando ofertas de demonstração');
       } else {
         setOffers(realOffers);
-        toast.success(t('dashboard.toasts.machinesFound', { count: realOffers.length }));
+        toast.success(`${realOffers.length} máquinas encontradas!`);
       }
     } catch (err) {
       // Use demo offers on API error for testing
       setOffers(DEMO_OFFERS);
-      toast.warning(t('dashboard.toasts.errorShowingDemo'));
+      toast.warning('Erro ao buscar ofertas. Mostrando dados de demonstração.');
     } finally {
       setLoading(false);
     }
@@ -618,7 +529,7 @@ export default function Dashboard({ onStatsUpdate }) {
   };
 
   const handleSelectOffer = (offer) => {
-    toast.success(t('dashboard.toasts.machineSelected', { name: offer.gpu_name }));
+    toast.success(`Máquina ${offer.gpu_name} selecionada!`);
     navigate(`${basePath}/machines`, { state: { selectedOffer: offer } });
   };
 
@@ -741,22 +652,22 @@ export default function Dashboard({ onStatsUpdate }) {
       } catch (error) {
         failedCount++;
         // Mark as failed with descriptive error message
-        let errorMessage = t('dashboard.toasts.unknownError');
+        let errorMessage = 'Erro desconhecido';
         const errMsg = error.message?.toLowerCase() || '';
         if (errMsg.includes('balance') || errMsg.includes('insufficient') || errMsg.includes('funds')) {
-          errorMessage = t('dashboard.errors.insufficientBalance');
+          errorMessage = 'Saldo insuficiente';
         } else if (errMsg.includes('timeout')) {
-          errorMessage = t('dashboard.errors.connectionTimeout');
+          errorMessage = 'Timeout de conexão';
         } else if (errMsg.includes('unavailable') || errMsg.includes('not available') || errMsg.includes('already rented')) {
-          errorMessage = t('dashboard.errors.machineUnavailable');
+          errorMessage = 'Máquina indisponível';
         } else if (errMsg.includes('network')) {
-          errorMessage = t('dashboard.toasts.networkError');
+          errorMessage = 'Erro de rede';
         } else if (errMsg.includes('auth') || errMsg.includes('401') || errMsg.includes('403') || errMsg.includes('unauthorized')) {
-          errorMessage = t('dashboard.toasts.authError');
+          errorMessage = 'Erro de autenticação';
         } else if (errMsg.includes('limit') || errMsg.includes('quota') || errMsg.includes('maximum')) {
-          errorMessage = t('dashboard.errors.instanceLimit');
+          errorMessage = 'Limite de instâncias';
         } else if (errMsg.includes('api_key') || errMsg.includes('api key')) {
-          errorMessage = t('dashboard.errors.invalidApiKey');
+          errorMessage = 'API Key inválida';
         } else if (error.message && error.message.length < 40) {
           errorMessage = error.message;
         }
@@ -781,22 +692,22 @@ export default function Dashboard({ onStatsUpdate }) {
     // If all failed, try next round after a short delay
     if (totalFailed === candidates.length) {
       console.log(`All machines failed in round ${round}, checking for next round...`);
-      toast.warning(t('dashboard.errors.allMachinesFailed', { count: candidates.length }));
+      toast.warning(`Todas as ${candidates.length} máquinas falharam. Tentando próximo grupo...`);
 
       setTimeout(() => {
         const hasMoreOffers = allOffers.length > round * 5;
         if (round < MAX_ROUNDS && hasMoreOffers) {
           const nextRound = round + 1;
-          toast.info(t('dashboard.toasts.startingRound', { round: nextRound, total: MAX_ROUNDS }));
+          toast.info(`Iniciando round ${nextRound}/${MAX_ROUNDS}...`);
           startProvisioningRaceIntegrated(allOffers, nextRound);
         } else {
-          toast.error(t('dashboard.errors.allAttemptsFailed'));
+          toast.error('Todas as tentativas falharam. Verifique sua API Key e saldo.');
         }
       }, 1500);
       return;
     }
 
-    // Poll for status updates every 2 seconds (reduced from 3s for faster detection)
+    // Poll for status updates every 3 seconds
     const pollInterval = setInterval(async () => {
       if (winnerFound) {
         clearInterval(pollInterval);
@@ -807,59 +718,28 @@ export default function Dashboard({ onStatsUpdate }) {
         const res = await fetch(`${API_BASE}/api/v1/instances`, {
           headers: { 'Authorization': `Bearer ${getToken()}` }
         });
-        if (!res.ok) {
-          console.log(`[RACE R${round}] ⚠️ Failed to fetch instances: ${res.status}`);
-          return;
-        }
+        if (!res.ok) return;
 
         const data = await res.json();
         const instances = data.instances || [];
 
-        console.log(`[RACE R${round}] 🔍 Polling ${createdInstanceIdsRef.current.length} instances...`);
-
         for (const created of createdInstanceIdsRef.current) {
           const instance = instances.find(i => i.id === created.instanceId);
-          if (!instance) {
-            console.log(`[RACE R${round}] ⚠️ Instance ${created.instanceId} not found in API response`);
-            continue;
-          }
+          if (!instance) continue;
 
           const status = instance.actual_status;
           const candidateIndex = created.index;
-          const hasSSH = !!(instance.ssh_host && instance.ssh_port);
 
-          console.log(`[RACE R${round}] Instance ${created.instanceId}: status="${status}", ssh=${hasSSH ? `${instance.ssh_host}:${instance.ssh_port}` : 'N/A'}`);
-
-          // Update UI with detailed status messages
           setRaceCandidates(prev => {
             const updated = [...prev];
             if (updated[candidateIndex]) {
               let progress = updated[candidateIndex].progress || 30;
-              let statusMessage = 'Conectando...';
-
-              if (status === 'loading') {
-                progress = Math.min(progress + 10, 90);
-                statusMessage = 'Iniciando sistema...';
-              } else if (status === 'running') {
-                if (hasSSH) {
-                  progress = 100;
-                  statusMessage = 'Verificando SSH...';
-                } else {
-                  progress = 95;
-                  statusMessage = 'Aguardando SSH...';
-                }
-              } else if (status === 'created') {
-                progress = 40;
-                statusMessage = 'Reservando máquina...';
-              } else {
-                statusMessage = `Status: ${status}`;
-              }
-
+              if (status === 'loading') progress = Math.min(progress + 10, 90);
+              if (status === 'running') progress = 100;
               updated[candidateIndex] = {
                 ...updated[candidateIndex],
                 progress,
                 actualStatus: status,
-                statusMessage,
                 sshHost: instance.ssh_host,
                 sshPort: instance.ssh_port
               };
@@ -867,9 +747,7 @@ export default function Dashboard({ onStatsUpdate }) {
             return updated;
           });
 
-          // Winner detection: must be running AND have SSH credentials
-          if (status === 'running' && hasSSH && !winnerFound) {
-            console.log(`[RACE R${round}] 🎯 WINNER FOUND! Instance ${created.instanceId} is running with SSH ${instance.ssh_host}:${instance.ssh_port}`);
+          if (status === 'running' && !winnerFound) {
             winnerFound = true;
             clearInterval(pollInterval);
 
@@ -910,16 +788,15 @@ export default function Dashboard({ onStatsUpdate }) {
           }
         }
       } catch (error) {
-        console.error('[RACE] ❌ Error polling instance status:', error);
+        console.error('Error polling instance status:', error);
       }
-    }, 2000); // Poll every 2 seconds for faster winner detection
+    }, 3000);
 
     raceIntervalsRef.current.push(pollInterval);
 
-    // Timeout after 15 seconds per round (BATCH_TIMEOUT)
+    // Timeout after 3 minutes per round
     const raceTimeout = setTimeout(async () => {
       if (!winnerFound) {
-        console.log(`[RACE R${round}] ⏱️ Timeout após 15s - nenhum vencedor encontrado`);
         clearInterval(pollInterval);
 
         // Clean up created instances
@@ -953,7 +830,7 @@ export default function Dashboard({ onStatsUpdate }) {
           toast.error(`Tempo esgotado após ${MAX_ROUNDS} tentativas.`);
         }
       }
-    }, 15 * 1000); // 15 seconds per round (BATCH_TIMEOUT)
+    }, 3 * 60 * 1000); // 3 minutes per round
 
     raceTimeoutsRef.current.push(raceTimeout);
   };
@@ -996,7 +873,7 @@ export default function Dashboard({ onStatsUpdate }) {
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}));
           const apiError = errorData.detail || errorData.message || errorData.error || '';
-          throw new Error(apiError || t('dashboard.toasts.httpError', { status: res.status }));
+          throw new Error(apiError || `Erro HTTP ${res.status}`);
         }
 
         const data = await res.json();
@@ -1019,38 +896,38 @@ export default function Dashboard({ onStatsUpdate }) {
       } catch (error) {
         // Mark as failed with descriptive error message
         const msg = (error.message || '').toLowerCase();
-        let errorMessage = t('dashboard.toasts.unknownError');
+        let errorMessage = 'Erro desconhecido';
 
         // Balance/Credit errors
         if (msg.includes('balance') || msg.includes('insufficient') || msg.includes('credit') || msg.includes('saldo')) {
-          errorMessage = t('dashboard.errors.insufficientBalance');
+          errorMessage = 'Saldo insuficiente';
         // Machine availability errors
         } else if (msg.includes('unavailable') || msg.includes('not available') || msg.includes('offer not found') || msg.includes('not found')) {
-          errorMessage = t('dashboard.errors.machineUnavailable');
+          errorMessage = 'Máquina indisponível';
         } else if (msg.includes('already rented') || msg.includes('busy') || msg.includes('in use')) {
-          errorMessage = t('dashboard.errors.alreadyRented');
+          errorMessage = 'Já está alugada';
         // Connection/Network errors
         } else if (msg.includes('timeout') || msg.includes('timed out')) {
-          errorMessage = t('dashboard.errors.connectionTimeout');
+          errorMessage = 'Timeout de conexão';
         } else if (msg.includes('network') || msg.includes('connection') || msg.includes('connect')) {
-          errorMessage = t('dashboard.toasts.networkError');
+          errorMessage = 'Erro de rede';
         // Authentication errors
         } else if (msg.includes('auth') || msg.includes('401') || msg.includes('403') || msg.includes('api key') || msg.includes('unauthorized') || msg.includes('forbidden')) {
-          errorMessage = t('dashboard.toasts.authError');
+          errorMessage = 'Erro de autenticação';
         // Limit errors
         } else if (msg.includes('limit') || msg.includes('quota') || msg.includes('exceeded')) {
-          errorMessage = t('dashboard.errors.instanceLimit');
+          errorMessage = 'Limite de instâncias';
         // Disk/Storage errors
         } else if (msg.includes('disk') || msg.includes('storage') || msg.includes('space')) {
-          errorMessage = t('dashboard.toasts.diskError');
+          errorMessage = 'Erro de disco';
         // SSH/Docker errors
         } else if (msg.includes('ssh') || msg.includes('docker') || msg.includes('container')) {
-          errorMessage = t('dashboard.toasts.initError');
+          errorMessage = 'Erro de inicialização';
         // HTTP status codes
         } else if (msg.includes('erro http') || msg.includes('500') || msg.includes('502') || msg.includes('503')) {
-          errorMessage = t('dashboard.errors.serverUnavailable');
+          errorMessage = 'Servidor indisponível';
         } else if (msg.includes('400') || msg.includes('bad request')) {
-          errorMessage = t('dashboard.errors.invalidRequest');
+          errorMessage = 'Requisição inválida';
         } else if (error.message && error.message.length > 0) {
           // Use the actual message if it's short enough, otherwise truncate
           errorMessage = error.message.length <= 25 ? error.message : error.message.slice(0, 22) + '...';
@@ -1157,9 +1034,9 @@ export default function Dashboard({ onStatsUpdate }) {
           }
         }
       } catch (error) {
-        console.error('[RACE] ❌ Error polling instance status:', error);
+        console.error('Error polling instance status:', error);
       }
-    }, 2000); // Poll every 2 seconds for faster winner detection
+    }, 3000);
 
     raceIntervalsRef.current.push(pollInterval);
 
@@ -1269,7 +1146,7 @@ export default function Dashboard({ onStatsUpdate }) {
           if (offersToUse.length > 0) {
             startProvisioningRace(offersToUse);
           } else {
-            toast.error(t('dashboard.toasts.noMachinesForTier'));
+            toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
           }
         })
         .catch(() => {
@@ -1279,7 +1156,7 @@ export default function Dashboard({ onStatsUpdate }) {
           if (filteredDemoOffers.length > 0) {
             startProvisioningRace(filteredDemoOffers);
           } else {
-            toast.error(t('dashboard.toasts.noMachinesForTier'));
+            toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
           }
         });
     }
@@ -1326,7 +1203,7 @@ export default function Dashboard({ onStatsUpdate }) {
           if (offersToUse.length > 0) {
             startProvisioningRaceIntegrated(offersToUse);
           } else {
-            toast.error(t('dashboard.toasts.noMachinesForTier'));
+            toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
           }
         })
         .catch(() => {
@@ -1337,7 +1214,7 @@ export default function Dashboard({ onStatsUpdate }) {
           if (filteredDemoOffers.length > 0) {
             startProvisioningRaceIntegrated(filteredDemoOffers);
           } else {
-            toast.error(t('dashboard.toasts.noMachinesForTier'));
+            toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
           }
         });
     }
@@ -1405,7 +1282,7 @@ export default function Dashboard({ onStatsUpdate }) {
       min_reliability: 0, region: 'any', verified_only: false, datacenter: false,
       static_ip: false, order_by: 'dph_total', limit: 100
     });
-    toast.info(t('dashboard.toasts.filtersReset'));
+    toast.info('Filtros resetados');
   };
 
   return (
@@ -1420,38 +1297,24 @@ export default function Dashboard({ onStatsUpdate }) {
 
       {/* NOTE: Provisioning Race Screen removed - now integrated into WizardForm step 4 */}
 
-      {/* Economy Widget */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 mb-6">
-        <EconomyWidget getAuthHeaders={() => ({ 'Authorization': `Bearer ${getToken()}` })} />
-      </div>
-
       {/* Deploy Wizard */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
         <Card>
           <CardHeader className="pb-6">
-                  <Cpu className="w-5 h-5 text-brand-500" />
-{/* Header com título e saldo */}
-                  <CardTitle className="text-lg">Nova Instância GPU</CardTitle>
-{/* Header com título */}
-              <div className="w-10 h-10 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center">
+            {/* Header com título */}
             <div className="flex items-center gap-3 mb-6">
-                <div>
+              <div className="w-10 h-10 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center">
+                <Cpu className="w-5 h-5 text-brand-500" />
               </div>
               <div>
-            <div className="flex items-center justify-between gap-3 mb-6">
-                </div>
-              <div className="flex items-center gap-3">
-                  <CardDescription className="text-xs">Provisione sua máquina em minutos</CardDescription>
-                <Cpu className="w-5 h-5 text-brand-500" />
-                <CardTitle className="text-lg">{t('dashboard.newInstance.title')}</CardTitle>
-                <div className="w-10 h-10 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center">
-                <CardDescription className="text-xs">{t('dashboard.newInstance.subtitle')}</CardDescription>
+                <CardTitle className="text-lg">Nova Instância GPU</CardTitle>
+                <CardDescription className="text-xs">Provisione sua máquina em minutos</CardDescription>
               </div>
             </div>
 
             {/* Seletor de Método Unificado */}
-            <div className="space-y-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Opção 1: Configuração Guiada */}
                 <button
                   onClick={() => {
@@ -1463,40 +1326,30 @@ export default function Dashboard({ onStatsUpdate }) {
                       document.getElementById('wizard-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 100);
                     if (deployMethod === 'manual' && mode === 'wizard') {
-                      toast.info(t('dashboard.toasts.guidedModeSelected'));
+                      toast.info('Modo Guiado já selecionado. Comece escolhendo uma região abaixo.');
                     }
                   }}
                   data-testid="config-guided"
-                  className={`p-2 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.01] hover:shadow-md hover:shadow-brand-500/10 active:scale-[0.99] ${
+                  className={`p-6 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:shadow-brand-500/10 active:scale-[0.98] ${
                     deployMethod === 'manual' && mode === 'wizard'
-                      ? 'border-brand-500 ring-1 ring-brand-500/20 bg-brand-500/5'
+                      ? 'border-brand-500 ring-2 ring-brand-500/20 bg-brand-500/5'
                       : 'border-gray-700 hover:border-brand-400 hover:bg-gray-800/50'
                   }`}
                 >
                   {deployMethod === 'manual' && mode === 'wizard' && (
-                    <div className="absolute top-0 left-0 w-0.5 h-full bg-brand-500" />
+                    <div className="absolute top-0 left-0 w-1 h-full bg-brand-500" />
                   )}
-<div className="flex items-start gap-3">
-                        <p className="font-semibold text-xs text-white group-hover:text-brand-300 transition-colors">Configuração Guiada</p>
-                      {deployMethod === 'manual' && mode === 'wizard' && <Check className="w-3 h-3 text-white" />}
-                      </div>
-                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-brand-300 transition-colors">{t('dashboard.deployMethods.guided.title')}</p>
-                        <span className="inline-block text-[8px] font-semibold text-brand-400 bg-brand-500/10 px-1 py-0.5 rounded">✓</span>
-                    </div>
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                    <div className="flex-1 min-w-0">
+                  <div className="flex items-start gap-3">
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 flex-shrink-0 transition-colors ${
-                      <p className="text-[10px] text-gray-400 leading-tight">Simples e intuitivo</p>
-                      <p className="text-xs text-gray-400 leading-relaxed mb-3">{t('dashboard.deployMethods.guided.description')}</p>
-                      <span className="inline-block text-[10px] font-semibold text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-md border border-brand-800/20">{t('dashboard.deployMethods.guided.badge')}</span>
                       deployMethod === 'manual' && mode === 'wizard' ? 'border-brand-500 bg-brand-500' : 'border-gray-600 group-hover:border-brand-400'
-<div className="flex items-center gap-2">
-                    <div className="flex-1">
                     }`}>
+                      {deployMethod === 'manual' && mode === 'wizard' && <Check className="w-3 h-3 text-white" />}
                     </div>
-                    {deployMethod === 'manual' && mode === 'wizard' && (
-                      <Check className="w-3.5 h-3.5 text-brand-500 flex-shrink-0" />
-                    )}
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-brand-300 transition-colors">Configuração Guiada</p>
+                      <p className="text-xs text-gray-400 leading-relaxed mb-3">Escolha região, GPU e performance de forma simples e intuitiva</p>
+                      <span className="inline-block text-[10px] font-semibold text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-md border border-brand-800/20">✓ Recomendado</span>
+                    </div>
                   </div>
                 </button>
 
@@ -1509,39 +1362,29 @@ export default function Dashboard({ onStatsUpdate }) {
                     setTimeout(() => {
                       document.getElementById('wizard-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 100);
-                    toast.info(t('dashboard.toasts.advancedModeSelected'));
+                    toast.info('Modo Avançado selecionado. Configure filtros detalhados.');
                   }}
                   data-testid="config-advanced"
-                  className={`p-2 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.01] hover:shadow-md hover:shadow-brand-500/10 active:scale-[0.99] ${
+                  className={`p-6 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:shadow-brand-500/10 active:scale-[0.98] ${
                     deployMethod === 'manual' && mode === 'advanced'
-                      ? 'border-brand-500 ring-1 ring-brand-500/20 bg-brand-500/5'
+                      ? 'border-brand-500 ring-2 ring-brand-500/20 bg-brand-500/5'
                       : 'border-gray-700 hover:border-brand-400 hover:bg-gray-800/50'
                   }`}
                 >
                   {deployMethod === 'manual' && mode === 'advanced' && (
-                    <div className="absolute top-0 left-0 w-0.5 h-full bg-brand-500" />
+                    <div className="absolute top-0 left-0 w-1 h-full bg-brand-500" />
                   )}
-<div className="flex items-start gap-3">
-                      </div>
-                      <p className="text-[10px] text-gray-400 leading-tight">Controle total</p>
-                    </div>
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-400 leading-relaxed mb-3">{t('dashboard.deployMethods.advanced.description')}</p>
-                      <span className="inline-block text-[10px] font-semibold text-gray-500 bg-gray-800 px-2.5 py-1 rounded-md border border-gray-700">{t('dashboard.deployMethods.advanced.badge')}</span>
-                        <span className="inline-block text-[8px] font-semibold text-gray-500 bg-gray-800 px-1 py-0.5 rounded">Pro</span>
+                  <div className="flex items-start gap-3">
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 flex-shrink-0 transition-colors ${
-                      {deployMethod === 'manual' && mode === 'advanced' && <Check className="w-3 h-3 text-white" />}
-                        <p className="font-semibold text-xs text-white group-hover:text-brand-300 transition-colors">Configuração Avançada</p>
-<div className="flex items-center gap-2">
-                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-brand-300 transition-colors">{t('dashboard.deployMethods.advanced.title')}</p>
-                    <div className="flex-1">
                       deployMethod === 'manual' && mode === 'advanced' ? 'border-brand-500 bg-brand-500' : 'border-gray-600 group-hover:border-brand-400'
                     }`}>
+                      {deployMethod === 'manual' && mode === 'advanced' && <Check className="w-3 h-3 text-white" />}
                     </div>
-                    {deployMethod === 'manual' && mode === 'advanced' && (
-                      <Check className="w-3.5 h-3.5 text-brand-500 flex-shrink-0" />
-                    )}
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-brand-300 transition-colors">Configuração Avançada</p>
+                      <p className="text-xs text-gray-400 leading-relaxed mb-3">Controle total com filtros detalhados de hardware e rede</p>
+                      <span className="inline-block text-[10px] font-semibold text-gray-500 bg-gray-800 px-2.5 py-1 rounded-md border border-gray-700">Para especialistas</span>
+                    </div>
                   </div>
                 </button>
 
@@ -1553,7 +1396,7 @@ export default function Dashboard({ onStatsUpdate }) {
                     setTimeout(() => {
                       document.getElementById('wizard-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 100);
-                    toast.info(t('dashboard.toasts.aiAssistantActivated'));
+                    toast.info('Assistente IA ativado. Descreva o que você precisa.');
                   }}
                   data-testid="config-ai"
                   className={`p-6 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/10 active:scale-[0.98] ${
@@ -1572,9 +1415,9 @@ export default function Dashboard({ onStatsUpdate }) {
                       {deployMethod === 'ai' && <Check className="w-3 h-3 text-white" />}
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-purple-300 transition-colors">{t('dashboard.deployMethods.ai.title')}</p>
-                      <p className="text-xs text-gray-400 leading-relaxed mb-3">{t('dashboard.deployMethods.ai.description')}</p>
-                      <span className="inline-block text-[10px] font-semibold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-md border border-purple-500/20">{t('dashboard.deployMethods.ai.badge')}</span>
+                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-purple-300 transition-colors">Assistente IA</p>
+                      <p className="text-xs text-gray-400 leading-relaxed mb-3">Converse e deixe a IA recomendar a melhor configuração</p>
+                      <span className="inline-block text-[10px] font-semibold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-md border border-purple-500/20">✨ Inteligente</span>
                     </div>
                   </div>
                 </button>
@@ -1582,53 +1425,25 @@ export default function Dashboard({ onStatsUpdate }) {
             </div>
           </CardHeader>
 
+          {/* AI MODE */}
+          {deployMethod === 'ai' && (
+            <CardContent id="wizard-form-section" className="h-[600px] p-0 relative animate-fadeIn">
+              <AIWizardChat
+                compact={false}
+                onRecommendation={(rec) => {}}
+                onSearchWithFilters={(filters) => {
+                  // Logic to jump to search results
+                  setDeployMethod('manual');
+                  setMode('advanced');
+                  // Apply filters...
+                }}
+              />
+            </CardContent>
+          )}
+
           {/* WIZARD MODE (MANUAL) */}
           {deployMethod === 'manual' && mode === 'wizard' && !showResults && (
-            (() => {
-              console.log('[WIZARD RENDER] loadingBalance:', loadingBalance, 'balance:', balance);
-              if (loadingBalance) {
-                console.log('[WIZARD RENDER] Showing loading...');
-                return (
-                  <div data-testid="balance-loading" className="flex items-center justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
-                  </div>
-                );
-              }
-              if (balance !== null && balance <= 0) {
-                console.log('[WIZARD RENDER] No balance, showing error message');
-                return (
-              <div data-testid="insufficient-balance-message" className="flex flex-col items-center justify-center py-12 px-6 text-center">
-                <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center mb-4">
-                  <DollarSign className="w-8 h-8 text-red-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">Saldo Insuficiente</h3>
-                <p className="text-gray-400 mb-6 max-w-md">
-                  Você não possui créditos para provisionar novas máquinas. Adicione saldo para continuar.
-                </p>
-                <div className="flex items-center gap-3">
-                  <Button
-                    data-testid="add-credits-button"
-                    onClick={() => window.open('https://vast.ai/console/billing/', '_blank')}
-                    className="bg-brand-500 hover:bg-brand-600"
-                  >
-                    <DollarSign className="w-4 h-4 mr-2" />
-                    Adicionar Créditos
-                  </Button>
-                  <Button
-                    data-testid="check-balance-button"
-                    onClick={fetchBalance}
-                    variant="outline"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Verificar Novamente
-                  </Button>
-                </div>
-              </div>
-                );
-              }
-              console.log('[WIZARD RENDER] Has balance, showing wizard');
-              return (
-            <div id="wizard-form-section" data-testid="wizard-form-container" className="animate-fadeIn">
+            <div id="wizard-form-section" className="animate-fadeIn">
               <WizardForm
                 searchCountry={searchCountry}
                 selectedLocation={selectedLocation}
@@ -1657,8 +1472,6 @@ export default function Dashboard({ onStatsUpdate }) {
                 maxRounds={MAX_ROUNDS}
               />
             </div>
-              );
-            })()
           )}
 
           {/* ADVANCED MODE (MANUAL) */}
@@ -1681,8 +1494,8 @@ export default function Dashboard({ onStatsUpdate }) {
               <div className="flex flex-col gap-4 mb-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-gray-900 dark:text-white text-lg font-semibold">{t('dashboard.results.title')}</h2>
-                    <p className="text-gray-500 text-xs">{t('dashboard.results.resultsFound', { count: offers.length })}</p>
+                    <h2 className="text-gray-900 dark:text-white text-lg font-semibold">Máquinas Disponíveis</h2>
+                    <p className="text-gray-500 text-xs">{offers.length} resultados encontrados</p>
                   </div>
                   <Button
                     variant="outline"
@@ -1690,7 +1503,7 @@ export default function Dashboard({ onStatsUpdate }) {
                     onClick={() => setShowResults(false)}
                   >
                     <ChevronLeft className="w-4 h-4" />
-                    {t('common.back')}
+                    Voltar
                   </Button>
                 </div>
 
@@ -1699,7 +1512,7 @@ export default function Dashboard({ onStatsUpdate }) {
                   <div className="flex items-center gap-4 p-3 bg-gray-800 rounded-lg border border-gray-700">
                     <div className="flex items-center gap-2">
                       <Activity className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{t('dashboard.results.sortBy')}</span>
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Ordenar por:</span>
                     </div>
                     <Select value={advancedFilters.order_by} onValueChange={(v) => handleAdvancedFilterChange('order_by', v)}>
                       <SelectTrigger className="w-[200px] h-9 bg-gray-900">
@@ -1712,7 +1525,7 @@ export default function Dashboard({ onStatsUpdate }) {
                       </SelectContent>
                     </Select>
                     <div className="flex items-center gap-2 ml-4">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.results.limit')}</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Limite:</span>
                       <Input
                         type="number"
                         min="10"
@@ -1737,17 +1550,17 @@ export default function Dashboard({ onStatsUpdate }) {
                     setError(null);
                     setShowResults(false);
                   }}
-                  retryText={t('common.refresh')}
+                  retryText="Tentar novamente"
                 />
               )}
 
               {!loading && !error && offers.length === 0 && (
                 <EmptyState
                   icon="search"
-                  title={t('dashboard.results.noMachinesFound')}
-                  description={t('dashboard.results.noMachinesDescription')}
+                  title="Nenhuma máquina encontrada"
+                  description="Não encontramos ofertas com os filtros selecionados. Tente ajustar os critérios de busca."
                   action={() => setShowResults(false)}
-                  actionText={t('dashboard.results.adjustFilters')}
+                  actionText="Ajustar filtros"
                 />
               )}
 
@@ -1767,11 +1580,6 @@ export default function Dashboard({ onStatsUpdate }) {
             </CardContent>
           )}
         </Card>
-
-        {/* Snapshot Status Section */}
-        <div className="mt-6">
-          <SnapshotStatus refreshInterval={30000} />
-        </div>
       </div>
     </div >
   );

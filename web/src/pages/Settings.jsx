@@ -1,23 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
-import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive, Mail } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive, Webhook } from 'lucide-react'
+import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import StandbyConfig from '../components/StandbyConfig'
 import FailoverReport from '../components/FailoverReport'
-import WebhookManager from '../components/WebhookManager'
-import { useTranslation } from 'react-i18next'
-import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive, Globe } from 'lucide-react'
-import { useToast } from '../components/Toast'
-import StandbyConfig from '../components/StandbyConfig'
-import FailoverReport from '../components/FailoverReport'
-import LanguageSelector from '../components/LanguageSelector'
-import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive, Globe } from 'lucide-react'
-import { useToast } from '../components/Toast'
-import StandbyConfig from '../components/StandbyConfig'
-import FailoverReport from '../components/FailoverReport'
-import RegionPreferences from '../components/settings/RegionPreferences'
 import { Alert, Card, Button } from '../components/tailadmin-ui'
 
 const API_BASE = ''
@@ -256,24 +242,14 @@ function Toast({ message, title = 'Saldo Baixo!', type = 'warning', onClose }) {
   )
 }
 
-// Menu items para Settings - labels will be translated in the component
+// Menu items para Settings
 const SETTINGS_MENU = [
   { id: 'apis', label: 'APIs & Credenciais', icon: Key, color: 'green' },
-  { id: 'regions', label: 'Preferencias de Regiao', icon: Globe, color: 'blue' },
-  { id: 'storage', label: 'Armazenamento', icon: Database, color: 'cyan' },
+  { id: 'storage', label: 'Armazenamento', icon: Database, color: 'blue' },
   { id: 'cloudstorage', label: 'Cloud Storage Failover', icon: Cloud, color: 'purple' },
   { id: 'agent', label: 'Agent Sync', icon: Server, color: 'cyan' },
-  { id: 'webhooks', label: 'Webhooks', icon: Webhook, color: 'orange' },
   { id: 'notifications', label: 'Notificações', icon: AlertCircle, color: 'yellow' },
-  { id: 'email', label: 'Relatórios por Email', icon: Mail, color: 'cyan', href: '/app/settings/email-preferences' },
   { id: 'failover', label: 'CPU Failover', icon: Shield, color: 'red' },
-  { id: 'preferences', labelKey: 'settings.preferences.title', icon: Globe, color: 'teal' },
-  { id: 'apis', labelKey: 'settings.menu.apis', icon: Key, color: 'green' },
-  { id: 'storage', labelKey: 'settings.menu.storage', icon: Database, color: 'blue' },
-  { id: 'cloudstorage', labelKey: 'settings.menu.cloudstorage', icon: Cloud, color: 'purple' },
-  { id: 'agent', labelKey: 'settings.menu.agent', icon: Server, color: 'cyan' },
-  { id: 'notifications', labelKey: 'settings.menu.notifications', icon: AlertCircle, color: 'yellow' },
-  { id: 'failover', labelKey: 'settings.menu.failover', icon: Shield, color: 'red' },
 ]
 
 // Cloud Storage Providers
@@ -313,11 +289,10 @@ const CLOUD_STORAGE_PROVIDERS = [
 ]
 
 export default function Settings() {
-  const { t } = useTranslation()
   const toast = useToast()
   const [searchParams] = useSearchParams()
   const tabFromUrl = searchParams.get('tab')
-  const [activeTab, setActiveTab] = useState(tabFromUrl || 'preferences')
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'apis')
   const [settings, setSettings] = useState({
     vast_api_key: '',
     r2_access_key: '',
@@ -589,8 +564,6 @@ export default function Settings() {
       <div className="page-header">
         <h1 className="page-title" data-testid="settings-page-title">Configurações</h1>
         <p className="page-subtitle">Gerencie suas APIs, armazenamento e preferências</p>
-        <h1 className="page-title">{t('settings.pageTitle')}</h1>
-        <p className="page-subtitle">{t('settings.pageSubtitle')}</p>
       </div>
 
       {/* Layout: Sidebar + Content */}
@@ -605,9 +578,7 @@ export default function Settings() {
                   green: 'stat-card-icon-success',
                   blue: 'stat-card-icon-primary',
                   cyan: 'stat-card-icon-primary',
-                  teal: 'bg-teal-500/20 text-teal-400',
                   purple: 'bg-purple-500/20 text-purple-400',
-                  orange: 'bg-orange-500/20 text-orange-400',
                   yellow: 'stat-card-icon-warning',
                   red: 'stat-card-icon-error',
                 }
@@ -624,42 +595,10 @@ export default function Settings() {
                         : 'text-gray-400 hover:bg-white/10 hover:text-gray-200'
                     }`}
                   >
-                const menuItemContent = (
-                  <>
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconColorClasses[item.color]}`}>
                       <MenuIcon className="w-4 h-4" />
                     </div>
                     <span className="text-sm font-medium">{item.label}</span>
-                  </>
-                )
-
-                const menuItemClasses = `w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left mb-1 ${
-                  isActive
-                    ? 'bg-brand-500/10 text-brand-400'
-                    : 'text-gray-400 hover:bg-white/10 hover:text-gray-200'
-                }`
-
-                // If item has href, render as Link for navigation
-                if (item.href) {
-                  return (
-                    <Link
-                      key={item.id}
-                      to={item.href}
-                      className={menuItemClasses}
-                    >
-                      {menuItemContent}
-                    </Link>
-                  )
-                }
-
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={menuItemClasses}
-                  >
-                    {menuItemContent}
-                    <span className="text-sm font-medium">{t(item.labelKey)}</span>
                   </button>
                 )
               })}
@@ -674,33 +613,6 @@ export default function Settings() {
             <Alert variant={message.type === 'success' ? 'success' : 'error'}>
               {message.text}
             </Alert>
-          )}
-
-          {/* Preferences Tab */}
-          {activeTab === 'preferences' && (
-            <div className="space-y-6">
-              {/* Language Selection */}
-              <Card
-                className="border-white/10 bg-dark-surface-card"
-                header={
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-teal-500/10">
-                      <Globe className="w-5 h-5 text-teal-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">{t('settings.preferences.language')}</h3>
-                      <p className="text-gray-500 text-sm mt-1">{t('settings.preferences.languageDescription')}</p>
-                    </div>
-                  </div>
-                }
-              >
-                <LanguageSelector />
-              </Card>
-          {/* Region Preferences Tab */}
-          {activeTab === 'regions' && (
-            <div className="space-y-6">
-              <RegionPreferences />
-            </div>
           )}
 
           {/* APIs & Credenciais Tab */}
@@ -1352,11 +1264,6 @@ export default function Settings() {
           </button>
         </Card>
             </div>
-          )}
-
-          {/* Webhooks Tab */}
-          {activeTab === 'webhooks' && (
-            <WebhookManager />
           )}
 
           {/* Failover Tab */}

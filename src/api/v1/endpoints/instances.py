@@ -32,6 +32,7 @@ from ....core.exceptions import (
 )
 from ..dependencies import (
     get_instance_service,
+    get_instance_service_public,
     get_migration_service,
     get_sync_service,
     require_auth,
@@ -49,6 +50,9 @@ from ....services.machine_setup_service import MachineSetupService, MachineSetup
 import time
 
 router = APIRouter(prefix="/instances", tags=["Instances"], dependencies=[Depends(require_auth)])
+
+# Public router for endpoints that don't require auth (e.g., searching offers)
+public_router = APIRouter(prefix="/instances", tags=["Instances (Public)"])
 
 
 async def setup_machine_components(instance_id: int, ssh_host: str, ssh_port: int):
@@ -120,7 +124,7 @@ async def setup_machine_components(instance_id: int, ssh_host: str, ssh_port: in
         logger.error(f"[SETUP] Exception setting up instance {instance_id}: {e}")
 
 
-@router.get("/offers", response_model=SearchOffersResponse)
+@public_router.get("/offers", response_model=SearchOffersResponse)
 async def search_offers(
     gpu_name: Optional[str] = Query(None, description="Filter by GPU model (e.g., RTX_4090, A100)"),
     num_gpus: int = Query(1, ge=1, le=8, description="Number of GPUs"),
@@ -140,7 +144,7 @@ async def search_offers(
     order_by: str = Query("dph_total", description="Order by field: dph_total, gpu_ram, reliability"),
     limit: int = Query(50, le=100, description="Maximum results"),
     include_blacklisted: bool = Query(False, description="Include blacklisted machines (marked but not filtered)"),
-    instance_service: InstanceService = Depends(get_instance_service),
+    instance_service: InstanceService = Depends(get_instance_service_public),
 ):
     """
     Search available GPU offers with advanced filters
@@ -652,17 +656,19 @@ async def create_instance(
                     label=request.label
                 )
 
-            db.commit()
-            instance_id=instance.id,
-        background_tasks.add_task(
-        )
-            ssh_port=instance.ssh_port,
-            logger.info(f"Quota committed for team {team_id}: instance {instance.id} created")
-            ssh_host=instance.ssh_host,
+        db.commit()
+
+        # Commit quota reservation on success
         if quota_reserved:
-# Auto-setup code-server + DumontAgent in background
+            logger.info(f"Quota committed for team {team_id}: instance {instance.id} created")
+
+        # Auto-setup code-server + DumontAgent in background
+        background_tasks.add_task(
             setup_machine_components,
-# Commit quota reservation on success
+            instance_id=instance.id,
+            ssh_host=instance.ssh_host,
+            ssh_port=instance.ssh_port,
+        )
 
         return InstanceResponse(
             id=instance.id,

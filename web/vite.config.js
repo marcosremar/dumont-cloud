@@ -1,10 +1,22 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
+import svgr from "vite-plugin-svgr"
 import path from "path"
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    svgr({
+      svgrOptions: {
+        exportType: "named",
+        ref: true,
+        svgo: false,
+        titleProp: true,
+      },
+      include: "**/*.svg?react",
+    }),
+  ],
   test: {
     globals: true,
     environment: "jsdom",
@@ -21,12 +33,11 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 4892,
     strictPort: false,
-    allowedHosts: ["dumontcloud.orb.local", "dumontcloud-local.orb.local", ".orb.local"],
-    // HMR config - automatically use the same port as the server
+    allowedHosts: ["dumontcloud.orb.local", "dumontcloud-local.orb.local", ".orb.local", "localhost"],
+    // HMR config - let Vite auto-detect port
     hmr: {
       protocol: "ws",
-      host: "dumontcloud.orb.local",
-      clientPort: 4892,
+      host: "localhost",
     },
     watch: {
       usePolling: false,
@@ -39,20 +50,20 @@ export default defineConfig({
     },
     proxy: {
       "/admin/doc/live": {
-        target: "http://dumontcloud.orb.local:8081",
+        target: "http://localhost:8081",
         changeOrigin: true,
       },
       "/api/docs": {
-        target: "http://dumontcloud.orb.local:8081",
+        target: "http://localhost:8081",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/docs/, "/api"),
       },
       "/api": {
-        target: "http://dumontcloud.orb.local:8767",
+        target: "http://localhost:8767",
         changeOrigin: true,
       },
       "/admin": {
-        target: "http://dumontcloud.orb.local:8767",
+        target: "http://localhost:8767",
         changeOrigin: true,
       },
     },
