@@ -65,6 +65,8 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 markers = [
     "slow: marks tests as slow (provisions real GPUs, costs money)",
+    "real: marks tests that use real GPU instances and cost money",
+    "fast: marks tests that run quickly without provisioning resources",
 ]
 # SEMPRE rodar TODOS os testes em paralelo com 10 workers
 # Não segregar testes por tipo - GPU, CPU, integration, todos juntos
@@ -79,7 +81,7 @@ timeout_method = "thread"
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::pytest.PytestCollectionWarning",
-    "ignore::pytest_benchmark.logger.PytestBenchmarkWarning",
+    # "ignore::pytest_benchmark.logger.PytestBenchmarkWarning",  # pytest-benchmark not installed
 ]
 
 # Rate limiting is configured in conftest.py via environment variables:
