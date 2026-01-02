@@ -1,1 +1,0 @@
-WARNING  tests.backend.conftest:conftest.py:270 WARN: Status inesperado ao parar sync: 422

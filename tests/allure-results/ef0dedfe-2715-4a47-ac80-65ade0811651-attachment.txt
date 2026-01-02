@@ -1,2 +1,0 @@
-[92m✓[0m Status com config
-[92m✓[0m Campo 'config' presente no status

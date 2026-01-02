@@ -1,2 +1,0 @@
-[92m✓[0m Logout
-[92m✓[0m Logout realizado com sucesso

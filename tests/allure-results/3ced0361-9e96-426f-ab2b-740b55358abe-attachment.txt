@@ -1,1 +1,0 @@
-2025-12-21 06:32:13,047 - tests.backend.conftest - INFO - PASS: Restic não configurado (esperado em ambiente de teste)

@@ -1,2 +1,0 @@
-INFO     tests.backend.conftest:conftest.py:255 PASS: Health service
-INFO     tests.backend.conftest:conftest.py:255 PASS: Nome do serviço: dumont-cloud

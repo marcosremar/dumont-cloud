@@ -1,2 +1,0 @@
-INFO     tests.backend.conftest:conftest.py:233 Usando cache para TestAlertsReadiness
-INFO     tests.backend.conftest:conftest.py:265 INFO: Estrutura de alerta preparada para implementação futura
