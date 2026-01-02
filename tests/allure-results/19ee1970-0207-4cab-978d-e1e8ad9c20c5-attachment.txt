@@ -1,2 +1,0 @@
-[92m✓[0m Health check
-[92m✓[0m Health status: healthy

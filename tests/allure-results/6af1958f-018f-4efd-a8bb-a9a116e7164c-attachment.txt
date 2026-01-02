@@ -1,1 +1,0 @@
-ERROR    dumontcloud.tests.backend.conftest:conftest.py:174 Login erro: HTTPConnectionPool(host='localhost', port=8766): Max retries exceeded with url: /api/v1/auth/login (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8766): Failed to establish a new connection: [Errno 111] Connection refused"))

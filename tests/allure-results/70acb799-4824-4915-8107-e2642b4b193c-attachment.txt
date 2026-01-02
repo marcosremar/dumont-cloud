@@ -1,2 +1,0 @@
-INFO     tests.backend.conftest:conftest.py:233 Usando cache para TestHibernationSecurity
-INFO     tests.backend.conftest:conftest.py:255 PASS: Endpoint protegido contra acesso não autenticado

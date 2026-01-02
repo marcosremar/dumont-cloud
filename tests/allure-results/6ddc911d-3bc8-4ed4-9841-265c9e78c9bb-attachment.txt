@@ -1,2 +1,0 @@
-[92m✓[0m Preços do standby
-[92m✓[0m Tempo de resposta dos preços: 0.001s

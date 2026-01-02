@@ -1,2 +1,0 @@
-INFO     tests.backend.conftest:conftest.py:255 PASS: Savings history
-INFO     tests.backend.conftest:conftest.py:255 PASS: Savings history retornou dados

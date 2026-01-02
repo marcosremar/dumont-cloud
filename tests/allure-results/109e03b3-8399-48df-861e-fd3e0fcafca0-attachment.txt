@@ -1,2 +1,0 @@
-[92m✓[0m Estrutura de máquinas
-[94mℹ[0m Nenhuma máquina com hibernação encontrada

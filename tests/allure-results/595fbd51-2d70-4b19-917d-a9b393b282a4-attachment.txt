@@ -1,3 +1,0 @@
-INFO     tests.backend.conftest:conftest.py:233 Usando cache para TestTelemetryEndpoints
-WARNING  dumontcloud.tests.backend.conftest:conftest.py:198 Request erro, tentativa 2: HTTPConnectionPool(host='localhost', port=8766): Max retries exceeded with url: /api/v1/telemetry/stats (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8766): Failed to establish a new connection: [Errno 111] Connection refused"))
-WARNING  dumontcloud.tests.backend.conftest:conftest.py:198 Request erro, tentativa 3: HTTPConnectionPool(host='localhost', port=8766): Max retries exceeded with url: /api/v1/telemetry/stats (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8766): Failed to establish a new connection: [Errno 111] Connection refused"))

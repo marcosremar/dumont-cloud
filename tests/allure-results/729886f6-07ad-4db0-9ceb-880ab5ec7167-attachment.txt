@@ -1,2 +1,0 @@
-[94mℹ[0m Previsão não disponível para 'RTX 4090' tipo 'on-demand'
-[94mℹ[0m Previsão não disponível para 'RTX 4090' tipo 'interruptible'

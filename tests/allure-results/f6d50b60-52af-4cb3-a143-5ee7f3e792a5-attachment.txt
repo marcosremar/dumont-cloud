@@ -1,2 +1,0 @@
-INFO     tests.backend.conftest:conftest.py:233 Usando cache para TestSnapshotSecurity
-INFO     tests.backend.conftest:conftest.py:255 PASS: Acesso não autorizado rejeitado para listar snapshots

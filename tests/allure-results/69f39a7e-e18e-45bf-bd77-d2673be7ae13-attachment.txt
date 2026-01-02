@@ -1,3 +1,0 @@
-INFO     tests.backend.conftest:conftest.py:233 Usando cache para TestHibernationPerformance
-INFO     tests.backend.conftest:conftest.py:255 PASS: Tempo de resposta
-INFO     tests.backend.conftest:conftest.py:255 PASS: Tempo de resposta: 0.001s

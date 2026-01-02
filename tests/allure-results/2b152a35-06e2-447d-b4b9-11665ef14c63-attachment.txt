@@ -1,3 +1,0 @@
-INFO     tests.backend.conftest:conftest.py:255 PASS: Listar associações
-INFO     tests.backend.conftest:conftest.py:255 PASS: Testando sync para GPU: 12345
-INFO     tests.backend.conftest:conftest.py:265 INFO: Sync retornou status: 500
