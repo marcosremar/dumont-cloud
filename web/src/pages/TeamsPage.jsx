@@ -279,9 +279,7 @@ export default function TeamsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="page-title flex items-center gap-3">
-              <div className="stat-card-icon stat-card-icon-primary">
-                <Users className="w-5 h-5" />
-              </div>
+              <Users className="w-6 h-6 text-brand-400" />
               Teams
             </h1>
             <p className="page-subtitle">Manage your teams and team members</p>

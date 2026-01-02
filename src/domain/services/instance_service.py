@@ -130,13 +130,30 @@ class InstanceService:
             for port in ports:
                 env_vars[f"PORT_{port}"] = str(port)
 
+        # Build startup script that installs and starts code-server for VS Code Web
+        code_server_script = """#!/bin/bash
+# Install code-server for VS Code Web
+curl -fsSL https://code-server.dev/install.sh | sh -s -- --method=standalone --prefix=/usr/local 2>/dev/null || true
+
+# Start code-server on port 8080 (no auth for internal use)
+nohup /usr/local/bin/code-server --bind-addr 0.0.0.0:8080 --auth none --disable-telemetry /workspace > /var/log/code-server.log 2>&1 &
+
+# Create workspace directory
+mkdir -p /workspace
+"""
+        # Combine with user's custom onstart command if provided
+        if onstart_cmd:
+            final_onstart = f"{code_server_script}\n# User custom command:\n{onstart_cmd}"
+        else:
+            final_onstart = code_server_script
+
         instance = self.gpu_provider.create_instance(
             offer_id=offer_id,
             image=image,
             disk_size=disk_size,
             label=label,
             env_vars=env_vars,
-            onstart_cmd=onstart_cmd,
+            onstart_cmd=final_onstart,
         )
 
         logger.info(f"Instance {instance.id} created successfully")

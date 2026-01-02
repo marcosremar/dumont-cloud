@@ -1,12 +1,12 @@
 {
-  "timestamp": "2025-12-23T08:42:39.243177",
+  "timestamp": "2026-01-01T23:48:14.120002",
   "modes": {
     "economic": {
       "provider": "vast",
-      "gpu": "RTX 5070",
-      "pause": 11.55379605293274,
-      "resume": 153.57426142692566,
-      "total": 165.1280574798584
+      "gpu": "RTX 3060",
+      "pause": 25.506768226623535,
+      "resume": 180.9014618396759,
+      "total": 206.40823006629944
     },
     "fast": {
       "provider": "gcp",
@@ -27,8 +27,8 @@
     },
     "spot": {
       "provider": "vast",
-      "search": 1.5678040981292725,
-      "total_estimated": 71.56780409812927
+      "search": 1.0000815391540527,
+      "total_estimated": 71.00008153915405
     }
   },
   "summary": {

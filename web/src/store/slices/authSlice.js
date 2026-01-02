@@ -4,6 +4,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
+const isDemoMode = () => localStorage.getItem('demo_mode') === 'true'
 
 // Async thunks
 export const login = createAsyncThunk(
@@ -53,6 +54,10 @@ export const register = createAsyncThunk(
 export const checkAuth = createAsyncThunk(
   'auth/checkAuth',
   async (_, { rejectWithValue }) => {
+    // Skip API call in demo mode - assume authenticated
+    if (isDemoMode()) {
+      return { authenticated: true, user: { isDemo: true } }
+    }
     try {
       const token = localStorage.getItem('auth_token')
       if (!token) {
@@ -94,12 +99,14 @@ export const logout = createAsyncThunk(
   }
 )
 
+const storedToken = localStorage.getItem('auth_token') || null
+
 const initialState = {
-  isAuthenticated: false,
-  token: localStorage.getItem('auth_token') || null,
+  isAuthenticated: !!storedToken,
+  token: storedToken,
   loading: false,
   error: null,
-  initialized: false,
+  initialized: !!storedToken,
 }
 
 const authSlice = createSlice({

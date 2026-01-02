@@ -15,7 +15,7 @@ const Backdrop = () => {
   );
 };
 
-const AppLayout = ({ user, onLogout, children, isDemo = false, dashboardStats = null }) => {
+const AppLayout = ({ user, onLogout, children, dashboardStats = null }) => {
   const { isExpanded } = useSidebar();
 
   return (
@@ -25,7 +25,7 @@ const AppLayout = ({ user, onLogout, children, isDemo = false, dashboardStats = 
       <div className="fixed bottom-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-brand-400/5 blur-[100px] pointer-events-none" />
 
       {/* Sidebar */}
-      <AppSidebar isDemo={isDemo} />
+      <AppSidebar />
 
       {/* Backdrop for mobile */}
       <Backdrop />
@@ -36,7 +36,7 @@ const AppLayout = ({ user, onLogout, children, isDemo = false, dashboardStats = 
           }`}
       >
         {/* Header */}
-        <AppHeader user={user} onLogout={onLogout} isDemo={isDemo} dashboardStats={dashboardStats} />
+        <AppHeader user={user} onLogout={onLogout} dashboardStats={dashboardStats} />
 
         {/* Page Content */}
         <main className="p-4 md:p-6">

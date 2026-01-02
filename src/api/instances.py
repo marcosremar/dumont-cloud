@@ -524,8 +524,8 @@ def restore_to_instance(instance_id: int):
         from src.config import settings
 
         restore_cmd = f'''
-export AWS_ACCESS_KEY_ID="{user_settings.get('r2_access_key') or settings.r2.access_key}"
-export AWS_SECRET_ACCESS_KEY="{user_settings.get('r2_secret_key') or settings.r2.secret_key}"
+export AWS_ACCESS_KEY_ID="{user_settings.get('r2_access_key') or settings.r2.access_key_id}"
+export AWS_SECRET_ACCESS_KEY="{user_settings.get('r2_secret_key') or settings.r2.secret_access_key}"
 export RESTIC_REPOSITORY="{user_settings.get('restic_repo') or settings.r2.restic_repo}"
 export RESTIC_PASSWORD="{user_settings.get('restic_password') or settings.restic.password}"
 mkdir -p {target_path}

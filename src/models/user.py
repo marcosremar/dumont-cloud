@@ -52,6 +52,15 @@ class User(Base):
         Index('idx_user_verification', 'verification_token', 'verification_token_expires_at'),
     )
 
+    # Alias for compatibility with db_user_repository
+    @property
+    def password_hash(self):
+        return self.hashed_password
+
+    @password_hash.setter
+    def password_hash(self, value):
+        self.hashed_password = value
+
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, is_trial={self.is_trial}, verified={self.is_verified})>"
 

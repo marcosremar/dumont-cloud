@@ -368,9 +368,7 @@ export default function GPUMetrics() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
-              <div className="stat-card-icon stat-card-icon-success">
-                <BarChart3 size={24} />
-              </div>
+              <BarChart3 size={24} className="text-emerald-400" />
               Métricas de GPU
             </h1>
             <p className="text-gray-400 mt-1">Análise completa de preços, provedores e eficiência</p>
@@ -859,9 +857,7 @@ export default function GPUMetrics() {
                       <p className="text-2xl font-bold text-white">14</p>
                       <p className="text-xs text-gray-500 mt-1">Análises de Spot + Previsão</p>
                     </div>
-                    <div className="stat-card-icon stat-card-icon-success">
-                      <Sparkles size={20} />
-                    </div>
+                    <Sparkles size={20} className="text-emerald-400" />
                   </div>
                 </div>
                 <div className="stat-card">
@@ -871,9 +867,7 @@ export default function GPUMetrics() {
                       <p className="text-2xl font-bold text-brand-400">Monitor</p>
                       <p className="text-xs text-gray-500 mt-1">Acompanhe em tempo real</p>
                     </div>
-                    <div className="stat-card-icon stat-card-icon-success">
-                      <TrendingUp size={20} />
-                    </div>
+                    <TrendingUp size={20} className="text-emerald-400" />
                   </div>
                 </div>
                 <div className="stat-card">
@@ -883,9 +877,7 @@ export default function GPUMetrics() {
                       <p className="text-2xl font-bold text-yellow-400">Calculadora</p>
                       <p className="text-xs text-gray-500 mt-1">Simule suas economias</p>
                     </div>
-                    <div className="stat-card-icon stat-card-icon-warning">
-                      <DollarSign size={20} />
-                    </div>
+                    <DollarSign size={20} className="text-amber-400" />
                   </div>
                 </div>
                 <div className="stat-card">
@@ -895,9 +887,7 @@ export default function GPUMetrics() {
                       <p className="text-2xl font-bold text-brand-400">Score</p>
                       <p className="text-xs text-gray-500 mt-1">Provedores verificados</p>
                     </div>
-                    <div className="stat-card-icon stat-card-icon-success">
-                      <Shield size={20} />
-                    </div>
+                    <Shield size={20} className="text-emerald-400" />
                   </div>
                 </div>
               </div>

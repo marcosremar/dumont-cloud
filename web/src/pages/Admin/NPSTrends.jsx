@@ -490,9 +490,7 @@ export default function NPSTrends() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="page-title flex items-center gap-3 text-2xl font-bold text-white">
-              <div className="stat-card-icon stat-card-icon-primary p-2 rounded-lg bg-blue-500/10">
-                <TrendingUp className="w-5 h-5 text-blue-500" />
-              </div>
+              <TrendingUp className="w-6 h-6 text-blue-400" />
               NPS Dashboard
             </h1>
             <p className="page-subtitle text-gray-400 mt-1">

@@ -11,7 +11,7 @@ import "./i18n"
 ReactDOM.createRoot(document.getElementById("root")).render(
   // StrictMode desabilitado temporariamente - causa flickering
   // <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <App />
       <DevBar />
     </BrowserRouter>

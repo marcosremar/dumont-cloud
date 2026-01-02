@@ -23,7 +23,6 @@ import {
   OfferCard,
   FilterSection,
   ProvisioningRaceScreen,
-  AIWizardChat,
   AdvancedSearchForm,
   WizardForm,
   GPU_OPTIONS,
@@ -92,6 +91,12 @@ export default function Dashboard({ onStatsUpdate }) {
   const [provisioningMode, setProvisioningMode] = useState(false);
   const [raceCandidates, setRaceCandidates] = useState([]);
   const [raceWinner, setRaceWinner] = useState(null);
+
+  // Migration mode - computed directly from location.state for immediate availability
+  const migrationState = location.state?.wizardMode === 'migrate' ? location.state : null;
+  const migrationMode = !!migrationState;
+  const sourceMachine = migrationState?.sourceMachine || null;
+  const targetType = migrationState?.targetType || null;
   const [dashboardStats, setDashboardStats] = useState({
     activeMachines: 0,
     totalMachines: 0,
@@ -113,6 +118,26 @@ export default function Dashboard({ onStatsUpdate }) {
     checkOnboarding();
     fetchDashboardStats();
   }, []);
+
+  // Handle migration mode - set wizard mode and clear navigation state
+  useEffect(() => {
+    if (migrationMode) {
+      console.log('[Dashboard] Migration mode active:', { sourceMachine, targetType });
+      setMode('wizard');
+      // Pre-select location from source machine if available
+      if (sourceMachine?.geolocation) {
+        setSelectedLocation({
+          codes: [sourceMachine.geolocation],
+          name: sourceMachine.geolocation,
+          isRegion: false
+        });
+      }
+      // Clear the state to prevent re-triggering on refresh (after a small delay to ensure render)
+      setTimeout(() => {
+        window.history.replaceState({}, document.title);
+      }, 100);
+    }
+  }, [migrationMode, sourceMachine, targetType]);
 
   // Cleanup on unmount - destroy any created instances
   useEffect(() => {
@@ -141,12 +166,52 @@ export default function Dashboard({ onStatsUpdate }) {
   }, []);
 
   const fetchDashboardStats = async () => {
+    // Skip API call in demo mode - use demo stats directly
+    const isDemoMode = localStorage.getItem('demo_mode') === 'true';
+    if (isDemoMode) {
+      const stats = {
+        activeMachines: 2,
+        totalMachines: 3,
+        dailyCost: '4.80',
+        savings: '127',
+        uptime: 99.9,
+        balance: '4.94'
+      };
+      setDashboardStats(stats);
+      if (onStatsUpdate) onStatsUpdate(stats);
+      return;
+    }
+
     try {
-      const res = await fetch(`${API_BASE}/api/v1/instances`, {
-        headers: { 'Authorization': `Bearer ${getToken()}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
+      // Fetch instances and balance in parallel
+      const [instancesRes, balanceRes] = await Promise.all([
+        fetch(`${API_BASE}/api/v1/instances`, {
+          headers: { 'Authorization': `Bearer ${getToken()}` }
+        }),
+        fetch(`${API_BASE}/api/v1/balance`, {
+          headers: { 'Authorization': `Bearer ${getToken()}` }
+        }).catch(() => null) // Balance is optional
+      ]);
+
+      // Parse balance response
+      let balanceValue = '0.00';
+      if (balanceRes?.ok) {
+        try {
+          const balanceData = await balanceRes.json();
+          balanceValue = (balanceData.credit || balanceData.balance || 0).toFixed(2);
+        } catch {
+          // Keep default
+        }
+      }
+
+      if (instancesRes.ok) {
+        let data;
+        try {
+          const text = await instancesRes.text();
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = {};
+        }
         const instances = data.instances || [];
         const running = instances.filter(i => i.status === 'running');
         const totalCost = running.reduce((acc, i) => acc + (i.dph_total || 0), 0);
@@ -156,53 +221,36 @@ export default function Dashboard({ onStatsUpdate }) {
           totalMachines: instances.length,
           dailyCost: (totalCost * 24).toFixed(2),
           savings: ((totalCost * 24 * 0.89) * 30).toFixed(0), // 89% economia estimada
-          uptime: running.length > 0 ? 99.9 : 0
+          uptime: running.length > 0 ? 99.9 : 0,
+          balance: balanceValue
         };
-        console.log('Dashboard stats:', stats);
         setDashboardStats(stats);
-        if (onStatsUpdate) {
-          console.log('Calling onStatsUpdate with:', stats);
-          onStatsUpdate(stats);
-        } else {
-          console.log('onStatsUpdate is not defined');
-        }
+        if (onStatsUpdate) onStatsUpdate(stats);
       } else {
         // API failed, use demo mode fallback
-        console.log('API returned error, using demo stats');
         const stats = {
           activeMachines: 2,
           totalMachines: 3,
           dailyCost: '4.80',
           savings: '127',
-          uptime: 99.9
+          uptime: 99.9,
+          balance: balanceValue
         };
-        console.log('Dashboard stats (demo):', stats);
         setDashboardStats(stats);
-        if (onStatsUpdate) {
-          console.log('Calling onStatsUpdate with (demo):', stats);
-          onStatsUpdate(stats);
-        } else {
-          console.log('onStatsUpdate is not defined (demo)');
-        }
+        if (onStatsUpdate) onStatsUpdate(stats);
       }
-    } catch (e) {
-      console.error('Error fetching dashboard stats:', e);
-      // Demo mode fallback
+    } catch {
+      // Demo mode fallback - silently use demo stats
       const stats = {
         activeMachines: 2,
         totalMachines: 3,
         dailyCost: '4.80',
         savings: '127',
-        uptime: 99.9
+        uptime: 99.9,
+        balance: '0.00'
       };
-      console.log('Dashboard stats (demo - catch):', stats);
       setDashboardStats(stats);
-      if (onStatsUpdate) {
-        console.log('Calling onStatsUpdate with (demo - catch):', stats);
-        onStatsUpdate(stats);
-      } else {
-        console.log('onStatsUpdate is not defined (demo - catch)');
-      }
+      if (onStatsUpdate) onStatsUpdate(stats);
     }
   };
 
@@ -215,10 +263,33 @@ export default function Dashboard({ onStatsUpdate }) {
         return;
       }
 
+      // Skip API call in demo mode
+      const isDemoMode = localStorage.getItem('demo_mode') === 'true';
+      if (isDemoMode) {
+        setShowOnboarding(false);
+        return;
+      }
+
       const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
         headers: { 'Authorization': `Bearer ${getToken()}` }
       });
-      const data = await res.json();
+
+      // Handle non-OK responses gracefully
+      if (!res.ok) {
+        setShowOnboarding(false);
+        return;
+      }
+
+      // Parse JSON safely
+      let data;
+      try {
+        const text = await res.text();
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        setShowOnboarding(false);
+        return;
+      }
+
       if (data.authenticated) {
         setUser(data.user);
         // Verificar se o onboarding já foi completado
@@ -231,9 +302,8 @@ export default function Dashboard({ onStatsUpdate }) {
           setShowOnboarding(false);
         }
       }
-    } catch (e) {
-      console.error('Error checking onboarding:', e);
-      // Em caso de erro, não mostrar o onboarding
+    } catch {
+      // Em caso de erro, não mostrar o onboarding (silently fail)
       setShowOnboarding(false);
     }
   };
@@ -243,6 +313,10 @@ export default function Dashboard({ onStatsUpdate }) {
       // Mark as completed in localStorage immediately to prevent re-showing
       localStorage.setItem('onboarding_completed', 'true');
       setShowOnboarding(false);
+
+      // Skip API call in demo mode
+      const isDemoMode = localStorage.getItem('demo_mode') === 'true';
+      if (isDemoMode) return;
 
       const res = await fetch(`${API_BASE}/api/v1/settings/complete-onboarding`, {
         method: 'POST',
@@ -257,15 +331,13 @@ export default function Dashboard({ onStatsUpdate }) {
             has_completed_onboarding: true
           }
         }));
-      } else {
-        console.error('Failed to complete onboarding:', res.statusText);
       }
-    } catch (e) {
-      console.error('Error completing onboarding:', e);
+    } catch {
+      // Silently fail - localStorage already updated
     }
   };
   const [activeTab, setActiveTab] = useState('Global');
-  const [selectedTier, setSelectedTier] = useState('Rapido');
+  const [selectedTier, setSelectedTier] = useState(null);
   const [selectedGPU, setSelectedGPU] = useState('any');
   const [selectedGPUCategory, setSelectedGPUCategory] = useState('any');
   const [searchCountry, setSearchCountry] = useState('');
@@ -273,7 +345,6 @@ export default function Dashboard({ onStatsUpdate }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showResults, setShowResults] = useState(false);
-  const [deployMethod, setDeployMethod] = useState('manual'); // 'ai' | 'manual'
 
   // Filtros avançados completos do Vast.ai - Organizados por categoria
   const [advancedFilters, setAdvancedFilters] = useState({
@@ -484,22 +555,23 @@ export default function Dashboard({ onStatsUpdate }) {
       const response = await fetch(`${API_BASE}/api/v1/instances/offers?${params}`, {
         headers: { 'Authorization': `Bearer ${getToken()}` }
       });
-      if (!response.ok) throw new Error('Falha ao buscar ofertas');
+      if (!response.ok) throw new Error(`Falha ao buscar ofertas (HTTP ${response.status})`);
       const data = await response.json();
       const realOffers = data.offers || [];
 
-      // Use demo offers as fallback when API returns empty (e.g., no VAST_API_KEY)
+      // Show real offers only - no fallback to demo data
       if (realOffers.length === 0) {
-        setOffers(DEMO_OFFERS);
-        toast.info('Mostrando ofertas de demonstração');
+        setOffers([]);
+        toast.warning('Nenhuma máquina disponível. Verifique sua API Key VAST.ai.');
       } else {
         setOffers(realOffers);
         toast.success(`${realOffers.length} máquinas encontradas!`);
       }
     } catch (err) {
-      // Use demo offers on API error for testing
-      setOffers(DEMO_OFFERS);
-      toast.warning('Erro ao buscar ofertas. Mostrando dados de demonstração.');
+      // Show error - no fallback to demo data in real mode
+      setOffers([]);
+      setError(err.message);
+      toast.error(`Erro ao buscar ofertas: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -555,40 +627,179 @@ export default function Dashboard({ onStatsUpdate }) {
     }
   };
 
-  // Demo provisioning race (simulated)
+  // Demo provisioning race - Simulates REAL provisioning phases
+  // Phases match real API: creating → connecting → loading → running
   const runDemoProvisioningRace = async (candidates) => {
-    // Simulate progress for each candidate
-    const winnerIndex = Math.floor(Math.random() * candidates.length);
+    // Provisioning phases (same as real API)
+    const PHASES = {
+      creating: { name: 'creating', minProgress: 0, maxProgress: 15, statusText: 'Criando instância...' },
+      connecting: { name: 'connecting', minProgress: 15, maxProgress: 40, statusText: 'Conectando ao host...' },
+      loading: { name: 'loading', minProgress: 40, maxProgress: 85, statusText: 'Carregando ambiente...' },
+      running: { name: 'running', minProgress: 85, maxProgress: 100, statusText: 'Finalizando...' },
+    };
 
-    for (let progress = 0; progress <= 100; progress += 10) {
-      await new Promise(r => setTimeout(r, 300));
+    // Calculate realistic timings for each machine based on specs
+    const machineStates = candidates.map((c, index) => {
+      // Base boot time: 15-30 seconds (realistic for GPU instances)
+      const baseBootTime = 15000 + Math.random() * 15000;
 
-      setRaceCandidates(prev => prev.map((c, i) => {
-        if (i === winnerIndex) {
-          return { ...c, status: progress >= 100 ? 'ready' : 'connecting', progress: Math.min(progress + 20, 100) };
+      // Speed modifiers based on machine specs
+      const inetModifier = Math.max(0.5, Math.min(1.5, (c.inet_down || 500) / 1000)); // Faster internet = faster
+      const verifiedModifier = c.verified ? 0.8 : 1.2; // Verified = 20% faster
+      const gpuModifier = (c.gpu_name?.includes('4090') || c.gpu_name?.includes('A100')) ? 0.9 : 1.0;
+
+      // Total boot time for this machine
+      const bootTime = baseBootTime * verifiedModifier * gpuModifier / inetModifier;
+
+      // Failure probability based on real-world factors
+      const failureChance = c.verified ? 0.05 : 0.20; // 5% verified, 20% unverified
+      const willFail = Math.random() < failureChance;
+
+      // Which phase will fail (if failing)
+      const failPhases = ['creating', 'connecting', 'loading'];
+      const failPhase = willFail ? failPhases[Math.floor(Math.random() * failPhases.length)] : null;
+
+      // Failure reasons (realistic errors)
+      const failureReasons = {
+        creating: ['Máquina já alugada por outro usuário', 'Oferta expirada', 'Saldo insuficiente no host'],
+        connecting: ['Timeout de conexão SSH', 'Host não responde', 'Porta bloqueada por firewall'],
+        loading: ['Erro ao baixar imagem Docker', 'Disco cheio no host', 'Falha de inicialização CUDA'],
+      };
+
+      return {
+        index,
+        candidate: c,
+        phase: 'creating',
+        progress: 0,
+        bootTime,
+        startTime: Date.now(),
+        willFail,
+        failPhase,
+        failureReason: failPhase ? failureReasons[failPhase][Math.floor(Math.random() * failureReasons[failPhase].length)] : null,
+        status: 'creating',
+        instanceId: `demo-${c.id}-${Date.now()}`, // Simulated instance ID
+      };
+    });
+
+    // Update all machines to "creating" status initially
+    setRaceCandidates(prev => prev.map((c, i) => ({
+      ...c,
+      status: 'creating',
+      progress: 5,
+      instanceId: machineStates[i].instanceId,
+    })));
+
+    let winnerFound = false;
+    const pollInterval = 200; // Poll every 200ms (realistic)
+
+    // Main race loop - simulates real polling behavior
+    while (!winnerFound) {
+      await new Promise(r => setTimeout(r, pollInterval));
+
+      const now = Date.now();
+      let allDone = true;
+
+      // Update each machine's progress based on elapsed time
+      machineStates.forEach((state, i) => {
+        if (state.status === 'failed' || state.status === 'ready') return;
+
+        allDone = false;
+        const elapsed = now - state.startTime;
+        const progressRatio = Math.min(elapsed / state.bootTime, 1.0);
+
+        // Determine current phase based on progress
+        let newPhase = 'creating';
+        let newProgress = progressRatio * 100;
+
+        if (progressRatio < 0.15) {
+          newPhase = 'creating';
+          newProgress = progressRatio * 100;
+        } else if (progressRatio < 0.40) {
+          newPhase = 'connecting';
+          newProgress = 15 + ((progressRatio - 0.15) / 0.25) * 25;
+        } else if (progressRatio < 0.85) {
+          newPhase = 'loading';
+          newProgress = 40 + ((progressRatio - 0.40) / 0.45) * 45;
+        } else {
+          newPhase = 'running';
+          newProgress = 85 + ((progressRatio - 0.85) / 0.15) * 15;
         }
-        // Others progress slower or fail
-        const otherProgress = Math.min(progress - 10 + Math.random() * 20, 90);
-        const willFail = Math.random() > 0.6 && progress > 50;
+
+        // Check for failure in current phase
+        if (state.willFail && state.failPhase === newPhase && newPhase !== state.phase) {
+          state.status = 'failed';
+          state.progress = newProgress;
+        }
+        // Check for completion
+        else if (progressRatio >= 1.0) {
+          state.status = 'ready';
+          state.progress = 100;
+          state.phase = 'running';
+          if (!winnerFound) {
+            winnerFound = true;
+          }
+        } else {
+          state.phase = newPhase;
+          state.progress = newProgress;
+          state.status = newPhase;
+        }
+      });
+
+      // Update UI
+      setRaceCandidates(prev => prev.map((c, i) => {
+        const state = machineStates[i];
         return {
           ...c,
-          status: willFail ? 'failed' : 'connecting',
-          progress: willFail ? otherProgress : otherProgress,
-          errorMessage: willFail ? 'Máquina indisponível' : undefined
+          status: state.status,
+          progress: Math.round(state.progress),
+          instanceId: state.instanceId,
+          errorMessage: state.status === 'failed' ? state.failureReason : undefined,
         };
       }));
+
+      // Check if all machines are done (either ready or failed)
+      const allCompleted = machineStates.every(s => s.status === 'failed' || s.status === 'ready');
+      if (allCompleted) break;
+
+      // Safety timeout (30 seconds max)
+      const maxElapsed = Math.max(...machineStates.map(s => now - s.startTime));
+      if (maxElapsed > 30000) break;
     }
 
-    // Set winner
-    const winner = { ...candidates[winnerIndex], status: 'ready', progress: 100 };
-    setRaceWinner(winner);
-    toast.success(`🏆 ${winner.gpu_name} provisionada com sucesso! (Demo)`);
+    // Determine winner (first to reach ready)
+    const winnerState = machineStates.find(s => s.status === 'ready');
 
-    // Navigate after delay
-    setTimeout(() => {
-      setProvisioningMode(false);
-      navigate(`${basePath}/machines`);
-    }, 2000);
+    if (winnerState) {
+      const winner = { ...winnerState.candidate, status: 'ready', progress: 100, instanceId: winnerState.instanceId };
+      setRaceWinner(winner);
+
+      // Calculate actual boot time for display
+      const bootTimeSeconds = ((Date.now() - winnerState.startTime) / 1000).toFixed(1);
+      toast.success(`🏆 ${winner.gpu_name} pronta em ${bootTimeSeconds}s!`);
+
+      // Mark losers as destroyed (like real race)
+      setTimeout(() => {
+        setRaceCandidates(prev => prev.map((c, i) => {
+          if (i === winnerState.index) return c;
+          if (c.status === 'ready' || c.status === 'running') {
+            return { ...c, status: 'destroyed', progress: 0 };
+          }
+          return c;
+        }));
+      }, 500);
+
+      // Navigate after delay
+      setTimeout(() => {
+        setProvisioningMode(false);
+        navigate(`${basePath}/machines`);
+      }, 2500);
+    } else {
+      // All failed
+      toast.error('Todas as máquinas falharam. Tente novamente com outras opções.');
+      setTimeout(() => {
+        setProvisioningMode(false);
+      }, 2000);
+    }
   };
 
   // REAL provisioning race with multi-round support
@@ -730,15 +941,45 @@ export default function Dashboard({ onStatsUpdate }) {
           const status = instance.actual_status;
           const candidateIndex = created.index;
 
+          // Update with REAL status from API
           setRaceCandidates(prev => {
             const updated = [...prev];
-            if (updated[candidateIndex]) {
+            if (updated[candidateIndex] && updated[candidateIndex].status !== 'failed') {
               let progress = updated[candidateIndex].progress || 30;
-              if (status === 'loading') progress = Math.min(progress + 10, 90);
-              if (status === 'running') progress = 100;
+              let statusMessage = 'Conectando...';
+              let candidateStatus = 'connecting';
+
+              // Map real API status to progress and message
+              switch (status) {
+                case 'created':
+                  progress = 20;
+                  statusMessage = 'Instância criada';
+                  break;
+                case 'loading':
+                  progress = Math.min(progress + 10, 85);
+                  statusMessage = 'Carregando ambiente...';
+                  break;
+                case 'running':
+                  progress = 100;
+                  statusMessage = 'Pronta!';
+                  candidateStatus = 'connected';
+                  break;
+                case 'exited':
+                case 'error':
+                case 'destroyed':
+                  progress = 0;
+                  statusMessage = `Falhou: ${status}`;
+                  candidateStatus = 'failed';
+                  break;
+                default:
+                  statusMessage = status || 'Aguardando...';
+              }
+
               updated[candidateIndex] = {
                 ...updated[candidateIndex],
                 progress,
+                status: candidateStatus,
+                statusMessage,
                 actualStatus: status,
                 sshHost: instance.ssh_host,
                 sshPort: instance.ssh_port
@@ -747,6 +988,12 @@ export default function Dashboard({ onStatsUpdate }) {
             return updated;
           });
 
+          // Check for failed states
+          if ((status === 'exited' || status === 'error' || status === 'destroyed') && !winnerFound) {
+            // Mark as failed but continue checking others
+            continue;
+          }
+
           if (status === 'running' && !winnerFound) {
             winnerFound = true;
             clearInterval(pollInterval);
@@ -754,7 +1001,7 @@ export default function Dashboard({ onStatsUpdate }) {
             setRaceCandidates(prev => {
               return prev.map((c, i) => ({
                 ...c,
-                status: i === candidateIndex ? 'connected' : 'cancelled',
+                status: i === candidateIndex ? 'connected' : (c.status === 'failed' ? 'failed' : 'cancelled'),
                 progress: i === candidateIndex ? 100 : c.progress
               }));
             });
@@ -787,6 +1034,20 @@ export default function Dashboard({ onStatsUpdate }) {
             break;
           }
         }
+
+        // Check if all candidates failed
+        setRaceCandidates(prev => {
+          const allFailed = createdInstanceIdsRef.current.length > 0 &&
+            createdInstanceIdsRef.current.every(created => {
+              const candidate = prev[created.index];
+              return candidate?.status === 'failed';
+            });
+          if (allFailed && !winnerFound) {
+            clearInterval(pollInterval);
+            // Will trigger next round via handleAllFailed logic
+          }
+          return prev;
+        });
       } catch (error) {
         console.error('Error polling instance status:', error);
       }
@@ -970,16 +1231,45 @@ export default function Dashboard({ onStatsUpdate }) {
           const status = instance.actual_status;
           const candidateIndex = created.index;
 
-          // Update progress based on status
+          // Update with REAL status from API
           setRaceCandidates(prev => {
             const updated = [...prev];
-            if (updated[candidateIndex]) {
+            if (updated[candidateIndex] && updated[candidateIndex].status !== 'failed') {
               let progress = updated[candidateIndex].progress || 30;
-              if (status === 'loading') progress = Math.min(progress + 10, 90);
-              if (status === 'running') progress = 100;
+              let statusMessage = 'Conectando...';
+              let candidateStatus = 'connecting';
+
+              // Map real API status to progress and message
+              switch (status) {
+                case 'created':
+                  progress = 20;
+                  statusMessage = 'Instância criada';
+                  break;
+                case 'loading':
+                  progress = Math.min(progress + 10, 85);
+                  statusMessage = 'Carregando ambiente...';
+                  break;
+                case 'running':
+                  progress = 100;
+                  statusMessage = 'Pronta!';
+                  candidateStatus = 'connected';
+                  break;
+                case 'exited':
+                case 'error':
+                case 'destroyed':
+                  progress = 0;
+                  statusMessage = `Falhou: ${status}`;
+                  candidateStatus = 'failed';
+                  break;
+                default:
+                  statusMessage = status || 'Aguardando...';
+              }
+
               updated[candidateIndex] = {
                 ...updated[candidateIndex],
                 progress,
+                status: candidateStatus,
+                statusMessage,
                 actualStatus: status,
                 sshHost: instance.ssh_host,
                 sshPort: instance.ssh_port
@@ -997,7 +1287,7 @@ export default function Dashboard({ onStatsUpdate }) {
             setRaceCandidates(prev => {
               return prev.map((c, i) => ({
                 ...c,
-                status: i === candidateIndex ? 'connected' : 'cancelled',
+                status: i === candidateIndex ? 'connected' : (c.status === 'failed' ? 'failed' : 'cancelled'),
                 progress: i === candidateIndex ? 100 : c.progress
               }));
             });
@@ -1109,8 +1399,30 @@ export default function Dashboard({ onStatsUpdate }) {
   const handleWizardSearchWithRace = () => {
     const tier = tiers.find(t => t.name === selectedTier);
     if (tier) {
-      // First fetch offers, then start race
       setLoading(true);
+
+      // Helper to filter DEMO_OFFERS by tier
+      const filterDemoOffersByTier = (offers, tierFilter) => {
+        return offers.filter(o => {
+          if (tierFilter.max_price && o.dph_total > tierFilter.max_price) return false;
+          if (tierFilter.min_gpu_ram && o.gpu_ram < tierFilter.min_gpu_ram) return false;
+          return true;
+        });
+      };
+
+      // Skip API call in demo mode - use demo offers directly
+      if (isDemoMode()) {
+        const filteredDemoOffers = filterDemoOffersByTier(DEMO_OFFERS, tier.filter);
+        setOffers(filteredDemoOffers);
+        setLoading(false);
+        if (filteredDemoOffers.length > 0) {
+          startProvisioningRace(filteredDemoOffers);
+        } else {
+          toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
+        }
+        return;
+      }
+
       const params = new URLSearchParams();
       const filters = {
         ...tier.filter,
@@ -1122,15 +1434,6 @@ export default function Dashboard({ onStatsUpdate }) {
           params.append(key, value);
         }
       });
-
-      // Helper to filter DEMO_OFFERS by tier
-      const filterDemoOffersByTier = (offers, tierFilter) => {
-        return offers.filter(o => {
-          if (tierFilter.max_price && o.dph_total > tierFilter.max_price) return false;
-          if (tierFilter.min_gpu_ram && o.gpu_ram < tierFilter.min_gpu_ram) return false;
-          return true;
-        });
-      };
 
       fetch(`${API_BASE}/api/v1/instances/offers?${params}`, {
         headers: { 'Authorization': `Bearer ${getToken()}` }
@@ -1164,9 +1467,48 @@ export default function Dashboard({ onStatsUpdate }) {
 
   // Integrated wizard search - starts race within wizard (no overlay)
   const handleWizardSearchWithRaceIntegrated = () => {
+    console.log('[WizardRace] selectedTier:', selectedTier);
+    console.log('[WizardRace] tiers:', tiers.map(t => t.name));
     const tier = tiers.find(t => t.name === selectedTier);
+    console.log('[WizardRace] found tier:', tier?.name);
+    if (!tier) {
+      console.error('[WizardRace] TIER NOT FOUND! selectedTier was:', selectedTier);
+      toast.error('Tier não encontrado. Selecione uma opção.');
+      return;
+    }
     if (tier) {
       setLoading(true);
+
+      // Helper to filter DEMO_OFFERS by tier
+      const filterDemoOffersByTier = (offers, tierFilter) => {
+        return offers.filter(o => {
+          if (tierFilter.max_price && o.dph_total > tierFilter.max_price) return false;
+          if (tierFilter.min_gpu_ram && o.gpu_ram < tierFilter.min_gpu_ram) return false;
+          return true;
+        });
+      };
+
+      // Skip API call in demo mode - use demo offers directly
+      // Check both localStorage AND route (/demo-app)
+      const isInDemoMode = localStorage.getItem('demo_mode') === 'true' || window.location.pathname.startsWith('/demo-app');
+      console.log('[WizardRace] isInDemoMode:', isInDemoMode, 'path:', window.location.pathname);
+      console.log('[WizardRace] DEMO_OFFERS count:', DEMO_OFFERS?.length);
+      console.log('[WizardRace] tier.filter:', tier.filter);
+      if (isInDemoMode) {
+        const filteredDemoOffers = filterDemoOffersByTier(DEMO_OFFERS, tier.filter);
+        console.log('[WizardRace] filteredDemoOffers count:', filteredDemoOffers.length);
+        setOffers(filteredDemoOffers);
+        setLoading(false);
+        if (filteredDemoOffers.length > 0) {
+          console.log('[WizardRace] Starting race with', filteredDemoOffers.length, 'offers');
+          startProvisioningRaceIntegrated(filteredDemoOffers, true);
+        } else {
+          console.error('[WizardRace] No offers after filter!');
+          toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
+        }
+        return;
+      }
+
       const params = new URLSearchParams();
       const filters = {
         ...tier.filter,
@@ -1179,49 +1521,38 @@ export default function Dashboard({ onStatsUpdate }) {
         }
       });
 
-      // Helper to filter DEMO_OFFERS by tier
-      const filterDemoOffersByTier = (offers, tierFilter) => {
-        return offers.filter(o => {
-          if (tierFilter.max_price && o.dph_total > tierFilter.max_price) return false;
-          if (tierFilter.min_gpu_ram && o.gpu_ram < tierFilter.min_gpu_ram) return false;
-          return true;
-        });
-      };
-
       fetch(`${API_BASE}/api/v1/instances/offers?${params}`, {
         headers: { 'Authorization': `Bearer ${getToken()}` }
       })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
         .then(data => {
           const realOffers = data.offers || [];
-          // If no real offers, filter DEMO_OFFERS by the same criteria
-          const filteredDemoOffers = filterDemoOffersByTier(DEMO_OFFERS, tier.filter);
-          const offersToUse = realOffers.length > 0 ? realOffers : filteredDemoOffers;
-          setOffers(offersToUse);
+          console.log('[WizardRace] API returned offers:', realOffers.length);
+          setOffers(realOffers);
           setLoading(false);
-          // Start the race WITHOUT showing the overlay - wizard handles step 4
-          if (offersToUse.length > 0) {
-            startProvisioningRaceIntegrated(offersToUse);
+          // Start the race with REAL offers only - no fallback to demo data
+          if (realOffers.length > 0) {
+            console.log('[WizardRace] Starting race with', realOffers.length, 'offers');
+            startProvisioningRaceIntegrated(realOffers);
           } else {
-            toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
+            console.log('[WizardRace] No offers returned!');
+            toast.error('Nenhuma máquina disponível no momento. Verifique sua API Key VAST.ai ou tente outro tier.');
           }
         })
-        .catch(() => {
-          // Filter DEMO_OFFERS when API fails
-          const filteredDemoOffers = filterDemoOffersByTier(DEMO_OFFERS, tier.filter);
-          setOffers(filteredDemoOffers);
+        .catch((err) => {
+          setOffers([]);
           setLoading(false);
-          if (filteredDemoOffers.length > 0) {
-            startProvisioningRaceIntegrated(filteredDemoOffers);
-          } else {
-            toast.error('Nenhuma máquina encontrada para este tier. Tente outro.');
-          }
+          // Show error - no fallback to demo data in real mode
+          toast.error(`Erro ao buscar ofertas: ${err.message}. Verifique sua conexão e API Key.`);
         });
     }
   };
 
   // Start provisioning race integrated into wizard (no overlay)
-  const startProvisioningRaceIntegrated = (selectedOffers, round = 1) => {
+  const startProvisioningRaceIntegrated = (selectedOffers, isDemoRace = false, round = 1) => {
     // Store all offers for potential multi-round
     if (round === 1) {
       allOffersRef.current = selectedOffers;
@@ -1251,8 +1582,13 @@ export default function Dashboard({ onStatsUpdate }) {
     setCurrentRound(round);
 
     // DON'T set provisioningMode to true - wizard handles step 4 display
-    // Run REAL provisioning race with multi-round support
-    runRealProvisioningRaceWithMultiRound(top5, selectedOffers, round);
+    // Check if demo mode - run simulated race
+    if (isDemoRace || localStorage.getItem('demo_mode') === 'true') {
+      runDemoProvisioningRace(top5);
+    } else {
+      // Run REAL provisioning race with multi-round support
+      runRealProvisioningRaceWithMultiRound(top5, selectedOffers, round);
+    }
   };
 
   // Check if all candidates failed and start next round
@@ -1290,7 +1626,7 @@ export default function Dashboard({ onStatsUpdate }) {
       {showOnboarding && (
         <OnboardingWizard
           user={user}
-          onClose={() => setShowOnboarding(false)}
+          onClose={handleCompleteOnboarding}
           onComplete={handleCompleteOnboarding}
         />
       )}
@@ -1312,170 +1648,79 @@ export default function Dashboard({ onStatsUpdate }) {
               </div>
             </div>
 
-            {/* Seletor de Método Unificado */}
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Opção 1: Configuração Guiada */}
-                <button
-                  onClick={() => {
-                    setDeployMethod('manual');
-                    setMode('wizard');
-                    setShowResults(false);
-                    // Scroll to wizard form
-                    setTimeout(() => {
-                      document.getElementById('wizard-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                    if (deployMethod === 'manual' && mode === 'wizard') {
-                      toast.info('Modo Guiado já selecionado. Comece escolhendo uma região abaixo.');
-                    }
-                  }}
-                  data-testid="config-guided"
-                  className={`p-6 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:shadow-brand-500/10 active:scale-[0.98] ${
-                    deployMethod === 'manual' && mode === 'wizard'
-                      ? 'border-brand-500 ring-2 ring-brand-500/20 bg-brand-500/5'
-                      : 'border-gray-700 hover:border-brand-400 hover:bg-gray-800/50'
-                  }`}
-                >
-                  {deployMethod === 'manual' && mode === 'wizard' && (
-                    <div className="absolute top-0 left-0 w-1 h-full bg-brand-500" />
-                  )}
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 flex-shrink-0 transition-colors ${
-                      deployMethod === 'manual' && mode === 'wizard' ? 'border-brand-500 bg-brand-500' : 'border-gray-600 group-hover:border-brand-400'
-                    }`}>
-                      {deployMethod === 'manual' && mode === 'wizard' && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-brand-300 transition-colors">Configuração Guiada</p>
-                      <p className="text-xs text-gray-400 leading-relaxed mb-3">Escolha região, GPU e performance de forma simples e intuitiva</p>
-                      <span className="inline-block text-[10px] font-semibold text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-md border border-brand-800/20">✓ Recomendado</span>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Opção 2: Configuração Avançada */}
-                <button
-                  onClick={() => {
-                    setDeployMethod('manual');
-                    setMode('advanced');
-                    setShowResults(false);
-                    setTimeout(() => {
-                      document.getElementById('wizard-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                    toast.info('Modo Avançado selecionado. Configure filtros detalhados.');
-                  }}
-                  data-testid="config-advanced"
-                  className={`p-6 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:shadow-brand-500/10 active:scale-[0.98] ${
-                    deployMethod === 'manual' && mode === 'advanced'
-                      ? 'border-brand-500 ring-2 ring-brand-500/20 bg-brand-500/5'
-                      : 'border-gray-700 hover:border-brand-400 hover:bg-gray-800/50'
-                  }`}
-                >
-                  {deployMethod === 'manual' && mode === 'advanced' && (
-                    <div className="absolute top-0 left-0 w-1 h-full bg-brand-500" />
-                  )}
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 flex-shrink-0 transition-colors ${
-                      deployMethod === 'manual' && mode === 'advanced' ? 'border-brand-500 bg-brand-500' : 'border-gray-600 group-hover:border-brand-400'
-                    }`}>
-                      {deployMethod === 'manual' && mode === 'advanced' && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-brand-300 transition-colors">Configuração Avançada</p>
-                      <p className="text-xs text-gray-400 leading-relaxed mb-3">Controle total com filtros detalhados de hardware e rede</p>
-                      <span className="inline-block text-[10px] font-semibold text-gray-500 bg-gray-800 px-2.5 py-1 rounded-md border border-gray-700">Para especialistas</span>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Opção 3: Assistente IA */}
-                <button
-                  onClick={() => {
-                    setDeployMethod('ai');
-                    setShowResults(false);
-                    setTimeout(() => {
-                      document.getElementById('wizard-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                    toast.info('Assistente IA ativado. Descreva o que você precisa.');
-                  }}
-                  data-testid="config-ai"
-                  className={`p-6 rounded-lg border transition-all text-left group relative overflow-hidden cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/10 active:scale-[0.98] ${
-                    deployMethod === 'ai'
-                      ? 'border-purple-500 ring-2 ring-purple-500/20 bg-purple-500/5'
-                      : 'border-gray-700 hover:border-purple-400 hover:bg-gray-800/50'
-                  }`}
-                >
-                  {deployMethod === 'ai' && (
-                    <div className="absolute top-0 left-0 w-1 h-full bg-purple-500" />
-                  )}
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 flex-shrink-0 transition-colors ${
-                      deployMethod === 'ai' ? 'border-purple-500 bg-purple-500' : 'border-gray-600 group-hover:border-purple-400'
-                    }`}>
-                      {deployMethod === 'ai' && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm text-white mb-1.5 group-hover:text-purple-300 transition-colors">Assistente IA</p>
-                      <p className="text-xs text-gray-400 leading-relaxed mb-3">Converse e deixe a IA recomendar a melhor configuração</p>
-                      <span className="inline-block text-[10px] font-semibold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-md border border-purple-500/20">✨ Inteligente</span>
-                    </div>
-                  </div>
-                </button>
-              </div>
+            {/* Seletor de Modo Compacto */}
+            <div className="inline-flex items-center p-1 bg-white/5 rounded-lg border border-white/10">
+              <button
+                onClick={() => {
+                  setMode('wizard');
+                  setShowResults(false);
+                }}
+                data-testid="config-guided"
+                className={`px-4 py-2 rounded-md text-xs font-medium transition-all ${
+                  mode === 'wizard'
+                    ? 'bg-brand-500 text-white shadow-sm'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                }`}
+              >
+                Guiado
+              </button>
+              <button
+                onClick={() => {
+                  setMode('advanced');
+                  setShowResults(false);
+                }}
+                data-testid="config-advanced"
+                className={`px-4 py-2 rounded-md text-xs font-medium transition-all ${
+                  mode === 'advanced'
+                    ? 'bg-brand-500 text-white shadow-sm'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                }`}
+              >
+                Avançado
+              </button>
             </div>
           </CardHeader>
 
-          {/* AI MODE */}
-          {deployMethod === 'ai' && (
-            <CardContent id="wizard-form-section" className="h-[600px] p-0 relative animate-fadeIn">
-              <AIWizardChat
-                compact={false}
-                onRecommendation={(rec) => {}}
-                onSearchWithFilters={(filters) => {
-                  // Logic to jump to search results
-                  setDeployMethod('manual');
-                  setMode('advanced');
-                  // Apply filters...
-                }}
-              />
-            </CardContent>
-          )}
-
-          {/* WIZARD MODE (MANUAL) */}
-          {deployMethod === 'manual' && mode === 'wizard' && !showResults && (
+          {/* WIZARD MODE */}
+          {mode === 'wizard' && !showResults && (
             <div id="wizard-form-section" className="animate-fadeIn">
               <WizardForm
+                // Migration mode props
+                migrationMode={migrationMode}
+                sourceMachine={sourceMachine}
+                targetType={targetType}
+                initialStep={migrationMode ? 2 : 1}
+                // Step 1: Location
                 searchCountry={searchCountry}
                 selectedLocation={selectedLocation}
                 onSearchChange={handleSearchChange}
                 onRegionSelect={handleRegionSelect}
-                onCountryClick={(location) => {
-                  setSelectedLocation(location);
-                  setSearchCountry('');
-                }}
-                onClearSelection={clearSelection}
+                onClearSelection={() => setSelectedLocation(null)}
+                // Step 2: Hardware
                 selectedGPU={selectedGPU}
                 onSelectGPU={setSelectedGPU}
                 selectedGPUCategory={selectedGPUCategory}
                 onSelectGPUCategory={setSelectedGPUCategory}
                 selectedTier={selectedTier}
                 onSelectTier={setSelectedTier}
+                // Actions
                 loading={loading}
                 onSubmit={handleWizardSearchWithRaceIntegrated}
-                // Provisioning props (Step 4)
+                // Provisioning (Step 4)
                 provisioningCandidates={raceCandidates}
                 provisioningWinner={raceWinner}
                 isProvisioning={provisioningMode}
                 onCancelProvisioning={cancelProvisioningRace}
                 onCompleteProvisioning={completeProvisioningRace}
                 currentRound={currentRound}
-                maxRounds={MAX_ROUNDS}
+                maxRounds={3}
+                WorldMapComponent={WorldMap}
               />
             </div>
           )}
 
           {/* ADVANCED MODE (MANUAL) */}
-          {deployMethod === 'manual' && mode === 'advanced' && !showResults && (
+          {mode === 'advanced' && !showResults && (
             <div className="animate-fadeIn">
               <AdvancedSearchForm
                 filters={advancedFilters}

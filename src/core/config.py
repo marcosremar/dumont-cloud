@@ -12,13 +12,14 @@ load_dotenv()
 
 
 class R2Settings(BaseSettings):
-    """Cloudflare R2 Configuration"""
+    """Cloudflare R2 / Backblaze B2 Configuration (S3-compatible)"""
     model_config = SettingsConfigDict(env_prefix="R2_", extra="ignore")
 
-    access_key: str = Field(default="", validation_alias=AliasChoices("access_key", "R2_ACCESS_KEY"))
-    secret_key: str = Field(default="", validation_alias=AliasChoices("secret_key", "R2_SECRET_KEY"))
-    endpoint: str = Field(default="", validation_alias=AliasChoices("endpoint", "R2_ENDPOINT"))
-    bucket: str = Field(default="musetalk", validation_alias=AliasChoices("bucket", "R2_BUCKET"))
+    # Support both R2_ACCESS_KEY and R2_ACCESS_KEY_ID (B2 uses _ID suffix)
+    access_key_id: str = Field(default="", validation_alias=AliasChoices("access_key_id", "R2_ACCESS_KEY_ID", "ACCESS_KEY_ID"))
+    secret_access_key: str = Field(default="", validation_alias=AliasChoices("secret_access_key", "R2_SECRET_ACCESS_KEY", "SECRET_ACCESS_KEY"))
+    endpoint: str = Field(default="https://s3.us-west-000.backblazeb2.com", validation_alias=AliasChoices("endpoint", "R2_ENDPOINT"))
+    bucket: str = Field(default="dumontcloud-snapshots", validation_alias=AliasChoices("bucket", "R2_BUCKET"))
 
     @property
     def restic_repo(self) -> str:
@@ -39,7 +40,7 @@ class VastSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="VAST_", extra="ignore")
 
     api_key: str = Field(default="", validation_alias=AliasChoices("api_key", "VAST_API_KEY"))
-    api_url: str = Field(default="https://cloud.vast.ai/api/v0", validation_alias=AliasChoices("api_url", "VAST_API_URL"))
+    api_url: str = Field(default="https://console.vast.ai/api/v0", validation_alias=AliasChoices("api_url", "VAST_API_URL"))
     stage_timeout: int = Field(default=30, validation_alias=AliasChoices("stage_timeout", "VAST_STAGE_TIMEOUT"))
     ssh_ready_timeout: int = Field(default=60, validation_alias=AliasChoices("ssh_ready_timeout", "VAST_SSH_TIMEOUT"))
     default_region: str = Field(default="EU", validation_alias=AliasChoices("default_region", "VAST_DEFAULT_REGION"))

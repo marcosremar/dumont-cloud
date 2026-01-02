@@ -108,6 +108,18 @@ export const RENTAL_TYPE_OPTIONS = [
 
 export const PERFORMANCE_TIERS = [
   {
+    name: 'CPU',
+    level: 0,
+    color: 'blue',
+    speed: '100-500 Mbps',
+    time: '~1 min',
+    gpu: 'Sem GPU',
+    vram: 'N/A',
+    priceRange: '$0.01 - $0.05/hr',
+    description: 'Apenas CPU. Para tarefas que não precisam de GPU.',
+    filter: { max_price: 0.10, cpu_only: true }
+  },
+  {
     name: 'Lento',
     level: 1,
     color: 'slate',

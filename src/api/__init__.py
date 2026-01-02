@@ -1,7 +1,5 @@
-from .snapshots import snapshots_bp
-from .instances import instances_bp
+# Legacy Flask blueprints foram descontinuados.
+# Todo o sistema agora usa FastAPI v1 em src/api/v1/
+# Ver: src/api/v1/endpoints/ para as implementações atuais
 
-# cpu_standby_bp foi movido para v1/endpoints/standby.py (FastAPI)
-# A implementação Flask foi descontinuada
-
-__all__ = ['snapshots_bp', 'instances_bp']
+__all__ = []

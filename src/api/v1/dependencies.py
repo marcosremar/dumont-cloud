@@ -484,6 +484,8 @@ def get_snapshot_service(
     user_repo: SQLAlchemyUserRepository = Depends(get_user_repository),
 ) -> SnapshotService:
     """Get snapshot service"""
+    import json as json_module
+
     # Get user's settings
     user = user_repo.get_user(user_email)
 
@@ -493,12 +495,23 @@ def get_snapshot_service(
             detail="User not found",
         )
 
+    # Parse user.settings if it's a JSON string
+    user_settings = {}
+    if user and user.settings:
+        if isinstance(user.settings, str):
+            try:
+                user_settings = json_module.loads(user.settings)
+            except (json_module.JSONDecodeError, TypeError):
+                user_settings = {}
+        elif isinstance(user.settings, dict):
+            user_settings = user.settings
+
     # Get R2 credentials from user settings or use defaults
     settings = get_settings()
-    repo = user.settings.get("restic_repo") or settings.r2.restic_repo
-    password = user.settings.get("restic_password") or settings.restic.password
-    access_key = user.settings.get("r2_access_key") or settings.r2.access_key
-    secret_key = user.settings.get("r2_secret_key") or settings.r2.secret_key
+    repo = user_settings.get("restic_repo") or settings.r2.restic_repo
+    password = user_settings.get("restic_password") or settings.restic.password
+    access_key = user_settings.get("r2_access_key") or settings.r2.access_key_id
+    secret_key = user_settings.get("r2_secret_key") or settings.r2.secret_access_key
 
     if not repo or not password:
         raise HTTPException(
@@ -517,6 +530,8 @@ def get_snapshot_service(
 
 def get_snapshot_service_for_user(user_email: str) -> SnapshotService:
     """Get snapshot service for a specific user (callable without Depends)"""
+    import json as json_module
+
     db = SessionLocal()
     try:
         user_repo = SQLAlchemyUserRepository(session=db)
@@ -530,11 +545,22 @@ def get_snapshot_service_for_user(user_email: str) -> SnapshotService:
             detail="User not found",
         )
 
+    # Parse user.settings if it's a JSON string
+    user_settings = {}
+    if user and user.settings:
+        if isinstance(user.settings, str):
+            try:
+                user_settings = json_module.loads(user.settings)
+            except (json_module.JSONDecodeError, TypeError):
+                user_settings = {}
+        elif isinstance(user.settings, dict):
+            user_settings = user.settings
+
     settings = get_settings()
-    repo = user.settings.get("restic_repo") or settings.r2.restic_repo
-    password = user.settings.get("restic_password") or settings.restic.password
-    access_key = user.settings.get("r2_access_key") or settings.r2.access_key
-    secret_key = user.settings.get("r2_secret_key") or settings.r2.secret_key
+    repo = user_settings.get("restic_repo") or settings.r2.restic_repo
+    password = user_settings.get("restic_password") or settings.restic.password
+    access_key = user_settings.get("r2_access_key") or settings.r2.access_key_id
+    secret_key = user_settings.get("r2_secret_key") or settings.r2.secret_access_key
 
     if not repo or not password:
         raise HTTPException(
@@ -572,10 +598,22 @@ def get_migration_service(
         )
 
     # Get settings for snapshot provider
-    repo = (user.settings.get("restic_repo") if user else None) or settings.r2.restic_repo
-    password = (user.settings.get("restic_password") if user else None) or settings.restic.password
-    access_key = (user.settings.get("r2_access_key") if user else None) or settings.r2.access_key
-    secret_key = (user.settings.get("r2_secret_key") if user else None) or settings.r2.secret_key
+    # Parse user.settings if it's a JSON string
+    user_settings = {}
+    if user and user.settings:
+        if isinstance(user.settings, str):
+            try:
+                import json
+                user_settings = json.loads(user.settings)
+            except (json.JSONDecodeError, TypeError):
+                user_settings = {}
+        elif isinstance(user.settings, dict):
+            user_settings = user.settings
+
+    repo = user_settings.get("restic_repo") or settings.r2.restic_repo
+    password = user_settings.get("restic_password") or settings.restic.password
+    access_key = user_settings.get("r2_access_key") or settings.r2.access_key_id
+    secret_key = user_settings.get("r2_secret_key") or settings.r2.secret_access_key
 
     # Create services
     gpu_provider = VastProvider(api_key=api_key)
@@ -608,6 +646,7 @@ def get_sync_service(
     user_repo: SQLAlchemyUserRepository = Depends(get_user_repository),
 ) -> SyncService:
     """Get sync service (singleton to maintain sync state)"""
+    import json as json_module
     global _sync_service_instance
 
     # Get user's settings
@@ -623,11 +662,22 @@ def get_sync_service(
             detail="Vast.ai API key not configured. Please update settings.",
         )
 
+    # Parse user.settings if it's a JSON string
+    user_settings = {}
+    if user and user.settings:
+        if isinstance(user.settings, str):
+            try:
+                user_settings = json_module.loads(user.settings)
+            except (json_module.JSONDecodeError, TypeError):
+                user_settings = {}
+        elif isinstance(user.settings, dict):
+            user_settings = user.settings
+
     # Get settings for providers
-    repo = (user.settings.get("restic_repo") if user else None) or settings.r2.restic_repo
-    password = (user.settings.get("restic_password") if user else None) or settings.restic.password
-    access_key = (user.settings.get("r2_access_key") if user else None) or settings.r2.access_key
-    secret_key = (user.settings.get("r2_secret_key") if user else None) or settings.r2.secret_key
+    repo = user_settings.get("restic_repo") or settings.r2.restic_repo
+    password = user_settings.get("restic_password") or settings.restic.password
+    access_key = user_settings.get("r2_access_key") or settings.r2.access_key_id
+    secret_key = user_settings.get("r2_secret_key") or settings.r2.secret_access_key
 
     # Create services
     gpu_provider = VastProvider(api_key=api_key)

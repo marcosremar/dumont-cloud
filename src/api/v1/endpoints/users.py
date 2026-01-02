@@ -125,30 +125,38 @@ async def get_user_teams(
     """
     current_team_id = token_payload.get("team_id") if token_payload else None
 
-    # Get all teams for the user
-    teams = team_repo.get_teams_for_user(user_email)
+    try:
+        # Get all teams for the user
+        teams = team_repo.get_teams_for_user(user_email)
 
-    team_responses = []
-    for team in teams:
-        # Get user's role in this team
-        user_role = role_repo.get_user_role(user_email, team.id)
-        role_name = user_role.name if user_role else "Unknown"
-        role_id = user_role.id if user_role else 0
+        team_responses = []
+        for team in teams:
+            # Get user's role in this team
+            user_role = role_repo.get_user_role(user_email, team.id)
+            role_name = user_role.name if user_role else "Unknown"
+            role_id = user_role.id if user_role else 0
 
-        team_responses.append(UserTeamResponse(
-            id=team.id,
-            name=team.name,
-            slug=team.slug,
-            role=role_name,
-            role_id=role_id,
-            is_current=team.id == current_team_id,
-        ))
+            team_responses.append(UserTeamResponse(
+                id=team.id,
+                name=team.name,
+                slug=team.slug,
+                role=role_name,
+                role_id=role_id,
+                is_current=team.id == current_team_id,
+            ))
 
-    return UserTeamsListResponse(
-        teams=team_responses,
-        count=len(team_responses),
-        current_team_id=current_team_id,
-    )
+        return UserTeamsListResponse(
+            teams=team_responses,
+            count=len(team_responses),
+            current_team_id=current_team_id,
+        )
+    except Exception:
+        # Gracefully handle missing tables - return empty list
+        return UserTeamsListResponse(
+            teams=[],
+            count=0,
+            current_team_id=None,
+        )
 
 
 @router.post("/me/switch-team", response_model=SwitchTeamResponse)

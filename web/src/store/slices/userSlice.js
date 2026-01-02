@@ -55,16 +55,16 @@ export const completeOnboarding = createAsyncThunk(
       // Mark in localStorage immediately
       localStorage.setItem('onboarding_completed', 'true')
 
-      const res = await fetch(`${API_BASE}/api/v1/settings/complete-onboarding`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${getToken()}` },
-      })
-      if (!res.ok) {
-        console.error('Failed to complete onboarding on server')
+      // Skip API call in demo mode
+      const isDemoMode = localStorage.getItem('demo_mode') === 'true'
+      if (!isDemoMode) {
+        await fetch(`${API_BASE}/api/v1/settings/complete-onboarding`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${getToken()}` },
+        })
       }
       return true
-    } catch (error) {
-      console.error('Error completing onboarding:', error)
+    } catch {
       return true // Still mark as completed locally
     }
   }

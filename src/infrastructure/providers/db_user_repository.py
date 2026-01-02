@@ -2,16 +2,8 @@
 Database-based User Repository Implementation
 Implements IUserRepository interface using SQLAlchemy and PostgreSQL
 """
+import bcrypt
 import json
-import logging
-from typing import Optional, Dict, Any
-
-from passlib.context import CryptContext
-from sqlalchemy.orm import Session
-Database-based User Storage Implementation
-Implements IUserRepository interface using PostgreSQL with SQLAlchemy ORM
-"""
-import hashlib
 import logging
 from typing import Optional, Dict, Any
 
@@ -25,9 +17,6 @@ from ...models.user import User as DBUser
 from ...config.database import SessionLocal
 
 logger = logging.getLogger(__name__)
-
-# Password hashing context using bcrypt
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class DBUserRepository(IUserRepository):
@@ -410,20 +399,18 @@ class DatabaseUserRepository(IUserRepository):
             return True
 
     def verify_password(self, email: str, password: str) -> bool:
-        """Verify user password"""
+        """Verify user password using bcrypt"""
         if self._session:
             db_user = self._session.query(DBUser).filter(DBUser.email == email).first()
             if not db_user or not db_user.password_hash:
                 return False
-            password_hash = self._hash_password(password)
-            return db_user.password_hash == password_hash
+            return bcrypt.checkpw(password.encode(), db_user.password_hash.encode())
 
         with get_db_session() as session:
             db_user = session.query(DBUser).filter(DBUser.email == email).first()
             if not db_user or not db_user.password_hash:
                 return False
-            password_hash = self._hash_password(password)
-            return db_user.password_hash == password_hash
+            return bcrypt.checkpw(password.encode(), db_user.password_hash.encode())
 
     def update_settings(self, email: str, settings: Dict[str, Any]) -> DomainUser:
         """Update user settings"""
@@ -438,7 +425,7 @@ class DatabaseUserRepository(IUserRepository):
 
     def _hash_password(self, password: str) -> str:
         """Hash a password using bcrypt."""
-        return pwd_context.hash(password)
+        return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
     def update_last_sso_login(self, email: str) -> DomainUser:
         """Update last SSO login timestamp"""
         from datetime import datetime

@@ -574,14 +574,6 @@ export default function Settings() {
             <div className="p-2">
               {SETTINGS_MENU.map((item) => {
                 const MenuIcon = item.icon
-                const iconColorClasses = {
-                  green: 'stat-card-icon-success',
-                  blue: 'stat-card-icon-primary',
-                  cyan: 'stat-card-icon-primary',
-                  purple: 'bg-purple-500/20 text-purple-400',
-                  yellow: 'stat-card-icon-warning',
-                  red: 'stat-card-icon-error',
-                }
                 const isActive = activeTab === item.id
 
                 return (
@@ -592,12 +584,10 @@ export default function Settings() {
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-left mb-1 ${
                       isActive
                         ? 'bg-brand-500/10 text-brand-400'
-                        : 'text-gray-400 hover:bg-white/10 hover:text-gray-200'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconColorClasses[item.color]}`}>
-                      <MenuIcon className="w-4 h-4" />
-                    </div>
+                    <MenuIcon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-brand-400' : ''}`} />
                     <span className="text-sm font-medium">{item.label}</span>
                   </button>
                 )
@@ -623,12 +613,10 @@ export default function Settings() {
             className="border-white/10 bg-dark-surface-card"
             header={
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-brand-500/10">
-                  <Key className="w-5 h-5 text-brand-400" />
-                </div>
+                <Key className="w-6 h-6 text-brand-400 flex-shrink-0" />
                 <div>
                   <h3 className="text-lg font-semibold text-white">Vast.ai</h3>
-                  <p className="text-gray-500 text-sm mt-1">Configuração para acesso à plataforma Vast.ai</p>
+                  <p className="text-gray-500 text-sm">Configuração para acesso à plataforma Vast.ai</p>
                 </div>
               </div>
             }
@@ -650,12 +638,10 @@ export default function Settings() {
             className="border-white/10 bg-dark-surface-card"
             header={
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-brand-500/10">
-                  <Database className="w-5 h-5 text-brand-400" />
-                </div>
+                <Database className="w-6 h-6 text-brand-400 flex-shrink-0" />
                 <div>
                   <h3 className="text-lg font-semibold text-white">Cloudflare R2</h3>
-                  <p className="text-gray-500 text-sm mt-1">Armazenamento em nuvem para snapshots e backups</p>
+                  <p className="text-gray-500 text-sm">Armazenamento em nuvem para snapshots e backups</p>
                 </div>
               </div>
             }
@@ -713,12 +699,10 @@ export default function Settings() {
             className="border-white/10 bg-dark-surface-card"
             header={
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-brand-500/10">
-                  <Lock className="w-5 h-5 text-brand-400" />
-                </div>
+                <Lock className="w-6 h-6 text-brand-400 flex-shrink-0" />
                 <div>
                   <h3 className="text-lg font-semibold text-white">Restic</h3>
-                  <p className="text-gray-500 text-sm mt-1">Proteção e criptografia de repositórios</p>
+                  <p className="text-gray-500 text-sm">Proteção e criptografia de repositórios</p>
                 </div>
               </div>
             }
@@ -744,12 +728,10 @@ export default function Settings() {
                 className="border-white/10 bg-dark-surface-card"
                 header={
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-brand-500/10">
-                      <Cloud className="w-5 h-5 text-brand-400" />
-                    </div>
+                    <Cloud className="w-6 h-6 text-brand-400 flex-shrink-0" />
                     <div>
                       <h3 className="text-lg font-semibold text-white">Cloud Storage Failover</h3>
-                      <p className="text-gray-500 text-sm mt-1">Configure provedores de storage para failover global</p>
+                      <p className="text-gray-500 text-sm">Configure provedores de storage para failover global</p>
                     </div>
                   </div>
                 }
@@ -847,12 +829,10 @@ export default function Settings() {
                   className="border-white/10 bg-dark-surface-card"
                   header={
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-white/5">
-                        <span className="text-xl">🅱️</span>
-                      </div>
+                      <span className="text-2xl flex-shrink-0">🅱️</span>
                       <div>
                         <h3 className="text-lg font-semibold text-white">Backblaze B2</h3>
-                        <p className="text-gray-500 text-sm mt-1">Armazenamento de baixo custo (~$0.005/GB/mês)</p>
+                        <p className="text-gray-500 text-sm">Armazenamento de baixo custo (~$0.005/GB/mês)</p>
                       </div>
                     </div>
                   }
@@ -899,12 +879,10 @@ export default function Settings() {
                   className="border-white/10 bg-dark-surface-card"
                   header={
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-white/5">
-                        <span className="text-xl">📦</span>
-                      </div>
+                      <span className="text-2xl flex-shrink-0">📦</span>
                       <div>
                         <h3 className="text-lg font-semibold text-white">Amazon S3</h3>
-                        <p className="text-gray-500 text-sm mt-1">Alta disponibilidade, multi-região</p>
+                        <p className="text-gray-500 text-sm">Alta disponibilidade, multi-região</p>
                       </div>
                     </div>
                   }
@@ -970,12 +948,10 @@ export default function Settings() {
                   className="border-white/10 bg-dark-surface-card"
                   header={
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-white/5">
-                        <span className="text-xl">🔷</span>
-                      </div>
+                      <span className="text-2xl flex-shrink-0">🔷</span>
                       <div>
                         <h3 className="text-lg font-semibold text-white">Google Cloud Storage</h3>
-                        <p className="text-gray-500 text-sm mt-1">Integração com GCP, multi-região</p>
+                        <p className="text-gray-500 text-sm">Integração com GCP, multi-região</p>
                       </div>
                     </div>
                   }
@@ -1016,12 +992,10 @@ export default function Settings() {
                   className="border-white/10 bg-dark-surface-card"
                   header={
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-white/5">
-                        <span className="text-xl">☁️</span>
-                      </div>
+                      <span className="text-2xl flex-shrink-0">☁️</span>
                       <div>
                         <h3 className="text-lg font-semibold text-white">Cloudflare R2</h3>
-                        <p className="text-gray-500 text-sm mt-1">Zero egress fees (~$0.015/GB/mês)</p>
+                        <p className="text-gray-500 text-sm">Zero egress fees (~$0.015/GB/mês)</p>
                       </div>
                     </div>
                   }
@@ -1040,12 +1014,10 @@ export default function Settings() {
                 className="border-white/10 bg-dark-surface-card"
                 header={
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-white/5">
-                      <HardDrive className="w-5 h-5 text-gray-400" />
-                    </div>
+                    <HardDrive className="w-6 h-6 text-gray-400 flex-shrink-0" />
                     <div>
                       <h3 className="text-lg font-semibold text-white">Comparativo de Estratégias</h3>
-                      <p className="text-gray-500 text-sm mt-1">Tempo estimado de failover para cada estratégia</p>
+                      <p className="text-gray-500 text-sm">Tempo estimado de failover para cada estratégia</p>
                     </div>
                   </div>
                 }
@@ -1126,12 +1098,10 @@ export default function Settings() {
             className="border-white/10 bg-dark-surface-card"
             header={
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-brand-500/10">
-                  <AlertCircle className="w-5 h-5 text-brand-400" />
-                </div>
+                <AlertCircle className="w-6 h-6 text-brand-400 flex-shrink-0" />
                 <div>
                   <h3 className="text-lg font-semibold text-white">Notificações</h3>
-                  <p className="text-gray-500 text-sm mt-1">Alertas visuais e sonoros do sistema</p>
+                  <p className="text-gray-500 text-sm">Alertas visuais e sonoros do sistema</p>
                 </div>
               </div>
             }
@@ -1190,12 +1160,10 @@ export default function Settings() {
           className="border-white/10 bg-dark-surface-card"
           header={
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-brand-500/10">
-                <Server className="w-5 h-5 text-brand-400" />
-              </div>
+              <Server className="w-6 h-6 text-brand-400 flex-shrink-0" />
               <div>
                 <h3 className="text-lg font-semibold text-white">DumontAgent</h3>
-                <p className="text-gray-500 text-sm mt-1">Sincronização automática em máquinas GPU</p>
+                <p className="text-gray-500 text-sm">Sincronização automática em máquinas GPU</p>
               </div>
             </div>
           }
@@ -1274,12 +1242,10 @@ export default function Settings() {
           className="border-white/10 bg-dark-surface-card"
           header={
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-brand-500/10">
-                <DollarSign className="w-5 h-5 text-brand-400" />
-              </div>
+              <DollarSign className="w-6 h-6 text-brand-400 flex-shrink-0" />
               <div>
                 <h3 className="text-lg font-semibold text-white">Estimativa de Custo</h3>
-                <p className="text-gray-500 text-sm mt-1">Cloudflare R2 - Armazenamento em nuvem</p>
+                <p className="text-gray-500 text-sm">Cloudflare R2 - Armazenamento em nuvem</p>
               </div>
             </div>
           }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { apiGet, apiPost, apiDelete, isDemoMode } from '../utils/api'
 import { ConfirmModal } from '../components/ui/dumont-ui'
@@ -28,6 +28,7 @@ import {
 export default function Machines() {
   const { t } = useTranslation()
   const location = useLocation()
+  const navigate = useNavigate()
   const isDemo = isDemoMode()
 
   const [machines, setMachines] = useState([])
@@ -46,12 +47,6 @@ export default function Machines() {
   const [vastBalance, setVastBalance] = useState(null) // VAST.ai account balance
   const [deletingMachines, setDeletingMachines] = useState(new Set()) // Track machines being deleted
 
-  // Reliability filter/sort state
-  const [sortByReliability, setSortByReliability] = useState(false) // Sort by reliability score
-  const [reliabilityThreshold, setReliabilityThreshold] = useState(70) // Minimum reliability threshold (0-100)
-  const [autoExcludeBelowThreshold, setAutoExcludeBelowThreshold] = useState(false) // Auto-exclude machines below threshold
-  const [showAllMachines, setShowAllMachines] = useState(false) // Show all machines even when auto-exclude is on
-  const [reliabilityData, setReliabilityData] = useState({}) // Machine ID -> reliability data
 
   // Create machine modal state
   const [createModal, setCreateModal] = useState({ open: false, offer: null, creating: false, error: null })
@@ -91,57 +86,6 @@ export default function Machines() {
     }
   }
 
-  // Fetch reliability data for machines
-  const fetchReliabilityData = async (machineList) => {
-    if (!machineList || machineList.length === 0) return
-
-    // In demo mode, generate mock reliability data
-    if (isDemo) {
-      const mockData = {}
-      machineList.forEach((machine, index) => {
-        const machineKey = machine.machine_id || machine.id
-        // Use deterministic scores based on index for predictable testing:
-        // - First machine: 95 (excellent)
-        // - Second machine: 85 (good)
-        // - Third machine: 65 (below threshold)
-        // - Fourth machine: 55 (low)
-        // - Others: cycle through 90, 75, 60
-        const scorePatterns = [95, 85, 65, 55, 90, 75, 60, 80, 70, 50]
-        const baseScore = scorePatterns[index % scorePatterns.length]
-        mockData[machineKey] = {
-          overall_score: baseScore,
-          uptime_score: Math.min(100, baseScore + 5),
-          performance_score: Math.max(50, baseScore - 5),
-          user_rating: Math.round((baseScore / 20) * 10) / 10, // 4.75, 4.25, 3.25, etc.
-          total_ratings: 10 + index * 5
-        }
-      })
-      setReliabilityData(mockData)
-      return
-    }
-
-    try {
-      // Get machine IDs - prefer machine_id if available
-      const machineIds = machineList
-        .map(m => m.machine_id || m.id)
-        .filter(id => id != null)
-
-      if (machineIds.length === 0) return
-
-      // Build query params
-      const params = new URLSearchParams()
-      machineIds.forEach(id => params.append('machine_id', id))
-
-      const res = await apiGet(`/api/v1/reliability/machines?${params}`)
-      if (res.ok) {
-        const data = await res.json()
-        // API returns { reliability: { machine_id: data, ... } }
-        setReliabilityData(data.reliability || data)
-      }
-    } catch (e) {
-      // Silently fail - reliability data is optional, sorting/filtering will use fallbacks
-    }
-  }
 
   useEffect(() => {
     fetchMachines()
@@ -171,12 +115,6 @@ export default function Machines() {
     }
   }, []) // Run only once on mount
 
-  // Fetch reliability data when machines change
-  useEffect(() => {
-    if (machines.length > 0) {
-      fetchReliabilityData(machines)
-    }
-  }, [machines.length]) // Only refetch when machine count changes
 
   // Auto-sync every 30 seconds for running machines
   useEffect(() => {
@@ -207,12 +145,23 @@ export default function Machines() {
       }
 
       const res = await apiGet('/api/v1/instances')
-      if (!res.ok) throw new Error('Erro ao buscar máquinas')
+      if (!res.ok) {
+        // If unauthorized, don't show error - user will be redirected to login
+        if (res.status === 401) {
+          setMachines([])
+          setError(null)
+          return
+        }
+        throw new Error(`Erro ao buscar máquinas (${res.status})`)
+      }
       const data = await res.json()
       setMachines(data.instances || [])
       setError(null)
     } catch (err) {
-      setError(err.message)
+      // Network errors or API unavailable - show empty state instead of error
+      console.error('Erro ao buscar máquinas:', err)
+      setMachines([])
+      setError(null)
     } finally {
       setLoading(false)
     }
@@ -223,7 +172,7 @@ export default function Machines() {
   }
 
   const confirmDestroy = async () => {
-    const { machineId, machineName} = destroyDialog
+    const { machineId, machineName } = destroyDialog
     setDestroyDialog({ open: false, machineId: null, machineName: '' })
 
     // Add to deleting machines set for animation
@@ -234,21 +183,18 @@ export default function Machines() {
       showDemoToast(t('machines.toast.destroying', { name: machineName }), 'warning')
       await new Promise(r => setTimeout(r, 1500))
       setMachines(prev => prev.filter(m => m.id !== machineId))
-setDeletingMachines(prev => {
-        next.delete(machineId)
-      })
-        return next
-      showDemoToast(`${machineName} destruída com sucesso!`, 'success')
+      setDeletingMachines(prev => {
         const next = new Set(prev)
-showDemoToast(t('machines.toast.destroyedSuccess', { name: machineName }), 'success')
+        next.delete(machineId)
+        return next
+      })
+      showDemoToast(t('machines.toast.destroyedSuccess', { name: machineName }), 'success')
       return
     }
 
     try {
       const res = await apiDelete(`/api/v1/instances/${machineId}`)
-if (!res.ok) throw new Error('Erro ao destruir máquina')
-      showDemoToast(`${machineName} destruída com sucesso!`, 'success')
-if (!res.ok) throw new Error(t('machines.errors.destroyMachine'))
+      if (!res.ok) throw new Error(t('machines.errors.destroyMachine'))
       fetchMachines()
     } catch (err) {
       alert(err.message)
@@ -449,22 +395,17 @@ if (!res.ok) throw new Error(t('machines.errors.destroyMachine'))
     }
 
     try {
-      console.log(`[Snapshot] Starting for machine ${machineId}`)
       setSyncStatus(prev => ({ ...prev, [machineId]: 'syncing' }))
 
       // Use new sync endpoint with force=true for manual sync
       const res = await apiPost(`/api/v1/instances/${machineId}/sync?force=true`)
-      console.log(`[Snapshot] Response status:`, res.status)
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
-throw new Error(errorData.detail || errorData.error || t('machines.errors.syncFailed'))
-        throw new Error(errorData.detail || errorData.error || 'Erro ao sincronizar')
-console.error(`[Snapshot] Error:`, errorData)
+        throw new Error(errorData.detail || errorData.error || t('machines.errors.syncFailed'))
       }
 
       const data = await res.json()
-      console.log(`[Snapshot] Success:`, data)
 
       setSyncStatus(prev => ({ ...prev, [machineId]: 'synced' }))
       setLastSyncTime(prev => ({ ...prev, [machineId]: Date.now() }))
@@ -478,7 +419,6 @@ console.error(`[Snapshot] Error:`, errorData)
         `Arquivos inalterados: ${data.files_unmodified}\n` +
         `Dados enviados: ${data.data_added}`
 
-      console.log(`[Snapshot] ${message}`)
       alert(message)
 
       // Show success toast if in demo mode helper
@@ -486,7 +426,6 @@ console.error(`[Snapshot] Error:`, errorData)
         showDemoToast(`Snapshot concluído! ${data.data_added} sincronizados`, 'success')
       }
     } catch (err) {
-      console.error(`[Snapshot] Error:`, err)
       setSyncStatus(prev => ({ ...prev, [machineId]: 'idle' }))
       alert(`Erro ao criar snapshot: ${err.message}`)
     }
@@ -494,6 +433,9 @@ console.error(`[Snapshot] Error:`, errorData)
 
   // Auto-sync (using new incremental sync endpoint)
   const handleAutoSync = async (machineId) => {
+    // Skip in demo mode - no real machines to sync
+    if (isDemo) return
+
     // Check if already syncing
     if (syncStatus[machineId] === 'syncing') return
 
@@ -519,9 +461,8 @@ console.error(`[Snapshot] Error:`, errorData)
       } else {
         setSyncStatus(prev => ({ ...prev, [machineId]: 'idle' }))
       }
-    } catch (err) {
+    } catch {
       setSyncStatus(prev => ({ ...prev, [machineId]: 'idle' }))
-      console.error('Auto-sync failed:', err)
     }
   }
 
@@ -531,7 +472,20 @@ console.error(`[Snapshot] Error:`, errorData)
   }
 
   const handleMigrate = (machine) => {
-    setMigrationTarget(machine)
+    // Se tem CPU Standby ativo, fazer failover instantâneo (manter modal)
+    if (machine.cpu_standby?.enabled) {
+      setMigrationTarget(machine)
+      return
+    }
+
+    // Sem CPU Standby - ir para o Wizard
+    navigate('/app', {
+      state: {
+        wizardMode: 'migrate',
+        sourceMachine: machine,
+        targetType: machine.num_gpus > 0 ? 'cpu' : 'gpu'
+      }
+    })
   }
 
   const handleMigrationSuccess = (result) => {
@@ -697,62 +651,23 @@ console.error(`[Snapshot] Error:`, errorData)
     return dateB - dateA // Most recent first
   }
 
-  // Sort function: by reliability score (highest first)
-  const sortByReliabilityScore = (a, b) => {
-    // Check both machine_id and id for reliability data lookup
-    const dataA = reliabilityData[a.machine_id] || reliabilityData[a.id]
-    const dataB = reliabilityData[b.machine_id] || reliabilityData[b.id]
-    const scoreA = dataA?.overall_score || dataA?.reliability_score || a.reliability_score || 0
-    const scoreB = dataB?.overall_score || dataB?.reliability_score || b.reliability_score || 0
-    return scoreB - scoreA // Highest reliability first
-  }
-
-  // Get reliability score for a machine
-  const getReliabilityScore = (machine) => {
-    const data = reliabilityData[machine.machine_id] || reliabilityData[machine.id]
-    return data?.overall_score || data?.reliability_score || machine.reliability_score || null
-  }
-
-  // Check if machine meets reliability threshold
-  const meetsReliabilityThreshold = (machine) => {
-    const score = getReliabilityScore(machine)
-    // If no reliability data, consider it as meeting threshold (don't exclude for insufficient data)
-    if (score === null || score === undefined) return true
-    return score >= reliabilityThreshold
-  }
-
-  // Choose sort function based on settings
-  const getCurrentSortFn = sortByReliability ? sortByReliabilityScore : sortByRecent
-
   // Group machines: Loading → Running → Stopped
-  const loadingMachines = machines.filter(m => loadingStates.includes(m.actual_status)).sort(getCurrentSortFn)
-  const runningMachines = machines.filter(m => m.actual_status === 'running').sort(getCurrentSortFn)
+  const loadingMachines = machines.filter(m => loadingStates.includes(m.actual_status)).sort(sortByRecent)
+  const runningMachines = machines.filter(m => m.actual_status === 'running').sort(sortByRecent)
   const stoppedMachines = machines.filter(m =>
     !loadingStates.includes(m.actual_status) && m.actual_status !== 'running'
-  ).sort(getCurrentSortFn)
+  ).sort(sortByRecent)
 
   // For stats, "active" includes loading + running
   const activeMachines = [...loadingMachines, ...runningMachines]
   const inactiveMachines = stoppedMachines
 
   // Build filtered list: Loading always first, then based on filter
-  let filteredMachines = filter === 'online'
+  const filteredMachines = filter === 'online'
     ? [...loadingMachines, ...runningMachines]
     : filter === 'offline'
       ? stoppedMachines
       : [...loadingMachines, ...runningMachines, ...stoppedMachines]
-
-  // Apply reliability threshold filtering if enabled
-  const machinesExcludedByThreshold = autoExcludeBelowThreshold && !showAllMachines
-    ? filteredMachines.filter(m => !meetsReliabilityThreshold(m))
-    : []
-
-  if (autoExcludeBelowThreshold && !showAllMachines) {
-    filteredMachines = filteredMachines.filter(meetsReliabilityThreshold)
-  }
-
-  // Count of excluded machines for display
-  const excludedCount = machinesExcludedByThreshold.length
 
   const totalGpuMem = activeMachines.reduce((acc, m) => acc + (m.gpu_ram || 24000), 0)
   const totalCostPerHour = activeMachines.reduce((acc, m) => acc + (m.total_dph || m.dph_total || 0), 0)
@@ -775,9 +690,7 @@ console.error(`[Snapshot] Error:`, errorData)
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="page-title flex items-center gap-3">
-              <div className="stat-card-icon stat-card-icon-success">
-                <Server className="w-5 h-5" />
-              </div>
+              <Server className="w-6 h-6 text-emerald-400" />
               Minhas Máquinas
             </h1>
             <p className="page-subtitle">Gerencie suas instâncias de GPU e CPU</p>
@@ -792,20 +705,6 @@ console.error(`[Snapshot] Error:`, errorData)
         </div>
       </div>
 
-      {/* VAST.ai Balance - Compact inline */}
-      {vastBalance && (
-        <div className="mb-4 flex items-center gap-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-900/30 border border-green-500/30">
-            <Wallet className="w-4 h-4 text-green-400" />
-            <span className="text-sm text-green-400/70">Saldo:</span>
-            <span className="text-sm font-bold text-green-400">${vastBalance.credit?.toFixed(2) || '0.00'}</span>
-          </div>
-          <span className="text-xs text-gray-500">
-            <TrendingDown className="w-3 h-3 inline mr-1" />
-            ${totalCostPerHour.toFixed(2)}/hr em uso
-          </span>
-        </div>
-      )}
 
       {/* Stats Summary - TailAdmin Cards */}
       <div className="stats-grid mb-6">
@@ -815,9 +714,7 @@ console.error(`[Snapshot] Error:`, errorData)
               <p className="stat-card-label">GPUs Ativas</p>
               <p className="stat-card-value">{activeMachines.length}</p>
             </div>
-            <div className="stat-card-icon stat-card-icon-success">
-              <Server className="w-5 h-5" />
-            </div>
+            <Server className="w-5 h-5 text-emerald-400" />
           </div>
         </div>
         {totalCpuStandbyCount > 0 && (
@@ -827,9 +724,7 @@ console.error(`[Snapshot] Error:`, errorData)
                 <p className="stat-card-label">CPU Backup</p>
                 <p className="stat-card-value">{totalCpuStandbyCount}</p>
               </div>
-              <div className="stat-card-icon stat-card-icon-primary">
-                <Shield className="w-5 h-5" />
-              </div>
+              <Shield className="w-5 h-5 text-brand-400" />
             </div>
           </div>
         )}
@@ -839,9 +734,7 @@ console.error(`[Snapshot] Error:`, errorData)
               <p className="stat-card-label">VRAM Total</p>
               <p className="stat-card-value">{Math.round(totalGpuMem / 1024)} GB</p>
             </div>
-            <div className="stat-card-icon stat-card-icon-warning">
-              <Cpu className="w-5 h-5" />
-            </div>
+            <Cpu className="w-5 h-5 text-amber-400" />
           </div>
         </div>
         <div className="stat-card">
@@ -850,9 +743,7 @@ console.error(`[Snapshot] Error:`, errorData)
               <p className="stat-card-label">Custo/Hora</p>
               <p className="stat-card-value">${totalCostPerHour.toFixed(2)}</p>
             </div>
-            <div className="stat-card-icon stat-card-icon-error">
-              <Activity className="w-5 h-5" />
-            </div>
+            <Activity className="w-5 h-5 text-rose-400" />
           </div>
         </div>
       </div>
@@ -878,78 +769,6 @@ console.error(`[Snapshot] Error:`, errorData)
             </div>
           </div>
 
-          {/* Reliability Sort & Filter Controls */}
-          <div className="mt-4 pt-4 border-t border-white/10">
-            <div className="flex flex-wrap items-center gap-6">
-              {/* Sort by Reliability Toggle */}
-              <div className="flex items-center gap-3">
-                <ArrowUpDown className="w-4 h-4 text-gray-400" />
-                <Switch
-                  checked={sortByReliability}
-                  onCheckedChange={setSortByReliability}
-                  label="Ordenar por confiabilidade"
-                />
-              </div>
-
-              {/* Reliability Threshold Slider */}
-              <div className="flex items-center gap-3 min-w-[200px]">
-                <Filter className="w-4 h-4 text-gray-400" />
-                <div className="flex flex-col flex-1">
-                  <span className="text-xs text-gray-400 mb-1">
-                    Limite mínimo: <span className="text-white font-medium">{reliabilityThreshold}%</span>
-                  </span>
-                  <Slider
-                    value={[reliabilityThreshold]}
-                    onValueChange={(values) => setReliabilityThreshold(values[0])}
-                    min={0}
-                    max={100}
-                    step={5}
-                  />
-                </div>
-              </div>
-
-              {/* Auto-exclude Checkbox */}
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={autoExcludeBelowThreshold}
-                  onChange={(e) => {
-                    setAutoExcludeBelowThreshold(e.target.checked)
-                    // Reset show all when disabling auto-exclude
-                    if (!e.target.checked) {
-                      setShowAllMachines(false)
-                    }
-                  }}
-                  label="Ocultar abaixo do limite"
-                />
-              </div>
-
-              {/* Show All Machines Toggle (only visible when auto-exclude is enabled) */}
-              {autoExcludeBelowThreshold && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setShowAllMachines(!showAllMachines)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                      showAllMachines
-                        ? 'bg-brand-500/20 text-brand-400 border border-brand-500/30'
-                        : 'bg-gray-700/50 text-gray-400 border border-gray-600/30 hover:bg-gray-700'
-                    }`}
-                  >
-                    {showAllMachines ? (
-                      <>
-                        <Eye className="w-4 h-4" />
-                        Mostrando todas
-                      </>
-                    ) : (
-                      <>
-                        <EyeOff className="w-4 h-4" />
-                        Mostrar todas ({excludedCount} ocultas)
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         <div className="ta-card-body">

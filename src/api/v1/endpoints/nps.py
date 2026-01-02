@@ -66,6 +66,14 @@ async def should_show_survey(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+    except Exception:
+        # Gracefully handle missing tables or other DB errors
+        return NPSShouldShowResponse(
+            should_show=False,
+            reason="NPS service unavailable",
+            trigger_type=None,
+            survey_config=None,
+        )
 
 
 @router.post("/submit", response_model=NPSSubmissionResponse)

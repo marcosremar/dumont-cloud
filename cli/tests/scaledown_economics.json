@@ -1,10 +1,10 @@
 {
-  "gpu": "v100-sxm2-16gb",
-  "cost_running_per_hour": 0.005,
+  "gpu": "V100-SXM2-16GB",
+  "cost_running_per_hour": 0.239,
   "cost_stopped_per_hour": 0.005,
-  "savings_per_hour": 0.0,
-  "savings_percent": 0.0,
-  "recovery_seconds": 7.516999244689941,
-  "monthly_savings_16h_idle": 0.0,
-  "timestamp": "2025-12-23T08:43:25"
+  "savings_per_hour": 0.234,
+  "savings_percent": 97.90794979079499,
+  "recovery_seconds": 7.6,
+  "monthly_savings_16h_idle": 112.32000000000001,
+  "timestamp": "2026-01-01T23:51:42"
 }

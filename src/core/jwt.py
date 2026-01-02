@@ -10,7 +10,7 @@ from .config import get_settings
 
 # JWT Configuration
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_DAYS = 30  # Token valid for 30 days
+ACCESS_TOKEN_EXPIRE_DAYS = 45  # Token valid for 45 days (long session)
 
 
 def create_access_token(

@@ -1,0 +1,128 @@
+{
+  "test_name": "Wizard GPU - Data Attributes Test",
+  "date": "2026-01-02",
+  "time": "18:47",
+  "url": "http://localhost:4894/demo-app",
+  "status": "INCOMPLETE",
+  "reason": "Wizard flow blocked at Step 2",
+  
+  "objective": {
+    "primary": "Verify data attributes on GPU cards",
+    "attributes_to_check": [
+      "data-gpu-card=\"true\"",
+      "data-gpu-name=\"RTX 4090\"",
+      "data-selected=\"true|false\""
+    ]
+  },
+  
+  "steps_executed": [
+    {
+      "step": 1,
+      "name": "Navigation",
+      "status": "SUCCESS",
+      "actions": [
+        "Navigated to http://localhost:4894/demo-app",
+        "Wizard loaded successfully"
+      ],
+      "screenshot": "gpu-attr-01-initial.png"
+    },
+    {
+      "step": 2,
+      "name": "Region Selection",
+      "status": "SUCCESS",
+      "actions": [
+        "Clicked 'EUA' button",
+        "Wizard advanced to Step 2/4"
+      ],
+      "screenshot": "gpu-attr-02-step2.png"
+    },
+    {
+      "step": 3,
+      "name": "Purpose Selection",
+      "status": "PARTIAL",
+      "actions": [
+        "Purpose card clicked",
+        "Button 'Próximo' visible and enabled"
+      ],
+      "issue": "Clicking 'Próximo' did not advance wizard to Step 3",
+      "screenshot": "gpu-attr-02-step2.png"
+    },
+    {
+      "step": 4,
+      "name": "GPU List Verification",
+      "status": "NOT_REACHED",
+      "reason": "Wizard did not advance from Step 2",
+      "expected_actions": [
+        "Wait for GPUs to load",
+        "Count cards with [data-gpu-card=\"true\"]",
+        "Verify data-gpu-name attribute",
+        "Click GPU card",
+        "Verify data-selected changes to \"true\""
+      ]
+    }
+  ],
+  
+  "bug_identified": {
+    "location": "web/src/components/dashboard/WizardForm.jsx",
+    "problem": "Wizard navigation from Step 2 to Step 3 not working",
+    "symptoms": [
+      "Purpose card can be clicked",
+      "Button 'Próximo' is enabled",
+      "Clicking 'Próximo' does not increment currentStep",
+      "Step 3 (GPU Hardware) never loads"
+    ],
+    "possible_causes": [
+      "handleNext() not called on button click",
+      "selectedPurpose state not updating",
+      "Step validation preventing advance",
+      "currentStep not incrementing"
+    ]
+  },
+  
+  "screenshots": [
+    {
+      "file": "gpu-attr-01-initial.png",
+      "description": "Initial wizard state - Step 1 (Region)",
+      "size_kb": 124,
+      "elements_visible": [
+        "Wizard header",
+        "Region buttons (EUA, Europa, Ásia, América do Sul)",
+        "Interactive map",
+        "Button 'Próximo'"
+      ]
+    },
+    {
+      "file": "gpu-attr-02-step2.png",
+      "description": "Step 2 (Purpose) - Where test got stuck",
+      "size_kb": 105,
+      "elements_visible": [
+        "Stepper 2/4 active",
+        "Question 'O que você vai fazer?'",
+        "5 purpose cards",
+        "Button 'Próximo' (enabled)"
+      ],
+      "issue": "Wizard did not advance to Step 3 after clicking button"
+    }
+  ],
+  
+  "data_attributes_status": "UNKNOWN",
+  "data_attributes_verified": false,
+  
+  "recommendations": [
+    "Add console.log to handleNext() function",
+    "Verify onClick handler on 'Próximo' button",
+    "Check selectedPurpose state updates",
+    "Ensure currentStep increments correctly",
+    "Test wizard navigation manually in browser",
+    "After fix, re-run: npx playwright test wizard-gpu-data-attr-simple.spec.js"
+  ],
+  
+  "files_generated": [
+    "tests/wizard-gpu-data-attr-simple.spec.js",
+    "screenshots/gpu-attr-01-initial.png",
+    "screenshots/gpu-attr-02-step2.png",
+    "screenshots/WIZARD_DATA_ATTRIBUTES_TEST_REPORT.md",
+    "screenshots/TEST_SUMMARY.md",
+    "screenshots/test-results.json"
+  ]
+}

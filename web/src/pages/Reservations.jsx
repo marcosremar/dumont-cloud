@@ -167,9 +167,7 @@ export default function Reservations() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="page-title flex items-center gap-3">
-              <div className="stat-card-icon stat-card-icon-primary">
-                <Calendar className="w-5 h-5" />
-              </div>
+              <Calendar className="w-6 h-6 text-brand-400" />
               Reservas de GPU
             </h1>
             <p className="page-subtitle">

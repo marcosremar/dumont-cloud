@@ -13,7 +13,7 @@ Manage GPU instances, snapshots, and deployments on vast.ai.
 """
 
 # Vast.ai Configuration
-VAST_API_URL = "https://cloud.vast.ai/api/v0"
+VAST_API_URL = "https://console.vast.ai/api/v0"
 VAST_DEFAULT_TIMEOUT = 30
 
 # SSH Configuration

@@ -24,10 +24,38 @@ test.use({
 const BASE_PATH = '/demo-app';
 
 // Helper para navegar para Machines
-async function goToMachines(page) {
-  await page.goto(`${BASE_PATH}/machines`);
-  await page.waitForLoadState('domcontentloaded');
-  await page.waitForTimeout(2000);
+async function goToMachines(page, retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    await page.goto(`${BASE_PATH}/machines`);
+    await page.waitForLoadState('networkidle');
+
+    // Wait for page title
+    const titleFound = await page.waitForSelector('text=Minhas Máquinas', { timeout: 10000 }).catch(() => null);
+    if (!titleFound && attempt < retries) {
+      console.log(`ℹ️ Attempt ${attempt}: Title not found, retrying...`);
+      continue;
+    }
+
+    // Wait for machine cards (GPU names)
+    const cardsFound = await page.waitForSelector('text=/RTX|A100|H100/i', { timeout: 10000 }).catch(() => null);
+    if (!cardsFound && attempt < retries) {
+      console.log(`ℹ️ Attempt ${attempt}: Cards not found, retrying...`);
+      continue;
+    }
+
+    // Wait for specific content like VRAM or GB
+    const contentFound = await page.waitForSelector('text=/GB VRAM|GB RAM/i', { timeout: 5000 }).catch(() => null);
+    if (contentFound) {
+      await page.waitForTimeout(500);
+      return; // Success
+    }
+
+    if (attempt < retries) {
+      console.log(`ℹ️ Attempt ${attempt}: Content not fully loaded, retrying...`);
+    }
+  }
+  console.log('ℹ️ Page loaded after retries');
+  await page.waitForTimeout(1000);
 }
 
 // ============================================================

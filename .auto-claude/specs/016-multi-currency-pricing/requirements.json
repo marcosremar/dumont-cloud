@@ -1,4 +1,0 @@
-{
-  "task_description": "# Multi-Currency Pricing\n\nDisplay prices and billing in multiple currencies. Support for USD, EUR, GBP, BRL initially. Currency conversion with transparent rates.\n\n## Rationale\nListed in known gaps. Reduces friction for international users. Enables expansion into European and Brazilian markets. Complements internationalization effort.\n\n## User Stories\n- As a European user, I want to see prices in EUR so that I can easily understand costs\n- As a Brazilian startup, I want to be billed in BRL so that I can avoid currency conversion fees\n\n## Acceptance Criteria\n- [ ] Prices displayed in user's selected currency\n- [ ] Support: USD, EUR, GBP, BRL\n- [ ] Daily exchange rate updates\n- [ ] Transparent conversion rate shown at checkout\n- [ ] Billing in local currency where possible\n",
-  "workflow_type": "feature"
-}

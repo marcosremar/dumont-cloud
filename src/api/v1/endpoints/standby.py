@@ -2,6 +2,7 @@
 CPU Standby management API endpoints
 """
 import logging
+import os
 import time
 import uuid
 import json
@@ -1495,3 +1496,142 @@ async def fast_failover(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"failover_id": failover_id, "error": str(e)}
         )
+
+
+# ============================================================
+# CPU STANDALONE PROVISIONING - Direct GCP without GPU
+# ============================================================
+
+class CPUProvisionRequest(BaseModel):
+    """Request to provision a standalone CPU instance in GCP"""
+    machine_type: str = "e2-medium"  # e2-micro, e2-small, e2-medium, e2-standard-2
+    zone: str = "us-central1-a"  # GCP zone
+    disk_size_gb: int = 50
+    spot: bool = True  # Use spot/preemptible for lower cost
+    label: Optional[str] = None
+
+
+@router.post("/cpu/provision")
+async def provision_cpu_standalone(
+    request: CPUProvisionRequest,
+    user_email: str = Depends(get_current_user_email),
+):
+    """
+    Provision a standalone CPU instance in GCP.
+
+    This creates a CPU-only machine directly in GCP without requiring
+    a GPU instance first. Useful for:
+    - Development work that doesn't need GPU
+    - Running CPU-only workloads
+    - Cost-effective standby preparation
+
+    Machine types:
+    - e2-micro: 0.25 vCPU, 1GB RAM (~$0.008/hour spot)
+    - e2-small: 0.5 vCPU, 2GB RAM (~$0.017/hour spot)
+    - e2-medium: 1 vCPU, 4GB RAM (~$0.034/hour spot)
+    - e2-standard-2: 2 vCPU, 8GB RAM (~$0.067/hour spot)
+    """
+    from ....infrastructure.providers.gcp_provider import GCPProvider, GCPInstanceConfig
+
+    # Get user settings for GCP credentials
+    settings = get_settings()
+    user_repo = FileUserRepository(config_file=settings.app.config_file)
+    user = user_repo.get_user(user_email)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Get GCP credentials
+    gcp_creds = user.settings.get("gcp_credentials")
+
+    if not gcp_creds:
+        cloud_storage = user.settings.get("cloud_storage", {})
+        gcs_creds_json = cloud_storage.get("gcs_credentials_json")
+        if gcs_creds_json:
+            try:
+                gcp_creds = json.loads(gcs_creds_json) if isinstance(gcs_creds_json, str) else gcs_creds_json
+            except json.JSONDecodeError:
+                pass
+
+    if not gcp_creds:
+        creds_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+        if creds_path and os.path.exists(creds_path):
+            with open(creds_path, 'r') as f:
+                gcp_creds = json.load(f)
+
+    if not gcp_creds:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="GCP credentials not configured. Set GOOGLE_APPLICATION_CREDENTIALS or configure in settings."
+        )
+
+    # Create GCP provider
+    gcp_provider = GCPProvider(credentials_json=json.dumps(gcp_creds))
+
+    # Generate instance name
+    instance_name = f"dumont-cpu-{int(time.time())}"
+    if request.label:
+        instance_name = f"dumont-{request.label[:20]}-{int(time.time())}"
+
+    # Create instance config
+    config = GCPInstanceConfig(
+        name=instance_name,
+        machine_type=request.machine_type,
+        zone=request.zone,
+        disk_size_gb=request.disk_size_gb,
+        spot=request.spot,
+    )
+
+    logger.info(f"Provisioning CPU instance: {instance_name} ({request.machine_type}) in {request.zone}")
+
+    # Create the instance
+    result = gcp_provider.create_instance(config)
+
+    if result.get("error"):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create CPU instance: {result['error']}"
+        )
+
+    return {
+        "success": True,
+        "instance": {
+            "name": result.get("name"),
+            "zone": result.get("zone"),
+            "external_ip": result.get("external_ip"),
+            "internal_ip": result.get("internal_ip"),
+            "machine_type": request.machine_type,
+            "status": "running",
+            "ssh_command": f"ssh root@{result.get('external_ip')}",
+        },
+        "cost_estimate": {
+            "hourly": _estimate_gcp_cost(request.machine_type, request.spot),
+            "daily": _estimate_gcp_cost(request.machine_type, request.spot) * 24,
+        },
+        "message": f"CPU instance provisioned. SSH: ssh root@{result.get('external_ip')}",
+    }
+
+
+def _estimate_gcp_cost(machine_type: str, spot: bool) -> float:
+    """Estimate hourly cost for GCP machine type"""
+    # Approximate spot prices (actual may vary by region)
+    spot_prices = {
+        "e2-micro": 0.008,
+        "e2-small": 0.017,
+        "e2-medium": 0.034,
+        "e2-standard-2": 0.067,
+        "e2-standard-4": 0.134,
+    }
+    on_demand_prices = {
+        "e2-micro": 0.0084,
+        "e2-small": 0.0168,
+        "e2-medium": 0.0336,
+        "e2-standard-2": 0.0672,
+        "e2-standard-4": 0.1344,
+    }
+
+    prices = spot_prices if spot else on_demand_prices
+    return prices.get(machine_type, 0.05)

@@ -3,7 +3,7 @@
  * Type-safe hooks for use throughout the app
  */
 import { useDispatch, useSelector } from 'react-redux'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { addToast, removeToast } from './slices/uiSlice'
 import { fetchInstances, fetchOffers } from './slices/instancesSlice'
 import { fetchUser, completeOnboarding } from './slices/userSlice'
@@ -149,6 +149,71 @@ export const useInstancesPolling = (intervalMs = 5000) => {
   }, [dispatch, intervalMs, isAuthenticated])
 
   return { instances, loading }
+}
+
+/**
+ * Reservations hook - placeholder for reservations management
+ * Returns empty data until reservationsSlice is implemented
+ */
+export const useReservations = (isDemo = false) => {
+  const [reservations, setReservations] = useState([])
+  const [stats, setStats] = useState({
+    total_reserved_hours: 0,
+    total_credits_saved: 0,
+    average_discount: 0,
+    upcoming_count: 0
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const setDemo = useCallback((demoReservations, demoStats) => {
+    setReservations(demoReservations || [])
+    setStats(demoStats || {})
+  }, [])
+
+  const fetchReservations = useCallback(async () => {
+    setLoading(true)
+    try {
+      // Placeholder - would fetch from API
+      return reservations
+    } finally {
+      setLoading(false)
+    }
+  }, [reservations])
+
+  const fetchStats = useCallback(async () => {
+    // Placeholder - would fetch from API
+    return stats
+  }, [stats])
+
+  const createReservation = useCallback(async (data) => {
+    // Placeholder - would create via API
+    const newReservation = { id: Date.now(), ...data, status: 'pending' }
+    setReservations(prev => [...prev, newReservation])
+    return newReservation
+  }, [])
+
+  const cancelReservation = useCallback(async (id) => {
+    // Placeholder - would cancel via API
+    setReservations(prev => prev.filter(r => r.id !== id))
+  }, [])
+
+  const clearError = useCallback(() => {
+    setError(null)
+  }, [])
+
+  return {
+    reservations,
+    stats,
+    loading,
+    error,
+    fetch: fetchReservations,
+    fetchStats,
+    create: createReservation,
+    cancel: cancelReservation,
+    setDemo,
+    clearError,
+  }
 }
 
 /**

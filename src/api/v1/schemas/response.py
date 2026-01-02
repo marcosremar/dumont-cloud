@@ -41,19 +41,19 @@ class GpuOfferResponse(BaseModel):
     """GPU offer response"""
     id: int
     gpu_name: str
-    num_gpus: int
-    gpu_ram: float
-    cpu_cores: int
-    cpu_ram: float
-    disk_space: float
-    inet_down: float
-    inet_up: float
-    dph_total: float
+    num_gpus: int = 1
+    gpu_ram: float = 0.0
+    cpu_cores: Optional[int] = None
+    cpu_ram: Optional[float] = None
+    disk_space: Optional[float] = None
+    inet_down: Optional[float] = None
+    inet_up: Optional[float] = None
+    dph_total: float = 0.0
     geolocation: Optional[str] = None
-    reliability: float
+    reliability: float = 0.0
     cuda_version: Optional[str] = None
-    verified: bool
-    static_ip: bool
+    verified: bool = False
+    static_ip: bool = False
 
     # Machine History fields (from blacklist/history system)
     machine_id: Optional[str] = None

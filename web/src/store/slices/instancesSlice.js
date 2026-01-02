@@ -6,11 +6,16 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 const getToken = () => localStorage.getItem('auth_token')
+const isDemoMode = () => localStorage.getItem('demo_mode') === 'true'
 
 // Async thunks
 export const fetchInstances = createAsyncThunk(
   'instances/fetchInstances',
   async (_, { rejectWithValue }) => {
+    // Skip API call in demo mode
+    if (isDemoMode()) {
+      return []
+    }
     try {
       const res = await fetch(`${API_BASE}/api/v1/instances`, {
         headers: { 'Authorization': `Bearer ${getToken()}` },

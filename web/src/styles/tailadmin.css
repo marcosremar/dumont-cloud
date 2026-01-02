@@ -7,10 +7,11 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Page Container - using same black as landing page (#0a0d0a) */
+/* Page Container - refined dark theme with subtle gradient */
 .page-container {
   @apply min-h-screen;
-  background-color: #0a0d0a;
+  background: linear-gradient(180deg, #0a0d0a 0%, #0f1310 50%, #0a0d0a 100%);
+  background-attachment: fixed;
 }
 
 /* Page Header */

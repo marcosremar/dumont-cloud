@@ -127,7 +127,7 @@ async def setup_machine_components(instance_id: int, ssh_host: str, ssh_port: in
 @public_router.get("/offers", response_model=SearchOffersResponse)
 async def search_offers(
     gpu_name: Optional[str] = Query(None, description="Filter by GPU model (e.g., RTX_4090, A100)"),
-    num_gpus: int = Query(1, ge=1, le=8, description="Number of GPUs"),
+    num_gpus: int = Query(1, ge=0, le=8, description="Number of GPUs (0 for CPU-only)"),
     min_gpu_ram: float = Query(0, description="Minimum GPU RAM in GB"),
     min_cpu_cores: int = Query(1, description="Minimum CPU cores"),
     min_cpu_ram: float = Query(1, description="Minimum CPU RAM in GB"),
@@ -188,15 +188,16 @@ async def search_offers(
         )
 
     # Build offer dicts
+    # Note: gpu_ram and cpu_ram come from VAST.ai in MB, convert to GB for frontend display
     offer_dicts = [
         {
             "id": offer.id,
             "machine_id": str(offer.machine_id) if hasattr(offer, 'machine_id') else str(offer.id),
             "gpu_name": offer.gpu_name,
             "num_gpus": offer.num_gpus,
-            "gpu_ram": offer.gpu_ram,
-            "cpu_cores": offer.cpu_cores,
-            "cpu_ram": offer.cpu_ram,
+            "gpu_ram": round(offer.gpu_ram / 1024, 1) if offer.gpu_ram is not None and offer.gpu_ram > 100 else (offer.gpu_ram if offer.gpu_ram is not None else 0),  # MB to GB
+            "cpu_cores": offer.cpu_cores if offer.cpu_cores is not None else 0,
+            "cpu_ram": round(offer.cpu_ram / 1024, 1) if offer.cpu_ram is not None and offer.cpu_ram > 100 else (offer.cpu_ram if offer.cpu_ram is not None else 0),  # MB to GB
             "disk_space": offer.disk_space,
             "inet_down": offer.inet_down,
             "inet_up": offer.inet_up,

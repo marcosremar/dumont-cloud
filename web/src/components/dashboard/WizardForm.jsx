@@ -3,7 +3,8 @@ import {
   Search, Globe, MapPin, X, Cpu, MessageSquare, Lightbulb, Code, Zap,
   Sparkles, Gauge, Activity, Clock, Loader2, AlertCircle, Check, ChevronRight, ChevronLeft,
   Shield, Server, HardDrive, Cloud, Timer, DollarSign, Database, Filter, Star, TrendingUp,
-  ChevronDown, ChevronUp, Info, HelpCircle, Rocket, Hourglass, Settings, Network, Plus, Trash2
+  ChevronDown, ChevronUp, Info, HelpCircle, Rocket, Hourglass, Settings, Network, Plus, Trash2,
+  RefreshCw, ArrowRight
 } from 'lucide-react';
 import { Button, Label, CardContent } from '../tailadmin-ui';
 import { WorldMap, GPUSelector } from './';
@@ -33,6 +34,11 @@ const TERM_TOOLTIPS = {
 };
 
 const WizardForm = ({
+  // Migration mode props
+  migrationMode = false,
+  sourceMachine = null,
+  targetType = null,
+  initialStep = 1,
   // Step 1: Location
   searchCountry,
   selectedLocation,
@@ -62,8 +68,15 @@ const WizardForm = ({
   const tiers = PERFORMANCE_TIERS;
   const countryData = COUNTRY_DATA;
   const [validationErrors, setValidationErrors] = useState([]);
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [failoverStrategy, setFailoverStrategy] = useState('snapshot_only'); // V5: Default é Snapshot Only
+
+  // Set initial step when migration mode changes
+  useEffect(() => {
+    if (migrationMode && initialStep > 1) {
+      setCurrentStep(initialStep);
+    }
+  }, [migrationMode, initialStep]);
 
   // Machine selection state
   const [selectionMode, setSelectionMode] = useState('recommended'); // 'recommended' or 'manual'
@@ -115,11 +128,131 @@ const WizardForm = ({
     if (remaining < 60) return `~${remaining}s restantes`;
     return `~${Math.ceil(remaining / 60)}min restantes`;
   };
+
+  // Format time ago (e.g., "30 min atrás", "1 dia atrás")
+  const getTimeAgo = (date) => {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 60) return `${diffMins} min atrás`;
+    if (diffHours < 24) return `${diffHours}h atrás`;
+    if (diffDays === 1) return 'Ontem';
+    if (diffDays < 7) return `${diffDays} dias atrás`;
+    return `${Math.floor(diffDays / 7)} semana(s) atrás`;
+  };
+
   const [recommendedMachines, setRecommendedMachines] = useState([]);
   const [loadingMachines, setLoadingMachines] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState(null);
   const [gpuSearchQuery, setGpuSearchQuery] = useState('');
   const [apiError, setApiError] = useState(null);
+
+  // Migration type: 'new' (clean machine) or 'restore' (restore from snapshot)
+  const [migrationType, setMigrationType] = useState('restore'); // Default to restore when migrating
+
+  // Snapshot selection for restore
+  const [availableSnapshots, setAvailableSnapshots] = useState([]);
+  const [selectedSnapshot, setSelectedSnapshot] = useState(null);
+  const [loadingSnapshots, setLoadingSnapshots] = useState(false);
+
+  // Fetch ALL snapshots globally - snapshots are stored in B2/R2 and can be restored to any machine
+  useEffect(() => {
+    const fetchSnapshots = async () => {
+      if (!migrationMode || migrationType !== 'restore') {
+        setAvailableSnapshots([]);
+        setSelectedSnapshot(null);
+        return;
+      }
+
+      setLoadingSnapshots(true);
+
+      // Mock snapshots for demo/fallback
+      const mockSnapshots = [
+        {
+          id: 'snap_latest',
+          name: 'workspace-backup',
+          short_id: 'abc123',
+          created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 min ago
+          size_gb: 12.5,
+          status: 'ready',
+          isLatest: true,
+          paths: ['/workspace'],
+        },
+        {
+          id: 'snap_yesterday',
+          name: 'daily-backup',
+          short_id: 'def456',
+          created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+          size_gb: 11.2,
+          status: 'ready',
+          paths: ['/workspace'],
+        },
+        {
+          id: 'snap_week',
+          name: 'weekly-backup',
+          short_id: 'ghi789',
+          created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(), // 1 week ago
+          size_gb: 10.8,
+          status: 'ready',
+          paths: ['/workspace'],
+        },
+      ];
+
+      // In demo mode, use mock snapshots directly
+      if (isDemoMode()) {
+        setAvailableSnapshots(mockSnapshots);
+        setSelectedSnapshot(mockSnapshots[0]); // Auto-select latest
+        setLoadingSnapshots(false);
+        return;
+      }
+
+      try {
+        // Fetch ALL snapshots globally from B2/R2 storage - not filtered by machine
+        const response = await apiGet('/api/snapshots');
+        if (response.ok) {
+          const data = await response.json();
+          // API returns { snapshots: [...] } with restic snapshot data
+          const snapshots = (data.snapshots || []).map((snap, index) => ({
+            id: snap.id || snap.short_id,
+            name: snap.tags?.join(', ') || snap.hostname || `Snapshot ${snap.short_id}`,
+            short_id: snap.short_id,
+            created_at: snap.time,
+            size_gb: snap.summary?.total_bytes_processed ? (snap.summary.total_bytes_processed / (1024 * 1024 * 1024)).toFixed(1) : null,
+            status: 'ready',
+            isLatest: index === 0,
+            paths: snap.paths || ['/workspace'],
+            hostname: snap.hostname,
+          }));
+
+          if (snapshots.length > 0) {
+            setAvailableSnapshots(snapshots);
+            setSelectedSnapshot(snapshots[0]); // Auto-select latest
+          } else {
+            // API returned empty, use mock as fallback
+            setAvailableSnapshots(mockSnapshots);
+            setSelectedSnapshot(mockSnapshots[0]);
+          }
+        } else {
+          // API error, use mock snapshots as fallback for development
+          console.log('Snapshots API not available, using mock data');
+          setAvailableSnapshots(mockSnapshots);
+          setSelectedSnapshot(mockSnapshots[0]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch snapshots:', err);
+        // Use mock snapshots as fallback
+        setAvailableSnapshots(mockSnapshots);
+        setSelectedSnapshot(mockSnapshots[0]);
+      } finally {
+        setLoadingSnapshots(false);
+      }
+    };
+
+    fetchSnapshots();
+  }, [migrationMode, migrationType]);
 
   // Lista completa de GPUs disponíveis
   const allGPUs = [
@@ -303,6 +436,10 @@ const WizardForm = ({
           let filteredOffers = [...DEMO_OFFERS];
 
           if (tier?.filter) {
+            if (tier.filter.cpu_only) {
+              // Filter for CPU-only machines (num_gpus === 0)
+              filteredOffers = filteredOffers.filter(o => o.num_gpus === 0);
+            }
             if (tier.filter.min_gpu_ram) {
               filteredOffers = filteredOffers.filter(o => o.gpu_ram >= tier.filter.min_gpu_ram);
             }
@@ -316,7 +453,7 @@ const WizardForm = ({
             filteredOffers = filteredOffers.filter(o =>
               o.geolocation === regionCode ||
               (regionCode === 'US' && ['US', 'CA', 'MX'].includes(o.geolocation)) ||
-              (regionCode === 'EU' && ['GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL'].includes(o.geolocation))
+              (regionCode === 'EU' && ['EU', 'GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'PL', 'CZ', 'AT', 'CH', 'BE', 'SE', 'NO', 'DK', 'FI', 'IE'].includes(o.geolocation))
             );
           }
 
@@ -351,6 +488,9 @@ const WizardForm = ({
 
         // Apply tier-specific filters
         if (tier?.filter) {
+          if (tier.filter.cpu_only) {
+            params.append('num_gpus', '0');  // CPU-only machines have 0 GPUs
+          }
           if (tier.filter.min_gpu_ram) params.append('min_gpu_ram', tier.filter.min_gpu_ram);
           if (tier.filter.max_price) params.append('max_price', tier.filter.max_price);
           if (tier.filter.verified_only) params.append('verified_only', 'true');
@@ -389,7 +529,8 @@ const WizardForm = ({
 
   // Verifica se os dados do step estão preenchidos
   const isStepDataComplete = (stepId) => {
-    if (stepId === 1) return !!selectedLocation;
+    // In migration mode, step 1 is always considered complete (location is pre-selected)
+    if (stepId === 1) return !!selectedLocation || migrationMode;
     if (stepId === 2) return !!selectedTier;
     if (stepId === 3) return !!failoverStrategy;
     if (stepId === 4) return !!provisioningWinner;
@@ -418,10 +559,15 @@ const WizardForm = ({
   };
 
   const handleNext = () => {
+    console.log('[WizardForm] handleNext called, currentStep:', currentStep);
+    console.log('[WizardForm] isStepComplete:', isStepComplete(currentStep));
+    console.log('[WizardForm] failoverStrategy:', failoverStrategy);
     if (currentStep < steps.length && isStepComplete(currentStep)) {
       if (currentStep === 3) {
+        console.log('[WizardForm] Step 3 -> calling handleStartProvisioning');
         handleStartProvisioning();
       } else {
+        console.log('[WizardForm] Advancing to step:', currentStep + 1);
         setCurrentStep(currentStep + 1);
       }
     }
@@ -484,6 +630,10 @@ const WizardForm = ({
   };
 
   const handleStartProvisioning = () => {
+    console.log('[WizardForm] handleStartProvisioning called');
+    console.log('[WizardForm] selectedLocation:', selectedLocation);
+    console.log('[WizardForm] selectedTier:', selectedTier);
+    console.log('[WizardForm] failoverStrategy:', failoverStrategy);
     const errors = [];
     const MIN_BALANCE = 0.10; // Saldo mínimo necessário ($0.10)
 
@@ -496,21 +646,32 @@ const WizardForm = ({
     }
 
     // Validar saldo mínimo (skip in demo mode)
+    console.log('[WizardForm] isDemoMode:', isDemoMode());
+    console.log('[WizardForm] userBalance:', userBalance);
     if (!isDemoMode() && userBalance !== null && userBalance < MIN_BALANCE) {
       errors.push(`Saldo insuficiente. Você precisa de pelo menos $${MIN_BALANCE.toFixed(2)} para criar uma máquina. Saldo atual: $${userBalance.toFixed(2)}`);
     }
 
+    console.log('[WizardForm] validation errors:', errors);
     if (errors.length > 0) {
+      console.log('[WizardForm] VALIDATION FAILED - returning early');
       setValidationErrors(errors);
       if (!selectedLocation) setCurrentStep(1);
       else if (!selectedTier) setCurrentStep(2);
       return;
     }
 
+    console.log('[WizardForm] Validation passed! Advancing to step 4 and calling onSubmit');
+    console.log('[WizardForm] onSubmit function exists:', typeof onSubmit === 'function');
     setValidationErrors([]);
     // V5: Ir direto para provisioning sem modal de confirmação
     setCurrentStep(4);
-    onSubmit(); // Inicia o provisioning
+    if (typeof onSubmit === 'function') {
+      console.log('[WizardForm] Calling onSubmit NOW');
+      onSubmit(); // Inicia o provisioning
+    } else {
+      console.error('[WizardForm] ERROR: onSubmit is not a function!');
+    }
   };
 
   const handleConfirmPayment = () => {
@@ -541,6 +702,234 @@ const WizardForm = ({
 
   return (
     <CardContent className="p-6 space-y-6">
+      {/* Migration Banner */}
+      {migrationMode && sourceMachine && (
+        <div className="bg-brand-500/20 border border-brand-500/50 rounded-lg p-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-brand-500/30 flex items-center justify-center flex-shrink-0">
+            <RefreshCw className="w-5 h-5 text-brand-400" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <p className="font-medium text-white">
+                Migrando Instância
+              </p>
+              <span className="px-2 py-0.5 text-xs bg-brand-500/30 text-brand-300 rounded">
+                {targetType === 'cpu' ? 'GPU → CPU' : 'CPU → GPU'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
+              <span className="flex items-center gap-1">
+                <Server className="w-3 h-3" />
+                {sourceMachine.gpu_name || 'CPU'}
+              </span>
+              <ArrowRight className="w-3 h-3 text-brand-400" />
+              <span className="flex items-center gap-1">
+                {targetType === 'cpu' ? (
+                  <><Cpu className="w-3 h-3" /> CPU</>
+                ) : (
+                  <><Server className="w-3 h-3" /> GPU</>
+                )}
+              </span>
+              <span className="text-gray-500">•</span>
+              <span>ID: {sourceMachine.id}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Migration Type Selection - Nova do zero vs Restaurar */}
+      {migrationMode && sourceMachine && (
+        <div className="space-y-3">
+          <div>
+            <Label className="text-gray-300 text-sm font-medium">Tipo de Migração</Label>
+            <p className="text-xs text-gray-500 mt-1">Escolha como deseja configurar a nova máquina</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {/* Option: Restore from snapshot */}
+            <button
+              onClick={() => setMigrationType('restore')}
+              data-testid="migration-type-restore"
+              className={`p-4 rounded-lg border text-left transition-all ${
+                migrationType === 'restore'
+                  ? 'bg-brand-500/10 border-brand-500'
+                  : 'bg-white/5 border-white/10 hover:bg-white/[0.07] hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  migrationType === 'restore' ? 'bg-brand-500/20 text-brand-400' : 'bg-white/5 text-gray-500'
+                }`}>
+                  <Database className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-medium ${migrationType === 'restore' ? 'text-brand-400' : 'text-gray-300'}`}>
+                      Restaurar Dados
+                    </span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
+                      Recomendado
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Restaura todos os arquivos e configurações do snapshot da máquina anterior
+                  </p>
+                </div>
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  migrationType === 'restore' ? 'border-brand-500 bg-brand-500/20' : 'border-white/20'
+                }`}>
+                  {migrationType === 'restore' && <div className="w-2 h-2 rounded-full bg-brand-400" />}
+                </div>
+              </div>
+            </button>
+
+            {/* Option: New machine from scratch */}
+            <button
+              onClick={() => setMigrationType('new')}
+              data-testid="migration-type-new"
+              className={`p-4 rounded-lg border text-left transition-all ${
+                migrationType === 'new'
+                  ? 'bg-brand-500/10 border-brand-500'
+                  : 'bg-white/5 border-white/10 hover:bg-white/[0.07] hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  migrationType === 'new' ? 'bg-brand-500/20 text-brand-400' : 'bg-white/5 text-gray-500'
+                }`}>
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-medium ${migrationType === 'new' ? 'text-brand-400' : 'text-gray-300'}`}>
+                      Nova do Zero
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Máquina completamente limpa, sem restaurar dados anteriores
+                  </p>
+                </div>
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  migrationType === 'new' ? 'border-brand-500 bg-brand-500/20' : 'border-white/20'
+                }`}>
+                  {migrationType === 'new' && <div className="w-2 h-2 rounded-full bg-brand-400" />}
+                </div>
+              </div>
+            </button>
+          </div>
+
+          {/* Warning when selecting "new" */}
+          {migrationType === 'new' && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs text-amber-400 font-medium">Atenção</p>
+                <p className="text-[10px] text-amber-400/80">
+                  A nova máquina será criada sem os dados da máquina anterior.
+                  Se você tem arquivos importantes, considere usar "Restaurar Dados".
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Snapshot selector when restore is selected */}
+          {migrationType === 'restore' && (
+            <div className="space-y-2">
+              <Label className="text-gray-400 text-xs font-medium">Selecione o Snapshot</Label>
+
+              {loadingSnapshots ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-400 mr-2" />
+                  <span className="text-xs text-gray-400">Buscando snapshots...</span>
+                </div>
+              ) : availableSnapshots.length > 0 ? (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {availableSnapshots.map((snapshot) => {
+                    const isSelected = selectedSnapshot?.id === snapshot.id;
+                    const createdDate = new Date(snapshot.created_at);
+                    const timeAgo = getTimeAgo(createdDate);
+
+                    return (
+                      <button
+                        key={snapshot.id}
+                        onClick={() => setSelectedSnapshot(snapshot)}
+                        data-testid={`snapshot-${snapshot.id}`}
+                        className={`w-full p-3 rounded-lg border text-left transition-all ${
+                          isSelected
+                            ? 'bg-brand-500/10 border-brand-500'
+                            : 'bg-white/5 border-white/10 hover:bg-white/[0.07] hover:border-white/20'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                            isSelected ? 'border-brand-500 bg-brand-500/20' : 'border-white/20'
+                          }`}>
+                            {isSelected && <div className="w-2 h-2 rounded-full bg-brand-400" />}
+                          </div>
+
+                          <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
+                            isSelected ? 'bg-brand-500/20 text-brand-400' : 'bg-white/5 text-gray-500'
+                          }`}>
+                            <Database className="w-4 h-4" />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-sm font-medium ${isSelected ? 'text-brand-400' : 'text-gray-300'}`}>
+                                {snapshot.name}
+                              </span>
+                              {snapshot.short_id && (
+                                <code className="text-[9px] px-1 py-0.5 rounded bg-white/5 text-gray-500 font-mono">
+                                  {snapshot.short_id}
+                                </code>
+                              )}
+                              {snapshot.isLatest && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
+                                  Mais recente
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-500">
+                              <span>{timeAgo}</span>
+                              <span>•</span>
+                              <span>{typeof snapshot.size_gb === 'number' ? snapshot.size_gb.toFixed(1) : snapshot.size_gb || '?'}GB</span>
+                              <span>•</span>
+                              {snapshot.paths && (
+                                <>
+                                  <span className="text-gray-600">{snapshot.paths.join(', ')}</span>
+                                  <span>•</span>
+                                </>
+                              )}
+                              <span className={snapshot.status === 'ready' ? 'text-emerald-400' : 'text-amber-400'}>
+                                {snapshot.status === 'ready' ? 'Pronto' : 'Processando'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex-shrink-0">
+                            <Clock className={`w-4 h-4 ${isSelected ? 'text-brand-400' : 'text-gray-600'}`} />
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-amber-400 font-medium">Nenhum snapshot disponível</p>
+                    <p className="text-[10px] text-amber-400/80">
+                      Não há snapshots salvos para esta máquina. A migração será feita com máquina limpa.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Payment Confirmation Modal */}
       {showPaymentConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
@@ -667,24 +1056,29 @@ const WizardForm = ({
             const isPassed = isStepPassed(step.id);
             const isCurrent = currentStep === step.id;
             const isClickable = canProceedToStep(step.id);
+            const isSkippedInMigration = migrationMode && step.id === 1;
 
             return (
               <React.Fragment key={step.id}>
                 <button
-                  onClick={() => goToStep(step.id)}
-                  disabled={!isClickable}
+                  onClick={() => !isSkippedInMigration && goToStep(step.id)}
+                  disabled={!isClickable || isSkippedInMigration}
                   className={`relative z-10 flex flex-col items-center gap-2 transition-all ${
-                    isClickable ? 'cursor-pointer' : 'cursor-not-allowed'
+                    isSkippedInMigration ? 'opacity-50 cursor-not-allowed' : isClickable ? 'cursor-pointer' : 'cursor-not-allowed'
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
-                    isPassed
-                      ? 'bg-brand-500/20 border-brand-500 text-brand-400'
-                      : isCurrent
-                        ? 'bg-brand-500/10 border-brand-400 text-brand-400'
-                        : 'bg-white/5 border-white/10 text-gray-500'
+                    isSkippedInMigration
+                      ? 'bg-gray-500/20 border-gray-500 text-gray-400'
+                      : isPassed
+                        ? 'bg-brand-500/20 border-brand-500 text-brand-400'
+                        : isCurrent
+                          ? 'bg-brand-500/10 border-brand-400 text-brand-400'
+                          : 'bg-white/5 border-white/10 text-gray-500'
                   }`}>
-                    {isPassed ? (
+                    {isSkippedInMigration ? (
+                      <Check className="w-4 h-4 text-gray-500" />
+                    ) : isPassed ? (
                       <Check className="w-4 h-4" />
                     ) : (
                       <StepIcon className="w-4 h-4" />
@@ -692,12 +1086,12 @@ const WizardForm = ({
                   </div>
                   <div className="text-center">
                     <div className={`text-[10px] font-bold mb-0.5 ${
-                      isPassed ? 'text-brand-400' : isCurrent ? 'text-brand-400' : 'text-gray-600'
+                      isSkippedInMigration ? 'text-gray-500' : isPassed ? 'text-brand-400' : isCurrent ? 'text-brand-400' : 'text-gray-600'
                     }`}>
-                      {step.id}/{steps.length}
+                      {isSkippedInMigration ? 'Pulado' : `${step.id}/${steps.length}`}
                     </div>
                     <div className={`text-xs font-medium ${
-                      isPassed ? 'text-brand-400' : isCurrent ? 'text-gray-200' : 'text-gray-500'
+                      isSkippedInMigration ? 'text-gray-500' : isPassed ? 'text-brand-400' : isCurrent ? 'text-gray-200' : 'text-gray-500'
                     }`}>
                       {step.name}
                     </div>
@@ -897,6 +1291,9 @@ const WizardForm = ({
                         <button
                           key={machine.id}
                           data-testid={`machine-${machine.id}`}
+                          data-gpu-name={machine.gpu_name}
+                          data-gpu-card="true"
+                          data-selected={isSelected ? "true" : "false"}
                           onClick={() => {
                             setSelectedMachine(machine);
                             onSelectGPU(machine.gpu_name);

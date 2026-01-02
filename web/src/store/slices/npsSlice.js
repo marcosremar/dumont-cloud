@@ -4,6 +4,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
+const isDemoMode = () => localStorage.getItem('demo_mode') === 'true'
 
 /**
  * Get authorization headers with current token
@@ -24,6 +25,10 @@ const getAuthHeaders = () => {
 export const checkShouldShow = createAsyncThunk(
   'nps/checkShouldShow',
   async ({ triggerType }, { rejectWithValue }) => {
+    // Skip API call in demo mode
+    if (isDemoMode()) {
+      return { should_show: false, triggerType }
+    }
     try {
       const res = await fetch(
         `${API_BASE}/api/v1/nps/should-show?trigger_type=${encodeURIComponent(triggerType)}`,
@@ -31,13 +36,26 @@ export const checkShouldShow = createAsyncThunk(
           headers: getAuthHeaders(),
         }
       )
-      const data = await res.json()
+
+      // Handle non-OK responses gracefully (backend offline)
       if (!res.ok) {
-        return rejectWithValue(data.detail || 'Failed to check survey status')
+        // Don't show NPS when backend is offline
+        return { should_show: false, triggerType }
       }
+
+      // Parse JSON safely
+      let data
+      try {
+        const text = await res.text()
+        data = text ? JSON.parse(text) : { should_show: false }
+      } catch {
+        return { should_show: false, triggerType }
+      }
+
       return { ...data, triggerType }
     } catch (error) {
-      return rejectWithValue(error.message || 'Connection error')
+      // Silently fail - don't show NPS when backend is offline
+      return { should_show: false, triggerType }
     }
   }
 )

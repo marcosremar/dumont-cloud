@@ -23,8 +23,8 @@ def get_restic_service() -> ResticService:
     return ResticService(
         repo=user_settings.get('restic_repo') or settings.r2.restic_repo,
         password=user_settings.get('restic_password') or settings.restic.password,
-        access_key=user_settings.get('r2_access_key') or settings.r2.access_key,
-        secret_key=user_settings.get('r2_secret_key') or settings.r2.secret_key,
+        access_key=user_settings.get('r2_access_key') or settings.r2.access_key_id,
+        secret_key=user_settings.get('r2_secret_key') or settings.r2.secret_access_key,
         connections=user_settings.get('restic_connections', settings.restic.connections),
     )
 

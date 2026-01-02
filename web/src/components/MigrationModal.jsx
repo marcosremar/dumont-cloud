@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, Cpu, Server, DollarSign, Info, ArrowRight, Check, Loader2 } from 'lucide-react';
+import { RefreshCw, Cpu, Server, DollarSign, Info, ArrowRight, Check, Loader2, Shield, Zap, HardDrive } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -48,16 +48,17 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
       setEstimate(null);
       setProgress(null);
       setMigrationStarted(false);
-      fetchEstimate();
+      // Note: Don't call fetchEstimate here - the second useEffect will handle it
+      // when targetType updates, avoiding race condition with stale state
     }
   }, [isOpen, instance]);
 
-  // Fetch estimate when target changes
+  // Fetch estimate when target changes (or on initial mount after targetType is set)
   useEffect(() => {
     if (isOpen && instance && !migrationStarted) {
       fetchEstimate();
     }
-  }, [targetType, gpuName, maxPrice]);
+  }, [isOpen, instance, targetType, gpuName, maxPrice]);
 
   const fetchEstimate = async () => {
     if (!instance) return;
@@ -74,7 +75,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
         body.gpu_name = gpuName;
       }
 
-      const res = await apiPost(`/api/instances/${instance.id}/migrate/estimate`, body);
+      const res = await apiPost(`/api/v1/instances/${instance.id}/migrate/estimate`, body);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.detail || 'Erro ao buscar estimativa');
@@ -111,7 +112,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
 
       setProgress('Criando snapshot...');
 
-      const res = await apiPost(`/api/instances/${instance.id}/migrate`, body);
+      const res = await apiPost(`/api/v1/instances/${instance.id}/migrate`, body);
       const data = await res.json();
 
       if (!res.ok) {
@@ -296,26 +297,70 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
                 <span className="font-medium">{progress}</span>
               </div>
               {loading && (
-                <div className="space-y-2 text-sm text-gray-400">
-                  <p>1. Criando snapshot do workspace...</p>
-                  <p>2. Provisionando nova instância...</p>
-                  <p>3. Aguardando SSH ficar pronto...</p>
-                  <p>4. Restaurando snapshot...</p>
-                  <p>5. Destruindo instância antiga...</p>
-                </div>
+                estimate?.uses_cpu_standby ? (
+                  <div className="space-y-2 text-sm text-gray-400">
+                    <p className="flex items-center gap-2">
+                      <Zap className="w-3 h-3 text-green-400" />
+                      1. Ativando CPU Standby...
+                    </p>
+                    <p>2. Destruindo instância GPU...</p>
+                    <p>3. Verificando conexão...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 text-sm text-gray-400">
+                    <p>1. Criando snapshot do workspace...</p>
+                    <p>2. Provisionando nova instância...</p>
+                    <p>3. Aguardando SSH ficar pronto...</p>
+                    <p>4. Restaurando snapshot...</p>
+                    <p>5. Destruindo instância antiga...</p>
+                  </div>
+                )
               )}
             </div>
           )}
 
-          {/* Warning */}
+          {/* Migration Strategy Info */}
+          {!migrationStarted && estimate?.available && (
+            <div className={`rounded-lg p-3 border ${
+              estimate?.uses_cpu_standby
+                ? 'bg-green-500/10 border-green-500/30'
+                : 'bg-brand-500/10 border-brand-500/30'
+            }`}>
+              {estimate?.uses_cpu_standby ? (
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Zap className="w-4 h-4 text-green-400" />
+                    <span className="text-sm font-medium text-green-400">Failover Instantâneo</span>
+                  </div>
+                  <p className="text-xs text-gray-300">
+                    <strong className="text-green-400">CPU Standby ativo!</strong> Seus dados já estão sincronizados.
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Processo: Ativa CPU Standby → Destrói GPU. Tempo: ~10-20 segundos.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <HardDrive className="w-4 h-4 text-brand-400" />
+                    <span className="text-sm font-medium text-brand-400">Migração Completa</span>
+                  </div>
+                  <p className="text-xs text-gray-300">
+                    <strong className="text-brand-400">Processo:</strong> Cria snapshot → Nova instância → Restaura → Destrói antiga
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Tempo estimado: ~5 minutos. Seu workspace será preservado.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Data Preservation Notice */}
           {!migrationStarted && (
-            <div className="bg-brand-500/10 border border-brand-500/30 rounded-lg p-3">
-              <p className="text-xs text-gray-600 dark:text-gray-300">
-                <strong className="text-brand-500 dark:text-brand-400">Processo:</strong> Cria snapshot {'->'} Nova instância {'->'} Restaura {'->'} Destrói antiga
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                Tempo estimado: ~5 minutos. Seu workspace será preservado.
-              </p>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <Shield className="w-3 h-3" />
+              <span>Todos os seus arquivos e configurações serão preservados durante a migração.</span>
             </div>
           )}
         </div>

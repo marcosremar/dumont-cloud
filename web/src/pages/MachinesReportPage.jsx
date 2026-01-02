@@ -39,9 +39,7 @@ function MetricCard({ icon: Icon, label, value, subValue }) {
           <p className="stat-card-value">{value}</p>
           {subValue && <p className="text-xs text-gray-500 mt-1">{subValue}</p>}
         </div>
-        <div className="stat-card-icon stat-card-icon-primary">
-          <Icon className="w-5 h-5" />
-        </div>
+        <Icon className="w-5 h-5 text-brand-400" />
       </div>
     </div>
   )
@@ -66,9 +64,7 @@ export default function MachinesReportPage() {
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="stat-card-icon stat-card-icon-primary">
-            <Server className="w-5 h-5" />
-          </div>
+          <Server className="w-6 h-6 text-brand-400" />
           <div>
             <h1 className="page-title">Relatório de Máquinas</h1>
             <p className="page-subtitle">Métricas de uso e desempenho das GPUs</p>

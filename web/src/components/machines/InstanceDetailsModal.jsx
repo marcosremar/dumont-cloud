@@ -215,7 +215,7 @@ export default function InstanceDetailsModal({ machine, isOpen, onClose }) {
 
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent className="max-w-4xl w-[90vw] max-h-[85vh] overflow-hidden flex flex-col">
+      <AlertDialogContent className="max-w-6xl w-[95vw] max-h-[85vh] overflow-hidden flex flex-col">
         <AlertDialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <AlertDialogTitle className="flex items-center gap-3">
@@ -263,157 +263,168 @@ export default function InstanceDetailsModal({ machine, isOpen, onClose }) {
 
         <div className="flex-1 overflow-y-auto mt-4">
           {activeTab === 'details' && (
-            <div className="space-y-6 p-1">
-              {/* Status Card */}
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-                  <Server className="w-4 h-4 text-green-400" />
-                  Status da Instância
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-xs text-gray-500">Status</span>
-                    <p className={`font-medium ${isRunning ? 'text-green-400' : 'text-gray-400'}`}>
-                      {isRunning ? 'Running' : machine.actual_status || 'Offline'}
-                    </p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-1">
+              {/* Left Column - Status & Hardware */}
+              <div className="space-y-4">
+                {/* Status Card */}
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                  <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                    <Server className="w-4 h-4 text-green-400" />
+                    Status da Instância
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-2.5 rounded-lg bg-black/20">
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">Status</span>
+                      <p className={`font-semibold text-sm ${isRunning ? 'text-green-400' : 'text-gray-400'}`}>
+                        {isRunning ? 'Running' : machine.actual_status || 'Offline'}
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-black/20">
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">Uptime</span>
+                      <p className="font-semibold text-sm text-white flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-gray-400" />
+                        {isRunning ? formatUptime(machine.start_date || machine.created_at) : 'N/A'}
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-black/20">
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">Custo/Hora</span>
+                      <p className="font-semibold text-sm text-green-400 flex items-center gap-1.5">
+                        <DollarSign className="w-3.5 h-3.5" />
+                        ${costPerHour.toFixed(3)}
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-black/20">
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">Provider</span>
+                      <p className="font-semibold text-sm text-white">Vast.ai</p>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-xs text-gray-500">Uptime</span>
-                    <p className="font-medium text-white flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-gray-400" />
-                      {isRunning ? formatUptime(machine.start_date || machine.created_at) : 'N/A'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500">Custo/Hora</span>
-                    <p className="font-medium text-green-400 flex items-center gap-1.5">
-                      <DollarSign className="w-3.5 h-3.5" />
-                      ${costPerHour.toFixed(3)}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500">Provider</span>
-                    <p className="font-medium text-white">Vast.ai</p>
+                </div>
+
+                {/* Hardware Card */}
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                  <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                    <Cpu className="w-4 h-4 text-blue-400" />
+                    Hardware
+                  </h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-2.5 rounded-lg bg-black/20">
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">GPU</span>
+                      <p className="font-semibold text-sm text-white truncate" title={machine.gpu_name}>{machine.gpu_name || 'Unknown'}</p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-black/20">
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">VRAM</span>
+                      <p className="font-semibold text-sm text-white">{gpuRam} GB</p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-black/20">
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">GPU Util</span>
+                      <p className="font-semibold text-sm text-white">
+                        {machine.gpu_util ? `${Number(machine.gpu_util).toFixed(0)}%` : 'N/A'}
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-black/20">
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">CPU</span>
+                      <p className="font-semibold text-sm text-white">{cpuCores} cores</p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-black/20">
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">RAM</span>
+                      <p className="font-semibold text-sm text-white">{ram} GB</p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-black/20">
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">Disk</span>
+                      <p className="font-semibold text-sm text-white flex items-center gap-1">
+                        <HardDrive className="w-3 h-3 text-gray-400" />
+                        {disk} GB
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Hardware Card */}
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-                  <Cpu className="w-4 h-4 text-blue-400" />
-                  Hardware
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-xs text-gray-500">GPU</span>
-                    <p className="font-medium text-white">{machine.gpu_name || 'Unknown'}</p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500">VRAM</span>
-                    <p className="font-medium text-white">{gpuRam} GB</p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500">CPU Cores</span>
-                    <p className="font-medium text-white">{cpuCores}</p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500">RAM</span>
-                    <p className="font-medium text-white">{ram} GB</p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500">Disk</span>
-                    <p className="font-medium text-white flex items-center gap-1.5">
-                      <HardDrive className="w-3.5 h-3.5 text-gray-400" />
-                      {disk} GB
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500">GPU Utilization</span>
-                    <p className="font-medium text-white">
-                      {machine.gpu_util ? `${Number(machine.gpu_util).toFixed(0)}%` : 'N/A'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Network Card */}
-              {isRunning && (
+              {/* Right Column - Network & Ollama */}
+              <div className="space-y-4">
+                {/* Network Card */}
                 <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                   <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
                     <Globe className="w-4 h-4 text-purple-400" />
                     Conexão
                   </h3>
-                  <div className="space-y-3">
-                    {machine.public_ipaddr && (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-xs text-gray-500">IP Público</span>
-                          <p className="font-mono text-sm text-white">{machine.public_ipaddr}</p>
+                  {isRunning ? (
+                    <div className="space-y-2">
+                      {machine.public_ipaddr && (
+                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-black/20">
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] uppercase tracking-wide text-gray-500">IP Público</span>
+                            <p className="font-mono text-sm text-white truncate">{machine.public_ipaddr}</p>
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard(machine.public_ipaddr, 'ip')}
+                            className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white flex-shrink-0 ml-2"
+                          >
+                            {copiedField === 'ip' ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                          </button>
                         </div>
-                        <button
-                          onClick={() => copyToClipboard(machine.public_ipaddr, 'ip')}
-                          className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white"
-                        >
-                          {copiedField === 'ip' ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    )}
-                    {machine.ssh_host && machine.ssh_port && (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-xs text-gray-500">SSH</span>
-                          <p className="font-mono text-sm text-white">ssh -p {machine.ssh_port} root@{machine.ssh_host}</p>
+                      )}
+                      {machine.ssh_host && machine.ssh_port && (
+                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-black/20">
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] uppercase tracking-wide text-gray-500">SSH</span>
+                            <p className="font-mono text-xs text-white truncate">ssh -p {machine.ssh_port} root@{machine.ssh_host}</p>
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard(`ssh -p ${machine.ssh_port} root@${machine.ssh_host}`, 'ssh')}
+                            className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white flex-shrink-0 ml-2"
+                          >
+                            {copiedField === 'ssh' ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                          </button>
                         </div>
-                        <button
-                          onClick={() => copyToClipboard(`ssh -p ${machine.ssh_port} root@${machine.ssh_host}`, 'ssh')}
-                          className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white"
-                        >
-                          {copiedField === 'ssh' ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      <Globe className="w-6 h-6 mx-auto mb-2 opacity-30" />
+                      Instância offline
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {/* Ollama Status Card */}
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-yellow-400" />
-                  Ollama / LLM
-                </h3>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-xs text-gray-500">Status</span>
-                    <p className={`font-medium ${
-                      ollamaStatus === 'available' ? 'text-green-400' :
-                      ollamaStatus === 'checking' ? 'text-yellow-400' : 'text-gray-400'
-                    }`}>
-                      {ollamaStatus === 'checking' && 'Verificando...'}
-                      {ollamaStatus === 'available' && `Disponível (${ollamaModels.length} modelo${ollamaModels.length > 1 ? 's' : ''})`}
-                      {ollamaStatus === 'no_models' && 'Sem modelos instalados'}
-                      {ollamaStatus === 'unavailable' && 'Não disponível'}
-                    </p>
+                {/* Ollama Status Card */}
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                  <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-yellow-400" />
+                    Ollama / LLM
+                  </h3>
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-black/20">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">Status</span>
+                      <p className={`font-semibold text-sm ${
+                        ollamaStatus === 'available' ? 'text-green-400' :
+                        ollamaStatus === 'checking' ? 'text-yellow-400' : 'text-gray-400'
+                      }`}>
+                        {ollamaStatus === 'checking' && 'Verificando...'}
+                        {ollamaStatus === 'available' && `Disponível (${ollamaModels.length} modelo${ollamaModels.length > 1 ? 's' : ''})`}
+                        {ollamaStatus === 'no_models' && 'Sem modelos instalados'}
+                        {ollamaStatus === 'unavailable' && 'Não disponível'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={checkOllama}
+                      className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${ollamaStatus === 'checking' ? 'animate-spin' : ''}`} />
+                    </button>
                   </div>
-                  <button
-                    onClick={checkOllama}
-                    className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${ollamaStatus === 'checking' ? 'animate-spin' : ''}`} />
-                  </button>
+                  {ollamaStatus === 'available' && ollamaModels.length > 0 && (
+                    <div className="mt-3 space-y-1">
+                      {ollamaModels.map(model => (
+                        <div key={model.name} className="text-xs font-mono text-gray-400 bg-black/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                          <Terminal className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{model.name}</span>
+                          <span className="text-gray-600 flex-shrink-0">({(model.size / 1024 / 1024 / 1024).toFixed(1)} GB)</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {ollamaStatus === 'available' && ollamaModels.length > 0 && (
-                  <div className="mt-3 space-y-1">
-                    {ollamaModels.map(model => (
-                      <div key={model.name} className="text-xs font-mono text-gray-400 bg-black/20 px-2 py-1 rounded flex items-center gap-2">
-                        <Terminal className="w-3 h-3" />
-                        {model.name}
-                        <span className="text-gray-600">({(model.size / 1024 / 1024 / 1024).toFixed(1)} GB)</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           )}

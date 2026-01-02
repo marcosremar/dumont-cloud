@@ -70,12 +70,20 @@ async def get_current_user(
         try:
             user = auth_service.get_user(user_email)
             if user:
+                # Parse settings if it's a JSON string
+                import json
+                settings = user.settings or {}
+                if isinstance(settings, str):
+                    try:
+                        settings = json.loads(settings)
+                    except json.JSONDecodeError:
+                        settings = {}
                 return AuthMeResponse(
                     authenticated=True,
                     user={
                         "email": user.email,
                         "username": user.email,
-                        "settings": user.settings or {}
+                        "settings": settings
                     }
                 )
         except Exception as e:

@@ -1,3 +1,0 @@
-feat(gpu): add reservation system
-
-Add GPU reservation system allowing users to pre-book GPU capacity with guaranteed availability and discounted rates (10-20% off spot pricing). Includes new reservation and credit models, database migrations, and scheduling services for capacity allocation and pricing management.

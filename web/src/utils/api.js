@@ -6,28 +6,17 @@ const API_BASE = ''
 
 /**
  * Check if currently in demo mode
- * DISABLED - Always returns false to force real data mode
+ * True for: demo routes (/demo-app, /demo-docs), OR localStorage demo_mode flag
  */
 export function isDemoMode() {
-  // Force demo mode OFF - always use real data from Vast.ai
-  return false
-}
-
-/**
- * Set demo mode flag (called after login with demo credentials)
- */
-export function setDemoMode(isDemo) {
-  if (isDemo) {
-    localStorage.setItem('demo_mode', 'true')
-  } else {
-    localStorage.removeItem('demo_mode')
-  }
+  const path = window.location.pathname
+  const demoModeFromStorage = localStorage.getItem('demo_mode') === 'true'
+  return path.startsWith('/demo-app') || path.startsWith('/demo-docs') || demoModeFromStorage
 }
 
 /**
  * Fetch with authentication
  * Automatically adds JWT token from localStorage
- * In demo mode, adds ?demo=true to API calls
  */
 export async function apiFetch(endpoint, options = {}) {
   let token = localStorage.getItem('auth_token')
@@ -50,14 +39,7 @@ export async function apiFetch(endpoint, options = {}) {
     options.body = JSON.stringify(options.body)
   }
 
-  // Add demo param if in demo mode
-  let finalEndpoint = endpoint
-  if (isDemoMode()) {
-    const separator = endpoint.includes('?') ? '&' : '?'
-    finalEndpoint = `${endpoint}${separator}demo=true`
-  }
-
-  const response = await fetch(`${API_BASE}${finalEndpoint}`, {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers,
     credentials: 'include',

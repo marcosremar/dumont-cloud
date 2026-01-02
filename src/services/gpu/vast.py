@@ -1130,11 +1130,12 @@ tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &
         logger.debug(f"search_cpu_offers: min_cpu_cores={min_cpu_cores}, min_cpu_ram={min_cpu_ram}, "
               f"max_price={max_price}, min_disk={min_disk}, region={region}")
 
+        # Note: cpu_ram filter removed because many CPU-only offers report cpu_ram: 0
+        # even though they have actual RAM. This seems to be a VAST.ai API quirk.
         query = {
             "rentable": {"eq": True},
             "num_gpus": {"eq": 0},
             "cpu_cores_effective": {"gte": min_cpu_cores},
-            "cpu_ram": {"gte": min_cpu_ram * 1024},
             "disk_space": {"gte": min_disk},
             "inet_down": {"gte": min_inet_down},
             "dph_total": {"lte": max_price},
@@ -1149,10 +1150,11 @@ tailscale up --authkey={tailscale_authkey} --hostname={hostname} --ssh &
 
         try:
             resp = requests.get(
-                f"{self.API_URL}/bundles",
+                f"{self.API_URL}/bundles/",
                 params=params,
                 headers=self.headers,
                 timeout=30,
+                allow_redirects=True,
             )
             resp.raise_for_status()
             data = resp.json()

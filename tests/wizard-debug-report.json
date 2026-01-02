@@ -1,0 +1,935 @@
+{
+  "consoleLogs": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:02.079Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:02.084Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:02.084Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:02.217Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:02.217Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:02.217Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:02.343Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:02.347Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:02.348Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:02.541Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:02.542Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:02.542Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:02.608Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:02.608Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:02.608Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:02.683Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:02.701Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:02.701Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:02.769Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:02.772Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:02.772Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:02.849Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:02.851Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:02.852Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:02.925Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:02.941Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:02.941Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:03.011Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:03.083Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:03.083Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:03.133Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:03.211Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:03.211Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:03.258Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:03.447Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:03.447Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:03.501Z"
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+      "timestamp": "2026-01-02T02:51:03.781Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:04.046Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:04.059Z"
+    },
+    {
+      "type": "log",
+      "text": "i18next::backendConnector: loaded namespace translation for language en {common: Object, navigation: Object, layout: Object, dashboard: Object, machines: Object}",
+      "timestamp": "2026-01-02T02:51:04.059Z"
+    },
+    {
+      "type": "log",
+      "text": "i18next: languageChanged en",
+      "timestamp": "2026-01-02T02:51:04.059Z"
+    },
+    {
+      "type": "log",
+      "text": "i18next: initialized {debug: true, initAsync: true, ns: Array(1), defaultNS: Array(1), fallbackLng: Array(1)}",
+      "timestamp": "2026-01-02T02:51:04.059Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:04.097Z"
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+      "timestamp": "2026-01-02T02:51:04.530Z"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "timestamp": "2026-01-02T02:51:04.637Z"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "timestamp": "2026-01-02T02:51:04.639Z"
+    },
+    {
+      "type": "log",
+      "text": "i18next::backendConnector: loaded namespace translation for language en {common: Object, navigation: Object, layout: Object, dashboard: Object, machines: Object}",
+      "timestamp": "2026-01-02T02:51:04.640Z"
+    },
+    {
+      "type": "log",
+      "text": "i18next: languageChanged en",
+      "timestamp": "2026-01-02T02:51:04.640Z"
+    },
+    {
+      "type": "log",
+      "text": "i18next: initialized {debug: true, initAsync: true, ns: Array(1), defaultNS: Array(1), fallbackLng: Array(1)}",
+      "timestamp": "2026-01-02T02:51:04.640Z"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "timestamp": "2026-01-02T02:51:04.641Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:05.034Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:05.034Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:05.052Z"
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+      "timestamp": "2026-01-02T02:51:05.317Z"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "timestamp": "2026-01-02T02:51:05.420Z"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "timestamp": "2026-01-02T02:51:05.421Z"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "timestamp": "2026-01-02T02:51:05.422Z"
+    },
+    {
+      "type": "log",
+      "text": "i18next::backendConnector: loaded namespace translation for language en {common: Object, navigation: Object, layout: Object, dashboard: Object, machines: Object}",
+      "timestamp": "2026-01-02T02:51:05.427Z"
+    },
+    {
+      "type": "log",
+      "text": "i18next: languageChanged en",
+      "timestamp": "2026-01-02T02:51:05.427Z"
+    },
+    {
+      "type": "log",
+      "text": "i18next: initialized {debug: true, initAsync: true, ns: Array(1), defaultNS: Array(1), fallbackLng: Array(1)}",
+      "timestamp": "2026-01-02T02:51:05.427Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400",
+      "timestamp": "2026-01-02T02:51:06.806Z"
+    },
+    {
+      "type": "log",
+      "text": "[vite] server connection lost. Polling for restart...",
+      "timestamp": "2026-01-02T02:51:06.806Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "timestamp": "2026-01-02T02:51:06.829Z"
+    },
+    {
+      "type": "log",
+      "text": "\n=== DEBUG REPORT ===",
+      "timestamp": "2026-01-02T02:51:07.071Z"
+    },
+    {
+      "type": "log",
+      "text": "{\n  \"consoleLogs\": [\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:02.079Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:02.084Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:02.084Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:02.217Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:02.217Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:02.217Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:02.343Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:02.347Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:02.348Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:02.541Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:02.542Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:02.542Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:02.608Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:02.608Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:02.608Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:02.683Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:02.701Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:02.701Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:02.769Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:02.772Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:02.772Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:02.849Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:02.851Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:02.852Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:02.925Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:02.941Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:02.941Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:03.011Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:03.083Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:03.083Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:03.133Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:03.211Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:03.211Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:03.258Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:03.447Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:03.447Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:03.501Z\"\n    },\n    {\n      \"type\": \"info\",\n      \"text\": \"%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold\",\n      \"timestamp\": \"2026-01-02T02:51:03.781Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:04.046Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:04.059Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"i18next::backendConnector: loaded namespace translation for language en {common: Object, navigation: Object, layout: Object, dashboard: Object, machines: Object}\",\n      \"timestamp\": \"2026-01-02T02:51:04.059Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"i18next: languageChanged en\",\n      \"timestamp\": \"2026-01-02T02:51:04.059Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"i18next: initialized {debug: true, initAsync: true, ns: Array(1), defaultNS: Array(1), fallbackLng: Array(1)}\",\n      \"timestamp\": \"2026-01-02T02:51:04.059Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:04.097Z\"\n    },\n    {\n      \"type\": \"info\",\n      \"text\": \"%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold\",\n      \"timestamp\": \"2026-01-02T02:51:04.530Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"Failed to load resource: the server responded with a status of 401 (Unauthorized)\",\n      \"timestamp\": \"2026-01-02T02:51:04.637Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"Failed to load resource: the server responded with a status of 401 (Unauthorized)\",\n      \"timestamp\": \"2026-01-02T02:51:04.639Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"i18next::backendConnector: loaded namespace translation for language en {common: Object, navigation: Object, layout: Object, dashboard: Object, machines: Object}\",\n      \"timestamp\": \"2026-01-02T02:51:04.640Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"i18next: languageChanged en\",\n      \"timestamp\": \"2026-01-02T02:51:04.640Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"i18next: initialized {debug: true, initAsync: true, ns: Array(1), defaultNS: Array(1), fallbackLng: Array(1)}\",\n      \"timestamp\": \"2026-01-02T02:51:04.640Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"Failed to load resource: the server responded with a status of 401 (Unauthorized)\",\n      \"timestamp\": \"2026-01-02T02:51:04.641Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:05.034Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:05.034Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:05.052Z\"\n    },\n    {\n      \"type\": \"info\",\n      \"text\": \"%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold\",\n      \"timestamp\": \"2026-01-02T02:51:05.317Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"Failed to load resource: the server responded with a status of 401 (Unauthorized)\",\n      \"timestamp\": \"2026-01-02T02:51:05.420Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"Failed to load resource: the server responded with a status of 401 (Unauthorized)\",\n      \"timestamp\": \"2026-01-02T02:51:05.421Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"Failed to load resource: the server responded with a status of 401 (Unauthorized)\",\n      \"timestamp\": \"2026-01-02T02:51:05.422Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"i18next::backendConnector: loaded namespace translation for language en {common: Object, navigation: Object, layout: Object, dashboard: Object, machines: Object}\",\n      \"timestamp\": \"2026-01-02T02:51:05.427Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"i18next: languageChanged en\",\n      \"timestamp\": \"2026-01-02T02:51:05.427Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"i18next: initialized {debug: true, initAsync: true, ns: Array(1), defaultNS: Array(1), fallbackLng: Array(1)}\",\n      \"timestamp\": \"2026-01-02T02:51:05.427Z\"\n    },\n    {\n      \"type\": \"error\",\n      \"text\": \"WebSocket connection to 'ws://localhost:4892/?token=CXfm7HfZ-PvN' failed: Error during WebSocket handshake: Unexpected response code: 400\",\n      \"timestamp\": \"2026-01-02T02:51:06.806Z\"\n    },\n    {\n      \"type\": \"log\",\n      \"text\": \"[vite] server connection lost. Polling for restart...\",\n      \"timestamp\": \"2026-01-02T02:51:06.806Z\"\n    },\n    {\n      \"type\": \"debug\",\n      \"text\": \"[vite] connecting...\",\n      \"timestamp\": \"2026-01-02T02:51:06.829Z\"\n    }\n  ],\n  \"consoleErrors\": [],\n  \"networkRequests\": [\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:01.889Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.006Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.194Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.276Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.320Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.398Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.427Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.506Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.584Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.632Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.650Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.709Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.740Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.791Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.823Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.865Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.897Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.944Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:02.983Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:03.029Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:03.112Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:03.165Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:03.245Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:03.285Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:03.476Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:03.517Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:03.902Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/api/v1/auth/me\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"authorization\": \"Bearer null\",\n        \"referer\": \"http://localhost:4898/demo-app\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:04.007Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/api/v1/instances\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"authorization\": \"Bearer null\",\n        \"referer\": \"http://localhost:4898/demo-app\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:04.008Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/api/v1/balance\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"authorization\": \"Bearer null\",\n        \"referer\": \"http://localhost:4898/demo-app\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:04.008Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:04.081Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:04.166Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:04.581Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/api/v1/auth/me\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"authorization\": \"Bearer null\",\n        \"referer\": \"http://localhost:4898/demo-app\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:04.617Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/api/v1/instances\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"authorization\": \"Bearer null\",\n        \"referer\": \"http://localhost:4898/demo-app\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:04.617Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/api/v1/balance\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"authorization\": \"Bearer null\",\n        \"referer\": \"http://localhost:4898/demo-app\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:04.618Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:05.042Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:05.085Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:05.360Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/api/v1/auth/me\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"authorization\": \"Bearer null\",\n        \"referer\": \"http://localhost:4898/demo-app\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:05.397Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/api/v1/instances\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"authorization\": \"Bearer null\",\n        \"referer\": \"http://localhost:4898/demo-app\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:05.397Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/api/v1/balance\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"authorization\": \"Bearer null\",\n        \"referer\": \"http://localhost:4898/demo-app\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:05.397Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap\",\n      \"headers\": {\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:06.814Z\"\n    },\n    {\n      \"method\": \"GET\",\n      \"url\": \"http://localhost:4898/src/utils/api.js\",\n      \"headers\": {\n        \"origin\": \"http://localhost:4898\",\n        \"sec-ch-ua-platform\": \"\\\"Windows\\\"\",\n        \"referer\": \"http://localhost:4898/src/pages/Dashboard.jsx\",\n        \"user-agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36\",\n        \"sec-ch-ua\": \"\\\"HeadlessChrome\\\";v=\\\"143\\\", \\\"Chromium\\\";v=\\\"143\\\", \\\"Not A(Brand\\\";v=\\\"24\\\"\",\n        \"accept-language\": \"en-US\",\n        \"sec-ch-ua-mobile\": \"?0\"\n      },\n      \"timestamp\": \"2026-01-02T02:51:06.855Z\"\n    }\n  ],\n  \"timestamp\": \"2026-01-02T02:51:07.028Z\"\n}",
+      "timestamp": "2026-01-02T02:51:07.071Z"
+    }
+  ],
+  "consoleErrors": [],
+  "networkRequests": [
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:01.889Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.006Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.194Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.276Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.320Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.398Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.427Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.506Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.584Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.632Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.650Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.709Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.740Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.791Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.823Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.865Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.897Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.944Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:02.983Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:03.029Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:03.112Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:03.165Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:03.245Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:03.285Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:03.476Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:03.517Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:03.902Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/api/v1/auth/me",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "authorization": "Bearer null",
+        "referer": "http://localhost:4898/demo-app",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:04.007Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/api/v1/instances",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "authorization": "Bearer null",
+        "referer": "http://localhost:4898/demo-app",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:04.008Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/api/v1/balance",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "authorization": "Bearer null",
+        "referer": "http://localhost:4898/demo-app",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:04.008Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:04.081Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:04.166Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:04.581Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/api/v1/auth/me",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "authorization": "Bearer null",
+        "referer": "http://localhost:4898/demo-app",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:04.617Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/api/v1/instances",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "authorization": "Bearer null",
+        "referer": "http://localhost:4898/demo-app",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:04.617Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/api/v1/balance",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "authorization": "Bearer null",
+        "referer": "http://localhost:4898/demo-app",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:04.618Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:05.042Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:05.085Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:05.360Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/api/v1/auth/me",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "authorization": "Bearer null",
+        "referer": "http://localhost:4898/demo-app",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:05.397Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/api/v1/instances",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "authorization": "Bearer null",
+        "referer": "http://localhost:4898/demo-app",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:05.397Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/api/v1/balance",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "authorization": "Bearer null",
+        "referer": "http://localhost:4898/demo-app",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:05.397Z"
+    },
+    {
+      "method": "GET",
+      "url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:06.814Z"
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:4898/src/utils/api.js",
+      "headers": {
+        "origin": "http://localhost:4898",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "referer": "http://localhost:4898/src/pages/Dashboard.jsx",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36",
+        "sec-ch-ua": "\"HeadlessChrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+        "accept-language": "en-US",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "timestamp": "2026-01-02T02:51:06.855Z"
+    }
+  ],
+  "timestamp": "2026-01-02T02:51:07.028Z"
+}

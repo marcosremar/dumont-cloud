@@ -2,6 +2,7 @@
 User Storage Implementations
 Implements IUserRepository interface (Dependency Inversion Principle)
 """
+import bcrypt
 import json
 import os
 import hashlib
@@ -221,12 +222,14 @@ class SQLAlchemyUserRepository(IUserRepository):
             user.vast_api_key = updates["vast_api_key"]
 
         if "settings" in updates:
-            user.settings = updates["settings"]
+            # Serialize dict to JSON string for Text column
+            import json
+            user.settings = json.dumps(updates["settings"]) if isinstance(updates["settings"], dict) else updates["settings"]
 
         if "password" in updates:
             user.password_hash = self._hash_password(updates["password"])
 
-        self.session.flush()
+        self.session.commit()
         logger.info(f"User {email} updated")
 
         return user
@@ -244,13 +247,12 @@ class SQLAlchemyUserRepository(IUserRepository):
         return True
 
     def verify_password(self, email: str, password: str) -> bool:
-        """Verify user password"""
+        """Verify user password using bcrypt"""
         user = self.get_user(email)
-        if not user:
+        if not user or not user.password_hash:
             return False
 
-        password_hash = self._hash_password(password)
-        return user.password_hash == password_hash
+        return bcrypt.checkpw(password.encode(), user.password_hash.encode())
 
     def update_settings(self, email: str, settings: Dict[str, Any]) -> User:
         """Update user settings"""
@@ -264,6 +266,5 @@ class SQLAlchemyUserRepository(IUserRepository):
         return user.settings
 
     def _hash_password(self, password: str) -> str:
-        """Hash a password (simple SHA-256 for now)"""
-        # NOTE: In production, use bcrypt or argon2
-        return hashlib.sha256(password.encode()).hexdigest()
+        """Hash a password using bcrypt"""
+        return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()

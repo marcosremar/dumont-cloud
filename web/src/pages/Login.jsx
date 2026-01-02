@@ -16,8 +16,12 @@ export default function Login({ onLogin }) {
   useEffect(() => {
     const autoLogin = searchParams.get('auto_login')
 
-    if (autoLogin === 'demo') {
-      console.log('🔐 Auto-login detectado: modo demo')
+    console.log('[Login] Auto-login check:', { autoLogin, hasOnLogin: !!onLogin })
+
+    if (autoLogin === 'demo' && onLogin) {
+      console.log('[Login] Executing demo auto-login...')
+      // Set demo_mode flag in localStorage for isDemoMode() checks
+      localStorage.setItem('demo_mode', 'true')
       // Fazer login automaticamente com credenciais demo
       setUsername('marcosremar@gmail.com')
       setPassword('dumont123')
@@ -25,9 +29,10 @@ export default function Login({ onLogin }) {
 
       // Aguardar um tick para garantir que o estado foi atualizado
       setTimeout(async () => {
+        console.log('[Login] Calling onLogin...')
         const result = await onLogin('marcosremar@gmail.com', 'dumont123')
+        console.log('[Login] onLogin result:', result)
         if (result && result.error) {
-          console.error('❌ Erro no auto-login:', result.message)
           setError(result)
           setLoading(false)
         }
@@ -240,9 +245,6 @@ export default function Login({ onLogin }) {
                 </>
               )}
             </button>
-            <div className="text-center">
-              <a href="/demo-app" className="text-xs text-gray-500 hover:text-[#4caf50] transition-colors">Acessar Demonstração (Sem Login)</a>
-            </div>
           </form>
         </div>
       </div>

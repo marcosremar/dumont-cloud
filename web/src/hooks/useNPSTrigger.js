@@ -84,6 +84,12 @@ const useNPSTrigger = (options = {}) => {
         return { show: false, reason: 'not_authenticated' }
       }
 
+      // Skip API call in demo mode - never show NPS
+      const isDemoMode = localStorage.getItem('demo_mode') === 'true'
+      if (isDemoMode) {
+        return { show: false, reason: 'demo_mode' }
+      }
+
       try {
         const result = await dispatch(
           checkShouldShow({ triggerType: typeToCheck })
