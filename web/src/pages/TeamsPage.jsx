@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiGet, apiPost, isDemoMode } from '../utils/api';
+import { apiGet, apiPost } from '../utils/api';
 import {
   Users,
   Plus,
@@ -72,7 +72,6 @@ const DEMO_TEAMS = [
 export default function TeamsPage() {
   const navigate = useNavigate();
   const toast = useToast();
-  const isDemo = isDemoMode();
 
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);

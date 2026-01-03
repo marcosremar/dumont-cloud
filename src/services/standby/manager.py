@@ -393,7 +393,11 @@ class StandbyManager:
             'config': {
                 'gcp_zone': self._config.get('gcp_zone', 'europe-west1-b'),
                 'gcp_machine_type': self._config.get('gcp_machine_type', 'e2-medium'),
+                'gcp_disk_size': self._config.get('gcp_disk_size', 100),
+                'gcp_spot': self._config.get('gcp_spot', True),
+                'sync_interval': self._config.get('sync_interval', 30),
                 'auto_failover': self._config.get('auto_failover', True),
+                'auto_recovery': self._config.get('auto_recovery', True),
             }
         }
 

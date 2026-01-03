@@ -22,6 +22,7 @@ from ...core.exceptions import (
 from ...core.constants import VAST_API_URL, VAST_DEFAULT_TIMEOUT
 from ...domain.repositories import IGpuProvider
 from ...domain.models import GpuOffer, Instance
+from ...services.region_mapper import get_region_mapper
 
 logger = logging.getLogger(__name__)
 
@@ -1054,19 +1055,31 @@ class VastProvider(IGpuProvider):
     # Helper methods
 
     def _get_region_codes(self, region: str) -> List[str]:
-        """Get country codes for a region"""
-        regions = {
-            "EU": ["ES", "DE", "FR", "NL", "IT", "PL", "CZ", "BG", "UK", "GB",
-                   "Spain", "Germany", "France", "Netherlands", "Poland",
-                   "Czechia", "Bulgaria", "Sweden", "Norway", "Finland", "SE",
-                   "Belgium", "BE", "Austria", "AT", "Switzerland", "CH",
-                   "Portugal", "PT", "Ireland", "IE", "Denmark", "DK"],
-            "US": ["US", "United States", "CA", "Canada", "North America"],
-            "ASIA": ["JP", "Japan", "KR", "Korea", "SG", "Singapore", "TW", "Taiwan",
-                     "CN", "China", "Shaanxi", "HK", "Hong Kong", "IN", "India",
-                     "TH", "Thailand", "MY", "Malaysia", "ID", "Indonesia"],
-        }
-        return regions.get(region.upper(), [])
+        """
+        Get matching patterns for a region filter.
+
+        Uses RegionMapper to normalize region filters into search patterns.
+        This ensures consistent region handling across the codebase.
+
+        Args:
+            region: Region filter string (e.g., "EU", "US", "California", "DE")
+
+        Returns:
+            List of patterns to match against geolocation strings
+        """
+        if not region or region.lower() in ("global", "any", "all", ""):
+            return []  # No filter - return all
+
+        try:
+            mapper = get_region_mapper()
+            patterns = mapper.normalize_region_filter(region)
+            if patterns:
+                return patterns
+        except Exception as e:
+            logger.debug(f"RegionMapper error, using fallback: {e}")
+
+        # Minimal fallback for backward compatibility
+        return [region]
 
     def _parse_offer(self, data: Dict[str, Any]) -> GpuOffer:
         """Parse offer data from vast.ai API"""

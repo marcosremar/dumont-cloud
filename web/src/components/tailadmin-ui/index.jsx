@@ -165,8 +165,9 @@ export function Button({
   className = '',
   ...props
 }) {
+  // Primary uses explicit #4caf50 (Dumont logo green) for consistency
   const variants = {
-    primary: 'bg-brand-500 text-white hover:bg-brand-600 focus:ring-brand-500 font-semibold shadow-lg shadow-brand-500/20',
+    primary: 'text-white font-semibold shadow-lg',
     secondary: 'bg-white/10 text-gray-300 hover:bg-white/20',
     success: 'bg-success-500 text-white hover:bg-success-600 focus:ring-success-500',
     error: 'bg-error-500 text-white hover:bg-error-600 focus:ring-error-500',
@@ -174,6 +175,12 @@ export function Button({
     outline: 'border border-white/20 bg-transparent text-gray-300 hover:bg-white/10',
     ghost: 'bg-transparent text-gray-400 hover:bg-white/10',
   };
+
+  // Inline styles for primary button to ensure exact #4caf50 color
+  const primaryStyle = variant === 'primary' ? {
+    backgroundColor: '#4caf50',
+    boxShadow: '0 10px 15px -3px rgba(76, 175, 80, 0.2)',
+  } : {};
 
   const sizes = {
     sm: 'px-4 py-2 text-xs',
@@ -184,7 +191,10 @@ export function Button({
   return (
     <button
       className={`inline-flex items-center justify-center gap-2.5 font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
+      style={primaryStyle}
       disabled={disabled || loading}
+      onMouseEnter={(e) => { if (variant === 'primary') e.currentTarget.style.backgroundColor = '#43a047'; }}
+      onMouseLeave={(e) => { if (variant === 'primary') e.currentTarget.style.backgroundColor = '#4caf50'; }}
       {...props}
     >
       {loading && (

@@ -42,7 +42,6 @@ import {
   resetFilters,
   clearError,
 } from '../store/slices/templateSlice'
-import { isDemoMode } from '../utils/api'
 
 // Demo templates for demo mode
 const DEMO_TEMPLATES = [
@@ -115,7 +114,6 @@ export default function TemplatePage() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const location = useLocation()
-  const isDemo = isDemoMode()
 
   // Redux state
   const templates = useSelector(selectTemplates)

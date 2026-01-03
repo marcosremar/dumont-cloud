@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { apiGet, apiPost, apiPut, apiDelete, isDemoMode } from '../utils/api';
+import { apiGet, apiPost, apiPut, apiDelete } from '../utils/api';
 import {
   Users,
   UserPlus,
@@ -129,7 +129,6 @@ export default function TeamDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const isDemo = isDemoMode();
 
   // Tab state - initialize from URL hash
   const getInitialTab = () => {

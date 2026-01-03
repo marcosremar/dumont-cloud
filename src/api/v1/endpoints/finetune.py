@@ -4,7 +4,7 @@ Fine-Tuning API endpoints
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, BackgroundTasks
 
-from ..schemas.request import CreateFineTuneJobRequest
+from ..schemas.request import CreateFineTuneJobRequest, DeployFineTuneRequest
 from ..schemas.response import (
     FineTuneJobResponse,
     ListFineTuneJobsResponse,
@@ -271,3 +271,69 @@ async def delete_job(
 
     logger.info(f"Deleted fine-tuning job {job_id}")
     return SuccessResponse(success=True, message=f"Job {job_id} deleted")
+
+
+@router.post("/jobs/{job_id}/deploy")
+async def deploy_finetuned_model(
+    job_id: str,
+    request: DeployFineTuneRequest,
+    background_tasks: BackgroundTasks,
+    user_id: str = Depends(get_current_user_email),
+    service: FineTuningService = Depends(get_service),
+):
+    """
+    Deploy a fine-tuned model for inference.
+
+    Creates a new GPU instance with vLLM serving the fine-tuned model.
+    Only works for completed jobs.
+    """
+    # Get job
+    job = service.get_job(job_id, user_id)
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Job {job_id} not found"
+        )
+
+    # Check job is completed
+    if job.status != "completed":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Job must be completed to deploy. Current status: {job.status}"
+        )
+
+    try:
+        # Deploy the model
+        result = service.deploy_finetuned_model(
+            job_id=job_id,
+            gpu_type=request.gpu_type,
+            instance_name=request.instance_name,
+            max_price=request.max_price,
+            port=request.port,
+        )
+
+        if not result.get("success"):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=result.get("error", "Failed to deploy model")
+            )
+
+        logger.info(f"Deployed fine-tuned model for job {job_id}: instance={result.get('instance_id')}")
+        return {
+            "success": True,
+            "job_id": job_id,
+            "instance_id": result.get("instance_id"),
+            "instance_name": result.get("instance_name"),
+            "gpu_type": request.gpu_type,
+            "endpoint_url": result.get("endpoint_url"),
+            "message": "Model deployment started. Check instance status for progress."
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to deploy fine-tuned model: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )

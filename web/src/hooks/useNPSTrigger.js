@@ -85,8 +85,8 @@ const useNPSTrigger = (options = {}) => {
       }
 
       // Skip API call in demo mode - never show NPS
-      const isDemoMode = localStorage.getItem('demo_mode') === 'true'
-      if (isDemoMode) {
+      const isDemo = window.location.pathname.startsWith('/demo-app') || window.location.pathname.startsWith('/demo-docs')
+      if (isDemo) {
         return { show: false, reason: 'demo_mode' }
       }
 

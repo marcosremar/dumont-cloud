@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/marcosremar/dumont-cloud#readme",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "puppeteer": "^24.34.0"
   }
 }

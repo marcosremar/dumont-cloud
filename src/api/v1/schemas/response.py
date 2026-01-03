@@ -290,6 +290,13 @@ class FineTuneJobResponse(BaseModel):
     output_model_path: Optional[str] = Field(None, description="Output model path")
     error_message: Optional[str] = Field(None, description="Error message if failed")
 
+    # CPU Standby (failover support)
+    cpu_standby_enabled: bool = Field(True, description="Whether CPU Standby is enabled")
+    cpu_standby_instance_id: Optional[str] = Field(None, description="CPU Standby instance ID")
+    cpu_standby_instance_ip: Optional[str] = Field(None, description="CPU Standby IP address")
+    last_checkpoint_sync: Optional[str] = Field(None, description="Last checkpoint sync timestamp")
+    checkpoint_sync_count: int = Field(0, description="Number of checkpoint syncs")
+
     @classmethod
     def from_domain(cls, job) -> "FineTuneJobResponse":
         """Create from domain model"""
@@ -315,6 +322,12 @@ class FineTuneJobResponse(BaseModel):
             completed_at=job.completed_at.isoformat() if job.completed_at else None,
             output_model_path=job.output_model_path,
             error_message=job.error_message,
+            # CPU Standby fields
+            cpu_standby_enabled=job.cpu_standby_enabled,
+            cpu_standby_instance_id=job.cpu_standby_instance_id,
+            cpu_standby_instance_ip=job.cpu_standby_instance_ip,
+            last_checkpoint_sync=job.last_checkpoint_sync.isoformat() if job.last_checkpoint_sync else None,
+            checkpoint_sync_count=job.checkpoint_sync_count,
         )
 
 

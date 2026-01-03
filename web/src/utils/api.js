@@ -5,16 +5,6 @@
 const API_BASE = ''
 
 /**
- * Check if currently in demo mode
- * True for: demo routes (/demo-app, /demo-docs), OR localStorage demo_mode flag
- */
-export function isDemoMode() {
-  const path = window.location.pathname
-  const demoModeFromStorage = localStorage.getItem('demo_mode') === 'true'
-  return path.startsWith('/demo-app') || path.startsWith('/demo-docs') || demoModeFromStorage
-}
-
-/**
  * Fetch with authentication
  * Automatically adds JWT token from localStorage
  */
@@ -34,13 +24,15 @@ export async function apiFetch(endpoint, options = {}) {
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
+  let body = options.body
+  if (body && typeof body === 'object' && !(body instanceof FormData)) {
     headers['Content-Type'] = 'application/json'
-    options.body = JSON.stringify(options.body)
+    body = JSON.stringify(body)
   }
 
   const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
+    body,
     headers,
     credentials: 'include',
   })
@@ -80,6 +72,14 @@ export async function apiPut(endpoint, data) {
  */
 export async function apiDelete(endpoint) {
   return apiFetch(endpoint, { method: 'DELETE' })
+}
+
+/**
+ * Check if currently in demo mode
+ * Always returns false - demo routes were removed
+ */
+export function isDemoMode() {
+  return false
 }
 
 export default apiFetch

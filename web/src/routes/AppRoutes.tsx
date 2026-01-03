@@ -14,15 +14,17 @@ import EmailPreferences from '../pages/Settings/EmailPreferences'
 import Login from '../pages/Login'
 import LandingPage from '../pages/LandingPage'
 import Machines from '../pages/Machines'
+import NewMachine from '../pages/NewMachine'
 import GPUMetrics from '../pages/GPUMetrics'
 import MetricsHub from '../pages/MetricsHub'
 import FailoverReportPage from '../pages/FailoverReportPage'
 import MachinesReportPage from '../pages/MachinesReportPage'
 import FineTuning from '../pages/FineTuning'
+import FineTuningJobDetails from '../pages/FineTuningJobDetails'
 import Serverless from '../pages/Serverless'
 import GpuOffers from '../pages/GpuOffers'
 import Jobs from '../pages/Jobs'
-import ChatArena from '../pages/ChatArena'
+import Playground from '../pages/Playground'
 import Models from '../pages/Models'
 import Savings from '../pages/Savings'
 import Documentation from '../pages/Documentation'
@@ -37,6 +39,7 @@ import TeamsPage from '../pages/TeamsPage'
 import TeamDetailsPage from '../pages/TeamDetailsPage'
 import CreateRolePage from '../pages/CreateRolePage'
 import Reservations from '../pages/Reservations'
+import Agents from '../pages/Agents'
 
 /**
  * Wrapper for protected routes with AppLayout
@@ -83,6 +86,10 @@ export default function AppRoutes() {
       <Route
         path="/app/machines"
         element={<ProtectedPage><Machines /></ProtectedPage>}
+      />
+      <Route
+        path="/app/machines/new"
+        element={<ProtectedPage><NewMachine /></ProtectedPage>}
       />
       <Route
         path="/app/serverless"
@@ -133,6 +140,10 @@ export default function AppRoutes() {
         element={<ProtectedPage><FineTuning /></ProtectedPage>}
       />
       <Route
+        path="/app/finetune/:jobId"
+        element={<ProtectedPage><FineTuningJobDetails /></ProtectedPage>}
+      />
+      <Route
         path="/app/gpu-offers"
         element={<ProtectedPage><GpuOffers /></ProtectedPage>}
       />
@@ -141,8 +152,12 @@ export default function AppRoutes() {
         element={<ProtectedPage><Jobs /></ProtectedPage>}
       />
       <Route
-        path="/app/chat-arena"
-        element={<ProtectedPage><ChatArena /></ProtectedPage>}
+        path="/app/playground"
+        element={<ProtectedPage><Playground /></ProtectedPage>}
+      />
+      <Route
+        path="/app/agents"
+        element={<ProtectedPage><Agents /></ProtectedPage>}
       />
       <Route
         path="/app/models"
@@ -183,48 +198,6 @@ export default function AppRoutes() {
       <Route
         path="/app/admin/nps"
         element={<ProtectedPage><NPSTrends /></ProtectedPage>}
-      />
-
-      {/* Demo Routes - No auth required */}
-      <Route
-        path="/demo-app"
-        element={
-          <AppLayout user={null} onLogout={() => {}} dashboardStats={null}>
-            <Dashboard onStatsUpdate={() => {}} />
-          </AppLayout>
-        }
-      />
-      <Route
-        path="/demo-app/serverless"
-        element={
-          <AppLayout user={null} onLogout={() => {}} dashboardStats={null}>
-            <Serverless />
-          </AppLayout>
-        }
-      />
-      <Route
-        path="/demo-app/machines"
-        element={
-          <AppLayout user={null} onLogout={() => {}} dashboardStats={null}>
-            <Machines />
-          </AppLayout>
-        }
-      />
-      <Route
-        path="/demo-app/gpu-offers"
-        element={
-          <AppLayout user={null} onLogout={() => {}} dashboardStats={null}>
-            <GpuOffers />
-          </AppLayout>
-        }
-      />
-      <Route
-        path="/demo-app/chat-arena"
-        element={
-          <AppLayout user={null} onLogout={() => {}} dashboardStats={null}>
-            <ChatArena />
-          </AppLayout>
-        }
       />
 
       {/* Fallback */}

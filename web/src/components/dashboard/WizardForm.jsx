@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Search, Globe, MapPin, X, Cpu, MessageSquare, Lightbulb, Code, Zap,
   Sparkles, Gauge, Activity, Clock, Loader2, AlertCircle, Check, ChevronRight, ChevronLeft,
-  Shield, Server, HardDrive, Cloud, Timer, DollarSign, Database, Filter, Star, TrendingUp,
+  Shield, Server, HardDrive, Timer, DollarSign, Database, Filter, Star, TrendingUp,
   ChevronDown, ChevronUp, Info, HelpCircle, Rocket, Hourglass, Settings, Network, Plus, Trash2,
   RefreshCw, ArrowRight
 } from 'lucide-react';
-import { Button, Label, CardContent } from '../tailadmin-ui';
+import { Label, CardContent } from '../tailadmin-ui';
+import { Button } from '../ui/button';
 import { WorldMap, GPUSelector } from './';
 import { COUNTRY_DATA, PERFORMANCE_TIERS, DEMO_OFFERS } from './constants';
 import { apiGet, isDemoMode } from '../../utils/api';
@@ -368,28 +369,6 @@ const WizardForm = ({
       available: true,
     },
     {
-      id: 'tensordock',
-      name: 'Tensor Dock Serverless',
-      provider: 'Tensor Dock + B2',
-      icon: Cloud,
-      description: 'Abordagem serverless-like. Paga só quando usa.',
-      recoveryTime: '~2 min',
-      dataLoss: 'Último snapshot',
-      costHour: '+$0.001/h',
-      costMonth: '~$1/mês',
-      costDetail: 'Só storage B2 (~$0.50/mês) + custo GPU sob demanda',
-      howItWorks: 'Snapshots automáticos para B2. Sem máquina idle. Quando precisar, GPU é provisionada sob demanda no Tensor Dock e dados restaurados.',
-      features: [
-        'Sem máquina idle ($0/h parado)',
-        'Snapshots B2 (~$0.50/mês)',
-        'GPU sob demanda',
-        'Boot otimizado',
-      ],
-      requirements: 'Conta Tensor Dock',
-      recommended: false,
-      available: true,
-    },
-    {
       id: 'no_failover',
       name: 'Sem Failover',
       provider: 'Apenas GPU',
@@ -428,7 +407,35 @@ const WizardForm = ({
       try {
         // Get tier config for price range and build filter params
         const tier = tiers.find(t => t.name === selectedTier);
-        const regionCode = selectedLocation?.codes?.[0] || '';
+
+        // Map region selection to API-expected codes (US, EU, ASIA)
+        // API expects: US, EU, ASIA - not individual country codes
+        let regionCode = '';
+        if (selectedLocation?.isRegion) {
+          const regionName = selectedLocation.name?.toLowerCase();
+          if (regionName === 'eua' || regionName === 'usa' || regionName === 'estados unidos') {
+            regionCode = 'US';
+          } else if (regionName === 'europa' || regionName === 'europe') {
+            regionCode = 'EU';
+          } else if (regionName === 'ásia' || regionName === 'asia') {
+            regionCode = 'ASIA';
+          } else if (regionName === 'américa do sul' || regionName === 'south america') {
+            regionCode = 'SA';  // Try SA for South America
+          }
+        } else if (selectedLocation?.codes?.[0]) {
+          // For individual country selections, map to their region
+          const countryCode = selectedLocation.codes[0];
+          const usCountries = ['US', 'CA', 'MX'];
+          const euCountries = ['GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'BE', 'CH', 'AT', 'IE', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'GR', 'HU', 'RO'];
+          const asiaCountries = ['JP', 'CN', 'KR', 'SG', 'IN', 'TH', 'VN', 'ID', 'MY', 'PH', 'TW'];
+          const saCountries = ['BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'UY', 'PY', 'BO'];
+
+          if (usCountries.includes(countryCode)) regionCode = 'US';
+          else if (euCountries.includes(countryCode)) regionCode = 'EU';
+          else if (asiaCountries.includes(countryCode)) regionCode = 'ASIA';
+          else if (saCountries.includes(countryCode)) regionCode = 'SA';
+          else regionCode = countryCode;  // Fallback to country code
+        }
 
         // In demo mode, use DEMO_OFFERS instead of real API
         if (isDemoMode()) {
@@ -646,7 +653,7 @@ const WizardForm = ({
     }
 
     // Validar saldo mínimo (skip in demo mode)
-    console.log('[WizardForm] isDemoMode:', isDemoMode());
+    console.log('[WizardForm] isDemoMode:'());
     console.log('[WizardForm] userBalance:', userBalance);
     if (!isDemoMode() && userBalance !== null && userBalance < MIN_BALANCE) {
       errors.push(`Saldo insuficiente. Você precisa de pelo menos $${MIN_BALANCE.toFixed(2)} para criar uma máquina. Saldo atual: $${userBalance.toFixed(2)}`);
@@ -663,12 +670,20 @@ const WizardForm = ({
 
     console.log('[WizardForm] Validation passed! Advancing to step 4 and calling onSubmit');
     console.log('[WizardForm] onSubmit function exists:', typeof onSubmit === 'function');
+    console.log('[WizardForm] selectedMachine:', selectedMachine);
     setValidationErrors([]);
     // V5: Ir direto para provisioning sem modal de confirmação
     setCurrentStep(4);
     if (typeof onSubmit === 'function') {
-      console.log('[WizardForm] Calling onSubmit NOW');
-      onSubmit(); // Inicia o provisioning
+      console.log('[WizardForm] Calling onSubmit NOW with selectedMachine');
+      // Pass selectedMachine with offer_id, failover strategy, and tier
+      onSubmit({
+        machine: selectedMachine,
+        offerId: selectedMachine?.id,
+        failoverStrategy,
+        tier: selectedTier,
+        region: selectedLocation,
+      });
     } else {
       console.error('[WizardForm] ERROR: onSubmit is not a function!');
     }
@@ -678,7 +693,13 @@ const WizardForm = ({
     // V5: Mantido para compatibilidade mas não usado mais
     setShowPaymentConfirm(false);
     setCurrentStep(4);
-    onSubmit();
+    onSubmit({
+      machine: selectedMachine,
+      offerId: selectedMachine?.id,
+      failoverStrategy,
+      tier: selectedTier,
+      region: selectedLocation,
+    });
   };
 
   const handleCancelPayment = () => {
@@ -1140,6 +1161,45 @@ const WizardForm = ({
         </div>
       )}
 
+      {/* Selection Summary Bar - Shows selections from previous steps */}
+      {currentStep > 1 && (
+        <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/10 mb-4">
+          <span className="text-xs text-gray-500 mr-1">Selecionado:</span>
+
+          {/* Location Tag */}
+          {selectedLocation && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-500/10 border border-brand-500/30 text-brand-400 rounded-full text-xs font-medium">
+              {selectedLocation.isRegion ? <Globe className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
+              <span>{selectedLocation.name}</span>
+            </div>
+          )}
+
+          {/* Tier Tag - Show if step > 1 and tier selected */}
+          {currentStep > 2 && selectedTier && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-400 rounded-full text-xs font-medium">
+              <Cpu className="w-3 h-3" />
+              <span>{selectedTier}</span>
+            </div>
+          )}
+
+          {/* GPU Tag - Show if step > 2 and GPU selected */}
+          {currentStep > 2 && selectedGPU && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/10 border border-blue-500/30 text-blue-400 rounded-full text-xs font-medium">
+              <Server className="w-3 h-3" />
+              <span>{selectedGPU}</span>
+            </div>
+          )}
+
+          {/* Strategy Tag - Show if step > 3 and strategy selected */}
+          {currentStep > 3 && failoverStrategy && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-full text-xs font-medium">
+              <Shield className="w-3 h-3" />
+              <span>{failoverOptions.find(f => f.id === failoverStrategy)?.name || failoverStrategy}</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Step 1: Localização */}
       {currentStep === 1 && (
         <div className="space-y-5 animate-fadeIn">
@@ -1269,8 +1329,8 @@ const WizardForm = ({
                 <p className="text-xs text-gray-500 mt-1">Escolha uma das máquinas recomendadas</p>
               </div>
 
-              {/* 3 máquinas recomendadas */}
-              <div className="space-y-2">
+              {/* 3 máquinas recomendadas - Layout horizontal */}
+              <div>
                 {loadingMachines ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-5 h-5 animate-spin text-gray-400 mr-2" />
@@ -1278,101 +1338,93 @@ const WizardForm = ({
                   </div>
                 ) : recommendedMachines.length > 0 ? (
                   <>
-                    {recommendedMachines.map((machine, index) => {
-                      const isSelected = selectedMachine?.id === machine.id;
-                      const labelIcons = {
-                        'Mais econômico': DollarSign,
-                        'Melhor custo-benefício': TrendingUp,
-                        'Mais rápido': Zap,
-                      };
-                      const LabelIcon = labelIcons[machine.label] || Star;
+                    {/* Grid horizontal de 3 colunas */}
+                    <div className="grid grid-cols-3 gap-3">
+                      {recommendedMachines.map((machine, index) => {
+                        const isSelected = selectedMachine?.id === machine.id;
+                        const labelIcons = {
+                          'Mais econômico': DollarSign,
+                          'Melhor custo-benefício': TrendingUp,
+                          'Mais rápido': Zap,
+                        };
+                        const LabelIcon = labelIcons[machine.label] || Star;
+                        const isCenterCard = index === 1;
 
-                      return (
-                        <button
-                          key={machine.id}
-                          data-testid={`machine-${machine.id}`}
-                          data-gpu-name={machine.gpu_name}
-                          data-gpu-card="true"
-                          data-selected={isSelected ? "true" : "false"}
-                          onClick={() => {
-                            setSelectedMachine(machine);
-                            onSelectGPU(machine.gpu_name);
-                            onSelectGPUCategory('any');
-                          }}
-                          className={`w-full p-3 rounded-lg border text-left transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-brand-500/10 border-brand-500"
-                              : "bg-white/5 border-white/10 hover:bg-white/[0.07] hover:border-white/20"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            {/* Radio indicator */}
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                              isSelected ? "border-brand-500 bg-brand-500/20" : "border-white/20"
+                        return (
+                          <button
+                            key={machine.id}
+                            data-testid={`machine-${machine.id}`}
+                            data-gpu-name={machine.gpu_name}
+                            data-gpu-card="true"
+                            data-selected={isSelected ? "true" : "false"}
+                            onClick={() => {
+                              setSelectedMachine(machine);
+                              onSelectGPU(machine.gpu_name);
+                              onSelectGPUCategory('any');
+                            }}
+                            className={`relative p-3 rounded-lg border text-center transition-all cursor-pointer flex flex-col items-center ${
+                              isSelected
+                                ? "bg-brand-500/10 border-brand-500 ring-2 ring-brand-500/30"
+                                : isCenterCard
+                                ? "bg-brand-500/5 border-brand-500/30 hover:bg-brand-500/10"
+                                : "bg-white/5 border-white/10 hover:bg-white/[0.07] hover:border-white/20"
+                            }`}
+                          >
+                            {/* Badge no topo */}
+                            <div className={`absolute -top-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${
+                              isCenterCard ? "bg-brand-500 text-white" : "bg-white/10 text-gray-400"
                             }`}>
-                              {isSelected && <div className="w-2 h-2 rounded-full bg-brand-400" />}
+                              <LabelIcon className="w-3 h-3" />
+                              {machine.label}
                             </div>
 
                             {/* GPU Icon */}
-                            <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center mt-3 mb-2 ${
                               isSelected ? "bg-brand-500/20 text-brand-400" : "bg-white/5 text-gray-500"
                             }`}>
-                              <Cpu className="w-4 h-4" />
+                              <Cpu className="w-5 h-5" />
                             </div>
 
-                            {/* Machine Info */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className={`text-sm font-medium ${isSelected ? "text-brand-400" : "text-gray-200"}`}>
-                                  {machine.gpu_name}
+                            {/* GPU Name */}
+                            <span className={`text-sm font-semibold ${isSelected ? "text-brand-400" : "text-gray-200"}`}>
+                              {machine.gpu_name}
+                            </span>
+
+                            {/* Specs */}
+                            <div className="flex items-center justify-center gap-1 mt-1">
+                              {machine.isCPU ? (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400">
+                                  {machine.cpu_cores} vCPU
                                 </span>
-                                {machine.isCPU ? (
-                                  <>
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400">
-                                      {machine.cpu_cores} vCPU
-                                    </span>
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-gray-400">
-                                      {machine.cpu_ram}GB RAM
-                                    </span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-gray-400">
-                                      {machine.gpu_ram}GB
-                                    </span>
-                                    {machine.num_gpus > 1 && (
-                                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-gray-400">
-                                        x{machine.num_gpus}
-                                      </span>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-500">
-                                <span>{machine.location}</span>
-                                <span>•</span>
-                                <span>{machine.provider}</span>
-                                <span>•</span>
-                                <span>{machine.reliability}% uptime</span>
-                              </div>
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-gray-400">
+                                  {machine.gpu_ram}GB VRAM
+                                </span>
+                              )}
                             </div>
 
-                            {/* Label & Price */}
-                            <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                              <div className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded ${
-                                index === 1 ? "bg-brand-500/20 text-brand-400" : "bg-white/10 text-gray-400"
-                              }`}>
-                                <LabelIcon className="w-3 h-3" />
-                                {machine.label}
+                            {/* Location */}
+                            <span className="text-[10px] text-gray-500 mt-1">
+                              {machine.location}
+                            </span>
+
+                            {/* Price */}
+                            <span className={`text-lg font-mono font-bold mt-2 ${
+                              isCenterCard ? "text-brand-400" : "text-gray-200"
+                            }`}>
+                              ${machine.dph_total.toFixed(2)}/h
+                            </span>
+
+                            {/* Selection indicator */}
+                            {isSelected && (
+                              <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-brand-500 flex items-center justify-center">
+                                <Check className="w-3 h-3 text-white" />
                               </div>
-                              <span className="text-sm font-mono font-medium text-gray-200">
-                                ${machine.dph_total.toFixed(2)}/h
-                              </span>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </>
                 ) : (
                   <div className="text-center py-6 text-gray-500 text-sm">
@@ -1464,34 +1516,6 @@ const WizardForm = ({
             </div>
           )}
 
-          {/* Resumo da seleção */}
-          {selectedTier && (
-            <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-md bg-brand-500/20 flex items-center justify-center flex-shrink-0">
-                  {selectedTier === 'Lento' && <Gauge className="w-4 h-4 text-brand-400" />}
-                  {selectedTier === 'Medio' && <Activity className="w-4 h-4 text-brand-400" />}
-                  {selectedTier === 'Rapido' && <Zap className="w-4 h-4 text-brand-400" />}
-                  {selectedTier === 'Ultra' && <Sparkles className="w-4 h-4 text-brand-400" />}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-200">
-                      Tier: {tiers.find(t => t.name === selectedTier)?.name}
-                    </span>
-                    <span className="text-xs font-mono text-brand-400">
-                      {tiers.find(t => t.name === selectedTier)?.priceRange}
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    <span>{tiers.find(t => t.name === selectedTier)?.gpu}</span>
-                    <span className="mx-1">•</span>
-                    <span>{tiers.find(t => t.name === selectedTier)?.vram}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
         </div>
       )}
@@ -1960,16 +1984,17 @@ const WizardForm = ({
             <X className="w-4 h-4 mr-1" />
             {provisioningWinner ? 'Buscar Outras' : 'Cancelar'}
           </Button>
-        ) : (
+        ) : currentStep > 1 ? (
           <Button
             onClick={handlePrev}
-            disabled={currentStep === 1}
             variant="ghost"
-            className={`px-4 py-2 text-gray-400 hover:text-gray-200 ${currentStep === 1 ? 'opacity-0 pointer-events-none' : ''}`}
+            className="px-4 py-2 text-gray-400 hover:text-gray-200"
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
             Voltar
           </Button>
+        ) : (
+          <div></div>
         )}
 
         {/* Right button: Próximo, Iniciar, or Usar Esta Máquina */}
@@ -1977,7 +2002,7 @@ const WizardForm = ({
           <button
             onClick={() => provisioningWinner && onCompleteProvisioning && onCompleteProvisioning(provisioningWinner)}
             disabled={!provisioningWinner}
-            className="group relative px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 hover:scale-[1.02] active:scale-[0.98]"
+            className="ta-btn ta-btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <span className="flex items-center gap-2">
               {provisioningWinner ? (
@@ -1997,18 +2022,18 @@ const WizardForm = ({
           <button
             onClick={handleNext}
             disabled={!isStepComplete(currentStep)}
-            className="group relative px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 hover:scale-[1.02] active:scale-[0.98]"
+            className="ta-btn ta-btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <span className="flex items-center gap-2">
               Próximo
-              <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+              <ChevronRight className="w-4 h-4" />
             </span>
           </button>
         ) : (
           <button
             onClick={handleNext}
             disabled={!isStepComplete(currentStep) || loading}
-            className="group relative px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 hover:scale-[1.02] active:scale-[0.98]"
+            className="ta-btn ta-btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <span className="flex items-center gap-2">
               {loading ? (

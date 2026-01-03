@@ -1,7 +1,8 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { Cpu, Wifi, Zap, Check, AlertTriangle, Ban } from 'lucide-react';
-import { Card, CardContent, Button, Badge } from '../tailadmin-ui';
+import { Card, CardContent, Badge } from '../tailadmin-ui';
+import { Button } from '../ui/button';
 import { selectSelectedCurrency, selectExchangeRate } from '../../store/slices/currencySlice';
 import { formatAmount } from '../../utils/formatCurrency';
 

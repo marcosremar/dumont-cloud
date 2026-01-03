@@ -7,11 +7,28 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Page Container - refined dark theme with subtle gradient */
+/* App Layout Background - Global grid pattern */
+.app-layout-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(76, 175, 80, 0.15), transparent),
+    linear-gradient(180deg, #050705 0%, #0a0d0a 50%, #050705 100%);
+}
+
+.app-grid-pattern {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(76, 175, 80, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(76, 175, 80, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black, transparent);
+  z-index: 0;
+}
+
+/* Page Container - transparent to show layout background */
 .page-container {
   @apply min-h-screen;
-  background: linear-gradient(180deg, #0a0d0a 0%, #0f1310 50%, #0a0d0a 100%);
-  background-attachment: fixed;
 }
 
 /* Page Header */
@@ -69,9 +86,10 @@
   @apply px-5 py-4 border-t border-white/10 bg-dark-surface-secondary;
 }
 
-/* Stat Cards - Clean Style */
+/* Stat Cards - Clean Style with transparent background */
 .stat-card {
-  @apply bg-dark-surface-card rounded-lg border border-white/10 p-4 flex flex-col;
+  @apply rounded-lg border border-white/10 p-4 flex flex-col;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, transparent 100%);
 }
 
 .stat-card-icon {
@@ -124,7 +142,7 @@
 }
 
 .ta-btn-primary {
-  @apply bg-brand-700 text-white hover:bg-brand-600 focus:ring-brand-500;
+  @apply bg-brand-500/20 text-brand-300 border border-brand-500/30 hover:bg-brand-500/30 hover:text-brand-200 focus:ring-brand-500;
 }
 
 .ta-btn-secondary {
@@ -581,4 +599,339 @@
 
 .glass-dark {
   @apply bg-dark-surface/80 backdrop-blur-sm border border-white/10;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMMAND CENTER DASHBOARD STYLES
+   Futuristic control room aesthetic with distinctive typography and effects
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Import distinctive fonts */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+/* Dashboard Container with Grid Background */
+.dashboard-command-center {
+  position: relative;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(76, 175, 80, 0.15), transparent),
+    linear-gradient(180deg, #050705 0%, #0a0d0a 50%, #050705 100%);
+}
+
+.dashboard-command-center::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(76, 175, 80, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(76, 175, 80, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black, transparent);
+}
+
+/* Orbitron for headers - techy display font */
+.font-display {
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.05em;
+}
+
+/* JetBrains Mono for data/metrics */
+.font-data {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Space Grotesk for body text */
+.font-body {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Staggered Animation Entrance */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUpFade 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-delay-0 { animation-delay: 0s; }
+.animate-delay-1 { animation-delay: 0.05s; }
+.animate-delay-2 { animation-delay: 0.1s; }
+.animate-delay-3 { animation-delay: 0.15s; }
+.animate-delay-4 { animation-delay: 0.2s; }
+.animate-delay-5 { animation-delay: 0.25s; }
+.animate-delay-6 { animation-delay: 0.3s; }
+.animate-delay-7 { animation-delay: 0.35s; }
+.animate-delay-8 { animation-delay: 0.4s; }
+
+/* Glow Card Effect */
+.glow-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(20, 25, 20, 0.9) 0%, rgba(10, 13, 10, 0.95) 100%);
+  border: 1px solid rgba(76, 175, 80, 0.15);
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.glow-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(76, 175, 80, 0.06), transparent 40%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.glow-card:hover::before {
+  opacity: 1;
+}
+
+.glow-card:hover {
+  border-color: rgba(76, 175, 80, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(76, 175, 80, 0.1),
+    0 8px 32px -8px rgba(0, 0, 0, 0.5),
+    0 0 60px -20px rgba(76, 175, 80, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Metric Value with Digital Display Effect */
+.metric-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  background: linear-gradient(135deg, #ffffff 0%, #4caf50 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 30px rgba(76, 175, 80, 0.3);
+}
+
+.metric-value-green {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: #4caf50;
+  text-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
+}
+
+.metric-value-blue {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: #00d4ff;
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+.metric-value-amber {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: #ffc107;
+  text-shadow: 0 0 20px rgba(255, 193, 7, 0.5);
+}
+
+.metric-value-purple {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: #a855f7;
+  text-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+}
+
+/* Status Pulse Animation */
+@keyframes statusPulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 0 4px transparent;
+  }
+}
+
+.status-pulse {
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+/* Icon Glow */
+.icon-glow-green {
+  filter: drop-shadow(0 0 8px rgba(76, 175, 80, 0.6));
+}
+
+.icon-glow-blue {
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.6));
+}
+
+.icon-glow-amber {
+  filter: drop-shadow(0 0 8px rgba(255, 193, 7, 0.6));
+}
+
+.icon-glow-purple {
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.6));
+}
+
+/* Header Title with Accent Line */
+.header-accent {
+  position: relative;
+  display: inline-block;
+}
+
+.header-accent::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -8px;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #4caf50, transparent);
+  border-radius: 2px;
+}
+
+/* Quick Action Button */
+.quick-action-btn {
+  position: relative;
+  background: rgba(20, 25, 20, 0.8);
+  border: 1px solid rgba(76, 175, 80, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.quick-action-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.3), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.quick-action-btn:hover {
+  background: rgba(76, 175, 80, 0.08);
+  border-color: rgba(76, 175, 80, 0.3);
+  transform: translateY(-2px);
+}
+
+.quick-action-btn:hover::before {
+  opacity: 1;
+}
+
+/* Activity Item */
+.activity-item {
+  position: relative;
+  padding-left: 20px;
+}
+
+.activity-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+
+/* System Status Bar */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(10, 13, 10, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.status-bar:hover {
+  background: rgba(20, 25, 20, 0.9);
+  border-color: rgba(76, 175, 80, 0.2);
+}
+
+/* Scan Line Effect (subtle) */
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+.scanline-effect::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(180deg, transparent, rgba(76, 175, 80, 0.1), transparent);
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Primary CTA Button with Glow */
+.cta-glow {
+  position: relative;
+  background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
+}
+
+.cta-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 30px rgba(76, 175, 80, 0.5);
+}
+
+.cta-glow::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(135deg, #4caf50, #81c784, #4caf50);
+  border-radius: 14px;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.cta-glow:hover::before {
+  opacity: 0.5;
+}
+
+/* Section Divider */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.3), transparent);
+  margin: 24px 0;
+}
+
+/* Card Label */
+.card-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.4);
 }

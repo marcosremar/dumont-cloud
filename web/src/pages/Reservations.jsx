@@ -11,7 +11,7 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react'
-import { Button } from '../components/tailadmin-ui'
+import { Button } from '../components/ui/button'
 import ReservationCalendar from '../components/ReservationCalendar'
 import ReservationForm from '../components/ReservationForm'
 import { useReservations } from '../store/hooks'

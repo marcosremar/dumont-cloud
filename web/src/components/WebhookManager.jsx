@@ -16,7 +16,8 @@ import {
   EyeOff,
 } from 'lucide-react'
 import { useToast } from './Toast'
-import { Card, Alert, Button } from './tailadmin-ui'
+import { Card, Alert } from './tailadmin-ui'
+import { Button } from './ui/button'
 import { WebhookLogsInline } from './WebhookLogViewer'
 import {
   fetchWebhooks,

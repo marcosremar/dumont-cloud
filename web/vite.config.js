@@ -64,11 +64,11 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api\/docs/, "/api"),
       },
       "/api": {
-        target: "http://localhost:8001",
+        target: "http://localhost:8081",
         changeOrigin: true,
       },
       "/admin": {
-        target: "http://localhost:8000",
+        target: "http://localhost:8081",
         changeOrigin: true,
       },
     },

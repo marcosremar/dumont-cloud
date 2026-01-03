@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Cpu, Loader2, Check, X, Server, Wifi, Zap, Play, Clock, Timer } from 'lucide-react';
-import { Card, CardContent, Button } from '../tailadmin-ui';
+import { Card, CardContent } from '../tailadmin-ui';
+import { Button } from '../ui/button';
 
 // Progress stages with labels and icons
 const PROGRESS_STAGES = [

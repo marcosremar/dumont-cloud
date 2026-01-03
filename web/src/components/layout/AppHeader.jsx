@@ -209,11 +209,11 @@ const AppHeader = ({ user, onLogout, dashboardStats = null }) => {
           )}
 
           {/* Saldo VAST.ai - Caixa separada - sempre visível */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-            <Cloud className="w-4 h-4 text-emerald-400" />
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border" style={{ backgroundColor: 'rgba(76, 175, 80, 0.1)', borderColor: 'rgba(76, 175, 80, 0.2)' }}>
+            <Cloud className="w-4 h-4" style={{ color: '#4caf50' }} />
             <div>
               <p className="text-[10px] text-gray-400 leading-none">Saldo VAST</p>
-              <p className="text-xs font-bold text-emerald-400 leading-none mt-0.5">
+              <p className="text-xs font-bold leading-none mt-0.5" style={{ color: '#4caf50' }}>
                 {balanceLoading ? (
                   <span className="animate-pulse">--</span>
                 ) : (
@@ -274,7 +274,7 @@ const AppHeader = ({ user, onLogout, dashboardStats = null }) => {
               onClick={() => setUserMenuOpen(!isUserMenuOpen)}
               className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1f1a]"
             >
-              <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center shadow-lg shadow-brand-500/20">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg" style={{ backgroundColor: '#4caf50', boxShadow: '0 10px 15px -3px rgba(76, 175, 80, 0.2)' }}>
                 <User size={18} className="text-white" />
               </div>
               <div className="hidden md:block text-left">

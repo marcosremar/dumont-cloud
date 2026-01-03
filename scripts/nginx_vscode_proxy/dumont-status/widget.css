@@ -1,0 +1,206 @@
+/**
+ * Dumont Cloud - VS Code Failover Status Widget Styles
+ *
+ * Widget posicionado no canto superior direito
+ * Cores:
+ *   GPU ativo: Verde (#22c55e)
+ *   CPU Standby: Azul (#3b82f6)
+ *   Failover: Amarelo (#eab308)
+ *   Erro: Vermelho (#ef4444)
+ */
+
+#dumont-failover-widget {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 12px;
+    user-select: none;
+    pointer-events: auto;
+}
+
+.dumont-widget-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(30, 30, 30, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 6px 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    cursor: default;
+    transition: all 0.3s ease;
+}
+
+.dumont-widget-inner:hover {
+    background: rgba(40, 40, 40, 0.98);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Status Indicator */
+.dumont-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dumont-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.dumont-status-gpu {
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+}
+
+.dumont-status-cpu {
+    background: #3b82f6;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+.dumont-status-failover {
+    background: #eab308;
+    box-shadow: 0 0 8px rgba(234, 179, 8, 0.6);
+    animation: blink 0.5s infinite;
+}
+
+.dumont-status-warning {
+    background: #f97316 !important;
+    box-shadow: 0 0 8px rgba(249, 115, 22, 0.6) !important;
+}
+
+.dumont-status-text {
+    color: #e5e5e5;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Status Details */
+.dumont-status-details {
+    display: none;
+    padding-left: 8px;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dumont-sync-count {
+    color: #9ca3af;
+    font-size: 11px;
+}
+
+/* Mode-specific styles */
+#dumont-failover-widget.dumont-gpu .dumont-widget-inner {
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+#dumont-failover-widget.dumont-cpu .dumont-widget-inner {
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+#dumont-failover-widget.dumont-failover .dumont-widget-inner {
+    border-color: rgba(234, 179, 8, 0.5);
+    background: rgba(40, 35, 20, 0.95);
+}
+
+/* Notification */
+.dumont-notification {
+    margin-top: 8px;
+    max-width: 300px;
+    animation: slideIn 0.3s ease;
+}
+
+.dumont-notification-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(30, 30, 30, 0.95);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.dumont-notification-warning .dumont-notification-content {
+    border-left: 3px solid #eab308;
+    background: rgba(40, 35, 20, 0.95);
+}
+
+.dumont-notification-error .dumont-notification-content {
+    border-left: 3px solid #ef4444;
+    background: rgba(40, 20, 20, 0.95);
+}
+
+.dumont-notification-success .dumont-notification-content {
+    border-left: 3px solid #22c55e;
+    background: rgba(20, 35, 25, 0.95);
+}
+
+.dumont-notification-info .dumont-notification-content {
+    border-left: 3px solid #3b82f6;
+    background: rgba(20, 30, 40, 0.95);
+}
+
+.dumont-notification-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.dumont-notification-text {
+    color: #e5e5e5;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* Animations */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+@keyframes blink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.3;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Dark theme adjustments for code-server */
+.monaco-workbench #dumont-failover-widget {
+    /* Ensure visibility in Monaco editor */
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    #dumont-failover-widget {
+        top: 5px;
+        right: 5px;
+    }
+
+    .dumont-widget-inner {
+        padding: 4px 8px;
+    }
+
+    .dumont-notification {
+        max-width: 250px;
+    }
+}

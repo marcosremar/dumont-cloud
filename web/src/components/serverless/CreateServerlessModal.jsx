@@ -43,7 +43,7 @@ const MODEL_TEMPLATES = [
   {
     id: 'qwen3-0.6b',
     name: 'Qwen3 0.6B',
-    description: 'Modelo pequeno e rapido, ideal para testes',
+    description: 'Small and fast model, ideal for testing',
     type: 'llm',
     docker_image: 'vllm/vllm-openai:latest',
     model_id: 'Qwen/Qwen3-0.6B',
@@ -53,7 +53,7 @@ const MODEL_TEMPLATES = [
   {
     id: 'qwen2.5-0.5b',
     name: 'Qwen 2.5 0.5B',
-    description: 'Ultra leve, < 1GB VRAM',
+    description: 'Ultra light, < 1GB VRAM',
     type: 'llm',
     docker_image: 'vllm/vllm-openai:latest',
     model_id: 'Qwen/Qwen2.5-0.5B-Instruct',
@@ -63,7 +63,7 @@ const MODEL_TEMPLATES = [
   {
     id: 'phi-3-mini',
     name: 'Phi-3 Mini',
-    description: 'Modelo Microsoft compacto',
+    description: 'Compact Microsoft model',
     type: 'llm',
     docker_image: 'vllm/vllm-openai:latest',
     model_id: 'microsoft/Phi-3-mini-4k-instruct',
@@ -74,7 +74,7 @@ const MODEL_TEMPLATES = [
   {
     id: 'qwen2.5-7b',
     name: 'Qwen 2.5 7B',
-    description: 'Equilibrio entre performance e custo',
+    description: 'Balance between performance and cost',
     type: 'llm',
     docker_image: 'vllm/vllm-openai:latest',
     model_id: 'Qwen/Qwen2.5-7B-Instruct',
@@ -84,7 +84,7 @@ const MODEL_TEMPLATES = [
   {
     id: 'mistral-7b',
     name: 'Mistral 7B',
-    description: 'LLM popular e eficiente',
+    description: 'Popular and efficient LLM',
     type: 'llm',
     docker_image: 'vllm/vllm-openai:latest',
     model_id: 'mistralai/Mistral-7B-Instruct-v0.3',
@@ -94,7 +94,7 @@ const MODEL_TEMPLATES = [
   {
     id: 'llama-3.1-8b',
     name: 'Llama 3.1 8B',
-    description: 'Meta LLM de alta qualidade',
+    description: 'High quality Meta LLM',
     type: 'llm',
     docker_image: 'vllm/vllm-openai:latest',
     model_id: 'meta-llama/Llama-3.1-8B-Instruct',
@@ -105,7 +105,7 @@ const MODEL_TEMPLATES = [
   {
     id: 'whisper-small',
     name: 'Whisper Small',
-    description: 'Transcricao de audio leve',
+    description: 'Lightweight audio transcription',
     type: 'speech',
     docker_image: 'ghcr.io/huggingface/text-generation-inference:latest',
     model_id: 'openai/whisper-small',
@@ -116,7 +116,7 @@ const MODEL_TEMPLATES = [
   {
     id: 'sdxl-turbo',
     name: 'SDXL Turbo',
-    description: 'Geracao de imagens rapida',
+    description: 'Fast image generation',
     type: 'image',
     docker_image: 'ghcr.io/huggingface/diffusers:latest',
     model_id: 'stabilityai/sdxl-turbo',
@@ -177,10 +177,10 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <Zap className="w-5 h-5 text-brand-400" />
-              Criar Endpoint Serverless
+              Create Serverless Endpoint
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              Auto-scaling GPU endpoint com pricing otimizado
+              Auto-scaling GPU endpoint with optimized pricing
             </p>
           </div>
           <button
@@ -195,9 +195,9 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Templates Section */}
           <div>
-            <h3 className="text-lg font-medium text-white mb-4">Templates de Modelos</h3>
+            <h3 className="text-lg font-medium text-white mb-4">Model Templates</h3>
             <p className="text-sm text-gray-400 mb-4">
-              Selecione um modelo pre-configurado ou configure manualmente
+              Select a pre-configured model or configure manually
             </p>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
@@ -239,7 +239,7 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle2 className="w-4 h-4 text-brand-400" />
                   <span className="text-sm font-medium text-brand-300">
-                    Template selecionado: {selectedTemplate.name}
+                    Selected template: {selectedTemplate.name}
                   </span>
                 </div>
                 <div className="text-xs text-gray-400 font-mono">
@@ -251,21 +251,21 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
 
           {/* Step 1: Básico */}
           <div>
-            <h3 className="text-lg font-medium text-white mb-4">1. Informações Básicas</h3>
+            <h3 className="text-lg font-medium text-white mb-4">1. Basic Information</h3>
             <div className="space-y-4">
               <div>
                 <Input
-                  label="Nome do Endpoint"
+                  label="Endpoint Name"
                   value={config.name}
                   onChange={(e) => setConfig({ ...config, name: e.target.value })}
-                  placeholder="meu-endpoint-llama2"
-                  helper={`URL: https://${config.name || 'meu-endpoint'}.dumont.cloud`}
+                  placeholder="my-llama2-endpoint"
+                  helper={`URL: https://${config.name || 'my-endpoint'}.dumont.cloud`}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label="Imagem Docker"
+                  label="Docker Image"
                   value={config.docker_image}
                   onChange={(e) => setConfig({ ...config, docker_image: e.target.value })}
                   placeholder="vllm/vllm-openai:latest"
@@ -282,7 +282,7 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
 
           {/* Step 2: Machine Type (SPOT vs ON-DEMAND) */}
           <div>
-            <h3 className="text-lg font-medium text-white mb-4">2. Tipo de Máquina</h3>
+            <h3 className="text-lg font-medium text-white mb-4">2. Machine Type</h3>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
               {/* Spot Option */}
@@ -310,14 +310,14 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
                   </Badge>
                 </div>
                 <p className="text-xs text-gray-500 mb-3">
-                  Mais barato, pode ser interrompido. Auto-restart automático.
+                  Cheaper, can be interrupted. Automatic auto-restart.
                 </p>
                 <div className="flex items-center gap-1 text-sm">
                   <DollarSign className="w-4 h-4 text-brand-400" />
                   <span className="font-bold text-white">
                     ${selectedGpu?.price_spot.toFixed(2)}
                   </span>
-                  <span className="text-gray-500">/hora</span>
+                  <span className="text-gray-500">/hr</span>
                 </div>
               </button>
 
@@ -342,18 +342,18 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
                     </span>
                   </div>
                   <Badge className="bg-white/5 text-gray-400 border-white/10">
-                    Estável
+                    Stable
                   </Badge>
                 </div>
                 <p className="text-xs text-gray-500 mb-3">
-                  Preço fixo, não interruptível. Mais estável e previsível.
+                  Fixed price, not interruptible. More stable and predictable.
                 </p>
                 <div className="flex items-center gap-1 text-sm">
                   <DollarSign className="w-4 h-4 text-gray-400" />
                   <span className="font-bold text-white">
                     ${selectedGpu?.price_ondemand.toFixed(2)}
                   </span>
-                  <span className="text-gray-500">/hora</span>
+                  <span className="text-gray-500">/hr</span>
                 </div>
               </button>
             </div>
@@ -365,13 +365,13 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
                   <Info className="w-5 h-5 text-brand-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <h4 className="text-sm font-medium text-brand-300 mb-1">
-                      Como funciona o Spot
+                      How Spot works
                     </h4>
                     <ul className="text-xs text-gray-400 space-y-1">
-                      <li>• Disco persistente na região escolhida (Regional Volume + R2)</li>
-                      <li>• GPU pode ser interrompida a qualquer momento</li>
-                      <li>• Auto-restart busca nova GPU e reconecta o disco</li>
-                      <li>• Economia de até {savingsPercent}% vs On-Demand</li>
+                      <li>• Persistent disk in chosen region (Regional Volume + R2)</li>
+                      <li>• GPU can be interrupted at any time</li>
+                      <li>• Auto-restart finds new GPU and reconnects disk</li>
+                      <li>• Save up to {savingsPercent}% vs On-Demand</li>
                     </ul>
                   </div>
                 </div>
@@ -381,7 +381,7 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
 
           {/* Step 3: GPU & Region */}
           <div>
-            <h3 className="text-lg font-medium text-white mb-4">3. GPU e Região</h3>
+            <h3 className="text-lg font-medium text-white mb-4">3. GPU and Region</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -405,7 +405,7 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   <MapPin className="w-4 h-4 inline mr-1" />
-                  Região
+                  Region
                 </label>
                 <select
                   value={config.region}
@@ -429,17 +429,17 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
             <div className="grid grid-cols-2 gap-4">
               <Input
                 type="number"
-                label="Mín Instâncias"
+                label="Min Instances"
                 value={config.min_instances}
                 onChange={(e) => setConfig({ ...config, min_instances: parseInt(e.target.value) || 0 })}
                 min="0"
                 max="10"
-                helper="0 = scale to zero quando sem uso"
+                helper="0 = scale to zero when idle"
               />
 
               <Input
                 type="number"
-                label="Máx Instâncias"
+                label="Max Instances"
                 value={config.max_instances}
                 onChange={(e) => setConfig({ ...config, max_instances: parseInt(e.target.value) || 1 })}
                 min="1"
@@ -451,24 +451,24 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
           {/* Price Estimate */}
           <div className="p-4 rounded-lg bg-brand-500/10 border border-brand-500/20">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-medium text-white">Estimativa de Custo</h4>
+              <h4 className="text-sm font-medium text-white">Cost Estimate</h4>
               <DollarSign className="w-4 h-4 text-brand-400" />
             </div>
 
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-400">Por hora (1 instância):</span>
+                <span className="text-gray-400">Per hour (1 instance):</span>
                 <span className="font-bold text-white">${pricePerHour?.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Máximo por dia ({config.max_instances}x 24h):</span>
+                <span className="text-gray-400">Max per day ({config.max_instances}x 24h):</span>
                 <span className="font-bold text-white">
                   ${((pricePerHour || 0) * config.max_instances * 24).toFixed(2)}
                 </span>
               </div>
               {config.machine_type === 'spot' && (
                 <div className="flex justify-between text-brand-400">
-                  <span>Economia vs On-Demand:</span>
+                  <span>Savings vs On-Demand:</span>
                   <span className="font-bold">{savingsPercent}%</span>
                 </div>
               )}
@@ -482,7 +482,7 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
             variant="outline"
             onClick={onClose}
           >
-            Cancelar
+            Cancel
           </Button>
           <Button
             variant="primary"
@@ -490,7 +490,7 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
             disabled={!config.name || !config.docker_image}
             icon={CheckCircle2}
           >
-            Criar Endpoint
+            Create Endpoint
           </Button>
         </div>
       </AlertDialogContent>

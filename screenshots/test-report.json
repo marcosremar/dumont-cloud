@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-01-03T12:16:47.862Z",
+  "baseUrl": "http://localhost:4892",
+  "results": {
+    "passed": [
+      "Página de Máquinas carregou com lista",
+      "GPU Offers - Lista de ofertas visível",
+      "Botão de Deploy/Reservar encontrado",
+      "Wizard de Deploy aberto",
+      "Opção GPU disponível no wizard",
+      "Página de Models acessível",
+      "Chat Arena acessível",
+      "Dashboard acessível"
+    ],
+    "failed": [],
+    "warnings": [
+      "Usando modo demo (sem autenticação)",
+      "Opção CPU/Standby não visível (pode estar em outra etapa)",
+      "Reservations requer autenticação"
+    ],
+    "screenshots": [
+      "01-inicial.png",
+      "02-maquinas.png",
+      "03-gpu-offers.png",
+      "04-wizard-deploy.png",
+      "07-models.png",
+      "08-chat-arena.png",
+      "09-dashboard.png"
+    ]
+  },
+  "successRate": 100
+}

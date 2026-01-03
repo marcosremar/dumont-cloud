@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { apiGet, isDemoMode } from '../utils/api';
+import { apiGet } from '../utils/api';
 import {
   Clock,
   User,
@@ -210,7 +210,6 @@ const getStatusIcon = (status) => {
 };
 
 export default function AuditLogTable({ teamId, compact = false }) {
-  const isDemo = isDemoMode();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

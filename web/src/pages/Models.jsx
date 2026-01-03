@@ -1,12 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Play, Square, RefreshCw, Clock, DollarSign, Cpu, Server,
   Plus, Loader2, CheckCircle, XCircle, AlertCircle, Terminal,
   Eye, ExternalLink, Copy, Key, Globe, Lock, Mic, Image, MessageSquare, Search,
-  ChevronRight, ChevronLeft, Rocket, Zap
+  ChevronRight, ChevronLeft, Rocket, Zap, Link2, Sparkles, Filter, ChevronDown,
+  Columns, Star, ArrowRight
 } from 'lucide-react';
-import { DEMO_MODELS, DEMO_TEMPLATES } from '../constants/demoData';
+import { FIREWORKS_MODELS, RUNTIME_OPTIONS } from '../constants/demoData';
+import { detectModelType, extractModelIdFromUrl, RUNTIMES, isGatedModel, getGatedModelInfo } from '../constants/popularModels';
+import { useToast } from '../components/Toast';
 
 // Model type icons (labels are translation keys)
 const MODEL_TYPE_CONFIG = {
@@ -29,6 +33,11 @@ const STATUS_CONFIG = {
 
 const Models = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const toast = useToast();
+  const basePath = location.pathname.startsWith('/demo-app') ? '/demo-app' : '/app';
+
   const [models, setModels] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +51,8 @@ const Models = () => {
     model_type: 'llm',
     model_id: '',
     custom_model: false,
+    huggingface_url: '',
+    runtime: 'vllm',
     instance_id: null,
     create_new_instance: true,
     gpu_type: 'RTX 4090',
@@ -50,23 +61,23 @@ const Models = () => {
     access_type: 'private',
     port: 8000,
     name: '',
+    hf_token: '', // HuggingFace token for gated models
   });
 
-  // Check if demo mode is enabled
-  const isDemoMode = () => {
-    return localStorage.getItem('demo_mode') === 'true';
-  };
+  // Model search/filter state
+  const [modelSearch, setModelSearch] = useState('');
+  const [showAllModels, setShowAllModels] = useState(false);
+
+  // HuggingFace URL import state
+  const [hfUrl, setHfUrl] = useState('');
+  const [detectedType, setDetectedType] = useState(null);
+
+  // Tab state for main view
+  const [activeTab, setActiveTab] = useState('popular'); // 'popular' | 'deployed'
+
 
   // Fetch models and templates
   const fetchModels = useCallback(async () => {
-    // Use demo data in demo mode
-    if (isDemoMode()) {
-      setModels(DEMO_MODELS);
-      setLoading(false);
-      setRefreshing(false);
-      return;
-    }
-
     try {
       const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/v1/models', {
@@ -85,12 +96,6 @@ const Models = () => {
   }, []);
 
   const fetchTemplates = useCallback(async () => {
-    // Use demo data in demo mode
-    if (isDemoMode()) {
-      setTemplates(DEMO_TEMPLATES);
-      return;
-    }
-
     try {
       const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/v1/models/templates', {
@@ -122,12 +127,52 @@ const Models = () => {
     fetchModels();
   };
 
+  // Parse Hugging Face URL to extract model ID
+  const parseHuggingFaceUrl = (url) => {
+    if (!url) return null;
+    // Match patterns like:
+    // https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct
+    // huggingface.co/meta-llama/Llama-3.2-3B-Instruct
+    // meta-llama/Llama-3.2-3B-Instruct
+    const hfPattern = /(?:https?:\/\/)?(?:huggingface\.co\/)?([a-zA-Z0-9_-]+\/[a-zA-Z0-9._-]+)/;
+    const match = url.match(hfPattern);
+    return match ? match[1] : null;
+  };
+
+  // Get all models for current type
+  const getAllModelsForType = useMemo(() => {
+    return FIREWORKS_MODELS[formData.model_type] || [];
+  }, [formData.model_type]);
+
+  // Filter models based on search
+  const filteredModels = useMemo(() => {
+    const allModels = getAllModelsForType;
+    if (!modelSearch.trim()) {
+      return showAllModels ? allModels : allModels.filter(m => m.featured);
+    }
+    const query = modelSearch.toLowerCase();
+    return allModels.filter(m =>
+      m.name.toLowerCase().includes(query) ||
+      m.id.toLowerCase().includes(query) ||
+      m.size.toLowerCase().includes(query)
+    );
+  }, [getAllModelsForType, modelSearch, showAllModels]);
+
+  // Get runtime options for current type
+  const runtimeOptions = useMemo(() => {
+    return RUNTIME_OPTIONS[formData.model_type] || [];
+  }, [formData.model_type]);
+
   const openDeployWizard = () => {
     setWizardStep(1);
+    setModelSearch('');
+    setShowAllModels(false);
     setFormData({
       model_type: 'llm',
       model_id: '',
       custom_model: false,
+      huggingface_url: '',
+      runtime: 'vllm',
       instance_id: null,
       create_new_instance: true,
       gpu_type: 'RTX 4090',
@@ -136,56 +181,13 @@ const Models = () => {
       access_type: 'private',
       port: 8000,
       name: '',
+      hf_token: '',
     });
     setShowDeployWizard(true);
   };
 
   const handleDeploy = async () => {
     setDeploying(true);
-
-    // In demo mode, simulate deployment
-    if (isDemoMode()) {
-      setTimeout(() => {
-        const newModel = {
-          id: `model-demo-${Date.now()}`,
-          name: formData.name || formData.model_id.split('/').pop(),
-          model_id: formData.model_id,
-          model_type: formData.model_type,
-          status: 'deploying',
-          runtime: DEMO_TEMPLATES.find(t => t.type === formData.model_type)?.runtime || 'vLLM',
-          gpu_name: formData.gpu_type,
-          num_gpus: formData.num_gpus,
-          dph_total: 0.45,
-          progress: 15,
-          status_message: 'Iniciando deploy...',
-          port: formData.port,
-        };
-        setModels(prev => [...prev, newModel]);
-        setShowDeployWizard(false);
-        setDeploying(false);
-
-        // Simulate progress updates
-        let progress = 15;
-        const interval = setInterval(() => {
-          progress += 10;
-          if (progress >= 100) {
-            clearInterval(interval);
-            setModels(prev => prev.map(m =>
-              m.id === newModel.id
-                ? { ...m, status: 'running', progress: 100, status_message: 'Running', endpoint_url: `https://${m.model_type}-demo.dumont.cloud/v1`, access_type: formData.access_type, api_key: formData.access_type === 'private' ? 'dm-sk-demo-key-xxxx' : undefined }
-                : m
-            ));
-          } else {
-            setModels(prev => prev.map(m =>
-              m.id === newModel.id
-                ? { ...m, progress, status_message: progress < 50 ? 'Downloading model...' : 'Loading into GPU...' }
-                : m
-            ));
-          }
-        }, 800);
-      }, 500);
-      return;
-    }
 
     try {
       const token = localStorage.getItem('auth_token');
@@ -199,6 +201,7 @@ const Models = () => {
         access_type: formData.access_type,
         port: formData.port,
         name: formData.name || undefined,
+        hf_token: formData.hf_token || undefined, // HuggingFace token for gated models
       };
 
       const response = await fetch('/api/v1/models/deploy', {
@@ -211,7 +214,10 @@ const Models = () => {
       });
 
       if (response.ok) {
+        const modelName = formData.name || formData.model_id.split('/').pop();
+        toast?.success(`Deploy iniciado: ${modelName}`);
         setShowDeployWizard(false);
+        setActiveTab('deployed'); // Switch to deploys tab to show progress
         fetchModels();
       } else {
         const error = await response.json();
@@ -227,14 +233,6 @@ const Models = () => {
 
   const handleStopModel = async (modelId) => {
     if (!confirm(t('models.confirmStop'))) return;
-
-    // In demo mode, simulate stop
-    if (isDemoMode()) {
-      setModels(prev => prev.map(m =>
-        m.id === modelId ? { ...m, status: 'stopped' } : m
-      ));
-      return;
-    }
 
     try {
       const token = localStorage.getItem('auth_token');
@@ -255,12 +253,6 @@ const Models = () => {
   const handleDeleteModel = async (modelId) => {
     if (!confirm(t('models.confirmDelete'))) return;
 
-    // In demo mode, simulate delete
-    if (isDemoMode()) {
-      setModels(prev => prev.filter(m => m.id !== modelId));
-      return;
-    }
-
     try {
       const token = localStorage.getItem('auth_token');
       const response = await fetch(`/api/v1/models/${modelId}`, {
@@ -275,6 +267,41 @@ const Models = () => {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
+  };
+
+  // Handle HuggingFace URL input
+  const handleHfUrlChange = (url) => {
+    setHfUrl(url);
+    if (url.includes('huggingface.co') || url.includes('/')) {
+      const modelId = extractModelIdFromUrl(url);
+      const type = detectModelType(modelId);
+      setDetectedType(type);
+      setFormData(prev => ({
+        ...prev,
+        model_id: modelId,
+        model_type: type,
+        huggingface_url: url,
+        custom_model: true,
+        port: RUNTIMES[type]?.port || 8000,
+      }));
+    } else {
+      setDetectedType(null);
+    }
+  };
+
+  // Quick deploy from HuggingFace URL
+  const handleHfQuickDeploy = () => {
+    if (!hfUrl || !detectedType) return;
+    const modelId = extractModelIdFromUrl(hfUrl);
+    setFormData(prev => ({
+      ...prev,
+      model_id: modelId,
+      model_type: detectedType,
+      custom_model: true,
+      port: RUNTIMES[detectedType]?.port || 8000,
+    }));
+    setWizardStep(3);
+    setShowDeployWizard(true);
   };
 
   const ModelStatusBadge = ({ status }) => {
@@ -307,23 +334,26 @@ const Models = () => {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-100">{t('models.title')}</h1>
-          <p className="text-sm text-gray-400 mt-1">
-            {t('models.pageSubtitle')}
-          </p>
+        <div className="flex items-center gap-4">
+          <Rocket className="w-9 h-9 flex-shrink-0" style={{ color: '#4caf50' }} />
+          <div className="flex flex-col justify-center">
+            <h1 className="text-2xl font-bold text-gray-100 leading-tight">{t('models.title')}</h1>
+            <p className="text-sm text-gray-400 mt-0.5">
+              {t('models.pageSubtitle')}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-gray-200 transition-all border border-white/10"
+            className="ta-btn ta-btn-secondary p-2"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
           <button
             onClick={openDeployWizard}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 transition-all"
+            className="ta-btn ta-btn-primary"
           >
             <Rocket className="w-4 h-4" />
             {t('models.deployModel')}
@@ -333,7 +363,7 @@ const Models = () => {
 
       {/* Deploy Wizard Modal */}
       {showDeployWizard && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4">
           <div className="bg-dark-surface-card border border-white/10 rounded-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Wizard Header */}
             <div className="p-6 border-b border-white/10">
@@ -418,13 +448,37 @@ const Models = () => {
               {wizardStep === 2 && selectedTemplate && (
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-300 mb-4">
-                      {t('models.wizard.chooseModel')}
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-medium text-gray-300">
+                        {t('models.wizard.chooseModel')}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowAllModels(!showAllModels)}
+                        className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1"
+                      >
+                        {showAllModels ? 'Mostrar Populares' : 'Ver Todos os Modelos'}
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAllModels ? 'rotate-180' : ''}`} />
+                      </button>
+                    </div>
 
-                    {/* Popular models */}
-                    <div className="space-y-2 mb-6">
-                      {selectedTemplate.popular_models.map((model) => (
+                    {/* Search input */}
+                    <div className="relative mb-4">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                      <input
+                        type="text"
+                        placeholder="Buscar modelo..."
+                        value={modelSearch}
+                        onChange={(e) => setModelSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50"
+                      />
+                    </div>
+
+                    {/* Models list */}
+                    <div className="space-y-2 mb-6 max-h-[280px] overflow-y-auto pr-1">
+                      {filteredModels.map((model) => {
+                        const modelIsGated = isGatedModel(model.id);
+                        return (
                         <button
                           key={model.id}
                           type="button"
@@ -435,30 +489,108 @@ const Models = () => {
                               : 'bg-white/[0.02] border-white/10 hover:border-white/20'
                           }`}
                         >
-                          <div>
-                            <div className="text-sm font-medium text-gray-200">{model.name}</div>
-                            <div className="text-xs text-gray-500 font-mono">{model.id}</div>
+                          <div className="flex items-center gap-3">
+                            {model.featured && (
+                              <Star className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                            )}
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-200">{model.name}</span>
+                                {modelIsGated && (
+                                  <Lock className="w-3.5 h-3.5 text-amber-400" title="Modelo requer autenticação HuggingFace" />
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-500 font-mono">{model.id}</div>
+                            </div>
                           </div>
-                          <span className="text-xs px-2 py-1 rounded bg-white/10 text-gray-400">
-                            {model.size}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs px-2 py-1 rounded bg-white/10 text-gray-400">
+                              {model.size}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {model.vram}GB
+                            </span>
+                          </div>
                         </button>
-                      ))}
+                      );})}
+                      {filteredModels.length === 0 && (
+                        <div className="text-center py-8 text-gray-500 text-sm">
+                          Nenhum modelo encontrado
+                        </div>
+                      )}
                     </div>
 
-                    {/* Custom model input */}
+                    {/* Hugging Face URL import */}
                     <div className="border-t border-white/10 pt-6">
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        {t('models.wizard.customModelLabel')}
+                      <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                        <Link2 className="w-4 h-4 text-amber-400" />
+                        Import do Hugging Face
                       </label>
                       <input
                         type="text"
-                        value={formData.custom_model ? formData.model_id : ''}
-                        onChange={(e) => setFormData({ ...formData, model_id: e.target.value, custom_model: true })}
-                        placeholder={t('models.wizard.customModelPlaceholder')}
+                        value={formData.huggingface_url || (formData.custom_model ? formData.model_id : '')}
+                        onChange={(e) => {
+                          const url = e.target.value;
+                          const modelId = parseHuggingFaceUrl(url) || url;
+                          setFormData({ ...formData, model_id: modelId, huggingface_url: url, custom_model: true });
+                        }}
+                        placeholder="https://huggingface.co/org/model ou org/model"
                         className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50"
                       />
+                      <p className="mt-1.5 text-xs text-gray-500">
+                        Cole o link ou ID do modelo do Hugging Face
+                      </p>
                     </div>
+
+                    {/* Gated Model Alert - HuggingFace Token Required */}
+                    {formData.model_id && isGatedModel(formData.model_id) && (
+                      <div className="mt-6 p-4 rounded-lg border border-amber-500/30 bg-amber-500/10">
+                        <div className="flex items-start gap-3">
+                          <Key className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <h4 className="text-sm font-medium text-amber-200">
+                              Modelo Gated - Autenticação Necessária
+                            </h4>
+                            <p className="text-xs text-amber-300/80 mt-1">
+                              {getGatedModelInfo(formData.model_id).instructions}
+                            </p>
+                            <a
+                              href={getGatedModelInfo(formData.model_id).accessUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 mt-2"
+                            >
+                              Aceitar licença no HuggingFace
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+
+                            <div className="mt-4">
+                              <label className="block text-xs font-medium text-amber-200 mb-2">
+                                HuggingFace Token (obrigatório)
+                              </label>
+                              <input
+                                type="password"
+                                value={formData.hf_token}
+                                onChange={(e) => setFormData({ ...formData, hf_token: e.target.value })}
+                                placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxx"
+                                className="w-full px-3 py-2 rounded-lg bg-black/20 border border-amber-500/30 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-amber-500/50"
+                              />
+                              <p className="mt-1.5 text-xs text-amber-300/60">
+                                Obtenha seu token em{' '}
+                                <a
+                                  href="https://huggingface.co/settings/tokens"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-amber-400 hover:text-amber-300"
+                                >
+                                  huggingface.co/settings/tokens
+                                </a>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -472,6 +604,37 @@ const Models = () => {
                     </h3>
 
                     <div className="space-y-4">
+                      {/* Runtime Selection */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-2">
+                          Runtime
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {runtimeOptions.map((runtime) => (
+                            <button
+                              key={runtime.id}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, runtime: runtime.id })}
+                              className={`p-3 rounded-lg border text-left transition-all ${
+                                formData.runtime === runtime.id
+                                  ? 'bg-brand-500/10 border-brand-500/50'
+                                  : 'bg-white/[0.02] border-white/10 hover:border-white/20'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-200">{runtime.name}</span>
+                                {runtime.recommended && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-400">
+                                    Recomendado
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">{runtime.description}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       {/* GPU Type */}
                       <div>
                         <label className="block text-xs font-medium text-gray-400 mb-2">
@@ -645,7 +808,7 @@ const Models = () => {
               <button
                 type="button"
                 onClick={() => wizardStep > 1 ? setWizardStep(wizardStep - 1) : setShowDeployWizard(false)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm transition-all"
+                className="ta-btn ta-btn-secondary"
               >
                 <ChevronLeft className="w-4 h-4" />
                 {wizardStep === 1 ? t('models.wizard.cancel') : t('models.wizard.back')}
@@ -655,8 +818,8 @@ const Models = () => {
                 <button
                   type="button"
                   onClick={() => setWizardStep(wizardStep + 1)}
-                  disabled={wizardStep === 2 && !formData.model_id}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={wizardStep === 2 && (!formData.model_id || (isGatedModel(formData.model_id) && !formData.hf_token))}
+                  className="ta-btn ta-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {t('models.wizard.next')}
                   <ChevronRight className="w-4 h-4" />
@@ -665,8 +828,8 @@ const Models = () => {
                 <button
                   type="button"
                   onClick={handleDeploy}
-                  disabled={deploying || !formData.model_id}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 text-sm transition-all disabled:opacity-50"
+                  disabled={deploying || !formData.model_id || (isGatedModel(formData.model_id) && !formData.hf_token)}
+                  className="ta-btn ta-btn-primary disabled:opacity-50"
                 >
                   {deploying ? (
                     <>
@@ -686,30 +849,246 @@ const Models = () => {
         </div>
       )}
 
-      {/* Models List */}
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mr-3" />
-          <span className="text-gray-400">{t('models.loading')}</span>
+      {/* HuggingFace Import Section - Always visible at top */}
+      <div className="border border-white/10 rounded-xl bg-gradient-to-r from-amber-500/5 to-orange-500/5 p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <Link2 className="w-5 h-5 text-amber-400" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-gray-100">Deploy from HuggingFace</h3>
+            <p className="text-sm text-gray-500">Cole qualquer link do HuggingFace - detectamos o tipo automaticamente</p>
+          </div>
         </div>
-      ) : models.length === 0 ? (
-        <div className="text-center py-20 border border-dashed border-white/10 rounded-xl">
-          <Zap className="w-12 h-12 mx-auto text-gray-600 mb-4" />
-          <h3 className="text-lg font-medium text-gray-300 mb-2">{t('models.noModels')}</h3>
-          <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-            {t('models.noModelsDescription')}
-          </p>
+        <div className="flex gap-3 items-center">
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={hfUrl}
+              onChange={(e) => handleHfUrlChange(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleHfQuickDeploy()}
+              placeholder="https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct"
+              className="w-full px-4 py-2.5 rounded-lg bg-black/20 border border-white/10 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500/50"
+            />
+          </div>
+          {detectedType && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+              {MODEL_TYPE_CONFIG[detectedType] && (
+                <>
+                  {(() => {
+                    const Icon = MODEL_TYPE_CONFIG[detectedType].icon;
+                    return <Icon className={`w-4 h-4 ${MODEL_TYPE_CONFIG[detectedType].color}`} />;
+                  })()}
+                  <span className="text-sm text-gray-300">{detectedType.toUpperCase()}</span>
+                  <span className="text-xs text-gray-500">· {RUNTIMES[detectedType]?.name}</span>
+                </>
+              )}
+            </div>
+          )}
           <button
-            onClick={openDeployWizard}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 transition-all"
+            onClick={handleHfQuickDeploy}
+            disabled={!hfUrl || !detectedType}
+            className="px-5 py-2.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 transition-all text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <Rocket className="w-4 h-4" />
-            {t('models.deployFirstModel')}
+            Deploy
           </button>
         </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {models.map((model) => {
+      </div>
+
+      {/* Tabs */}
+      <div className="flex items-center gap-1 border-b border-white/10">
+        <button
+          onClick={() => setActiveTab('popular')}
+          className={`px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px ${
+            activeTab === 'popular'
+              ? 'text-brand-400 border-brand-500'
+              : 'text-gray-400 border-transparent hover:text-gray-200'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4" />
+            Modelos Populares
+          </div>
+        </button>
+        <button
+          onClick={() => setActiveTab('deployed')}
+          className={`px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px ${
+            activeTab === 'deployed'
+              ? 'text-brand-400 border-brand-500'
+              : 'text-gray-400 border-transparent hover:text-gray-200'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Server className="w-4 h-4" />
+            Meus Deploys
+            {models.length > 0 && (
+              <span className="px-1.5 py-0.5 text-xs rounded-full bg-brand-500/20 text-brand-400">
+                {models.length}
+              </span>
+            )}
+          </div>
+        </button>
+      </div>
+
+      {/* Tab Content: Popular Models */}
+      {activeTab === 'popular' && (
+        <div className="space-y-6">
+          {/* LLM Models */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-blue-400" />
+                <span className="text-sm font-medium text-gray-300">LLMs (Chat/Completion)</span>
+                <span className="text-xs text-gray-500">· vLLM Runtime</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              {FIREWORKS_MODELS.llm.filter(m => m.featured).slice(0, 8).map((model) => (
+                <button
+                  key={model.id}
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, model_type: 'llm', model_id: model.id, custom_model: false, port: 8000 }));
+                    setWizardStep(3);
+                    setShowDeployWizard(true);
+                  }}
+                  className="p-3 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-blue-500/30 text-left transition-all group"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-gray-200 group-hover:text-white truncate">{model.name}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-blue-400 transition-colors flex-shrink-0" />
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400">{model.size}</span>
+                    <span>{model.vram}GB</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Image Models */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Image className="w-4 h-4 text-pink-400" />
+              <span className="text-sm font-medium text-gray-300">Image Generation</span>
+              <span className="text-xs text-gray-500">· Diffusers Runtime</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              {FIREWORKS_MODELS.image.filter(m => m.featured).slice(0, 4).map((model) => (
+                <button
+                  key={model.id}
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, model_type: 'image', model_id: model.id, custom_model: false, port: 8002 }));
+                    setWizardStep(3);
+                    setShowDeployWizard(true);
+                  }}
+                  className="p-3 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-pink-500/30 text-left transition-all group"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-gray-200 group-hover:text-white truncate">{model.name}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-pink-400 transition-colors flex-shrink-0" />
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span className="px-1.5 py-0.5 rounded bg-pink-500/10 text-pink-400">{model.size}</span>
+                    <span>{model.vram}GB</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Speech & Embeddings */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Mic className="w-4 h-4 text-purple-400" />
+                <span className="text-sm font-medium text-gray-300">Speech Recognition</span>
+                <span className="text-xs text-gray-500">· Faster-Whisper</span>
+              </div>
+              <div className="grid gap-2">
+                {FIREWORKS_MODELS.speech.filter(m => m.featured).slice(0, 3).map((model) => (
+                  <button
+                    key={model.id}
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, model_type: 'speech', model_id: model.id, custom_model: false, port: 8001 }));
+                      setWizardStep(3);
+                      setShowDeployWizard(true);
+                    }}
+                    className="p-3 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-purple-500/30 text-left transition-all group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-sm font-medium text-gray-200 group-hover:text-white">{model.name}</span>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                          <span className="px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400">{model.size}</span>
+                          <span>{model.vram}GB</span>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-purple-400 transition-colors" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Search className="w-4 h-4 text-amber-400" />
+                <span className="text-sm font-medium text-gray-300">Embeddings</span>
+                <span className="text-xs text-gray-500">· Sentence-Transformers</span>
+              </div>
+              <div className="grid gap-2">
+                {FIREWORKS_MODELS.embeddings.filter(m => m.featured).slice(0, 3).map((model) => (
+                  <button
+                    key={model.id}
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, model_type: 'embeddings', model_id: model.id, custom_model: false, port: 8003 }));
+                      setWizardStep(3);
+                      setShowDeployWizard(true);
+                    }}
+                    className="p-3 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-amber-500/30 text-left transition-all group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-sm font-medium text-gray-200 group-hover:text-white">{model.name}</span>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                          <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400">{model.size}</span>
+                          <span>{model.vram}GB</span>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-amber-400 transition-colors" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab Content: Deployed Models */}
+      {activeTab === 'deployed' && (
+        <>
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-6 h-6 animate-spin text-gray-400 mr-3" />
+              <span className="text-gray-400">{t('models.loading')}</span>
+            </div>
+          ) : models.length === 0 ? (
+            <div className="text-center py-16">
+              <Server className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-300 mb-2">Nenhum modelo deployado</h3>
+              <p className="text-sm text-gray-500 mb-6">Escolha um modelo popular acima ou importe do HuggingFace</p>
+              <button
+                onClick={() => setActiveTab('popular')}
+                className="px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 transition-all text-sm"
+              >
+                Ver Modelos Populares
+              </button>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {models.map((model) => {
             const isDeploying = ['pending', 'deploying', 'downloading', 'starting'].includes(model.status);
             const isRunning = model.status === 'running';
 
@@ -811,12 +1190,23 @@ const Models = () => {
                 </div>
 
                 {/* Card Actions */}
-                <div className="px-4 py-3 border-t border-white/5 flex items-center gap-2">
+                <div className="px-4 py-3 border-t border-white/5 flex items-center gap-2 flex-wrap">
                   {isRunning && (
                     <>
+                      {/* Chat Arena button for LLM models */}
+                      {model.model_type === 'llm' && (
+                        <button
+                          onClick={() => navigate(`${basePath}/chat-arena?model=${encodeURIComponent(model.model_id)}&endpoint=${encodeURIComponent(model.endpoint_url || '')}`)}
+                          className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 text-xs transition-all"
+                          title="Usar no Chat Arena"
+                        >
+                          <Columns className="w-3.5 h-3.5" />
+                          Chat Arena
+                        </button>
+                      )}
                       <button
                         onClick={() => handleStopModel(model.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs transition-all"
+                        className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs transition-all"
                       >
                         <Square className="w-3.5 h-3.5" />
                         {t('models.card.stop')}
@@ -845,7 +1235,9 @@ const Models = () => {
               </div>
             );
           })}
-        </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Info Box */}

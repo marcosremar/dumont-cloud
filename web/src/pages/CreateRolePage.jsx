@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { apiGet, apiPost, isDemoMode } from '../utils/api';
+import { apiGet, apiPost } from '../utils/api';
 import {
   Shield,
   ArrowLeft,
@@ -46,7 +46,6 @@ export default function CreateRolePage() {
   const { teamId } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const isDemo = isDemoMode();
 
   const [team, setTeam] = useState(null);
   const [permissions, setPermissions] = useState([]);

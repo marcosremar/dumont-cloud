@@ -228,6 +228,21 @@ const VRAM_FILTERS = [
   { value: '80', label: '80GB+' },
 ]
 
+const ARCHITECTURE_FILTERS = [
+  { value: 'all', label: 'Todas Arquiteturas' },
+  { value: 'Hopper', label: 'Hopper (H100)' },
+  { value: 'Ada Lovelace', label: 'Ada Lovelace (RTX 40)' },
+  { value: 'Ampere', label: 'Ampere (RTX 30/A100)' },
+]
+
+const USE_CASE_FILTERS = [
+  { value: 'all', label: 'Todos os usos' },
+  { value: 'Training', label: 'Training' },
+  { value: 'Inferência', label: 'Inferência' },
+  { value: 'Fine-tuning', label: 'Fine-tuning' },
+  { value: 'LLMs', label: 'LLMs' },
+]
+
 export default function GpuOffers() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -243,8 +258,11 @@ export default function GpuOffers() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('price-asc')
   const [vramFilter, setVramFilter] = useState('all')
+  const [archFilter, setArchFilter] = useState('all')
+  const [useCaseFilter, setUseCaseFilter] = useState('all')
   const [showEnterprise, setShowEnterprise] = useState(true)
   const [showRegionSelector, setShowRegionSelector] = useState(false)
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
 
   // Fetch regions on mount
   useEffect(() => {
@@ -276,6 +294,16 @@ export default function GpuOffers() {
     if (vramFilter !== 'all') {
       const minVram = parseInt(vramFilter)
       result = result.filter(gpu => gpu.vram >= minVram)
+    }
+
+    // Architecture filter
+    if (archFilter !== 'all') {
+      result = result.filter(gpu => gpu.architecture === archFilter)
+    }
+
+    // Use case filter
+    if (useCaseFilter !== 'all') {
+      result = result.filter(gpu => gpu.useCases.some(uc => uc.includes(useCaseFilter)))
     }
 
     // Enterprise filter
@@ -312,7 +340,7 @@ export default function GpuOffers() {
     })
 
     return result
-  }, [searchQuery, sortBy, vramFilter, showEnterprise])
+  }, [searchQuery, sortBy, vramFilter, archFilter, useCaseFilter, showEnterprise])
 
   const handleProvision = (gpu) => {
     // Redireciona para página de machines com GPU selecionada e região
@@ -417,9 +445,30 @@ export default function GpuOffers() {
               checked={showEnterprise}
               onChange={(e) => setShowEnterprise(e.target.checked)}
               className="w-4 h-4 rounded border-white/20 bg-dark-surface-secondary text-brand-500 focus:ring-brand-500"
+              aria-label="Incluir GPUs Enterprise"
             />
             <span className="text-sm text-gray-400">Incluir Enterprise</span>
           </label>
+
+          {/* Advanced Filters Toggle */}
+          <button
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className={`flex items-center gap-2 px-3 py-2.5 text-sm rounded-lg border transition-all ${
+              showAdvancedFilters || archFilter !== 'all' || useCaseFilter !== 'all'
+                ? 'bg-brand-500/10 border-brand-500/50 text-brand-400'
+                : 'bg-dark-surface-secondary border-white/10 text-gray-400 hover:border-white/20'
+            }`}
+            aria-label="Mostrar filtros avançados"
+            aria-expanded={showAdvancedFilters}
+          >
+            <Filter className="w-4 h-4" />
+            <span>Avançado</span>
+            {(archFilter !== 'all' || useCaseFilter !== 'all') && (
+              <Badge variant="primary" className="text-[10px] ml-1">
+                {[archFilter !== 'all', useCaseFilter !== 'all'].filter(Boolean).length}
+              </Badge>
+            )}
+          </button>
 
           {/* Region Selector Toggle */}
           <button
@@ -441,6 +490,75 @@ export default function GpuOffers() {
             )}
           </button>
         </div>
+
+        {/* Advanced Filters Panel */}
+        {showAdvancedFilters && (
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <div className="flex flex-wrap gap-4">
+              {/* Architecture Filter */}
+              <div className="flex items-center gap-2">
+                <Cpu className="w-4 h-4 text-gray-500" />
+                <select
+                  value={archFilter}
+                  onChange={(e) => setArchFilter(e.target.value)}
+                  className="px-3 py-2 text-sm text-white bg-dark-surface-secondary border border-white/10 rounded-lg focus:ring-1 focus:ring-brand-500 focus:border-brand-500"
+                  aria-label="Filtrar por arquitetura"
+                >
+                  {ARCHITECTURE_FILTERS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Use Case Filter */}
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-gray-500" />
+                <select
+                  value={useCaseFilter}
+                  onChange={(e) => setUseCaseFilter(e.target.value)}
+                  className="px-3 py-2 text-sm text-white bg-dark-surface-secondary border border-white/10 rounded-lg focus:ring-1 focus:ring-brand-500 focus:border-brand-500"
+                  aria-label="Filtrar por caso de uso"
+                >
+                  {USE_CASE_FILTERS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Clear All Filters */}
+              {(archFilter !== 'all' || useCaseFilter !== 'all' || vramFilter !== 'all' || !showEnterprise) && (
+                <button
+                  onClick={() => {
+                    setArchFilter('all')
+                    setUseCaseFilter('all')
+                    setVramFilter('all')
+                    setShowEnterprise(true)
+                  }}
+                  className="px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                  aria-label="Limpar todos os filtros"
+                >
+                  Limpar filtros
+                </button>
+              )}
+            </div>
+
+            {/* Active Filters Summary */}
+            {(archFilter !== 'all' || useCaseFilter !== 'all') && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {archFilter !== 'all' && (
+                  <Badge variant="primary" className="text-xs">
+                    Arquitetura: {ARCHITECTURE_FILTERS.find(f => f.value === archFilter)?.label}
+                  </Badge>
+                )}
+                {useCaseFilter !== 'all' && (
+                  <Badge variant="primary" className="text-xs">
+                    Uso: {USE_CASE_FILTERS.find(f => f.value === useCaseFilter)?.label}
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Selected Region Badge */}
         {selectedRegionData && (
@@ -571,15 +689,17 @@ export default function GpuOffers() {
             <button
               onClick={() => handleProvision(gpu)}
               className="w-full flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg bg-brand-800/20 hover:bg-brand-800/30 border border-brand-700/40 text-brand-400 text-sm font-medium transition-all"
+              aria-label={`Provisionar ${gpu.name} - ${gpu.vram}GB VRAM por $${gpu.price.toFixed(2)}/hora${selectedRegionData ? ` na região ${selectedRegionData.name || selectedRegionData.region_name}` : ''}`}
+              title={`Provisionar ${gpu.name} - ${gpu.vram}GB VRAM`}
             >
               <div className="flex items-center gap-2">
-                <Server className="w-4 h-4" />
+                <Server className="w-4 h-4" aria-hidden="true" />
                 <span>Provisionar</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </div>
               {selectedRegionData && (
                 <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                  <MapPin className="w-3 h-3" />
+                  <MapPin className="w-3 h-3" aria-hidden="true" />
                   <span>{selectedRegionData.name || selectedRegionData.region_name}</span>
                 </div>
               )}

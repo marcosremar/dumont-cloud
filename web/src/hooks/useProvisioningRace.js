@@ -519,6 +519,11 @@ export function useProvisioningRace(apiService, config = {}) {
     isCancelledRef.current = false;
   }, [cleanup]);
 
+  // Get all created instance IDs (for Redux integration)
+  const getCreatedInstanceIds = useCallback(() => {
+    return createdInstancesRef.current.map(c => c.instanceId).filter(Boolean)
+  }, [])
+
   return {
     // State
     candidates,
@@ -541,6 +546,9 @@ export function useProvisioningRace(apiService, config = {}) {
     cancelRace,
     completeRace,
     reset,
+
+    // For Redux integration - IDs of instances currently in the race
+    getCreatedInstanceIds,
   };
 }
 

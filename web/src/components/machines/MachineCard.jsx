@@ -53,9 +53,9 @@ import InstanceDetailsModal from './InstanceDetailsModal'
 
 // Failover strategies base info (costs calculated dynamically)
 const FAILOVER_STRATEGIES_BASE = {
-  disabled: { label: 'Desabilitado', color: 'gray', description: 'Sem proteção', recovery: null },
+  disabled: { label: 'Disabled', color: 'gray', description: 'No protection', recovery: null },
   cpu_standby: { label: 'CPU Standby', color: 'blue', description: 'GCP e2-medium', recovery: '~10-20min' },
-  warm_pool: { label: 'GPU Warm Pool', color: 'green', description: 'GPU reservada', recovery: '~30-60s' },
+  warm_pool: { label: 'GPU Warm Pool', color: 'green', description: 'Reserved GPU', recovery: '~30-60s' },
   regional_volume: { label: 'Regional Volume', color: 'purple', description: 'Volume + Spot GPU', recovery: '~2-5min' },
   snapshot: { label: 'Snapshot', color: 'orange', description: 'Backblaze B2', recovery: '~5-10min' },
 }
@@ -171,22 +171,22 @@ export default function MachineCard({
   const getStatusDisplay = (status) => {
     const statusMap = {
       'running': { label: 'Online', variant: 'success', animate: false },
-      'loading': { label: 'Inicializando', variant: 'warning', animate: true },
-      'creating': { label: 'Criando', variant: 'warning', animate: true },
-      'starting': { label: 'Iniciando', variant: 'warning', animate: true },
-      'pending': { label: 'Pendente', variant: 'warning', animate: true },
-      'provisioning': { label: 'Provisionando', variant: 'warning', animate: true },
-      'configuring': { label: 'Configurando', variant: 'warning', animate: true },
-      'paused': { label: 'Pausada', variant: 'gray', animate: false },
-      'stopped': { label: 'Parada', variant: 'gray', animate: false },
-      'exited': { label: 'Parada', variant: 'gray', animate: false },
+      'loading': { label: 'Loading', variant: 'warning', animate: true },
+      'creating': { label: 'Creating', variant: 'warning', animate: true },
+      'starting': { label: 'Starting', variant: 'warning', animate: true },
+      'pending': { label: 'Pending', variant: 'warning', animate: true },
+      'provisioning': { label: 'Provisioning', variant: 'warning', animate: true },
+      'configuring': { label: 'Configuring', variant: 'warning', animate: true },
+      'paused': { label: 'Paused', variant: 'gray', animate: false },
+      'stopped': { label: 'Stopped', variant: 'gray', animate: false },
+      'exited': { label: 'Stopped', variant: 'gray', animate: false },
       'offline': { label: 'Offline', variant: 'gray', animate: false },
-      'error': { label: 'Erro', variant: 'error', animate: false },
-      'failed': { label: 'Falhou', variant: 'error', animate: false },
-      'destroying': { label: 'Destruindo', variant: 'error', animate: true },
+      'error': { label: 'Error', variant: 'error', animate: false },
+      'failed': { label: 'Failed', variant: 'error', animate: false },
+      'destroying': { label: 'Destroying', variant: 'error', animate: true },
       'failover': { label: 'Failover', variant: 'primary', animate: true },
     }
-    return statusMap[status] || { label: status || 'Desconhecido', variant: 'gray', animate: false }
+    return statusMap[status] || { label: status || 'Unknown', variant: 'gray', animate: false }
   }
 
   const statusDisplay = getStatusDisplay(status)
@@ -244,12 +244,12 @@ export default function MachineCard({
     if (!isValidHost) {
       setAlertDialog({
         open: true,
-        title: 'SSH não disponível',
+        title: 'SSH not available',
         description: !sshHost
-          ? 'Host SSH não definido. A máquina pode ainda estar inicializando.'
+          ? 'SSH host not defined. The machine may still be initializing.'
           : sshHost === 'ssh.vast.ai'
-            ? 'Esta é uma máquina de demonstração. Use máquinas reais do VAST.ai para conectar via SSH.'
-            : `Host SSH inválido (${sshHost}). A máquina pode ainda estar inicializando.`,
+            ? 'This is a demo machine. Use real VAST.ai machines to connect via SSH.'
+            : `Invalid SSH host (${sshHost}). The machine may still be initializing.`,
         action: null
       })
       return
@@ -268,8 +268,8 @@ export default function MachineCard({
     if (!port8080Mapping || !port8080Mapping[0]) {
       setAlertDialog({
         open: true,
-        title: 'VS Code Online não disponível',
-        description: 'A porta 8080 (code-server) não está mapeada.',
+        title: 'VS Code Online not available',
+        description: 'Port 8080 (code-server) is not mapped.',
         action: null
       })
       return
@@ -314,7 +314,7 @@ export default function MachineCard({
               failoverProgress.phase === 'complete' ? 'text-brand-400' :
                 'text-brand-400 animate-pulse'
               }`} />
-            <span className="text-sm font-semibold text-white">Failover em Progresso</span>
+            <span className="text-sm font-semibold text-white">Failover in Progress</span>
           </div>
 
           <div className="space-y-1.5 text-xs">
@@ -328,7 +328,7 @@ export default function MachineCard({
                 }`}>
                 {['failover_active', 'searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? '✓' : '1'}
               </div>
-              <span>GPU Interrompida</span>
+              <span>GPU Interrupted</span>
               {failoverProgress.phase === 'gpu_lost' && <RefreshCw className="w-3 h-3 animate-spin ml-auto" />}
               {failoverProgress.metrics?.detection_time_ms && <span className="ml-auto text-gray-500">{failoverProgress.metrics.detection_time_ms}ms</span>}
             </div>
@@ -343,7 +343,7 @@ export default function MachineCard({
                 }`}>
                 {['searching', 'provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? '✓' : '2'}
               </div>
-              <span>Failover para CPU Standby</span>
+              <span>Failover to CPU Standby</span>
               {failoverProgress.phase === 'failover_active' && <RefreshCw className="w-3 h-3 animate-spin ml-auto" />}
               {failoverProgress.metrics?.failover_time_ms && <span className="ml-auto text-gray-500">{failoverProgress.metrics.failover_time_ms}ms</span>}
             </div>
@@ -358,7 +358,7 @@ export default function MachineCard({
                 }`}>
                 {['provisioning', 'restoring', 'complete'].includes(failoverProgress.phase) ? '✓' : '3'}
               </div>
-              <span>Buscando Nova GPU</span>
+              <span>Searching for New GPU</span>
               {failoverProgress.phase === 'searching' && <RefreshCw className="w-3 h-3 animate-spin ml-auto" />}
               {failoverProgress.metrics?.search_time_ms && <span className="ml-auto text-gray-500">{(failoverProgress.metrics.search_time_ms / 1000).toFixed(1)}s</span>}
             </div>
@@ -373,7 +373,7 @@ export default function MachineCard({
                 }`}>
                 {['restoring', 'complete'].includes(failoverProgress.phase) ? '✓' : '4'}
               </div>
-              <span>Provisionando {failoverProgress.newGpu || 'Nova GPU'}</span>
+              <span>Provisioning {failoverProgress.newGpu || 'New GPU'}</span>
               {failoverProgress.phase === 'provisioning' && <RefreshCw className="w-3 h-3 animate-spin ml-auto" />}
               {failoverProgress.metrics?.provisioning_time_ms && <span className="ml-auto text-gray-500">{(failoverProgress.metrics.provisioning_time_ms / 1000).toFixed(1)}s</span>}
             </div>
@@ -388,7 +388,7 @@ export default function MachineCard({
                 }`}>
                 {failoverProgress.phase === 'complete' ? '✓' : '5'}
               </div>
-              <span>Restaurando Dados</span>
+              <span>Restoring Data</span>
               {failoverProgress.phase === 'restoring' && <RefreshCw className="w-3 h-3 animate-spin ml-auto" />}
               {failoverProgress.metrics?.restore_time_ms && <span className="ml-auto text-gray-500">{(failoverProgress.metrics.restore_time_ms / 1000).toFixed(1)}s</span>}
             </div>
@@ -399,7 +399,7 @@ export default function MachineCard({
                 }`}>
                 {failoverProgress.phase === 'complete' ? '✓' : '6'}
               </div>
-              <span>Recuperação Completa</span>
+              <span>Recovery Complete</span>
               {failoverProgress.metrics?.total_time_ms && failoverProgress.phase === 'complete' && (
                 <span className="ml-auto text-brand-400 font-medium">{(failoverProgress.metrics.total_time_ms / 1000).toFixed(1)}s total</span>
               )}
@@ -415,16 +415,16 @@ export default function MachineCard({
           {failoverProgress.phase === 'complete' && failoverProgress.metrics && (
             <div className="mt-3 pt-2 border-t border-gray-700/50 grid grid-cols-3 gap-2 text-[10px]">
               <div className="text-center">
-                <div className="text-gray-500">Arquivos</div>
+                <div className="text-gray-500">Files</div>
                 <div className="text-white font-medium">{failoverProgress.metrics.files_synced?.toLocaleString() || '0'}</div>
               </div>
               <div className="text-center">
-                <div className="text-gray-500">Dados</div>
+                <div className="text-gray-500">Data</div>
                 <div className="text-white font-medium">{failoverProgress.metrics.data_restored_mb || '0'} MB</div>
               </div>
               <div className="text-center">
                 <div className="text-gray-500">Status</div>
-                <div className="text-green-400 font-medium">Sucesso</div>
+                <div className="text-green-400 font-medium">Success</div>
               </div>
             </div>
           )}
@@ -470,7 +470,7 @@ export default function MachineCard({
                   data-testid="failover-dropdown-menu"
                 >
                   <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-700">
-                    <span className="text-[10px] font-semibold text-gray-300">Estratégia de Failover</span>
+                    <span className="text-[10px] font-semibold text-gray-300">Failover Strategy</span>
                     <button
                       onClick={() => setShowStrategyMenu(false)}
                       className="p-0.5 rounded hover:bg-gray-800 text-gray-500 hover:text-gray-300"
@@ -513,14 +513,14 @@ export default function MachineCard({
                             </div>
                           </div>
                           <div className="text-[9px] text-brand-400 font-mono whitespace-nowrap">
-                            {cost > 0 ? `+$${cost.toFixed(3)}/h` : 'Grátis'}
+                            {cost > 0 ? `+$${cost.toFixed(3)}/h` : 'Free'}
                           </div>
                         </button>
                       )
                     })}
                   </div>
                   <div className="mt-2 pt-2 border-t border-gray-700 text-[8px] text-gray-500" data-testid="failover-cost-basis">
-                    Custos baseados em: GPU ${(machine.dph_total || 0).toFixed(2)}/h
+                    Costs based on: GPU ${(machine.dph_total || 0).toFixed(2)}/h
                   </div>
                 </div>
               )}
@@ -534,7 +534,7 @@ export default function MachineCard({
                 onClick={() => setShowBackupInfo(!showBackupInfo)}
               >
                 <Layers className="w-2.5 h-2.5 mr-0.5" />
-                {hasCpuStandby ? 'Backup' : 'Sem backup'}
+                {hasCpuStandby ? 'Backup' : 'No backup'}
               </Badge>
 
             {showBackupInfo && (
@@ -542,7 +542,7 @@ export default function MachineCard({
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-semibold text-white flex items-center gap-2">
                     <Layers className="w-4 h-4 text-brand-400" />
-                    CPU Backup (Espelho)
+                    CPU Backup (Mirror)
                   </span>
                   <button
                     onClick={() => setShowBackupInfo(false)}
@@ -561,27 +561,27 @@ export default function MachineCard({
                     </div>
                     <div className="flex items-center gap-2 text-xs">
                       <Server className="w-3.5 h-3.5 text-gray-400" />
-                      <span className="text-gray-400">Máquina:</span>
-                      <span className="text-white font-medium">{cpuStandby.name || 'Provisionando...'}</span>
+                      <span className="text-gray-400">Machine:</span>
+                      <span className="text-white font-medium">{cpuStandby.name || 'Provisioning...'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
                       <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                      <span className="text-gray-400">Zona:</span>
+                      <span className="text-gray-400">Zone:</span>
                       <span className="text-white font-medium">{cpuStandby.zone || 'europe-west1-b'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
                       <Globe className="w-3.5 h-3.5 text-gray-400" />
                       <span className="text-gray-400">IP:</span>
-                      <span className="text-white font-medium font-mono">{cpuStandby.ip || 'Aguardando...'}</span>
+                      <span className="text-white font-medium font-mono">{cpuStandby.ip || 'Waiting...'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
                       <Cpu className="w-3.5 h-3.5 text-gray-400" />
-                      <span className="text-gray-400">Tipo:</span>
+                      <span className="text-gray-400">Type:</span>
                       <span className="text-white font-medium">{cpuStandby.machine_type || 'e2-medium'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
                       <DollarSign className="w-3.5 h-3.5 text-brand-400" />
-                      <span className="text-gray-400">Custo:</span>
+                      <span className="text-gray-400">Cost:</span>
                       <span className="text-brand-400 font-medium">${cpuStandby.dph_total?.toFixed(3) || '0.010'}/h</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
@@ -595,10 +595,10 @@ export default function MachineCard({
                           cpuStandby.state === 'failover_active' ? 'bg-brand-500/20 text-brand-400' :
                             'bg-gray-700/30 text-gray-400'
                         }`}>
-                        {cpuStandby.state === 'ready' ? '✓ Pronto para failover' :
-                          cpuStandby.state === 'syncing' ? '↻ Sincronizando...' :
-                            cpuStandby.state === 'failover_active' ? '⚡ Failover ativo' :
-                              '○ Provisionando...'}
+                        {cpuStandby.state === 'ready' ? '✓ Ready for failover' :
+                          cpuStandby.state === 'syncing' ? '↻ Syncing...' :
+                            cpuStandby.state === 'failover_active' ? '⚡ Failover active' :
+                              '○ Provisioning...'}
                       </div>
                     </div>
                   </div>
@@ -606,10 +606,10 @@ export default function MachineCard({
                   <div className="text-center py-3">
                     <Shield className="w-8 h-8 text-gray-600 mx-auto mb-2" />
                     <p className="text-xs text-gray-400 mb-2">
-                      Nenhum backup CPU configurado para esta máquina.
+                      No CPU backup configured for this machine.
                     </p>
                     <p className="text-[10px] text-gray-500">
-                      Ative o auto-standby nas configurações para criar backups automáticos.
+                      Enable auto-standby in settings to create automatic backups.
                     </p>
                   </div>
                 )}
@@ -627,21 +627,21 @@ export default function MachineCard({
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={() => setShowDetailsModal(true)}>
               <Info className="w-3.5 h-3.5 mr-2" />
-              Ver Detalhes
+              View Details
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {isRunning && (
               <>
                 <DropdownMenuItem onClick={() => onSnapshot && onSnapshot(machine.id)} disabled={isCreatingSnapshot}>
                   <Save className="w-3.5 h-3.5 mr-2" />
-                  {isCreatingSnapshot ? 'Criando...' : 'Criar Snapshot'}
+                  {isCreatingSnapshot ? 'Creating...' : 'Create Snapshot'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
               </>
             )}
             <DropdownMenuItem onClick={() => onRestoreToNew && onRestoreToNew(machine)}>
               <Upload className="w-3.5 h-3.5 mr-2" />
-              Restaurar em Nova
+              Restore to New
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setShowConfigModal(true)}>
@@ -654,12 +654,12 @@ export default function MachineCard({
               ) : (
                 <Copy className="w-3.5 h-3.5 mr-2" />
               )}
-              {copiedField === 'ssh' ? 'Copiado!' : 'Copiar SSH Config'}
+              {copiedField === 'ssh' ? 'Copied!' : 'Copy SSH Config'}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onDestroy(machine.id)} className="text-red-400 focus:text-red-400">
               <Trash2 className="w-3.5 h-3.5 mr-2" />
-              Destruir
+              Destroy
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -674,9 +674,9 @@ export default function MachineCard({
               ? 'bg-brand-500/20 text-brand-400 border-brand-500/30'
               : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
               }`}
-            title="Clique para copiar IP"
+            title="Click to copy IP"
           >
-            {copiedField === 'ip' ? 'Copiado!' : machine.public_ipaddr}
+            {copiedField === 'ip' ? 'Copied!' : machine.public_ipaddr}
           </button>
         )}
 
@@ -689,21 +689,21 @@ export default function MachineCard({
 
         <span
           className="px-1.5 py-0.5 rounded bg-gray-700/30 border border-gray-700/30"
-          title={`${cpuCores} núcleos de CPU`}
+          title={`${cpuCores} CPU cores`}
         >
           {cpuCores} CPU
         </span>
 
         <span
           className="px-1.5 py-0.5 rounded bg-gray-700/30 border border-gray-700/30"
-          title={`${ram}GB de memória do sistema`}
+          title={`${ram}GB system memory`}
         >
           {ram}GB RAM
         </span>
 
         <span
           className="px-1.5 py-0.5 rounded bg-gray-700/30 border border-gray-700/30"
-          title={`${disk}GB de armazenamento`}
+          title={`${disk}GB storage`}
         >
           {disk}GB Disk
         </span>
@@ -716,9 +716,9 @@ export default function MachineCard({
               ? 'bg-brand-500/20 text-brand-400 border-brand-500/30'
               : 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10'
               }`}
-            title={`SSH: root@${machine.ssh_host}:${machine.ssh_port || 22} (clique para copiar)`}
+            title={`SSH: root@${machine.ssh_host}:${machine.ssh_port || 22} (click to copy)`}
           >
-            {copiedField === 'ssh' ? 'Copiado!' : `SSH :${machine.ssh_port || 22}`}
+            {copiedField === 'ssh' ? 'Copied!' : `SSH :${machine.ssh_port || 22}`}
           </button>
         )}
 
@@ -730,7 +730,7 @@ export default function MachineCard({
                 ? 'bg-brand-500/10 text-brand-400 border-brand-500/20'
                 : 'bg-gray-700/30 text-gray-400 border-gray-700/30'
               }`}
-            title={syncStats ? `Último sync: ${syncStats.files_changed || 0} modificados, ${syncStats.data_added || '0 B'} enviados` : 'Clique em "Criar Snapshot" para sincronizar'}
+            title={syncStats ? `Last sync: ${syncStats.files_changed || 0} modified, ${syncStats.data_added || '0 B'} sent` : 'Click "Create Snapshot" to sync'}
           >
             <RefreshCw className={`w-2.5 h-2.5 ${syncStatus === 'syncing' ? 'animate-spin' : ''}`} />
             {syncStatus === 'syncing' ? 'Sync...' : syncStatus === 'synced' ? 'Synced' : 'Sync'}
@@ -760,7 +760,7 @@ export default function MachineCard({
               <div className="text-brand-400 font-mono text-xs font-bold" title={hasCpuStandby ? `GPU: $${costPerHour.toFixed(2)} + CPU: $${cpuCostPerHour.toFixed(3)}` : ''}>
                 ${totalCostPerHour.toFixed(2)}
               </div>
-              <div className="text-[8px] text-gray-500 uppercase">/hora</div>
+              <div className="text-[8px] text-gray-500 uppercase">/hr</div>
             </div>
             {uptime && (
               <div className="text-center">
@@ -801,7 +801,7 @@ export default function MachineCard({
                 icon={Shield}
                 className="flex-1 text-[10px] h-7"
                 onClick={() => setShowFailoverMigration(true)}
-                title="Migrar para outro tipo de failover"
+                title="Migrate to another failover type"
               >
                 Failover
               </Button>
@@ -812,9 +812,9 @@ export default function MachineCard({
                   icon={Zap}
                   className="flex-1 text-[10px] h-7"
                   onClick={() => onSimulateFailover(machine)}
-                  title="Simular roubo de GPU e failover automático"
+                  title="Simulate GPU interruption and automatic failover"
                 >
-                  Testar
+                  Test
                 </Button>
               )}
             </div>
@@ -835,21 +835,21 @@ export default function MachineCard({
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline" size="xs" icon={Pause} className="flex-1 text-[10px] h-7">
-                  Pausar
+                  Pause
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Pausar máquina?</AlertDialogTitle>
+                  <AlertDialogTitle>Pause machine?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Isso irá pausar a máquina {gpuName}. Processos em execução serão interrompidos.
-                    Você poderá reiniciá-la depois.
+                    This will pause the machine {gpuName}. Running processes will be interrupted.
+                    You can restart it later.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction onClick={() => onPause && onPause(machine.id)}>
-                    Pausar
+                    Pause
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -876,7 +876,7 @@ export default function MachineCard({
               <div className="text-brand-500 dark:text-brand-400 font-mono text-xs font-bold" title={hasCpuStandby ? `GPU: $${costPerHour.toFixed(2)} + CPU: $${cpuCostPerHour.toFixed(3)}` : ''}>
                 ${totalCostPerHour.toFixed(2)}
               </div>
-              <div className="text-[8px] text-gray-500 dark:text-gray-400 uppercase">/hora</div>
+              <div className="text-[8px] text-gray-500 dark:text-gray-400 uppercase">/hr</div>
             </div>
           </div>
 
@@ -895,9 +895,22 @@ export default function MachineCard({
                     <span className="text-xs font-mono">{formatElapsedTime(elapsedTime)}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-[10px] text-gray-400">
-                  <Hash className="w-2.5 h-2.5" />
-                  <span className="font-mono">VAST ID: {machine.id}</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                    <Hash className="w-2.5 h-2.5" />
+                    <span className="font-mono">VAST ID: {machine.id}</span>
+                  </div>
+                  {/* Cancel button for stuck machines (visible after 60s) */}
+                  {elapsedTime > 60 && (
+                    <button
+                      onClick={() => onDestroy && onDestroy(machine.id)}
+                      className="flex items-center gap-1 px-2 py-0.5 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors"
+                      title="Cancel this machine creation"
+                    >
+                      <X className="w-3 h-3" />
+                      Cancel
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
@@ -918,11 +931,25 @@ export default function MachineCard({
                   variant="secondary"
                   size="xs"
                   icon={Play}
-                  className={`text-[10px] h-7 ${machine.num_gpus === 0 ? 'flex-1' : 'w-full'}`}
+                  className="text-[10px] h-7 flex-1"
                   onClick={() => onStart && onStart(machine.id)}
                 >
-                  Iniciar
+                  Start
                 </Button>
+
+                {/* Delete button - visible for offline/error/failed machines */}
+                {(status === 'offline' || status === 'error' || status === 'failed' || status === 'exited') && (
+                  <Button
+                    variant="error"
+                    size="xs"
+                    icon={Trash2}
+                    className="text-[10px] h-7"
+                    onClick={() => onDestroy && onDestroy(machine.id)}
+                    title="Delete this machine"
+                  >
+                    Delete
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -931,7 +958,7 @@ export default function MachineCard({
 
       {showSSHInstructions && (
         <div className="mt-2 p-2 rounded bg-brand-500/10 border border-brand-500/20 text-[10px] text-brand-300 text-center">
-          SSH Config copiado! Cole em ~/.ssh/config
+          SSH Config copied! Paste in ~/.ssh/config
         </div>
       )}
 

@@ -1,0 +1,85 @@
+{
+  "timestamp": "2026-01-03T12:33:58.016Z",
+  "gpuTypes": {
+    "tested": [
+      "RTX 3080",
+      "RTX 3090",
+      "RTX 4080",
+      "RTX 4090",
+      "RTX A6000",
+      "A100 40GB",
+      "A100 80GB",
+      "L40S",
+      "H100 PCIe",
+      "H100 SXM"
+    ],
+    "passed": [
+      "RTX 3080",
+      "RTX 3090",
+      "RTX 4080",
+      "RTX 4090",
+      "RTX A6000",
+      "A100 40GB",
+      "A100 80GB",
+      "L40S",
+      "H100 PCIe",
+      "H100 SXM"
+    ],
+    "failed": []
+  },
+  "failoverTypes": {
+    "tested": [
+      "CPU Standby",
+      "Sem backup",
+      "Multi-região"
+    ],
+    "passed": [
+      "CPU Standby",
+      "Simulação de Failover"
+    ],
+    "failed": []
+  },
+  "regions": {
+    "tested": [
+      "US",
+      "EU",
+      "us-east",
+      "us-west",
+      "eu-west",
+      "Europe",
+      "America"
+    ],
+    "passed": [
+      "US",
+      "EU"
+    ],
+    "failed": []
+  },
+  "machineOperations": {
+    "create": [
+      "Pausar",
+      "Iniciar",
+      "Snapshot"
+    ],
+    "delete": [],
+    "failover": []
+  },
+  "issues": [],
+  "improvements": [
+    "1 botões sem texto/aria-label (acessibilidade)",
+    "Adicionar mais tooltips explicativos",
+    "Expandir suporte a mais regiões",
+    "Adicionar menu avançado para configurações de failover",
+    "Implementar filtros avançados por região na listagem"
+  ],
+  "screenshots": [
+    "01-inicio.png",
+    "02-gpu-offers.png",
+    "03-regioes.png",
+    "04-machines.png",
+    "05-failover-sim.png",
+    "06-dashboard.png",
+    "07-final.png"
+  ],
+  "score": 70
+}

@@ -3,8 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, Check, X, AlertCircle, Key, Database, Lock, Server, DollarSign, Shield, Cloud, HardDrive } from 'lucide-react'
 import { useToast } from '../components/Toast'
 import StandbyConfig from '../components/StandbyConfig'
-import FailoverReport from '../components/FailoverReport'
-import { Alert, Card, Button } from '../components/tailadmin-ui'
+import { Alert, Card } from '../components/tailadmin-ui'
+import { Button } from '../components/ui/button'
 
 const API_BASE = ''
 
@@ -335,6 +335,8 @@ export default function Settings() {
   })
   const [savingCloudStorage, setSavingCloudStorage] = useState(false)
   const [testingConnection, setTestingConnection] = useState(false)
+  const [failoverStatus, setFailoverStatus] = useState(null)
+  const [loadingFailoverStatus, setLoadingFailoverStatus] = useState(false)
 
   // Validação real-time
   const validations = useMemo(() => {
@@ -387,6 +389,33 @@ export default function Settings() {
       console.error('Failed to load agent settings:', e)
     }
   }
+
+  const loadFailoverStatus = async () => {
+    setLoadingFailoverStatus(true)
+    try {
+      const token = localStorage.getItem('auth_token')
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {}
+      const res = await fetch(`${API_BASE}/api/v1/standby/status`, {
+        credentials: 'include',
+        headers
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setFailoverStatus(data)
+      }
+    } catch (e) {
+      console.error('Failed to load failover status:', e)
+    } finally {
+      setLoadingFailoverStatus(false)
+    }
+  }
+
+  // Carregar status do failover quando a aba for selecionada
+  useEffect(() => {
+    if (activeTab === 'failover') {
+      loadFailoverStatus()
+    }
+  }, [activeTab])
 
   const handleAgentChange = (e) => {
     const { name, value } = e.target
@@ -562,8 +591,13 @@ export default function Settings() {
 
       {/* Page Header - TailAdmin Style */}
       <div className="page-header">
-        <h1 className="page-title" data-testid="settings-page-title">Configurações</h1>
-        <p className="page-subtitle">Gerencie suas APIs, armazenamento e preferências</p>
+        <div className="flex items-center gap-4">
+          <Key className="w-9 h-9 flex-shrink-0" style={{ color: '#4caf50' }} />
+          <div className="flex flex-col justify-center">
+            <h1 className="page-title leading-tight" data-testid="settings-page-title">Configurações</h1>
+            <p className="page-subtitle mt-0.5">Gerencie suas APIs, armazenamento e preferências</p>
+          </div>
+        </div>
       </div>
 
       {/* Layout: Sidebar + Content */}
@@ -1053,7 +1087,7 @@ export default function Settings() {
                   onClick={testCloudStorageConnection}
                   disabled={testingConnection || !cloudStorageSettings.enabled}
                   data-testid="settings-cloudstorage-test-connection"
-                  className="py-3 px-6 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="ta-btn ta-btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {testingConnection ? (
                     <>
@@ -1072,7 +1106,7 @@ export default function Settings() {
                   onClick={saveCloudStorageSettings}
                   disabled={savingCloudStorage}
                   data-testid="settings-cloudstorage-save"
-                  className="flex-1 py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 bg-brand-800/30 hover:bg-brand-800/50 border border-brand-700/40 text-brand-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="ta-btn ta-btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {savingCloudStorage ? (
                     <>
@@ -1128,7 +1162,7 @@ export default function Settings() {
                   type="submit"
                   disabled={saving || !isFormValid}
                   data-testid="settings-notifications-save"
-                  className="flex-1 py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 bg-brand-800/30 hover:bg-brand-800/50 border border-brand-700/40 text-brand-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="ta-btn ta-btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? (
                     <>
@@ -1216,7 +1250,7 @@ export default function Settings() {
             onClick={saveAgentSettings}
             disabled={savingAgent}
             data-testid="settings-agent-save"
-            className="py-2 px-4 rounded-lg font-semibold transition-all flex items-center gap-2 bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 border border-brand-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="ta-btn ta-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {savingAgent ? (
               <>
@@ -1318,8 +1352,92 @@ export default function Settings() {
           return token ? { 'Authorization': `Bearer ${token}` } : {}
         }} />
 
-        {/* Failover Report - Histórico e Métricas */}
-        <FailoverReport isDemo={localStorage.getItem('demo_mode') === 'true'} />
+        {/* Status Atual do Failover */}
+        <Card
+          className="border-white/10 bg-dark-surface-card"
+          header={
+            <div className="flex items-center gap-3">
+              <Database className="w-6 h-6 text-blue-400 flex-shrink-0" />
+              <div>
+                <h3 className="text-lg font-semibold text-white">Configuracao Atual</h3>
+                <p className="text-gray-500 text-sm">Valores salvos na API</p>
+              </div>
+            </div>
+          }
+        >
+          {loadingFailoverStatus ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+            </div>
+          ) : failoverStatus ? (
+            <div className="space-y-4">
+              {/* Status Geral */}
+              <div className="flex items-center gap-3 p-3 bg-dark-surface rounded-lg">
+                <div className={`w-3 h-3 rounded-full ${failoverStatus.auto_standby_enabled ? 'bg-green-500' : 'bg-gray-500'}`}></div>
+                <span className="text-gray-300">
+                  Auto-Standby: <strong className={failoverStatus.auto_standby_enabled ? 'text-green-400' : 'text-gray-400'}>
+                    {failoverStatus.auto_standby_enabled ? 'Ativo' : 'Inativo'}
+                  </strong>
+                </span>
+              </div>
+
+              {/* Configuracoes */}
+              {failoverStatus.config && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-dark-surface rounded-lg">
+                    <div className="text-gray-500 text-xs mb-1">Zona GCP</div>
+                    <div className="text-white text-sm font-medium">{failoverStatus.config.gcp_zone || '-'}</div>
+                  </div>
+                  <div className="p-3 bg-dark-surface rounded-lg">
+                    <div className="text-gray-500 text-xs mb-1">Tipo de Maquina</div>
+                    <div className="text-white text-sm font-medium">{failoverStatus.config.gcp_machine_type || '-'}</div>
+                  </div>
+                  <div className="p-3 bg-dark-surface rounded-lg">
+                    <div className="text-gray-500 text-xs mb-1">Disco</div>
+                    <div className="text-white text-sm font-medium">{failoverStatus.config.gcp_disk_size || 100} GB</div>
+                  </div>
+                  <div className="p-3 bg-dark-surface rounded-lg">
+                    <div className="text-gray-500 text-xs mb-1">VM Spot</div>
+                    <div className="text-white text-sm font-medium">{failoverStatus.config.gcp_spot !== false ? 'Sim' : 'Nao'}</div>
+                  </div>
+                  <div className="p-3 bg-dark-surface rounded-lg">
+                    <div className="text-gray-500 text-xs mb-1">Intervalo de Sync</div>
+                    <div className="text-white text-sm font-medium">{failoverStatus.config.sync_interval || 30}s</div>
+                  </div>
+                  <div className="p-3 bg-dark-surface rounded-lg">
+                    <div className="text-gray-500 text-xs mb-1">Auto-Failover</div>
+                    <div className="text-white text-sm font-medium">{failoverStatus.config.auto_failover !== false ? 'Sim' : 'Nao'}</div>
+                  </div>
+                  <div className="p-3 bg-dark-surface rounded-lg">
+                    <div className="text-gray-500 text-xs mb-1">Auto-Recovery</div>
+                    <div className="text-white text-sm font-medium">{failoverStatus.config.auto_recovery !== false ? 'Sim' : 'Nao'}</div>
+                  </div>
+                  <div className="p-3 bg-dark-surface rounded-lg">
+                    <div className="text-gray-500 text-xs mb-1">GPUs com Backup</div>
+                    <div className="text-white text-sm font-medium">{failoverStatus.active_associations || 0}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Explicacao */}
+              <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-sm">
+                <p className="text-blue-300 mb-2">
+                  <strong>Como funciona o CPU Standby:</strong>
+                </p>
+                <ul className="text-gray-400 space-y-1 text-xs">
+                  <li>• Quando ativo, uma VM CPU e criada automaticamente ao criar uma GPU</li>
+                  <li>• Os dados sao sincronizados a cada <strong className="text-white">{failoverStatus.config?.sync_interval || 30}s</strong> da GPU para a CPU</li>
+                  <li>• Se a GPU falhar, o sistema migra automaticamente para a CPU standby</li>
+                  <li>• Apos failover, uma nova GPU e provisionada e os dados restaurados</li>
+                </ul>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              Nao foi possivel carregar o status do failover
+            </div>
+          )}
+        </Card>
           </div>
         )}
           </form>

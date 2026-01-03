@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-01-03T12:36:50.252Z",
+  "machinesCreated": [],
+  "machinesDestroyed": [],
+  "failoverTests": [],
+  "errors": [
+    "Botão Nova Máquina não encontrado"
+  ],
+  "totalCost": "0.0000"
+}

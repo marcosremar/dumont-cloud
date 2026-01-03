@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-01-03T00:44:13.039Z",
+  "environment": "PRODUCTION",
+  "models": [
+    "Llama 3.2 3B",
+    "Qwen 2.5 3B"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Navigate to Chat Arena",
+      "duration": 6071,
+      "status": "PASS"
+    },
+    {
+      "step": 2,
+      "action": "Open model selector and fetch REAL models",
+      "duration": 2632,
+      "status": "PASS"
+    },
+    {
+      "step": 3,
+      "action": "Verify REAL models are listed",
+      "duration": 16014,
+      "status": "FAIL",
+      "metadata": {
+        "modelCount": 0
+      }
+    }
+  ],
+  "metrics": {},
+  "errors": [
+    {
+      "step": 3,
+      "error": "No models found in dropdown",
+      "modelCount": 0
+    },
+    {
+      "critical": true,
+      "error": "Not enough models to compare. Found: 0, Need: 2",
+      "stack": "Error: Not enough models to compare. Found: 0, Need: 2\n    at /Users/marcos/CascadeProjects/dumontcloud/tests/chat-arena-real-vibe.spec.js:189:15\n    at /Users/marcos/CascadeProjects/dumontcloud/node_modules/playwright/lib/worker/workerMain.js:322:9\n    at /Users/marcos/CascadeProjects/dumontcloud/node_modules/playwright/lib/worker/testInfo.js:311:11\n    at TimeoutManager.withRunnable (/Users/marcos/CascadeProjects/dumontcloud/node_modules/playwright/lib/worker/timeoutManager.js:67:14)\n    at TestInfoImpl._runWithTimeout (/Users/marcos/CascadeProjects/dumontcloud/node_modules/playwright/lib/worker/testInfo.js:309:7)\n    at /Users/marcos/CascadeProjects/dumontcloud/node_modules/playwright/lib/worker/workerMain.js:320:7\n    at WorkerMain._runTest (/Users/marcos/CascadeProjects/dumontcloud/node_modules/playwright/lib/worker/workerMain.js:295:5)\n    at WorkerMain.runTestGroup (/Users/marcos/CascadeProjects/dumontcloud/node_modules/playwright/lib/worker/workerMain.js:199:11)\n    at process.<anonymous> (/Users/marcos/CascadeProjects/dumontcloud/node_modules/playwright/lib/common/process.js:65:22)"
+    }
+  ]
+}

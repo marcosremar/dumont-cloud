@@ -56,8 +56,8 @@ export const completeOnboarding = createAsyncThunk(
       localStorage.setItem('onboarding_completed', 'true')
 
       // Skip API call in demo mode
-      const isDemoMode = localStorage.getItem('demo_mode') === 'true'
-      if (!isDemoMode) {
+      const isDemo = window.location.pathname.startsWith('/demo-app') || window.location.pathname.startsWith('/demo-docs')
+      if (!isDemo) {
         await fetch(`${API_BASE}/api/v1/settings/complete-onboarding`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${getToken()}` },

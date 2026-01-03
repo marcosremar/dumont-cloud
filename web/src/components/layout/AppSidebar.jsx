@@ -12,9 +12,11 @@ import {
   Brain,
   BookOpen,
   Sparkles,
-  Play,
+  Terminal,
   Columns,
+  MessageSquare,
   Rocket,
+  Bot,
 } from "lucide-react";
 
 import { useSidebar } from "../../context/SidebarContext";
@@ -46,13 +48,13 @@ const AppSidebar = () => {
       path: `${basePath}/serverless`,
     },
     {
-      icon: Play,
+      icon: Terminal,
       name: "Jobs",
       path: `${basePath}/jobs`,
     },
     {
       icon: Rocket,
-      name: "Models",
+      name: "Deploy Model",
       path: `${basePath}/models`,
     },
     {
@@ -61,9 +63,14 @@ const AppSidebar = () => {
       path: `${basePath}/finetune`,
     },
     {
-      icon: Columns,
-      name: "Chat Arena",
-      path: `${basePath}/chat-arena`,
+      icon: MessageSquare,
+      name: "Playground",
+      path: `${basePath}/playground`,
+    },
+    {
+      icon: Bot,
+      name: "Agents",
+      path: `${basePath}/agents`,
     },
     {
       name: "Analytics",

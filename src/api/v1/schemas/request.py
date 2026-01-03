@@ -148,23 +148,36 @@ class FineTuneConfigRequest(BaseModel):
     lora_alpha: int = Field(16, ge=4, le=128, description="LoRA alpha")
     learning_rate: float = Field(2e-4, ge=1e-6, le=1e-2, description="Learning rate")
     epochs: int = Field(1, ge=1, le=10, description="Number of epochs")
-    batch_size: int = Field(2, ge=1, le=32, description="Batch size per GPU")
-    gradient_accumulation_steps: int = Field(4, ge=1, le=32, description="Gradient accumulation steps")
-    max_seq_length: int = Field(2048, ge=256, le=8192, description="Maximum sequence length")
-    warmup_steps: int = Field(5, ge=0, le=1000, description="Warmup steps")
+    batch_size: int = Field(2, ge=1, le=65536, description="Batch size (tokens)")
+    gradient_accumulation_steps: int = Field(4, ge=1, le=128, description="Gradient accumulation steps")
+    max_seq_length: int = Field(2048, ge=256, le=65536, description="Maximum sequence length")
+    warmup_steps: int = Field(5, ge=0, le=10000, description="Warmup steps")
     weight_decay: float = Field(0.01, ge=0, le=1, description="Weight decay")
+    turbo_mode: bool = Field(False, description="Enable turbo mode for faster training")
 
 
 class CreateFineTuneJobRequest(BaseModel):
     """Create fine-tuning job request"""
     name: str = Field(..., min_length=1, max_length=100, description="Job name")
     base_model: str = Field(..., description="Base model ID (e.g., unsloth/llama-3-8b-bnb-4bit)")
-    dataset_source: str = Field(..., description="Dataset source: upload, url, huggingface")
-    dataset_path: str = Field(..., description="Dataset path (local path or URL)")
+    dataset_source: str = Field(..., description="Dataset source: upload, url, huggingface, existing")
+    dataset_path: str = Field(..., description="Dataset path (local path, URL, or dataset ID)")
     dataset_format: str = Field("alpaca", description="Dataset format: alpaca, sharegpt, raw")
     config: Optional[FineTuneConfigRequest] = Field(None, description="Fine-tuning configuration")
     gpu_type: str = Field("A100", description="GPU type")
     num_gpus: int = Field(1, ge=1, le=8, description="Number of GPUs")
+    # Additional fields from UI
+    method: Optional[str] = Field("supervised", description="Fine-tuning method: supervised, reinforcement, preference")
+    job_id: Optional[str] = Field(None, description="Custom job ID")
+    model_output_name: Optional[str] = Field(None, description="Custom output model name")
+
+
+class DeployFineTuneRequest(BaseModel):
+    """Deploy a fine-tuned model request"""
+    gpu_type: str = Field("RTX4090", description="GPU type for inference")
+    instance_name: Optional[str] = Field(None, description="Custom instance name")
+    max_price: float = Field(2.0, ge=0, description="Maximum price per hour ($)")
+    port: int = Field(8000, ge=1024, le=65535, description="Port for model server")
 
 
 # Reservation Requests

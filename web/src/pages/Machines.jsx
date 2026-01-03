@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { apiGet, apiPost, apiDelete, isDemoMode } from '../utils/api'
+import { useSelector } from 'react-redux'
+import { apiGet, apiPost, apiDelete } from '../utils/api'
+import { selectRacingInstanceIds } from '../store/slices/instancesSlice'
 import { ConfirmModal } from '../components/ui/dumont-ui'
-import { Plus, Server, Shield, Cpu, Activity, Check, RefreshCw, DollarSign, TrendingDown, Wallet, ArrowUpDown, Filter, Eye, EyeOff } from 'lucide-react'
+import { Plus, Server, Shield, Activity, Check, RefreshCw, DollarSign, ArrowUpDown, Filter, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react'
+import { useToast } from '../components/Toast'
 import MigrationModal from '../components/MigrationModal'
 import { ErrorState } from '../components/ErrorState'
 import { EmptyState } from '../components/EmptyState'
@@ -29,7 +32,13 @@ export default function Machines() {
   const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
-  const isDemo = isDemoMode()
+  const toast = useToast()
+  const API_BASE = import.meta.env.VITE_API_URL || ''
+  const getToken = () => localStorage.getItem('auth_token')
+  const isDemo = location.pathname.startsWith('/demo-app')
+
+  // Get racing instance IDs from Redux - these machines should not appear in the list
+  const racingInstanceIds = useSelector(selectRacingInstanceIds)
 
   const [machines, setMachines] = useState([])
   const [loading, setLoading] = useState(true)
@@ -46,7 +55,6 @@ export default function Machines() {
   const [newMachineIds, setNewMachineIds] = useState(new Set()) // Track newly created machines for highlight animation
   const [vastBalance, setVastBalance] = useState(null) // VAST.ai account balance
   const [deletingMachines, setDeletingMachines] = useState(new Set()) // Track machines being deleted
-
 
   // Create machine modal state
   const [createModal, setCreateModal] = useState({ open: false, offer: null, creating: false, error: null })
@@ -152,14 +160,14 @@ export default function Machines() {
           setError(null)
           return
         }
-        throw new Error(`Erro ao buscar máquinas (${res.status})`)
+        throw new Error(`Error fetching machines (${res.status})`)
       }
       const data = await res.json()
       setMachines(data.instances || [])
       setError(null)
     } catch (err) {
       // Network errors or API unavailable - show empty state instead of error
-      console.error('Erro ao buscar máquinas:', err)
+      console.error('Error fetching machines:', err)
       setMachines([])
       setError(null)
     } finally {
@@ -412,22 +420,22 @@ export default function Machines() {
       setSyncStats(prev => ({ ...prev, [machineId]: data }))
 
       // Show sync result with better visibility
-      const syncType = data.is_incremental ? 'Sync incremental' : 'Sync inicial'
-      const message = `${syncType} concluído em ${data.duration_seconds.toFixed(1)}s!\n\n` +
-        `Arquivos novos: ${data.files_new}\n` +
-        `Arquivos modificados: ${data.files_changed}\n` +
-        `Arquivos inalterados: ${data.files_unmodified}\n` +
-        `Dados enviados: ${data.data_added}`
+      const syncType = data.is_incremental ? 'Incremental sync' : 'Initial sync'
+      const message = `${syncType} completed in ${data.duration_seconds.toFixed(1)}s!\n\n` +
+        `New files: ${data.files_new}\n` +
+        `Modified files: ${data.files_changed}\n` +
+        `Unchanged files: ${data.files_unmodified}\n` +
+        `Data sent: ${data.data_added}`
 
       alert(message)
 
       // Show success toast if in demo mode helper
       if (showDemoToast) {
-        showDemoToast(`Snapshot concluído! ${data.data_added} sincronizados`, 'success')
+        showDemoToast(`Snapshot complete! ${data.data_added} synced`, 'success')
       }
     } catch (err) {
       setSyncStatus(prev => ({ ...prev, [machineId]: 'idle' }))
-      alert(`Erro ao criar snapshot: ${err.message}`)
+      alert(`Error creating snapshot: ${err.message}`)
     }
   }
 
@@ -641,6 +649,12 @@ export default function Machines() {
     }, 5000)
   }
 
+  // Navigate to new machine page
+  const goToNewMachine = () => {
+    const basePath = location.pathname.startsWith('/demo-app') ? '/demo-app' : '/app'
+    navigate(`${basePath}/machines/new`)
+  }
+
   // States where machine is loading/starting
   const loadingStates = ['loading', 'creating', 'starting', 'pending', 'provisioning', 'configuring']
 
@@ -651,10 +665,15 @@ export default function Machines() {
     return dateB - dateA // Most recent first
   }
 
-  // Group machines: Loading → Running → Stopped
-  const loadingMachines = machines.filter(m => loadingStates.includes(m.actual_status)).sort(sortByRecent)
-  const runningMachines = machines.filter(m => m.actual_status === 'running').sort(sortByRecent)
-  const stoppedMachines = machines.filter(m =>
+  // Filter out machines that are in a provisioning race (they only appear after winner is selected)
+  const visibleMachines = useMemo(() => {
+    return machines.filter(m => !racingInstanceIds.includes(m.id))
+  }, [machines, racingInstanceIds])
+
+  // Group machines: Loading → Running → Stopped (using visibleMachines instead of machines)
+  const loadingMachines = visibleMachines.filter(m => loadingStates.includes(m.actual_status)).sort(sortByRecent)
+  const runningMachines = visibleMachines.filter(m => m.actual_status === 'running').sort(sortByRecent)
+  const stoppedMachines = visibleMachines.filter(m =>
     !loadingStates.includes(m.actual_status) && m.actual_status !== 'running'
   ).sort(sortByRecent)
 
@@ -669,7 +688,6 @@ export default function Machines() {
       ? stoppedMachines
       : [...loadingMachines, ...runningMachines, ...stoppedMachines]
 
-  const totalGpuMem = activeMachines.reduce((acc, m) => acc + (m.gpu_ram || 24000), 0)
   const totalCostPerHour = activeMachines.reduce((acc, m) => acc + (m.total_dph || m.dph_total || 0), 0)
   const totalCpuStandbyCount = activeMachines.filter(m => m.cpu_standby?.enabled).length
 
@@ -688,87 +706,103 @@ export default function Machines() {
       {/* Page Header - TailAdmin Style */}
       <div className="page-header">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="page-title flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 flex items-center justify-center border border-emerald-500/20">
               <Server className="w-6 h-6 text-emerald-400" />
-              Minhas Máquinas
-            </h1>
-            <p className="page-subtitle">Gerencie suas instâncias de GPU e CPU</p>
+            </div>
+            <div className="flex flex-col justify-center">
+              <h1 className="page-title leading-tight">My Machines</h1>
+              <p className="page-subtitle mt-0.5">Manage your GPU and CPU instances</p>
+            </div>
           </div>
-          <Link
-            to={isDemo ? "/demo-app" : "/app"}
+          <button
+            onClick={goToNewMachine}
             className="ta-btn ta-btn-primary"
           >
             <Plus className="w-4 h-4" />
-            Nova Máquina
-          </Link>
+            New Machine
+          </button>
         </div>
       </div>
 
-
-      {/* Stats Summary - TailAdmin Cards */}
+      {/* Stats Summary */}
       <div className="stats-grid mb-6">
         <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="stat-card-label">GPUs Ativas</p>
-              <p className="stat-card-value">{activeMachines.length}</p>
+              <p className="stat-card-label">Total</p>
+              <p className="stat-card-value">{visibleMachines.length}</p>
             </div>
-            <Server className="w-5 h-5 text-emerald-400" />
+            <Server className="w-5 h-5 text-gray-400" />
           </div>
         </div>
-        {totalCpuStandbyCount > 0 && (
-          <div className="stat-card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="stat-card-label">CPU Backup</p>
-                <p className="stat-card-value">{totalCpuStandbyCount}</p>
-              </div>
-              <Shield className="w-5 h-5 text-brand-400" />
-            </div>
-          </div>
-        )}
+
         <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="stat-card-label">VRAM Total</p>
-              <p className="stat-card-value">{Math.round(totalGpuMem / 1024)} GB</p>
+              <p className="stat-card-label">Active</p>
+              <p className="stat-card-value text-emerald-400">{activeMachines.length}</p>
             </div>
-            <Cpu className="w-5 h-5 text-amber-400" />
+            <Activity className="w-5 h-5 text-emerald-400" />
           </div>
         </div>
+
         <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="stat-card-label">Custo/Hora</p>
-              <p className="stat-card-value">${totalCostPerHour.toFixed(2)}</p>
+              <p className="stat-card-label">Protected</p>
+              <p className="stat-card-value text-cyan-400">{totalCpuStandbyCount}</p>
             </div>
-            <Activity className="w-5 h-5 text-rose-400" />
+            <Shield className="w-5 h-5 text-cyan-400" />
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="stat-card-label">Cost/Hour</p>
+              <p className="stat-card-value text-amber-400">${totalCostPerHour.toFixed(2)}</p>
+            </div>
+            <DollarSign className="w-5 h-5 text-amber-400" />
           </div>
         </div>
       </div>
 
-      {/* Filter Tabs - TailAdmin Style */}
+
+      {/* Filter Tabs - Enhanced Style */}
       <div className="ta-card">
         <div className="ta-card-header">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="ta-tabs">
+            <div className="flex items-center gap-2">
               {[
-                { id: 'all', label: 'Todas', count: machines.length },
-                { id: 'online', label: 'Online', count: activeMachines.length },
-                { id: 'offline', label: 'Offline', count: inactiveMachines.length },
+                { id: 'all', label: 'All', count: visibleMachines.length, icon: Server },
+                { id: 'online', label: 'Online', count: activeMachines.length, icon: Activity, color: 'text-emerald-400' },
+                { id: 'offline', label: 'Offline', count: inactiveMachines.length, icon: null, color: 'text-gray-400' },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setFilter(tab.id)}
-                  className={`ta-tab ${filter === tab.id ? 'ta-tab-active' : ''}`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    filter === tab.id
+                      ? 'bg-brand-500/20 text-brand-400 border border-brand-500/30'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50 border border-transparent'
+                  }`}
                 >
-                  {tab.label} ({tab.count})
+                  {tab.icon && <tab.icon className={`w-4 h-4 ${filter === tab.id ? 'text-brand-400' : tab.color || ''}`} />}
+                  <span>{tab.label}</span>
+                  <span className={`px-1.5 py-0.5 rounded text-xs ${
+                    filter === tab.id ? 'bg-brand-500/30 text-brand-300' : 'bg-gray-700 text-gray-400'
+                  }`}>
+                    {tab.count}
+                  </span>
                 </button>
               ))}
             </div>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Auto-refresh</span>
+            </div>
           </div>
-
         </div>
 
         <div className="ta-card-body">
@@ -778,7 +812,7 @@ export default function Machines() {
             <ErrorState
               message={error}
               onRetry={fetchMachines}
-              retryText="Tentar novamente"
+              retryText="Try again"
               autoRetry={true}
               autoRetryDelay={10000}
             />
@@ -788,14 +822,14 @@ export default function Machines() {
           {!error && filteredMachines.length === 0 ? (
             <EmptyState
               icon="server"
-              title={filter === 'all' ? 'Nenhuma máquina' : filter === 'online' ? 'Nenhuma máquina online' : 'Nenhuma máquina offline'}
+              title={filter === 'all' ? 'No machines' : filter === 'online' ? 'No online machines' : 'No offline machines'}
               description={filter === 'all'
-                ? 'Crie sua primeira máquina GPU para começar a trabalhar.'
+                ? 'Create your first GPU machine to get started.'
                 : filter === 'online'
-                  ? 'Todas as suas máquinas estão offline. Inicie uma para começar.'
-                  : 'Todas as suas máquinas estão online.'}
-              action={() => window.location.href = '/'}
-              actionText="Criar máquina"
+                  ? 'All your machines are offline. Start one to begin.'
+                  : 'All your machines are online.'}
+              action={goToNewMachine}
+              actionText="Create machine"
             />
           ) : !error && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -827,8 +861,8 @@ export default function Machines() {
         isOpen={destroyDialog.open}
         onClose={() => setDestroyDialog({ open: false, machineId: null, machineName: '' })}
         onConfirm={confirmDestroy}
-        title="Destruir máquina?"
-        message={`Tem certeza que deseja destruir a máquina ${destroyDialog.machineName}? Esta ação é irreversível e todos os dados não salvos serão perdidos.`}
+        title="Destroy machine?"
+        message={`Are you sure you want to destroy ${destroyDialog.machineName}? This action is irreversible and all unsaved data will be lost.`}
         variant="danger"
       />
 
@@ -846,7 +880,7 @@ export default function Machines() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Plus className="w-5 h-5 text-green-400" />
-              Criar Máquina GPU
+              Create GPU Machine
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-4 pt-2">
@@ -854,7 +888,7 @@ export default function Machines() {
                   <div className="p-4 rounded-lg border border-gray-700 bg-gray-800/50">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-white font-semibold">{createModal.offer.gpu_name}</span>
-                      <span className="text-green-400 font-mono">${createModal.offer.dph_total?.toFixed(3)}/hr</span>
+                      <span className="text-green-400 font-mono">${createModal.offer.dph_total?.toFixed(3)}/h</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
                       <div>VRAM: {Math.round((createModal.offer.gpu_ram || 24000) / 1024)} GB</div>
@@ -867,10 +901,10 @@ export default function Machines() {
                 <div className="p-3 rounded-lg border border-cyan-700/50 bg-cyan-900/20">
                   <div className="flex items-center gap-2 text-cyan-300 text-sm">
                     <Shield className="w-4 h-4" />
-                    <span>CPU Standby será criado automaticamente</span>
+                    <span>CPU Standby will be created automatically</span>
                   </div>
                   <p className="text-xs text-gray-400 mt-1 ml-6">
-                    Uma VM de backup será provisionada para proteção contra interrupções.
+                    A backup VM will be provisioned for protection against interruptions.
                   </p>
                 </div>
                 {createModal.error && (
@@ -882,22 +916,22 @@ export default function Machines() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={createModal.creating}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={createModal.creating}>Cancel</AlertDialogCancel>
             <button
               onClick={() => handleCreateInstance(createModal.offer)}
               disabled={createModal.creating}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed rounded-md transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed rounded-lg transition-colors"
               data-testid="confirm-create-instance"
             >
               {createModal.creating ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  Criando...
+                  Creating...
                 </>
               ) : (
                 <>
                   <Plus className="w-4 h-4" />
-                  Criar Máquina
+                  Create Machine
                 </>
               )}
             </button>

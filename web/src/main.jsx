@@ -2,7 +2,6 @@ import React from "react"
 import ReactDOM from "react-dom/client"
 import { BrowserRouter } from "react-router-dom"
 import App from "./App"
-import DevBar from "./components/DevBar"
 import "./styles/index.css"
 
 // Initialize i18n before React renders - must be imported at entry point
@@ -13,7 +12,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   // <React.StrictMode>
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <App />
-      <DevBar />
     </BrowserRouter>
   // </React.StrictMode>,
 )

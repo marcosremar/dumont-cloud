@@ -23,7 +23,7 @@ export default function FailoverReportPage() {
 
             {/* Conteúdo principal */}
             <div className="max-w-7xl mx-auto">
-                <FailoverReport isDemo={localStorage.getItem('demo_mode') === 'true'} />
+                <FailoverReport isDemo={window.location.pathname.startsWith('/demo-app') || window.location.pathname.startsWith('/demo-docs')} />
             </div>
         </div>
     )

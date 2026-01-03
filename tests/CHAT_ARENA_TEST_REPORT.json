@@ -1,0 +1,99 @@
+{
+  "steps": [
+    {
+      "step": 1,
+      "action": "Verify initial empty state",
+      "duration": 16,
+      "status": "PASS"
+    },
+    {
+      "step": 2,
+      "action": "Open model selector dropdown",
+      "duration": 643,
+      "status": "PASS"
+    },
+    {
+      "step": 3,
+      "action": "Verify 3 demo models are listed",
+      "duration": 5,
+      "status": "PASS"
+    },
+    {
+      "step": 4,
+      "action": "Select demo-1 model",
+      "duration": 327,
+      "status": "PASS"
+    },
+    {
+      "step": 5,
+      "action": "Select demo-2 model",
+      "duration": 334,
+      "status": "PASS"
+    },
+    {
+      "step": 6,
+      "action": "Close dropdown and verify chat panels",
+      "duration": 598,
+      "status": "PASS"
+    },
+    {
+      "step": 7,
+      "action": "Configure system prompt for model",
+      "duration": 1504,
+      "status": "PASS"
+    },
+    {
+      "step": 8,
+      "action": "Type and send message",
+      "duration": 1089,
+      "status": "PASS"
+    },
+    {
+      "step": 9,
+      "action": "Wait for model responses",
+      "duration": 3865,
+      "status": "PASS"
+    },
+    {
+      "step": 10,
+      "action": "Verify responses and metrics",
+      "duration": 75,
+      "status": "PASS"
+    },
+    {
+      "step": 11,
+      "action": "Open stats popover",
+      "duration": 601,
+      "status": "PASS"
+    },
+    {
+      "step": 12,
+      "action": "Export conversation as Markdown",
+      "duration": 34,
+      "status": "PASS",
+      "metadata": {
+        "filename": "chat-arena-2026-01-03.md"
+      }
+    },
+    {
+      "step": 13,
+      "action": "Export conversation as JSON",
+      "duration": 42,
+      "status": "PASS",
+      "metadata": {
+        "filename": "chat-arena-2026-01-03.json"
+      }
+    },
+    {
+      "step": 14,
+      "action": "Clear all conversations",
+      "duration": 552,
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "metrics": {
+    "totalDuration": 10108,
+    "averageStepDuration": 691.7857142857143
+  }
+}

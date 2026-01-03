@@ -4,7 +4,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
-const isDemoMode = () => localStorage.getItem('demo_mode') === 'true'
 
 /**
  * Get authorization headers with current token
@@ -25,10 +24,6 @@ const getAuthHeaders = () => {
 export const checkShouldShow = createAsyncThunk(
   'nps/checkShouldShow',
   async ({ triggerType }, { rejectWithValue }) => {
-    // Skip API call in demo mode
-    if (isDemoMode()) {
-      return { should_show: false, triggerType }
-    }
     try {
       const res = await fetch(
         `${API_BASE}/api/v1/nps/should-show?trigger_type=${encodeURIComponent(triggerType)}`,

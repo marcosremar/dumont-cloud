@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Play, Square, RefreshCw, Clock, DollarSign, Cpu, Server,
+  PlayCircle, Square, RefreshCw, Clock, DollarSign, Cpu, Server,
   Plus, Loader2, CheckCircle, XCircle, AlertCircle, Terminal,
   Trash2, Eye, Download, ChevronDown, ChevronUp, ExternalLink
 } from 'lucide-react';
@@ -11,7 +11,7 @@ const STATUS_CONFIG = {
   pending: { color: 'text-gray-400', bg: 'bg-gray-500/10', icon: Clock, labelKey: 'jobs.status.pending' },
   provisioning: { color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Loader2, labelKey: 'jobs.status.provisioning' },
   starting: { color: 'text-blue-400', bg: 'bg-blue-500/10', icon: Loader2, labelKey: 'jobs.status.starting' },
-  running: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: Play, labelKey: 'jobs.status.running' },
+  running: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: PlayCircle, labelKey: 'jobs.status.running' },
   completing: { color: 'text-amber-400', bg: 'bg-amber-500/10', icon: Loader2, labelKey: 'jobs.status.completing' },
   completed: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', icon: CheckCircle, labelKey: 'jobs.status.completed' },
   failed: { color: 'text-red-400', bg: 'bg-red-500/10', icon: XCircle, labelKey: 'jobs.status.failed' },
@@ -255,23 +255,26 @@ const Jobs = () => {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-100">{t('jobs.title')}</h1>
-          <p className="text-sm text-gray-400 mt-1">
-            {t('jobs.pageSubtitle')}
-          </p>
+        <div className="flex items-center gap-4">
+          <Terminal className="w-9 h-9 flex-shrink-0" style={{ color: '#4caf50' }} />
+          <div className="flex flex-col justify-center">
+            <h1 className="text-2xl font-bold text-gray-100 leading-tight">{t('jobs.title')}</h1>
+            <p className="text-sm text-gray-400 mt-0.5">
+              {t('jobs.pageSubtitle')}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-gray-200 transition-all border border-white/10"
+            className="ta-btn ta-btn-secondary p-2"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
           <button
             onClick={() => setShowCreateForm(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 transition-all"
+            className="ta-btn ta-btn-primary"
           >
             <Plus className="w-4 h-4" />
             {t('jobs.newJob')}
@@ -544,14 +547,14 @@ const Jobs = () => {
                   <button
                     type="button"
                     onClick={() => setShowCreateForm(false)}
-                    className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm transition-all"
+                    className="ta-btn ta-btn-secondary"
                   >
                     {t('jobs.form.cancel')}
                   </button>
                   <button
                     type="submit"
                     disabled={creating}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 text-sm transition-all disabled:opacity-50"
+                    className="ta-btn ta-btn-primary disabled:opacity-50"
                   >
                     {creating ? (
                       <>
@@ -560,7 +563,7 @@ const Jobs = () => {
                       </>
                     ) : (
                       <>
-                        <Play className="w-4 h-4" />
+                        <PlayCircle className="w-4 h-4" />
                         {t('jobs.form.createAndRun')}
                       </>
                     )}
@@ -587,7 +590,7 @@ const Jobs = () => {
           </p>
           <button
             onClick={() => setShowCreateForm(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 transition-all"
+            className="ta-btn ta-btn-primary"
           >
             <Plus className="w-4 h-4" />
             {t('jobs.createFirstJob')}

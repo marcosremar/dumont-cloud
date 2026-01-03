@@ -23,6 +23,7 @@ class DatasetSource(str, Enum):
     UPLOAD = "upload"
     URL = "url"
     HUGGINGFACE = "huggingface"
+    EXISTING = "existing"  # Pre-existing dataset in storage
 
 
 @dataclass
@@ -112,6 +113,14 @@ class FineTuneJob:
     error_message: Optional[str] = None
     logs: List[str] = field(default_factory=list)
 
+    # CPU Standby for checkpoint sync (failover support)
+    cpu_standby_enabled: bool = True  # CPU Standby obrigatório por padrão
+    cpu_standby_instance_id: Optional[str] = None
+    cpu_standby_instance_ip: Optional[str] = None
+    cpu_standby_instance_zone: Optional[str] = None
+    last_checkpoint_sync: Optional[datetime] = None
+    checkpoint_sync_count: int = 0
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for persistence"""
         return {
@@ -137,6 +146,13 @@ class FineTuneJob:
             'output_model_path': self.output_model_path,
             'error_message': self.error_message,
             'logs': self.logs,
+            # CPU Standby fields
+            'cpu_standby_enabled': self.cpu_standby_enabled,
+            'cpu_standby_instance_id': self.cpu_standby_instance_id,
+            'cpu_standby_instance_ip': self.cpu_standby_instance_ip,
+            'cpu_standby_instance_zone': self.cpu_standby_instance_zone,
+            'last_checkpoint_sync': self.last_checkpoint_sync.isoformat() if self.last_checkpoint_sync else None,
+            'checkpoint_sync_count': self.checkpoint_sync_count,
         }
 
     @classmethod
@@ -165,12 +181,29 @@ class FineTuneJob:
             output_model_path=data.get('output_model_path'),
             error_message=data.get('error_message'),
             logs=data.get('logs', []),
+            # CPU Standby fields
+            cpu_standby_enabled=data.get('cpu_standby_enabled', True),
+            cpu_standby_instance_id=data.get('cpu_standby_instance_id'),
+            cpu_standby_instance_ip=data.get('cpu_standby_instance_ip'),
+            cpu_standby_instance_zone=data.get('cpu_standby_instance_zone'),
+            last_checkpoint_sync=datetime.fromisoformat(data['last_checkpoint_sync']) if data.get('last_checkpoint_sync') else None,
+            checkpoint_sync_count=data.get('checkpoint_sync_count', 0),
         )
 
     @property
     def is_running(self) -> bool:
         """Check if job is running"""
         return self.status == FineTuneStatus.RUNNING
+
+    @property
+    def is_active(self) -> bool:
+        """Check if job is in an active state (pending, uploading, queued, running)"""
+        return self.status in {
+            FineTuneStatus.PENDING,
+            FineTuneStatus.UPLOADING,
+            FineTuneStatus.QUEUED,
+            FineTuneStatus.RUNNING
+        }
 
     @property
     def is_completed(self) -> bool:
@@ -181,6 +214,16 @@ class FineTuneJob:
     def is_failed(self) -> bool:
         """Check if job failed"""
         return self.status == FineTuneStatus.FAILED
+
+    @property
+    def has_gpu_instance(self) -> bool:
+        """Check if job has a GPU instance ID"""
+        return self.skypilot_job_id is not None
+
+    @property
+    def has_cpu_standby(self) -> bool:
+        """Check if job has a CPU standby instance"""
+        return self.cpu_standby_instance_id is not None
 
     @property
     def progress_percent(self) -> float:

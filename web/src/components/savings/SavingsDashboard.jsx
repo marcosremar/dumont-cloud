@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { PageHeader, StatCard, Card, Button, Badge, Progress, EmptyState, StatsGrid } from '../tailadmin-ui/index'
+import { PageHeader, StatCard, Card, Badge, Progress, EmptyState, StatsGrid } from '../tailadmin-ui/index'
+import { Button } from '../ui/button'
 import { DollarSign, TrendingUp, TrendingDown, PiggyBank, Zap, Clock, Server, RefreshCw, BarChart3, ArrowUpRight, Calculator, CheckCircle, Sparkles, Activity, Play, Pause } from 'lucide-react'
 import {
     fetchSavings,

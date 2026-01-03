@@ -35,9 +35,17 @@ export default function StandbyConfig({ getAuthHeaders }) {
             if (res.ok) {
                 const data = await res.json()
                 setStatus(data)
+                const apiConfig = data.config || {}
                 setConfig(prev => ({
                     ...prev,
-                    enabled: data.auto_standby_enabled
+                    enabled: data.auto_standby_enabled,
+                    gcp_zone: apiConfig.gcp_zone || prev.gcp_zone,
+                    gcp_machine_type: apiConfig.gcp_machine_type || prev.gcp_machine_type,
+                    gcp_disk_size: apiConfig.gcp_disk_size || prev.gcp_disk_size,
+                    gcp_spot: apiConfig.gcp_spot !== undefined ? apiConfig.gcp_spot : prev.gcp_spot,
+                    sync_interval: apiConfig.sync_interval || prev.sync_interval,
+                    auto_failover: apiConfig.auto_failover !== undefined ? apiConfig.auto_failover : prev.auto_failover,
+                    auto_recovery: apiConfig.auto_recovery !== undefined ? apiConfig.auto_recovery : prev.auto_recovery,
                 }))
             }
         } catch (err) {
@@ -258,7 +266,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
                 <div className="pricing-info" data-testid="standby-config-pricing">
                     <DollarSign size={16} />
                     <span>
-                        Custo estimado: <strong>${pricing.estimated_monthly_usd}/mês</strong>
+                        Custo estimado: <strong>${Number(pricing.estimated_monthly_usd).toFixed(2)}/mes</strong>
                         {' '}({pricing.spot ? 'Spot' : 'On-Demand'})
                     </span>
                 </div>
@@ -398,7 +406,7 @@ export default function StandbyConfig({ getAuthHeaders }) {
           opacity: 0.5;
           cursor: not-allowed;
         }
-        
+
         .toggle-label {
           display: flex;
           align-items: center;

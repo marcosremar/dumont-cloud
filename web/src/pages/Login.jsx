@@ -20,8 +20,7 @@ export default function Login({ onLogin }) {
 
     if (autoLogin === 'demo' && onLogin) {
       console.log('[Login] Executing demo auto-login...')
-      // Set demo_mode flag in localStorage for isDemoMode() checks
-      localStorage.setItem('demo_mode', 'true')
+      // Demo mode is now determined by route (/demo-app) not localStorage
       // Fazer login automaticamente com credenciais demo
       setUsername('marcosremar@gmail.com')
       setPassword('dumont123')

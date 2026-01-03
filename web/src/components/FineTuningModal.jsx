@@ -2,159 +2,136 @@ import { useState, useEffect } from 'react';
 import {
   Brain,
   Upload,
-  Link,
   Database,
   Settings2,
-  Play,
   Loader2,
-  Info,
   Check,
   ChevronRight,
   ChevronLeft,
-  Cpu,
-  Zap,
+  ChevronDown,
+  Search,
+  Copy,
+  X,
+  Info,
 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from './ui/dialog';
-import { Button } from './ui/button';
-import { Label } from './ui/label';
-import { Input } from './ui/input';
-import { Slider } from './ui/slider';
 
-// Supported models - 10 lightweight models for fast fine-tuning
-const MODELS = [
-  // Ultra-lightweight (fastest training)
-  { id: 'unsloth/tinyllama-bnb-4bit', name: 'TinyLlama 1.1B', vram: '4GB', desc: 'Ultra-fast training, great for prototyping', category: 'ultra-light', speed: 'very-fast' },
-  { id: 'unsloth/stablelm-2-1_6b-bnb-4bit', name: 'StableLM 2 1.6B', vram: '6GB', desc: 'Stability AI\'s efficient small model', category: 'ultra-light', speed: 'very-fast' },
-  { id: 'unsloth/Phi-3-mini-4k-instruct-bnb-4bit', name: 'Phi-3 Mini', vram: '8GB', desc: 'Microsoft\'s compact but powerful model', category: 'ultra-light', speed: 'very-fast' },
-  // Lightweight (fast training)
-  { id: 'unsloth/mistral-7b-bnb-4bit', name: 'Mistral 7B', vram: '12GB', desc: 'Fast and efficient 7B model', category: 'light', speed: 'fast' },
-  { id: 'unsloth/gemma-7b-bnb-4bit', name: 'Gemma 7B', vram: '12GB', desc: 'Google\'s open-source 7B model', category: 'light', speed: 'fast' },
-  { id: 'unsloth/Qwen2-7B-bnb-4bit', name: 'Qwen 2 7B', vram: '12GB', desc: 'Alibaba\'s multilingual model', category: 'light', speed: 'fast' },
-  { id: 'unsloth/llama-3-8b-bnb-4bit', name: 'Llama 3 8B', vram: '16GB', desc: 'Meta\'s latest 8B parameter model', category: 'light', speed: 'fast' },
-  { id: 'unsloth/zephyr-7b-beta-bnb-4bit', name: 'Zephyr 7B Beta', vram: '12GB', desc: 'HuggingFace\'s fine-tuned Mistral', category: 'light', speed: 'fast' },
-  { id: 'unsloth/openhermes-2.5-mistral-7b-bnb-4bit', name: 'OpenHermes 2.5', vram: '12GB', desc: 'Excellent for chat & instruction', category: 'light', speed: 'fast' },
-  { id: 'unsloth/codellama-7b-bnb-4bit', name: 'CodeLlama 7B', vram: '12GB', desc: 'Specialized for code generation', category: 'light', speed: 'fast' },
+// Model Library (matching Fireworks.ai structure)
+const MODEL_LIBRARY = [
+  // Meta Llama models
+  { id: 'unsloth/llama-3-8b-bnb-4bit', name: 'Llama 3 8B', provider: 'Meta', vram: '16GB', category: 'llama' },
+  { id: 'unsloth/llama-3.1-8b-bnb-4bit', name: 'Llama 3.1 8B', provider: 'Meta', vram: '16GB', category: 'llama' },
+  { id: 'unsloth/llama-3.2-3b-bnb-4bit', name: 'Llama 3.2 3B', provider: 'Meta', vram: '8GB', category: 'llama' },
+  // Mistral models
+  { id: 'unsloth/mistral-7b-bnb-4bit', name: 'Mistral 7B', provider: 'Mistral AI', vram: '12GB', category: 'mistral' },
+  { id: 'unsloth/mistral-7b-instruct-v0.3-bnb-4bit', name: 'Mistral 7B Instruct v0.3', provider: 'Mistral AI', vram: '12GB', category: 'mistral' },
+  // Google models
+  { id: 'unsloth/gemma-7b-bnb-4bit', name: 'Gemma 7B', provider: 'Google', vram: '12GB', category: 'gemma' },
+  { id: 'unsloth/gemma-2-9b-bnb-4bit', name: 'Gemma 2 9B', provider: 'Google', vram: '18GB', category: 'gemma' },
+  // Qwen models
+  { id: 'unsloth/Qwen2-7B-bnb-4bit', name: 'Qwen 2 7B', provider: 'Alibaba', vram: '12GB', category: 'qwen' },
+  { id: 'unsloth/Qwen2.5-7B-bnb-4bit', name: 'Qwen 2.5 7B', provider: 'Alibaba', vram: '12GB', category: 'qwen' },
+  { id: 'unsloth/Qwen2.5-3B-bnb-4bit', name: 'Qwen 2.5 3B', provider: 'Alibaba', vram: '8GB', category: 'qwen' },
+  // Microsoft models
+  { id: 'unsloth/Phi-3-mini-4k-instruct-bnb-4bit', name: 'Phi-3 Mini', provider: 'Microsoft', vram: '8GB', category: 'phi' },
+  { id: 'unsloth/Phi-3.5-mini-instruct-bnb-4bit', name: 'Phi-3.5 Mini', provider: 'Microsoft', vram: '8GB', category: 'phi' },
+  // Lightweight models
+  { id: 'unsloth/tinyllama-bnb-4bit', name: 'TinyLlama 1.1B', provider: 'TinyLlama', vram: '4GB', category: 'tiny' },
+  { id: 'unsloth/stablelm-2-1_6b-bnb-4bit', name: 'StableLM 2 1.6B', provider: 'Stability AI', vram: '6GB', category: 'stablelm' },
+  // Code models
+  { id: 'unsloth/codellama-7b-bnb-4bit', name: 'CodeLlama 7B', provider: 'Meta', vram: '12GB', category: 'code' },
+  { id: 'unsloth/deepseek-coder-6.7b-base-bnb-4bit', name: 'DeepSeek Coder 6.7B', provider: 'DeepSeek', vram: '12GB', category: 'code' },
+  // Chat-optimized models
+  { id: 'unsloth/zephyr-7b-beta-bnb-4bit', name: 'Zephyr 7B Beta', provider: 'HuggingFace', vram: '12GB', category: 'chat' },
+  { id: 'unsloth/openhermes-2.5-mistral-7b-bnb-4bit', name: 'OpenHermes 2.5', provider: 'Nous Research', vram: '12GB', category: 'chat' },
 ];
 
-// GPU options - Various runtimes for different budgets
-const GPU_OPTIONS = [
-  // Budget-friendly (fast GPUs)
-  { value: 'RTX3060', label: 'RTX 3060', vram: '12GB', price: '~$0.20/hr', category: 'budget' },
-  { value: 'RTX3090', label: 'RTX 3090', vram: '24GB', price: '~$0.40/hr', category: 'budget' },
-  { value: 'RTX4070', label: 'RTX 4070', vram: '12GB', price: '~$0.35/hr', category: 'budget' },
-  // Standard (balanced)
-  { value: 'RTX4080', label: 'RTX 4080', vram: '16GB', price: '~$0.55/hr', category: 'standard' },
-  { value: 'RTX4090', label: 'RTX 4090', vram: '24GB', price: '~$0.80/hr', category: 'standard' },
-  { value: 'L4', label: 'L4', vram: '24GB', price: '~$0.65/hr', category: 'standard' },
-  // Professional (high performance)
-  { value: 'A100', label: 'A100 40GB', vram: '40GB', price: '~$1.50/hr', category: 'professional' },
-  { value: 'A100-80GB', label: 'A100 80GB', vram: '80GB', price: '~$2.50/hr', category: 'professional' },
-  { value: 'H100', label: 'H100 80GB', vram: '80GB', price: '~$3.50/hr', category: 'professional' },
+// HuggingFace datasets available for fine-tuning
+const SAMPLE_DATASETS = [
+  { id: 'yahma/alpaca-cleaned', name: 'Alpaca Cleaned (52K)', format: 'alpaca', size: '24 MB' },
+  { id: 'teknium/OpenHermes-2.5', name: 'OpenHermes 2.5 (1M)', format: 'sharegpt', size: '2.1 GB' },
+  { id: 'mlabonne/guanaco-llama2-1k', name: 'Guanaco 1K', format: 'alpaca', size: '1.5 MB' },
 ];
 
-// Dataset format options
-const FORMAT_OPTIONS = [
-  { value: 'alpaca', label: 'Alpaca', desc: 'instruction, input, output' },
-  { value: 'sharegpt', label: 'ShareGPT', desc: 'conversations array' },
-];
+// Copy to clipboard helper
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text);
+}
 
-// Validation constants
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-const ALLOWED_EXTENSIONS = ['.json', '.jsonl'];
-const MIN_JOB_NAME_LENGTH = 3;
-const MAX_JOB_NAME_LENGTH = 50;
+// Generate random string for job ID
+function generateId(length = 12) {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
 
-// Error prevention utilities
-const validateJobName = (name) => {
-  if (!name.trim()) return 'Job name is required';
-  if (name.length < MIN_JOB_NAME_LENGTH) return `Job name must be at least ${MIN_JOB_NAME_LENGTH} characters`;
-  if (name.length > MAX_JOB_NAME_LENGTH) return `Job name must be at most ${MAX_JOB_NAME_LENGTH} characters`;
-  if (!/^[a-zA-Z0-9_-]+$/.test(name.replace(/\s/g, '-'))) return 'Job name can only contain letters, numbers, hyphens and underscores';
-  return null;
-};
+// Generate timestamp string
+function generateTimestamp() {
+  const now = new Date();
+  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+}
 
-const validateDatasetUrl = (url) => {
-  if (!url.trim()) return 'Dataset URL is required';
-  try {
-    new URL(url);
-  } catch {
-    return 'Please enter a valid URL';
-  }
-  if (!url.startsWith('https://')) return 'URL must use HTTPS for security';
-  return null;
-};
-
-const validateFile = (file) => {
-  if (!file) return 'Please select a file';
-  if (file.size > MAX_FILE_SIZE) return `File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`;
-  const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
-  if (!ALLOWED_EXTENSIONS.includes(ext)) return `Only ${ALLOWED_EXTENSIONS.join(', ')} files are supported`;
-  return null;
-};
-
-const isGpuCompatible = (modelVramStr, gpuVramStr) => {
-  const modelVram = parseInt(modelVramStr) || 0;
-  const gpuVram = parseInt(gpuVramStr) || 0;
-  return gpuVram >= modelVram;
-};
-
-export default function FineTuningModal({ isOpen, onClose, onSuccess }) {
+export default function FineTuningModal({ isOpen, onClose, method = 'supervised', onSuccess }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Step 1: Model selection
-  const [baseModel, setBaseModel] = useState(MODELS[0].id);
+  // Step 1: Model
+  const [modelTab, setModelTab] = useState('library');
+  const [modelSearch, setModelSearch] = useState('');
+  const [selectedModel, setSelectedModel] = useState(null);
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
 
   // Step 2: Dataset
-  const [datasetSource, setDatasetSource] = useState('upload');
-  const [datasetPath, setDatasetPath] = useState('');
-  const [datasetFormat, setDatasetFormat] = useState('alpaca');
+  const [datasetTab, setDatasetTab] = useState('existing');
+  const [selectedDataset, setSelectedDataset] = useState(null);
+  const [showDatasetDropdown, setShowDatasetDropdown] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [datasetPath, setDatasetPath] = useState('');
+  const [evalDataset, setEvalDataset] = useState('none');
 
-  // Step 3: Configuration
-  const [jobName, setJobName] = useState('');
-  const [gpuType, setGpuType] = useState('A100');
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [config, setConfig] = useState({
-    lora_rank: 16,
-    lora_alpha: 16,
-    learning_rate: 0.0002,
-    epochs: 1,
-    batch_size: 2,
-    max_seq_length: 2048,
-  });
+  // Step 3: Optional Settings
+  const [modelOutputName, setModelOutputName] = useState('');
+  const [jobId, setJobId] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [epochs, setEpochs] = useState(1);
+  const [batchSize, setBatchSize] = useState(65536);
+  const [loraRank, setLoraRank] = useState(8);
+  const [learningRate, setLearningRate] = useState(0.0001);
+  const [maxContextLength, setMaxContextLength] = useState(65536);
+  const [gradientAccumulationSteps, setGradientAccumulationSteps] = useState(1);
+  const [warmupSteps, setWarmupSteps] = useState(0);
+  const [turboMode, setTurboMode] = useState(false);
+  const [enableWandb, setEnableWandb] = useState(false);
 
   // Reset on modal open
   useEffect(() => {
     if (isOpen) {
       setStep(1);
       setError(null);
-      setJobName('');
-      setDatasetPath('');
+      setSelectedModel(null);
+      setSelectedDataset(null);
       setUploadedFile(null);
+      setDatasetPath('');
+      // Generate default values
+      const timestamp = generateTimestamp();
+      const randomStr = generateId(8);
+      setModelOutputName(`ft-${timestamp}-${randomStr}`);
+      setJobId(generateId(12));
+      setDisplayName('');
     }
   }, [isOpen]);
 
-  // Handle file upload with validation
+  // Filter models based on search
+  const filteredModels = MODEL_LIBRARY.filter(model =>
+    model.name.toLowerCase().includes(modelSearch.toLowerCase()) ||
+    model.provider.toLowerCase().includes(modelSearch.toLowerCase()) ||
+    model.id.toLowerCase().includes(modelSearch.toLowerCase())
+  );
+
+  // Handle file upload
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    // Validate file before upload
-    const fileError = validateFile(file);
-    if (fileError) {
-      setError(fileError);
-      return;
-    }
 
     setUploadedFile(file);
     setUploading(true);
@@ -165,19 +142,11 @@ export default function FineTuningModal({ isOpen, onClose, onSuccess }) {
       formData.append('file', file);
 
       const token = localStorage.getItem('auth_token');
-
-      // Add timeout for large file uploads
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000); // 5 min timeout
-
       const res = await fetch('/api/v1/finetune/jobs/upload-dataset', {
         method: 'POST',
         body: formData,
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-        signal: controller.signal,
       });
-
-      clearTimeout(timeoutId);
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -187,56 +156,25 @@ export default function FineTuningModal({ isOpen, onClose, onSuccess }) {
       const data = await res.json();
       setDatasetPath(data.dataset_path);
     } catch (err) {
-      if (err.name === 'AbortError') {
-        setError('Upload timed out. Please try again with a smaller file.');
-      } else if (err.message.includes('fetch')) {
-        setError('Network error. Please check your connection and try again.');
-      } else {
-        setError('Failed to upload dataset: ' + err.message);
-      }
+      setError('Failed to upload dataset: ' + err.message);
       setUploadedFile(null);
     } finally {
       setUploading(false);
     }
   };
 
-  // Launch fine-tuning job with comprehensive validation
-  const handleLaunch = async () => {
-    // Prevent double submission
+  // Launch fine-tuning job
+  const handleCreate = async () => {
     if (loading) return;
 
-    // Validate job name
-    const jobNameError = validateJobName(jobName);
-    if (jobNameError) {
-      setError(jobNameError);
+    if (!selectedModel) {
+      setError('Please select a base model');
       return;
     }
 
-    // Validate dataset
-    if (!datasetPath) {
-      setError('Please upload a dataset or provide a URL');
+    if (!datasetPath && !selectedDataset) {
+      setError('Please select or upload a dataset');
       return;
-    }
-
-    // Validate URL if using URL source
-    if (datasetSource === 'url') {
-      const urlError = validateDatasetUrl(datasetPath);
-      if (urlError) {
-        setError(urlError);
-        return;
-      }
-    }
-
-    // Warn about GPU compatibility (but don't block)
-    const selectedModel = MODELS.find(m => m.id === baseModel);
-    const selectedGpu = GPU_OPTIONS.find(g => g.value === gpuType);
-    if (selectedModel && selectedGpu && !isGpuCompatible(selectedModel.vram, selectedGpu.vram)) {
-      const confirmProceed = window.confirm(
-        `Warning: ${selectedModel.name} requires ${selectedModel.vram} VRAM, ` +
-        `but ${selectedGpu.label} only has ${selectedGpu.vram}. ` +
-        `Training may fail or be very slow. Continue anyway?`
-      );
-      if (!confirmProceed) return;
     }
 
     setLoading(true);
@@ -245,10 +183,6 @@ export default function FineTuningModal({ isOpen, onClose, onSuccess }) {
     try {
       const token = localStorage.getItem('auth_token');
 
-      // Add timeout for job creation
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 sec timeout
-
       const res = await fetch('/api/v1/finetune/jobs', {
         method: 'POST',
         headers: {
@@ -256,29 +190,32 @@ export default function FineTuningModal({ isOpen, onClose, onSuccess }) {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          name: jobName.trim().replace(/\s+/g, '-'),
-          base_model: baseModel,
-          dataset_source: datasetSource,
-          dataset_path: datasetPath,
-          dataset_format: datasetFormat,
-          config: config,
-          gpu_type: gpuType,
+          name: displayName || modelOutputName,
+          base_model: selectedModel.id,
+          dataset_source: uploadedFile ? 'upload' : 'existing',
+          dataset_path: datasetPath || selectedDataset?.id,
+          dataset_format: 'alpaca',
+          config: {
+            lora_rank: loraRank,
+            lora_alpha: loraRank,
+            learning_rate: learningRate,
+            epochs: epochs,
+            batch_size: batchSize,
+            max_seq_length: maxContextLength,
+            gradient_accumulation_steps: gradientAccumulationSteps,
+            warmup_steps: warmupSteps,
+            turbo_mode: turboMode,
+          },
+          gpu_type: 'A100',
           num_gpus: 1,
+          method: method,
+          job_id: jobId,
+          model_output_name: modelOutputName,
         }),
-        signal: controller.signal,
       });
-
-      clearTimeout(timeoutId);
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        if (res.status === 401) {
-          throw new Error('Session expired. Please login again.');
-        } else if (res.status === 429) {
-          throw new Error('Too many requests. Please wait a moment and try again.');
-        } else if (res.status >= 500) {
-          throw new Error('Server error. Please try again later.');
-        }
         throw new Error(data.detail || `Failed to create job (HTTP ${res.status})`);
       }
 
@@ -286,590 +223,536 @@ export default function FineTuningModal({ isOpen, onClose, onSuccess }) {
       onSuccess && onSuccess(job);
       onClose();
     } catch (err) {
-      if (err.name === 'AbortError') {
-        setError('Request timed out. Please try again.');
-      } else if (err.message.includes('fetch') || err.message.includes('network')) {
-        setError('Network error. Please check your connection and try again.');
-      } else {
-        setError(err.message);
-      }
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Get selected model details
-  const selectedModel = MODELS.find(m => m.id === baseModel);
+  // Navigation
+  const canProceedStep1 = !!selectedModel;
+  const canProceedStep2 = !!(datasetPath || selectedDataset);
 
-  // Step navigation
-  const canProceed = () => {
-    switch (step) {
-      case 1: return !!baseModel;
-      case 2: return !!datasetPath;
-      case 3: return !!jobName.trim();
-      default: return true;
-    }
-  };
+  if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-[#1a1f2e] border-gray-700 text-white">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Brain className="w-5 h-5 text-purple-400" />
-            Fine-Tune Model with Unsloth
-          </DialogTitle>
-          <DialogDescription className="text-gray-400">
-            Step {step} of 4: {
-              step === 1 ? 'Select Base Model' :
-              step === 2 ? 'Upload Dataset' :
-              step === 3 ? 'Configure Job' :
-              'Review & Launch'
-            }
-          </DialogDescription>
-        </DialogHeader>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[999999]">
+      <div className="bg-[#1a1f2e] rounded-xl border border-white/10 w-full max-w-2xl min-h-[70vh] max-h-[90vh] flex flex-col shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <div>
+            <h2 className="text-base font-semibold text-white">Create Fine-Tuning Job</h2>
+            <p className="text-xs text-gray-400">
+              {method === 'supervised' && 'Supervised Fine-Tuning (SFT)'}
+              {method === 'reinforcement' && 'Reinforcement Fine-Tuning (RFT)'}
+              {method === 'preference' && 'Direct Preference Optimization (DPO)'}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
-        {/* Progress bar */}
-        <div className="flex gap-1 mt-2">
-          {[1, 2, 3, 4].map(s => (
-            <div
-              key={s}
-              className={`h-1 flex-1 rounded-full transition-colors ${
-                s <= step ? 'bg-purple-500' : 'bg-gray-700'
-              }`}
-            />
+        {/* Wizard Steps Indicator */}
+        <div className="flex items-center px-4 py-3 border-b border-white/5">
+          {[
+            { num: 1, label: 'Model', icon: Brain },
+            { num: 2, label: 'Dataset', icon: Database },
+            { num: 3, label: 'Settings', icon: Settings2 },
+          ].map((s, idx) => (
+            <div key={s.num} className="flex items-center">
+              <div className="flex items-center gap-1.5">
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
+                    step > s.num
+                      ? 'bg-green-500 text-white'
+                      : step === s.num
+                      ? 'bg-purple-500 text-white'
+                      : 'bg-white/10 text-gray-400'
+                  }`}
+                >
+                  {step > s.num ? <Check className="w-3 h-3" /> : s.num}
+                </div>
+                <span className={`text-xs ${step >= s.num ? 'text-white' : 'text-gray-500'}`}>
+                  {s.label}
+                </span>
+              </div>
+              {idx < 2 && (
+                <div className={`w-12 h-0.5 mx-2 ${step > s.num ? 'bg-green-500' : 'bg-white/10'}`} />
+              )}
+            </div>
           ))}
         </div>
 
-        <div className="space-y-5 py-4 min-h-[300px]">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4">
           {error && (
-            <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 flex items-start gap-2">
-              <Info className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-              <p className="text-red-400 text-sm">{error}</p>
+            <div className="mb-3 p-2.5 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-2">
+              <Info className="w-3.5 h-3.5 text-red-400 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-red-400">{error}</p>
             </div>
           )}
 
           {/* Step 1: Model Selection */}
           {step === 1 && (
-            <div className="space-y-4">
-              <Label className="text-base font-medium flex items-center gap-2">
-                <Cpu className="w-4 h-4 text-purple-400" />
-                Select Base Model
-              </Label>
-              <p className="text-sm text-gray-400">
-                Choose a pre-trained model to fine-tune. All models use 4-bit quantization for 80% less VRAM.
-              </p>
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-sm font-medium text-white mb-0.5">Model</h3>
+                <p className="text-xs text-gray-400">Choose a base model or a LoRA adapter to start fine-tuning.</p>
+              </div>
 
-              {/* Ultra-light models section */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-4 h-4 text-yellow-400" />
-                  <span className="text-sm font-medium text-yellow-400">Ultra-Fast Training (1-4B params)</span>
-                </div>
-                {MODELS.filter(m => m.category === 'ultra-light').map(model => (
-                  <div
-                    key={model.id}
-                    onClick={() => setBaseModel(model.id)}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                      baseModel === model.id
-                        ? 'border-purple-500 bg-purple-500/10'
-                        : 'border-gray-700 hover:border-gray-600 bg-gray-800/50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-white">{model.name}</h4>
-                          <span className="text-xs bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded">
-                            {model.speed}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-400">{model.desc}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs bg-gray-700 px-2 py-1 rounded text-gray-300">
-                          {model.vram}
-                        </span>
-                        {baseModel === model.id && (
-                          <Check className="w-5 h-5 text-purple-400" />
-                        )}
+              {/* Model Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowModelDropdown(!showModelDropdown)}
+                  className="w-full p-3 bg-[#0f1219] border border-white/10 rounded-lg flex items-center justify-between text-left hover:border-white/20 transition-colors"
+                >
+                  {selectedModel ? (
+                    <div className="flex items-center gap-2">
+                      <Brain className="w-4 h-4 text-purple-400" />
+                      <div>
+                        <div className="text-sm text-white font-medium">{selectedModel.name}</div>
+                        <div className="text-xs text-gray-500 font-mono">{selectedModel.id}</div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Light models section */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <Brain className="w-4 h-4 text-blue-400" />
-                  <span className="text-sm font-medium text-blue-400">Fast Training (7-8B params)</span>
-                </div>
-                <div className="max-h-[200px] overflow-y-auto space-y-2 pr-2">
-                  {MODELS.filter(m => m.category === 'light').map(model => (
-                    <div
-                      key={model.id}
-                      onClick={() => setBaseModel(model.id)}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                        baseModel === model.id
-                          ? 'border-purple-500 bg-purple-500/10'
-                          : 'border-gray-700 hover:border-gray-600 bg-gray-800/50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-white">{model.name}</h4>
-                            <span className="text-xs bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded">
-                              {model.speed}
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-400">{model.desc}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs bg-gray-700 px-2 py-1 rounded text-gray-300">
-                            {model.vram}
-                          </span>
-                          {baseModel === model.id && (
-                            <Check className="w-5 h-5 text-purple-400" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: Dataset */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <Label className="text-base font-medium flex items-center gap-2">
-                <Database className="w-4 h-4 text-purple-400" />
-                Dataset
-              </Label>
-
-              {/* Source selection */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setDatasetSource('upload')}
-                  className={`flex-1 p-3 rounded-lg border flex items-center justify-center gap-2 transition-all ${
-                    datasetSource === 'upload'
-                      ? 'border-purple-500 bg-purple-500/10 text-purple-400'
-                      : 'border-gray-700 hover:border-gray-600 text-gray-400'
-                  }`}
-                >
-                  <Upload className="w-4 h-4" />
-                  Upload File
+                  ) : (
+                    <span className="text-sm text-gray-400">Select a model...</span>
+                  )}
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showModelDropdown ? 'rotate-180' : ''}`} />
                 </button>
-                <button
-                  onClick={() => setDatasetSource('url')}
-                  className={`flex-1 p-3 rounded-lg border flex items-center justify-center gap-2 transition-all ${
-                    datasetSource === 'url'
-                      ? 'border-purple-500 bg-purple-500/10 text-purple-400'
-                      : 'border-gray-700 hover:border-gray-600 text-gray-400'
-                  }`}
-                >
-                  <Link className="w-4 h-4" />
-                  URL
-                </button>
-              </div>
 
-              {/* Upload section */}
-              {datasetSource === 'upload' && (
-                <div className="space-y-3">
-                  <div
-                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-all ${
-                      uploadedFile ? 'border-green-500/50 bg-green-500/5' : 'border-gray-700 hover:border-gray-600'
-                    }`}
-                  >
-                    {uploading ? (
-                      <div className="flex flex-col items-center gap-2">
-                        <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
-                        <span className="text-gray-400">Uploading...</span>
-                      </div>
-                    ) : uploadedFile ? (
-                      <div className="flex flex-col items-center gap-2">
-                        <Check className="w-8 h-8 text-green-400" />
-                        <span className="text-white">{uploadedFile.name}</span>
-                        <span className="text-xs text-gray-400">Upload successful</span>
-                      </div>
-                    ) : (
-                      <label className="cursor-pointer">
-                        <div className="flex flex-col items-center gap-2">
-                          <Upload className="w-8 h-8 text-gray-400" />
-                          <span className="text-gray-400">Click to upload JSON or JSONL file</span>
-                          <span className="text-xs text-gray-500">Max 100MB</span>
-                        </div>
+                {showModelDropdown && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-[#1e2330] border border-white/10 rounded-lg shadow-xl z-10 max-h-80 overflow-hidden">
+                    {/* Search */}
+                    <div className="p-2 border-b border-white/10">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                         <input
-                          type="file"
-                          accept=".json,.jsonl"
-                          onChange={handleFileUpload}
-                          className="hidden"
+                          type="text"
+                          placeholder="Search models..."
+                          value={modelSearch}
+                          onChange={(e) => setModelSearch(e.target.value)}
+                          className="w-full bg-[#0f1219] border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 outline-none"
                         />
-                      </label>
-                    )}
+                      </div>
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="flex border-b border-white/10">
+                      <button
+                        onClick={() => setModelTab('library')}
+                        className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                          modelTab === 'library' ? 'text-white border-b-2 border-purple-500' : 'text-gray-400'
+                        }`}
+                      >
+                        Model Library
+                      </button>
+                      <button
+                        onClick={() => setModelTab('custom')}
+                        className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                          modelTab === 'custom' ? 'text-white border-b-2 border-purple-500' : 'text-gray-400'
+                        }`}
+                      >
+                        Custom Models
+                      </button>
+                    </div>
+
+                    {/* Model List */}
+                    <div className="max-h-52 overflow-y-auto">
+                      {modelTab === 'library' ? (
+                        filteredModels.length > 0 ? (
+                          filteredModels.map((model) => (
+                            <button
+                              key={model.id}
+                              onClick={() => {
+                                setSelectedModel(model);
+                                setShowModelDropdown(false);
+                              }}
+                              className={`w-full p-2.5 flex items-center gap-2 hover:bg-white/5 transition-colors ${
+                                selectedModel?.id === model.id ? 'bg-purple-500/10' : ''
+                              }`}
+                            >
+                              <Brain className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                              <div className="flex-1 min-w-0 text-left">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-sm text-white font-medium">{model.name}</span>
+                                  <span className="text-xs text-gray-500">{model.provider}</span>
+                                </div>
+                                <div className="text-xs text-gray-500 font-mono truncate">{model.id}</div>
+                              </div>
+                              <span className="text-xs text-gray-500 bg-white/5 px-1.5 py-0.5 rounded">{model.vram}</span>
+                              {selectedModel?.id === model.id && (
+                                <Check className="w-3.5 h-3.5 text-purple-400" />
+                              )}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="p-3 text-center text-gray-400 text-xs">
+                            No models found matching "{modelSearch}"
+                          </div>
+                        )
+                      ) : (
+                        <div className="p-3 text-center text-gray-400 text-xs">
+                          No custom models available. Upload a LoRA adapter to use here.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Selected Model Info */}
+              {selectedModel && (
+                <div className="p-3 bg-purple-500/5 border border-purple-500/20 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs text-gray-400">Selected:</span>
+                      <span className="text-sm text-white ml-1.5 font-medium">{selectedModel.name}</span>
+                    </div>
+                    <span className="text-xs text-purple-400 bg-purple-500/20 px-1.5 py-0.5 rounded">
+                      {selectedModel.vram} VRAM
+                    </span>
                   </div>
                 </div>
               )}
+            </div>
+          )}
 
-              {/* URL input */}
-              {datasetSource === 'url' && (
-                <div className="space-y-3">
-                  <Input
-                    placeholder="https://huggingface.co/datasets/... or direct JSON URL"
-                    value={datasetPath}
-                    onChange={(e) => setDatasetPath(e.target.value)}
-                    className="bg-gray-800 border-gray-700 text-white"
-                  />
-                  <p className="text-xs text-gray-400">
-                    Supports HuggingFace datasets and direct JSON file URLs
-                  </p>
-                </div>
-              )}
+          {/* Step 2: Dataset Selection */}
+          {step === 2 && (
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-sm font-medium text-white mb-0.5">Dataset</h3>
+                <p className="text-xs text-gray-400">Select an existing dataset or upload a new one.</p>
+              </div>
 
-              {/* Format selection */}
-              <div className="space-y-2">
-                <Label className="text-sm text-gray-400">Dataset Format</Label>
-                <div className="flex gap-2">
-                  {FORMAT_OPTIONS.map(fmt => (
+              {/* Dataset Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowDatasetDropdown(!showDatasetDropdown)}
+                  className="w-full p-3 bg-[#0f1219] border border-white/10 rounded-lg flex items-center justify-between text-left hover:border-white/20 transition-colors"
+                >
+                  {selectedDataset ? (
+                    <div className="flex items-center gap-2">
+                      <Database className="w-4 h-4 text-cyan-400" />
+                      <div>
+                        <div className="text-sm text-white font-medium">{selectedDataset.name}</div>
+                        <div className="text-xs text-gray-500">{selectedDataset.format} • {selectedDataset.size}</div>
+                      </div>
+                    </div>
+                  ) : uploadedFile ? (
+                    <div className="flex items-center gap-2">
+                      <Database className="w-4 h-4 text-green-400" />
+                      <div>
+                        <div className="text-sm text-white font-medium">{uploadedFile.name}</div>
+                        <div className="text-xs text-gray-500">Uploaded file</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-gray-400">Select a dataset...</span>
+                  )}
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showDatasetDropdown ? 'rotate-180' : ''}`} />
+                </button>
+
+                {showDatasetDropdown && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-[#1e2330] border border-white/10 rounded-lg shadow-xl z-10">
+                    {SAMPLE_DATASETS.map((dataset) => (
+                      <button
+                        key={dataset.id}
+                        onClick={() => {
+                          setSelectedDataset(dataset);
+                          setUploadedFile(null);
+                          setDatasetPath(dataset.id);
+                          setShowDatasetDropdown(false);
+                        }}
+                        className={`w-full p-2.5 flex items-center gap-2 hover:bg-white/5 transition-colors ${
+                          selectedDataset?.id === dataset.id ? 'bg-cyan-500/10' : ''
+                        }`}
+                      >
+                        <Database className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                        <div className="flex-1 min-w-0 text-left">
+                          <div className="text-sm text-white font-medium">{dataset.name}</div>
+                          <div className="text-xs text-gray-500">{dataset.format} • {dataset.size}</div>
+                        </div>
+                        {selectedDataset?.id === dataset.id && (
+                          <Check className="w-3.5 h-3.5 text-cyan-400" />
+                        )}
+                      </button>
+                    ))}
+                    <div className="border-t border-white/10 p-1.5">
+                      <span className="text-xs text-gray-500 px-2">Or upload a new dataset below</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Upload Area */}
+              <div
+                className={`border-2 border-dashed rounded-lg p-5 text-center transition-all ${
+                  uploadedFile ? 'border-green-500/50 bg-green-500/5' : 'border-white/10 hover:border-white/20'
+                }`}
+              >
+                {uploading ? (
+                  <div className="flex flex-col items-center gap-1.5">
+                    <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+                    <span className="text-sm text-gray-400">Uploading...</span>
+                  </div>
+                ) : uploadedFile ? (
+                  <div className="flex flex-col items-center gap-1.5">
+                    <Check className="w-6 h-6 text-green-400" />
+                    <span className="text-sm text-white font-medium">{uploadedFile.name}</span>
+                    <span className="text-xs text-gray-400">Upload successful</span>
                     <button
-                      key={fmt.value}
-                      onClick={() => setDatasetFormat(fmt.value)}
-                      className={`flex-1 p-3 rounded-lg border text-left transition-all ${
-                        datasetFormat === fmt.value
-                          ? 'border-purple-500 bg-purple-500/10'
-                          : 'border-gray-700 hover:border-gray-600'
-                      }`}
+                      onClick={() => {
+                        setUploadedFile(null);
+                        setDatasetPath('');
+                      }}
+                      className="text-xs text-red-400 hover:text-red-300 mt-1"
                     >
-                      <span className="font-medium text-white">{fmt.label}</span>
-                      <p className="text-xs text-gray-400">{fmt.desc}</p>
+                      Remove
                     </button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer">
+                    <div className="flex flex-col items-center gap-2">
+                      <Upload className="w-7 h-7 text-gray-400" />
+                      <div className="text-sm">
+                        <span className="text-purple-400 font-medium">Click to upload</span>
+                        <span className="text-gray-400"> or drag and drop</span>
+                      </div>
+                      <span className="text-xs text-gray-500">JSON or JSONL files up to 100MB</span>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".json,.jsonl"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* Evaluation Dataset */}
+              <div>
+                <label className="block text-xs text-gray-400 mb-1.5">Evaluation Dataset (Optional)</label>
+                <select
+                  value={evalDataset}
+                  onChange={(e) => setEvalDataset(e.target.value)}
+                  className="w-full bg-[#0f1219] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
+                >
+                  <option value="none">Do not use a validation dataset</option>
+                  {SAMPLE_DATASETS.map(ds => (
+                    <option key={ds.id} value={ds.id}>{ds.name}</option>
                   ))}
-                </div>
+                </select>
               </div>
             </div>
           )}
 
-          {/* Step 3: Configuration */}
+          {/* Step 3: Optional Settings */}
           {step === 3 && (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-base font-medium flex items-center gap-2">
-                  <Settings2 className="w-4 h-4 text-purple-400" />
-                  Job Configuration
-                </Label>
+              <div>
+                <h3 className="text-sm font-medium text-white mb-0.5">Optional Settings</h3>
+                <p className="text-xs text-gray-400">Configure training parameters for your fine-tuning job.</p>
               </div>
 
-              {/* Job name */}
-              <div className="space-y-2">
-                <Label className="text-sm text-gray-400">Job Name</Label>
-                <Input
-                  placeholder="my-fine-tuned-model"
-                  value={jobName}
-                  onChange={(e) => setJobName(e.target.value)}
-                  className="bg-gray-800 border-gray-700 text-white"
+              {/* Model Output Name */}
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Model Output Name</label>
+                <input
+                  type="text"
+                  value={modelOutputName}
+                  onChange={(e) => setModelOutputName(e.target.value)}
+                  className="w-full bg-[#0f1219] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none font-mono"
                 />
               </div>
 
-              {/* GPU selection with categories */}
-              <div className="space-y-3">
-                <Label className="text-sm text-gray-400">GPU Type</Label>
-
-                {/* GPU compatibility check */}
-                {(() => {
-                  const model = MODELS.find(m => m.id === baseModel);
-                  const modelVram = parseInt(model?.vram || '0');
-                  const gpu = GPU_OPTIONS.find(g => g.value === gpuType);
-                  const gpuVram = parseInt(gpu?.vram || '0');
-                  const isCompatible = gpuVram >= modelVram;
-
-                  if (!isCompatible && gpu) {
-                    return (
-                      <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-2 flex items-start gap-2">
-                        <Info className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
-                        <p className="text-xs text-orange-400">
-                          {model?.name} requires {model?.vram} VRAM, but {gpu.label} has only {gpu.vram}.
-                          Consider a larger GPU or a smaller model.
-                        </p>
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-
-                {/* Budget GPUs */}
-                <div>
-                  <span className="text-xs text-green-400 mb-1 block">Budget (Best for ultra-light models)</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    {GPU_OPTIONS.filter(g => g.category === 'budget').map(gpu => {
-                      const model = MODELS.find(m => m.id === baseModel);
-                      const modelVram = parseInt(model?.vram || '0');
-                      const gpuVram = parseInt(gpu.vram);
-                      const isCompatible = gpuVram >= modelVram;
-
-                      return (
-                        <button
-                          key={gpu.value}
-                          onClick={() => setGpuType(gpu.value)}
-                          className={`p-2 rounded-lg border text-left transition-all ${
-                            gpuType === gpu.value
-                              ? 'border-purple-500 bg-purple-500/10'
-                              : isCompatible
-                                ? 'border-gray-700 hover:border-gray-600'
-                                : 'border-gray-700/50 opacity-50'
-                          }`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <span className="font-medium text-white text-sm">{gpu.label}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-xs text-gray-400">{gpu.vram}</span>
-                            <span className="text-xs text-green-400">{gpu.price}</span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Standard GPUs */}
-                <div>
-                  <span className="text-xs text-blue-400 mb-1 block">Standard (Recommended)</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    {GPU_OPTIONS.filter(g => g.category === 'standard').map(gpu => {
-                      const model = MODELS.find(m => m.id === baseModel);
-                      const modelVram = parseInt(model?.vram || '0');
-                      const gpuVram = parseInt(gpu.vram);
-                      const isCompatible = gpuVram >= modelVram;
-
-                      return (
-                        <button
-                          key={gpu.value}
-                          onClick={() => setGpuType(gpu.value)}
-                          className={`p-2 rounded-lg border text-left transition-all ${
-                            gpuType === gpu.value
-                              ? 'border-purple-500 bg-purple-500/10'
-                              : isCompatible
-                                ? 'border-gray-700 hover:border-gray-600'
-                                : 'border-gray-700/50 opacity-50'
-                          }`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <span className="font-medium text-white text-sm">{gpu.label}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-xs text-gray-400">{gpu.vram}</span>
-                            <span className="text-xs text-blue-400">{gpu.price}</span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Professional GPUs */}
-                <div>
-                  <span className="text-xs text-purple-400 mb-1 block">Professional (Fastest training)</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    {GPU_OPTIONS.filter(g => g.category === 'professional').map(gpu => (
-                      <button
-                        key={gpu.value}
-                        onClick={() => setGpuType(gpu.value)}
-                        className={`p-2 rounded-lg border text-left transition-all ${
-                          gpuType === gpu.value
-                            ? 'border-purple-500 bg-purple-500/10'
-                            : 'border-gray-700 hover:border-gray-600'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start">
-                          <span className="font-medium text-white text-sm">{gpu.label}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-xs text-gray-400">{gpu.vram}</span>
-                          <span className="text-xs text-purple-400">{gpu.price}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+              {/* Job ID */}
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Job ID</label>
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={jobId}
+                    onChange={(e) => setJobId(e.target.value)}
+                    className="flex-1 bg-[#0f1219] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none font-mono"
+                  />
+                  <button
+                    onClick={() => copyToClipboard(jobId)}
+                    className="p-2 bg-[#0f1219] border border-white/10 rounded-lg hover:bg-white/5"
+                  >
+                    <Copy className="w-3.5 h-3.5 text-gray-400" />
+                  </button>
                 </div>
               </div>
 
-              {/* Advanced settings toggle */}
-              <button
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="text-sm text-purple-400 hover:text-purple-300 flex items-center gap-1"
-              >
-                {showAdvanced ? 'Hide' : 'Show'} Advanced Settings
-                <ChevronRight className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-90' : ''}`} />
-              </button>
+              {/* Display Name */}
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Display Name (Optional)</label>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="My Fine-Tuned Model"
+                  className="w-full bg-[#0f1219] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-purple-500 outline-none"
+                />
+              </div>
 
-              {/* Advanced settings */}
-              {showAdvanced && (
-                <div className="space-y-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm text-gray-400">LoRA Rank</Label>
-                      <div className="flex items-center gap-3">
-                        <Slider
-                          value={[config.lora_rank]}
-                          onValueChange={([v]) => setConfig({ ...config, lora_rank: v })}
-                          min={4}
-                          max={64}
-                          step={4}
-                          className="flex-1"
-                        />
-                        <span className="w-8 text-right text-white">{config.lora_rank}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm text-gray-400">Epochs</Label>
-                      <div className="flex items-center gap-3">
-                        <Slider
-                          value={[config.epochs]}
-                          onValueChange={([v]) => setConfig({ ...config, epochs: v })}
-                          min={1}
-                          max={5}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <span className="w-8 text-right text-white">{config.epochs}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm text-gray-400">Batch Size</Label>
-                      <div className="flex items-center gap-3">
-                        <Slider
-                          value={[config.batch_size]}
-                          onValueChange={([v]) => setConfig({ ...config, batch_size: v })}
-                          min={1}
-                          max={8}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <span className="w-8 text-right text-white">{config.batch_size}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm text-gray-400">Max Seq Length</Label>
-                      <div className="flex items-center gap-3">
-                        <Slider
-                          value={[config.max_seq_length]}
-                          onValueChange={([v]) => setConfig({ ...config, max_seq_length: v })}
-                          min={512}
-                          max={4096}
-                          step={256}
-                          className="flex-1"
-                        />
-                        <span className="w-12 text-right text-white">{config.max_seq_length}</span>
-                      </div>
-                    </div>
-                  </div>
+              {/* Training Parameters Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Epochs</label>
+                  <input
+                    type="number"
+                    value={epochs}
+                    onChange={(e) => setEpochs(parseInt(e.target.value) || 1)}
+                    min={1}
+                    max={10}
+                    className="w-full bg-[#0f1219] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
+                  />
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* Step 4: Review */}
-          {step === 4 && (
-            <div className="space-y-4">
-              <Label className="text-base font-medium flex items-center gap-2">
-                <Zap className="w-4 h-4 text-purple-400" />
-                Review & Launch
-              </Label>
-
-              <div className="space-y-3 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                <div className="flex justify-between py-2 border-b border-gray-700">
-                  <span className="text-gray-400">Job Name</span>
-                  <span className="text-white font-medium">{jobName}</span>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Batch Size</label>
+                  <input
+                    type="number"
+                    value={batchSize}
+                    onChange={(e) => setBatchSize(parseInt(e.target.value) || 65536)}
+                    className="w-full bg-[#0f1219] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
+                  />
                 </div>
-                <div className="flex justify-between py-2 border-b border-gray-700">
-                  <span className="text-gray-400">Base Model</span>
-                  <span className="text-white">{selectedModel?.name}</span>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">LoRA Rank</label>
+                  <input
+                    type="number"
+                    value={loraRank}
+                    onChange={(e) => setLoraRank(parseInt(e.target.value) || 8)}
+                    min={4}
+                    max={64}
+                    className="w-full bg-[#0f1219] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
+                  />
                 </div>
-                <div className="flex justify-between py-2 border-b border-gray-700">
-                  <span className="text-gray-400">Dataset</span>
-                  <span className="text-white truncate max-w-[200px]">
-                    {uploadedFile?.name || datasetPath.split('/').pop()}
-                  </span>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Learning Rate</label>
+                  <input
+                    type="number"
+                    value={learningRate}
+                    onChange={(e) => setLearningRate(parseFloat(e.target.value) || 0.0001)}
+                    step={0.00001}
+                    className="w-full bg-[#0f1219] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
+                  />
                 </div>
-                <div className="flex justify-between py-2 border-b border-gray-700">
-                  <span className="text-gray-400">GPU</span>
-                  <span className="text-white">{GPU_OPTIONS.find(g => g.value === gpuType)?.label}</span>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Max Context Length</label>
+                  <input
+                    type="number"
+                    value={maxContextLength}
+                    onChange={(e) => setMaxContextLength(parseInt(e.target.value) || 65536)}
+                    className="w-full bg-[#0f1219] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
+                  />
                 </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-400">Epochs</span>
-                  <span className="text-white">{config.epochs}</span>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Gradient Accum. Steps</label>
+                  <input
+                    type="number"
+                    value={gradientAccumulationSteps}
+                    onChange={(e) => setGradientAccumulationSteps(parseInt(e.target.value) || 1)}
+                    min={1}
+                    className="w-full bg-[#0f1219] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">Warmup Steps</label>
+                  <input
+                    type="number"
+                    value={warmupSteps}
+                    onChange={(e) => setWarmupSteps(parseInt(e.target.value) || 0)}
+                    min={0}
+                    className="w-full bg-[#0f1219] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500 outline-none"
+                  />
                 </div>
               </div>
 
-              <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
-                <div className="flex items-start gap-2">
-                  <Info className="w-4 h-4 text-purple-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-300">
-                      Fine-tuning will start immediately. You can monitor progress in the Fine-Tuning dashboard.
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Estimated cost: {GPU_OPTIONS.find(g => g.value === gpuType)?.price} for GPU usage
-                    </p>
-                  </div>
-                </div>
+              {/* Checkboxes */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={turboMode}
+                    onChange={(e) => setTurboMode(e.target.checked)}
+                    className="w-3.5 h-3.5 rounded border-white/20 bg-[#0f1219] text-purple-500 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-white">Turbo Mode</span>
+                  <span className="text-xs text-gray-500">(Faster, higher cost)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={enableWandb}
+                    onChange={(e) => setEnableWandb(e.target.checked)}
+                    className="w-3.5 h-3.5 rounded border-white/20 bg-[#0f1219] text-purple-500 focus:ring-purple-500"
+                  />
+                  <span className="text-sm text-white">Weights & Biases</span>
+                  <span className="text-xs text-gray-500">(Experiment tracking)</span>
+                </label>
               </div>
             </div>
           )}
         </div>
 
-        <DialogFooter className="flex justify-between">
+        {/* Footer */}
+        <div className="flex justify-between px-4 py-3 border-t border-white/10">
           <div>
             {step > 1 && (
-              <Button
-                variant="ghost"
+              <button
                 onClick={() => setStep(step - 1)}
                 disabled={loading}
-                className="text-gray-400 hover:text-white"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors"
               >
-                <ChevronLeft className="w-4 h-4 mr-1" />
+                <ChevronLeft className="w-3.5 h-3.5" />
                 Back
-              </Button>
+              </button>
             )}
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="ghost"
+            <button
               onClick={onClose}
               disabled={loading}
-              className="text-gray-400 hover:text-white"
+              className="px-4 py-1.5 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
             >
               Cancel
-            </Button>
-            {step < 4 ? (
-              <Button
+            </button>
+            {step < 3 ? (
+              <button
                 onClick={() => setStep(step + 1)}
-                disabled={!canProceed()}
-                className="bg-purple-500 hover:bg-purple-600 text-white"
+                disabled={(step === 1 && !canProceedStep1) || (step === 2 && !canProceedStep2)}
+                className="flex items-center gap-1 px-4 py-1.5 rounded-lg text-sm bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             ) : (
-              <Button
-                onClick={handleLaunch}
+              <button
+                onClick={handleCreate}
                 disabled={loading}
-                className="bg-purple-500 hover:bg-purple-600 text-white gap-2"
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors disabled:opacity-50"
               >
                 {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Creating...
+                  </>
                 ) : (
-                  <Play className="w-4 h-4" />
+                  'Create'
                 )}
-                {loading ? 'Launching...' : 'Launch Fine-Tuning'}
-              </Button>
+              </button>
             )}
           </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </div>
   );
 }

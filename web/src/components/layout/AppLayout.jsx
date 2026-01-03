@@ -19,7 +19,10 @@ const AppLayout = ({ user, onLogout, children, dashboardStats = null }) => {
   const { isExpanded } = useSidebar();
 
   return (
-    <div className="min-h-screen bg-[#0a0d0a] relative overflow-hidden">
+    <div className="app-layout-bg min-h-screen relative overflow-hidden">
+      {/* Grid Background Pattern */}
+      <div className="app-grid-pattern" />
+
       {/* Decorative Background Elements */}
       <div className="fixed top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-brand-500/5 blur-[120px] pointer-events-none" />
       <div className="fixed bottom-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-brand-400/5 blur-[100px] pointer-events-none" />

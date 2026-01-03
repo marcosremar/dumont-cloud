@@ -1,4 +1,5 @@
-import { AlertDialog, AlertDialogContent, Button } from '../tailadmin-ui'
+import { AlertDialog, AlertDialogContent } from '../tailadmin-ui'
+import { Button } from '../ui/button'
 
 export default function TestModal({ onClose }) {
   return (

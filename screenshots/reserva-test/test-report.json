@@ -1,0 +1,139 @@
+{
+  "timestamp": "2026-01-03T12:24:31.834Z",
+  "checks": [
+    {
+      "name": "Aplicação acessível",
+      "passed": true,
+      "details": "http://localhost:4892/"
+    },
+    {
+      "name": "Página de Máquinas carrega",
+      "passed": true,
+      "details": "http://localhost:4892/demo-app/machines"
+    },
+    {
+      "name": "Título da página",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Botão Nova Máquina",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Estatísticas visíveis",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Cards de máquinas",
+      "passed": true,
+      "details": "20 cards"
+    },
+    {
+      "name": "Página GPU Offers carrega",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "GPUs listadas",
+      "passed": true,
+      "details": "RTX 3080, RTX 3090, RTX 4080, RTX 4090, A100, H100, L40S"
+    },
+    {
+      "name": "Preços visíveis",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Economia vs AWS visível",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Botões de Provisionar",
+      "passed": true,
+      "details": "10 botões"
+    },
+    {
+      "name": "Filtros disponíveis",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Seletor de região presente",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Regiões disponíveis",
+      "passed": true,
+      "details": "US, EU"
+    },
+    {
+      "name": "Dashboard carrega",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Ofertas no Dashboard",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Wizard/CTA presente",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Links de navegação",
+      "passed": true,
+      "details": "4 links"
+    },
+    {
+      "name": "Menu lateral",
+      "passed": true,
+      "details": "10 itens"
+    },
+    {
+      "name": "Tabs de filtro",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "name": "Ações de máquina",
+      "passed": true,
+      "details": ""
+    }
+  ],
+  "warnings": [],
+  "errors": [],
+  "screenshots": [
+    "01-home.png",
+    "02-machines.png",
+    "03-gpu-offers.png",
+    "04-regions.png",
+    "05-dashboard.png",
+    "06-final.png"
+  ],
+  "gpuOffers": [
+    "RTX 3080",
+    "RTX 3090",
+    "RTX 4080",
+    "RTX 4090",
+    "A100",
+    "H100",
+    "L40S"
+  ],
+  "regions": [
+    "US",
+    "EU"
+  ],
+  "machines": [],
+  "summary": {
+    "passed": 21,
+    "failed": 0,
+    "successRate": 100
+  }
+}

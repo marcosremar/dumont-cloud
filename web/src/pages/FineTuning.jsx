@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Brain,
   Plus,
@@ -7,184 +8,159 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  Play,
-  Square,
+  Search,
+  ChevronDown,
+  Copy,
+  MoreHorizontal,
   FileText,
   Trash2,
-  ChevronDown,
-  AlertCircle,
-  Cpu,
-  Database,
+  Play,
+  Square,
   Rocket,
   Download,
-  Server,
+  Eye,
 } from 'lucide-react';
-import { Button, Progress } from '../components/tailadmin-ui';
+import { Button } from '../components/ui/button';
+import MethodSelectionModal from '../components/MethodSelectionModal';
 import FineTuningModal from '../components/FineTuningModal';
 
-// Status configurations
+// Status badge configurations (matching Fireworks.ai)
 const STATUS_CONFIG = {
-  pending: { icon: Clock, color: 'text-yellow-400', bg: 'bg-yellow-400/10', label: 'Pending' },
-  uploading: { icon: Loader2, color: 'text-cyan-400', bg: 'bg-cyan-400/10', label: 'Uploading', spin: true },
-  queued: { icon: Clock, color: 'text-orange-400', bg: 'bg-orange-400/10', label: 'Queued' },
-  running: { icon: Loader2, color: 'text-purple-400', bg: 'bg-purple-400/10', label: 'Running', spin: true },
-  completed: { icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-400/10', label: 'Completed' },
-  failed: { icon: XCircle, color: 'text-red-400', bg: 'bg-red-400/10', label: 'Failed' },
-  cancelled: { icon: Square, color: 'text-gray-400', bg: 'bg-gray-400/10', label: 'Cancelled' },
+  pending: { color: 'bg-yellow-500/20 text-yellow-400', label: 'Pending' },
+  uploading: { color: 'bg-cyan-500/20 text-cyan-400', label: 'Uploading' },
+  queued: { color: 'bg-orange-500/20 text-orange-400', label: 'Queued' },
+  running: { color: 'bg-purple-500/20 text-purple-400', label: 'Running' },
+  completed: { color: 'bg-green-500/20 text-green-400', label: 'Completed' },
+  failed: { color: 'bg-red-500/20 text-red-400', label: 'Failed' },
+  cancelled: { color: 'bg-gray-500/20 text-gray-400', label: 'Cancelled' },
 };
 
-// Format relative time
-function formatTimeAgo(dateStr) {
+// Format date/time like Fireworks.ai
+function formatDateTime(dateStr) {
   if (!dateStr) return 'N/A';
   const date = new Date(dateStr);
-  const now = new Date();
-  const seconds = Math.floor((now - date) / 1000);
-
-  if (seconds < 60) return 'Just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  return `${Math.floor(seconds / 86400)}d ago`;
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
-// Job Card Component
-function JobCard({ job, onRefresh, onViewLogs, onCancel, onDeploy, onDownload, onDelete }) {
-  const status = STATUS_CONFIG[job.status] || STATUS_CONFIG.pending;
-  const StatusIcon = status.icon;
-  const isRunning = job.status === 'running' || job.status === 'queued' || job.status === 'pending' || job.status === 'uploading';
-  const isCompleted = job.status === 'completed';
-  const canDelete = !isRunning; // Can delete failed, completed, or cancelled jobs
+// Copy to clipboard helper
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text);
+}
+
+// Status Badge Component
+function StatusBadge({ status }) {
+  const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+  const isRunning = ['running', 'uploading'].includes(status);
 
   return (
-    <div className="bg-[#131713] rounded-xl border border-white/10 p-5 hover:border-white/20 transition-all shadow-sm">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg ${status.bg}`}>
-            <StatusIcon className={`w-5 h-5 ${status.color} ${status.spin ? 'animate-spin' : ''}`} />
-          </div>
-          <div>
-            <h3 className="font-semibold text-white">{job.name}</h3>
-            <p className="text-sm text-gray-400">{job.id}</p>
-          </div>
-        </div>
-        <span className={`text-xs px-2 py-1 rounded ${status.bg} ${status.color}`}>
-          {status.label}
-        </span>
-      </div>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.color}`}>
+      {isRunning && <Loader2 className="w-3 h-3 animate-spin" />}
+      {config.label}
+    </span>
+  );
+}
 
-      {/* Model & Dataset */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="flex items-center gap-2 text-sm">
-          <Cpu className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-400">Model:</span>
-          <span className="text-white truncate">{job.base_model.split('/').pop()}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <Database className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-400">GPU:</span>
-          <span className="text-white">{job.gpu_type}</span>
-        </div>
-      </div>
+// Copy Button Component
+function CopyButton({ text, className = '' }) {
+  const [copied, setCopied] = useState(false);
 
-      {/* Progress (for running jobs) */}
-      {isRunning && (
-        <div className="mb-4">
-          <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-400">
-              Epoch {job.current_epoch + 1} / {job.config?.epochs || 1}
-            </span>
-            <span className="text-purple-400">{job.progress_percent?.toFixed(1) || 0}%</span>
-          </div>
-          <Progress value={job.progress_percent || 0} className="h-2" />
-          {job.loss && (
-            <div className="text-xs text-gray-400 mt-1">
-              Loss: {job.loss.toFixed(4)}
-            </div>
-          )}
-        </div>
+  const handleCopy = (e) => {
+    e.stopPropagation();
+    copyToClipboard(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className={`p-1 rounded hover:bg-white/10 transition-colors ${className}`}
+      title="Copy to clipboard"
+    >
+      {copied ? (
+        <CheckCircle className="w-3.5 h-3.5 text-green-400" />
+      ) : (
+        <Copy className="w-3.5 h-3.5 text-gray-400" />
       )}
+    </button>
+  );
+}
 
-      {/* Error message */}
-      {job.status === 'failed' && job.error_message && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-red-400 line-clamp-2">{job.error_message}</p>
+// Job Row Actions Menu
+function JobActionsMenu({ job, onViewLogs, onCancel, onDeploy, onDownload, onDelete }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const isRunning = ['pending', 'uploading', 'queued', 'running'].includes(job.status);
+  const isCompleted = job.status === 'completed';
+  const canDelete = !isRunning;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-1.5 rounded hover:bg-white/10 transition-colors"
+      >
+        <MoreHorizontal className="w-4 h-4 text-gray-400" />
+      </button>
+
+      {isOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="absolute right-0 top-8 w-48 bg-[#1e2330] border border-white/10 rounded-lg shadow-xl z-20 py-1">
+            <button
+              onClick={() => { onViewLogs(job); setIsOpen(false); }}
+              className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-white/5 flex items-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              View Logs
+            </button>
+            {isCompleted && (
+              <>
+                <button
+                  onClick={() => { onDeploy(job); setIsOpen(false); }}
+                  className="w-full px-4 py-2 text-left text-sm text-green-400 hover:bg-white/5 flex items-center gap-2"
+                >
+                  <Rocket className="w-4 h-4" />
+                  Deploy
+                </button>
+                <button
+                  onClick={() => { onDownload(job); setIsOpen(false); }}
+                  className="w-full px-4 py-2 text-left text-sm text-cyan-400 hover:bg-white/5 flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </button>
+              </>
+            )}
+            {isRunning && (
+              <button
+                onClick={() => { onCancel(job.id); setIsOpen(false); }}
+                className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-white/5 flex items-center gap-2"
+              >
+                <Square className="w-4 h-4" />
+                Cancel
+              </button>
+            )}
+            {canDelete && (
+              <button
+                onClick={() => { onDelete(job.id); setIsOpen(false); }}
+                className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-white/5 flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            )}
           </div>
-        </div>
+        </>
       )}
-
-      {/* Timestamps */}
-      <div className="flex items-center justify-between text-xs text-gray-400 mb-4">
-        <span>Created {formatTimeAgo(job.created_at)}</span>
-        {job.completed_at && <span>Completed {formatTimeAgo(job.completed_at)}</span>}
-      </div>
-
-      {/* Actions */}
-      <div className="flex flex-wrap gap-2 pt-3 border-t border-white/10">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onViewLogs(job)}
-          className="text-gray-400 hover:text-white"
-        >
-          <FileText className="w-4 h-4 mr-1" />
-          Logs
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onRefresh(job.id)}
-          className="text-gray-400 hover:text-white"
-        >
-          <RefreshCw className="w-4 h-4 mr-1" />
-          Refresh
-        </Button>
-        {isCompleted && (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDeploy(job)}
-              className="text-green-400 hover:text-green-300"
-            >
-              <Rocket className="w-4 h-4 mr-1" />
-              Deploy
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDownload(job)}
-              className="text-cyan-400 hover:text-cyan-300"
-            >
-              <Download className="w-4 h-4 mr-1" />
-              Download
-            </Button>
-          </>
-        )}
-        {isRunning && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onCancel(job.id)}
-            className="text-red-400 hover:text-red-300 ml-auto"
-          >
-            <Square className="w-4 h-4 mr-1" />
-            Cancel
-          </Button>
-        )}
-        {canDelete && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(job.id)}
-            className="text-red-400 hover:text-red-300 ml-auto"
-          >
-            <Trash2 className="w-4 h-4 mr-1" />
-            Delete
-          </Button>
-        )}
-      </div>
     </div>
   );
 }
@@ -219,9 +195,9 @@ function LogsModal({ job, isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-[#1a1f2e] rounded-xl border border-gray-700 w-full max-w-4xl max-h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+      <div className="bg-[#1a1f2e] rounded-xl border border-white/10 w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl">
+        <div className="flex items-center justify-between p-4 border-b border-white/10">
           <h3 className="text-lg font-semibold text-white">Logs: {job.name}</h3>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={fetchLogs}>
@@ -257,7 +233,7 @@ function DeployModal({ job, isOpen, onClose, onSuccess }) {
 
   useEffect(() => {
     if (job) {
-      setInstanceName(`inference-${job.name.slice(0, 20)}`);
+      setInstanceName(`inference-${job.name?.slice(0, 20) || 'model'}`);
     }
   }, [job]);
 
@@ -300,46 +276,40 @@ function DeployModal({ job, isOpen, onClose, onSuccess }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-[#1a1f2e] rounded-xl border border-gray-700 w-full max-w-lg">
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+      <div className="bg-[#1a1f2e] rounded-xl border border-white/10 w-full max-w-lg shadow-2xl">
+        <div className="flex items-center justify-between p-4 border-b border-white/10">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
             <Rocket className="w-5 h-5 text-green-400" />
             Deploy Model
           </h3>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
             ✕
-          </Button>
+          </button>
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Model Info */}
-          <div className="bg-[#0f1219] rounded-lg p-4 border border-gray-700/50">
+          <div className="bg-[#0f1219] rounded-lg p-4 border border-white/5">
             <div className="flex items-center gap-3 mb-2">
               <Brain className="w-5 h-5 text-purple-400" />
               <span className="text-white font-medium">{job?.name}</span>
             </div>
             <div className="text-sm text-gray-400">
-              Base: {job?.config?.base_model?.split('/').pop() || 'Unknown'}
-            </div>
-            <div className="text-sm text-gray-400">
-              LoRA Rank: {job?.config?.lora_rank || 16}
+              Base: {job?.base_model?.split('/').pop() || 'Unknown'}
             </div>
           </div>
 
-          {/* Instance Name */}
           <div>
             <label className="block text-sm text-gray-400 mb-2">Instance Name</label>
             <input
               type="text"
               value={instanceName}
               onChange={(e) => setInstanceName(e.target.value)}
-              className="w-full bg-[#0f1219] border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none"
+              className="w-full bg-[#0f1219] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-purple-500 outline-none"
               placeholder="my-inference-instance"
             />
           </div>
 
-          {/* GPU Selection */}
           <div>
             <label className="block text-sm text-gray-400 mb-2">Select GPU</label>
             <div className="grid grid-cols-2 gap-3">
@@ -349,8 +319,8 @@ function DeployModal({ job, isOpen, onClose, onSuccess }) {
                   onClick={() => setSelectedGpu(gpu.id)}
                   className={`p-3 rounded-lg border transition-all text-left ${
                     selectedGpu === gpu.id
-                      ? 'border-green-500 bg-green-500/10'
-                      : 'border-gray-700 hover:border-gray-600'
+                      ? 'border-purple-500 bg-purple-500/10'
+                      : 'border-white/10 hover:border-white/20'
                   }`}
                 >
                   <div className="font-medium text-white">{gpu.name}</div>
@@ -366,7 +336,6 @@ function DeployModal({ job, isOpen, onClose, onSuccess }) {
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex gap-3">
             <Button variant="ghost" onClick={onClose} className="flex-1">
               Cancel
@@ -374,14 +343,14 @@ function DeployModal({ job, isOpen, onClose, onSuccess }) {
             <Button
               onClick={handleDeploy}
               disabled={loading || !instanceName}
-              className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : (
-                <Server className="w-4 h-4 mr-2" />
+                <Rocket className="w-4 h-4 mr-2" />
               )}
-              Deploy Instance
+              Deploy
             </Button>
           </div>
         </div>
@@ -392,13 +361,21 @@ function DeployModal({ job, isOpen, onClose, onSuccess }) {
 
 // Main Page Component
 export default function FineTuning() {
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [showMethodModal, setShowMethodModal] = useState(false);
+  const [showFineTuneModal, setShowFineTuneModal] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState('supervised');
   const [selectedJob, setSelectedJob] = useState(null);
   const [showLogs, setShowLogs] = useState(false);
   const [showDeploy, setShowDeploy] = useState(false);
-  const [filter, setFilter] = useState('all');
+
+  // Filters (like Fireworks.ai)
+  const [activeTab, setActiveTab] = useState('supervised');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
   // Fetch jobs
   const fetchJobs = async () => {
@@ -418,25 +395,9 @@ export default function FineTuning() {
 
   useEffect(() => {
     fetchJobs();
-    // Poll for updates every 10 seconds
     const interval = setInterval(fetchJobs, 10000);
     return () => clearInterval(interval);
   }, []);
-
-  // Refresh single job
-  const handleRefresh = async (jobId) => {
-    try {
-      const token = localStorage.getItem('auth_token');
-      const res = await fetch(`/api/v1/finetune/jobs/${jobId}/refresh`, {
-        method: 'POST',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-      });
-      const updatedJob = await res.json();
-      setJobs(jobs.map(j => j.id === jobId ? updatedJob : j));
-    } catch (err) {
-      console.error('Failed to refresh job:', err);
-    }
-  };
 
   // Cancel job
   const handleCancel = async (jobId) => {
@@ -504,137 +465,260 @@ export default function FineTuning() {
     }
   };
 
-  // Filter jobs
+  // Handle method selection and open wizard
+  const handleMethodSelect = (method) => {
+    setSelectedMethod(method);
+    setShowMethodModal(false);
+    setShowFineTuneModal(true);
+  };
+
+  // Filter jobs based on search and status
   const filteredJobs = jobs.filter(job => {
-    if (filter === 'all') return true;
-    if (filter === 'running') return ['pending', 'uploading', 'queued', 'running'].includes(job.status);
-    if (filter === 'completed') return job.status === 'completed';
-    if (filter === 'failed') return job.status === 'failed';
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch =
+        job.name?.toLowerCase().includes(query) ||
+        job.id?.toLowerCase().includes(query) ||
+        job.base_model?.toLowerCase().includes(query) ||
+        job.dataset_path?.toLowerCase().includes(query);
+      if (!matchesSearch) return false;
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'running') {
+        if (!['pending', 'uploading', 'queued', 'running'].includes(job.status)) return false;
+      } else if (job.status !== statusFilter) {
+        return false;
+      }
+    }
+
     return true;
   });
 
-  // Stats
-  const stats = {
-    total: jobs.length,
-    running: jobs.filter(j => ['running', 'queued', 'pending'].includes(j.status)).length,
-    completed: jobs.filter(j => j.status === 'completed').length,
-    failed: jobs.filter(j => j.status === 'failed').length,
-  };
-
   return (
     <div className="min-h-screen bg-[#0a0d0a] p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Brain className="w-7 h-7 text-purple-400" />
-            Fine-Tuning
-          </h1>
-          <p className="text-gray-400 mt-1">Train custom models with Unsloth</p>
-        </div>
-        <Button
-          onClick={() => setShowModal(true)}
-          className="bg-purple-500 hover:bg-purple-600 text-white gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          New Fine-Tune Job
-        </Button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-[#111411] rounded-xl p-4 border border-white/10 shadow-sm">
-          <div className="text-3xl font-bold text-white">{stats.total}</div>
-          <div className="text-sm text-gray-400">Total Jobs</div>
-        </div>
-        <div className="bg-[#111411] rounded-xl p-4 border border-white/10 shadow-sm">
-          <div className="text-3xl font-bold text-purple-400">{stats.running}</div>
-          <div className="text-sm text-gray-400">Running</div>
-        </div>
-        <div className="bg-[#111411] rounded-xl p-4 border border-white/10 shadow-sm">
-          <div className="text-3xl font-bold text-green-400">{stats.completed}</div>
-          <div className="text-sm text-gray-400">Completed</div>
-        </div>
-        <div className="bg-[#111411] rounded-xl p-4 border border-white/10 shadow-sm">
-          <div className="text-3xl font-bold text-red-400">{stats.failed}</div>
-          <div className="text-sm text-gray-400">Failed</div>
-        </div>
-      </div>
-
-      {/* Filter tabs */}
-      <div className="flex gap-2 mb-6">
-        {['all', 'running', 'completed', 'failed'].map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              filter === f
-                ? 'bg-purple-500 text-white'
-                : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
-            }`}
+      {/* Header - Like Fireworks.ai */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Brain className="w-9 h-9 flex-shrink-0" style={{ color: '#4caf50' }} />
+            <div className="flex flex-col justify-center">
+              <h1 className="text-2xl font-bold text-white leading-tight">Fine-Tuning Jobs</h1>
+              <p className="text-gray-400 mt-0.5">View your past fine-tuning jobs and create new ones.</p>
+            </div>
+          </div>
+          <Button
+            onClick={() => setShowMethodModal(true)}
+            className="bg-purple-600 hover:bg-purple-700 text-white gap-2"
           >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
-          </button>
-        ))}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={fetchJobs}
-          className="ml-auto text-gray-400 hover:text-white"
-        >
-          <RefreshCw className="w-4 h-4 mr-1" />
-          Refresh
-        </Button>
+            <Plus className="w-4 h-4" />
+            Fine-tune a Model
+          </Button>
+        </div>
       </div>
 
-      {/* Jobs Grid */}
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+      {/* Search and Filters - Like Fireworks.ai */}
+      <div className="mb-6 space-y-4">
+        {/* Search input */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by id, name, dataset, or created by"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-[#111411] border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-500 focus:border-purple-500 outline-none"
+          />
         </div>
-      ) : filteredJobs.length === 0 ? (
-        <div className="text-center py-16 bg-[#111411] rounded-xl border border-white/10 shadow-sm">
-          <Brain className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No Fine-Tuning Jobs</h3>
-          <p className="text-gray-400 mb-4">
-            {filter === 'all'
-              ? "You haven't created any fine-tuning jobs yet."
-              : `No ${filter} jobs found.`}
-          </p>
-          {filter === 'all' && (
-            <Button
-              onClick={() => setShowModal(true)}
-              className="bg-purple-500 hover:bg-purple-600 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Your First Job
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredJobs.map(job => (
-            <JobCard
-              key={job.id}
-              job={job}
-              onRefresh={handleRefresh}
-              onViewLogs={handleViewLogs}
-              onCancel={handleCancel}
-              onDeploy={handleDeploy}
-              onDownload={handleDownload}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-      )}
 
-      {/* Fine-Tuning Modal */}
+        {/* Tabs and Status Filter */}
+        <div className="flex items-center justify-between">
+          {/* Tabs - Like Fireworks.ai */}
+          <div className="flex border-b border-white/10">
+            {[
+              { id: 'supervised', label: 'Supervised' },
+              { id: 'reinforcement', label: 'Reinforcement' },
+              { id: 'preference', label: 'Preference' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
+                  activeTab === tab.id
+                    ? 'text-white'
+                    : 'text-gray-400 hover:text-gray-300'
+                }`}
+              >
+                {tab.label}
+                {activeTab === tab.id && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Status Filter Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+              className="flex items-center gap-2 px-4 py-2 bg-[#111411] border border-white/10 rounded-lg text-sm text-gray-300 hover:border-white/20"
+            >
+              {statusFilter === 'all' ? 'All' : STATUS_CONFIG[statusFilter]?.label || statusFilter}
+              <ChevronDown className="w-4 h-4" />
+            </button>
+
+            {showStatusDropdown && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowStatusDropdown(false)}
+                />
+                <div className="absolute right-0 top-10 w-40 bg-[#1e2330] border border-white/10 rounded-lg shadow-xl z-20 py-1">
+                  {['all', 'running', 'completed', 'failed'].map(status => (
+                    <button
+                      key={status}
+                      onClick={() => { setStatusFilter(status); setShowStatusDropdown(false); }}
+                      className={`w-full px-4 py-2 text-left text-sm hover:bg-white/5 ${
+                        statusFilter === status ? 'text-purple-400' : 'text-gray-300'
+                      }`}
+                    >
+                      {status === 'all' ? 'All' : STATUS_CONFIG[status]?.label || status}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Jobs Table - Like Fireworks.ai */}
+      <div className="bg-[#111411] rounded-xl border border-white/10 overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+          </div>
+        ) : filteredJobs.length === 0 ? (
+          <div className="text-center py-16">
+            <Brain className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-white mb-2">No Fine-Tuning Jobs</h3>
+            <p className="text-gray-400 mb-4">
+              {searchQuery || statusFilter !== 'all'
+                ? 'No jobs match your filters.'
+                : "You haven't created any fine-tuning jobs yet."}
+            </p>
+            {!searchQuery && statusFilter === 'all' && (
+              <Button
+                onClick={() => setShowMethodModal(true)}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Fine-tune a Model
+              </Button>
+            )}
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">Fine-tuning jobs</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">Base model</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">Dataset</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">Created by</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">Create time</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">Status</th>
+                <th className="w-10"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredJobs.map(job => (
+                <tr
+                  key={job.id}
+                  className="border-b border-white/5 hover:bg-white/[0.02] cursor-pointer"
+                  onClick={() => navigate(`/app/finetune/${job.id}`)}
+                >
+                  {/* Job Name & ID */}
+                  <td className="px-4 py-4">
+                    <div>
+                      <div className="text-white font-medium">{job.name || job.id}</div>
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                        <span className="font-mono">{job.id?.slice(0, 20)}...</span>
+                        <CopyButton text={job.id} />
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Base Model */}
+                  <td className="px-4 py-4">
+                    <div>
+                      <div className="text-gray-300 text-sm">{job.base_model?.split('/').pop() || 'Unknown'}</div>
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                        <span className="font-mono truncate max-w-[150px]">{job.base_model}</span>
+                        <CopyButton text={job.base_model} />
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Dataset */}
+                  <td className="px-4 py-4">
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-300 text-sm truncate max-w-[150px]">
+                        {job.dataset_path?.split('/').pop() || 'N/A'}
+                      </span>
+                      {job.dataset_path && <CopyButton text={job.dataset_path} />}
+                    </div>
+                  </td>
+
+                  {/* Created By */}
+                  <td className="px-4 py-4">
+                    <span className="text-gray-400 text-sm">{job.created_by || 'system'}</span>
+                  </td>
+
+                  {/* Create Time */}
+                  <td className="px-4 py-4">
+                    <span className="text-gray-400 text-sm">{formatDateTime(job.created_at)}</span>
+                  </td>
+
+                  {/* Status */}
+                  <td className="px-4 py-4">
+                    <StatusBadge status={job.status} />
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                    <JobActionsMenu
+                      job={job}
+                      onViewLogs={handleViewLogs}
+                      onCancel={handleCancel}
+                      onDeploy={handleDeploy}
+                      onDownload={handleDownload}
+                      onDelete={handleDelete}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Method Selection Modal */}
+      <MethodSelectionModal
+        isOpen={showMethodModal}
+        onClose={() => setShowMethodModal(false)}
+        onSelect={handleMethodSelect}
+      />
+
+      {/* Fine-Tuning Wizard Modal */}
       <FineTuningModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        isOpen={showFineTuneModal}
+        onClose={() => setShowFineTuneModal(false)}
+        method={selectedMethod}
         onSuccess={(job) => {
           fetchJobs();
-          setShowModal(false);
+          setShowFineTuneModal(false);
         }}
       />
 

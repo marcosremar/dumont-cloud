@@ -43,7 +43,7 @@ export function EmptyState({
           {action && (
             <button
               onClick={action}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 text-green-300 text-sm font-medium transition-all"
+              className="ta-btn ta-btn-primary"
             >
               {actionText || t('components.emptyState.createNew')}
             </button>
@@ -52,7 +52,7 @@ export function EmptyState({
           {secondaryAction && (
             <button
               onClick={secondaryAction}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 border border-gray-600/30 text-gray-300 text-sm font-medium transition-all"
+              className="ta-btn ta-btn-secondary"
             >
               {secondaryActionText || t('common.back')}
             </button>

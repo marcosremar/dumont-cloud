@@ -367,11 +367,13 @@ export default function GPUMetrics() {
         </nav>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
-              <BarChart3 size={24} className="text-emerald-400" />
-              Métricas de GPU
-            </h1>
-            <p className="text-gray-400 mt-1">Análise completa de preços, provedores e eficiência</p>
+            <div className="flex items-center gap-4">
+              <BarChart3 className="w-9 h-9 flex-shrink-0" style={{ color: '#4caf50' }} />
+              <div className="flex flex-col justify-center">
+                <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight">Métricas de GPU</h1>
+                <p className="text-gray-400 mt-0.5">Análise completa de preços, provedores e eficiência</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

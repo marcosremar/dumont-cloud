@@ -6,16 +6,11 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 const getToken = () => localStorage.getItem('auth_token')
-const isDemoMode = () => localStorage.getItem('demo_mode') === 'true'
 
 // Async thunks
 export const fetchInstances = createAsyncThunk(
   'instances/fetchInstances',
   async (_, { rejectWithValue }) => {
-    // Skip API call in demo mode
-    if (isDemoMode()) {
-      return []
-    }
     try {
       const res = await fetch(`${API_BASE}/api/v1/instances`, {
         headers: { 'Authorization': `Bearer ${getToken()}` },
@@ -213,6 +208,9 @@ const initialState = {
   offersLoading: false,
   error: null,
   lastFetch: null,
+  // Racing state - tracks instances that are in a provisioning race
+  racingInstanceIds: [],      // Array of instance IDs currently in a race
+  raceWinnerId: null,         // The winning instance ID (after race completes)
   // Reliability scoring state
   reliabilityData: {},        // Map of machine_id -> reliability data
   sortByReliability: false,   // Whether to sort by reliability score
@@ -293,6 +291,35 @@ const instancesSlice = createSlice({
     },
     clearRatingError: (state) => {
       state.ratingError = null
+    },
+    // Racing state reducers
+    addRacingInstance: (state, action) => {
+      const instanceId = action.payload
+      if (!state.racingInstanceIds.includes(instanceId)) {
+        state.racingInstanceIds.push(instanceId)
+      }
+    },
+    addRacingInstances: (state, action) => {
+      const instanceIds = action.payload // Array of instance IDs
+      instanceIds.forEach(id => {
+        if (!state.racingInstanceIds.includes(id)) {
+          state.racingInstanceIds.push(id)
+        }
+      })
+    },
+    removeRacingInstance: (state, action) => {
+      const instanceId = action.payload
+      state.racingInstanceIds = state.racingInstanceIds.filter(id => id !== instanceId)
+    },
+    clearRacingInstances: (state) => {
+      state.racingInstanceIds = []
+      state.raceWinnerId = null
+    },
+    setRaceWinner: (state, action) => {
+      const winnerId = action.payload
+      state.raceWinnerId = winnerId
+      // Remove winner from racing list - it's now a regular instance
+      state.racingInstanceIds = state.racingInstanceIds.filter(id => id !== winnerId)
     },
   },
   extraReducers: (builder) => {
@@ -419,6 +446,12 @@ export const {
   setExcludeBelowThreshold,
   setReliabilityLoading,
   clearRatingError,
+  // Racing actions
+  addRacingInstance,
+  addRacingInstances,
+  removeRacingInstance,
+  clearRacingInstances,
+  setRaceWinner,
 } = instancesSlice.actions
 
 // Selectors
@@ -445,6 +478,19 @@ export const selectMachineReliability = (machineId) => (state) =>
 // Rating submission selectors
 export const selectRatingSubmitting = (state) => state.instances.ratingSubmitting
 export const selectRatingError = (state) => state.instances.ratingError
+
+// Racing selectors
+export const selectRacingInstanceIds = (state) => state.instances.racingInstanceIds
+export const selectRaceWinnerId = (state) => state.instances.raceWinnerId
+export const selectIsInstanceRacing = (instanceId) => (state) =>
+  state.instances.racingInstanceIds.includes(instanceId)
+
+// Selector: instances excluding those in racing
+export const selectNonRacingInstances = (state) => {
+  const instances = state.instances.instances
+  const racingIds = state.instances.racingInstanceIds
+  return instances.filter(i => !racingIds.includes(i.id))
+}
 
 // Derived selector: filter offers based on reliability settings
 export const selectFilteredOffersByReliability = (state) => {

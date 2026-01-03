@@ -17,7 +17,8 @@ import {
   BarChart3,
   Gauge
 } from 'lucide-react'
-import { Badge, Button, Alert } from '../components/tailadmin-ui'
+import { Badge, Alert } from '../components/tailadmin-ui'
+import { Button } from '../components/ui/button'
 import ServerlessCard from '../components/serverless/ServerlessCard'
 import CreateServerlessModal from '../components/serverless/CreateServerlessModal'
 
@@ -32,6 +33,7 @@ export default function Serverless() {
   const [endpoints, setEndpoints] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createError, setCreateError] = useState(null)
   const [stats, setStats] = useState(null)
 
   useEffect(() => {
@@ -239,12 +241,12 @@ export default function Serverless() {
       {/* Page Header */}
       <div className="page-header">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="page-title flex items-center gap-3">
-              <Zap className="w-6 h-6 text-brand-400" />
-              {t('serverless.pageTitle')}
-            </h1>
-            <p className="page-subtitle">{t('serverless.pageSubtitle')}</p>
+          <div className="flex items-center gap-4">
+            <Zap className="w-9 h-9 flex-shrink-0" style={{ color: '#4caf50' }} />
+            <div className="flex flex-col justify-center">
+              <h1 className="page-title leading-tight">{t('serverless.pageTitle')}</h1>
+              <p className="page-subtitle mt-0.5">{t('serverless.pageSubtitle')}</p>
+            </div>
           </div>
           <Button
             variant="primary"

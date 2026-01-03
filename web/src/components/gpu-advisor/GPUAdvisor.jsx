@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { PageHeader, Card, Button, Input, Badge, EmptyState, Spinner } from '../tailadmin-ui/index'
+import { PageHeader, Card, Input, Badge, EmptyState, Spinner } from '../tailadmin-ui/index'
+import { Button } from '../ui/button'
 import { Search, Sparkles, Loader2, AlertCircle, Cpu, Zap, Clock, DollarSign, CheckCircle, Bot } from 'lucide-react'
 
 const API_BASE = ''

@@ -1,0 +1,112 @@
+{
+  "session": {
+    "started_at": "2026-01-03T02:31:17.626963",
+    "total_cost": 0.024084474303869553,
+    "passed": 8,
+    "total": 8
+  },
+  "results": [
+    {
+      "name": "1.1 Snapshot Upload",
+      "success": true,
+      "duration_seconds": 57.67439103126526,
+      "cost_usd": 0.002055985235836771,
+      "details": {
+        "snapshot_id": "test-1-1-1767407526",
+        "snapshot_size": 10496000,
+        "files_info": {
+          "/workspace/test_data/file_0.bin": {
+            "size": 10485760,
+            "md5": "87e134ee63d904731225a9908ecc2fab"
+          }
+        }
+      },
+      "error": null
+    },
+    {
+      "name": "1.2 Restore",
+      "success": true,
+      "duration_seconds": 47.89858102798462,
+      "cost_usd": 0.0026285085514739705,
+      "details": {
+        "files_verified": 1
+      },
+      "error": null
+    },
+    {
+      "name": "2.1 Manual Failover",
+      "success": true,
+      "duration_seconds": 89.2602949142456,
+      "cost_usd": 0.004915065309515706,
+      "details": {
+        "snapshot_id": "failover-1767407617",
+        "files_verified": 1
+      },
+      "error": null
+    },
+    {
+      "name": "2.2 Auto Failover",
+      "success": true,
+      "duration_seconds": 80.89574909210205,
+      "cost_usd": 0.0031790633640833843,
+      "details": {
+        "detection_time": 1.5108778476715088,
+        "total_failover": 49.35883283615112,
+        "within_sla": true
+      },
+      "error": null
+    },
+    {
+      "name": "3.1 Auto-Hibernation",
+      "success": true,
+      "duration_seconds": 54.06451392173767,
+      "cost_usd": 0.001526821920937962,
+      "details": {
+        "snapshot_id": "hibernate-1767407807",
+        "gpu_util": 0,
+        "idle_detected": true,
+        "files_info": {}
+      },
+      "error": null
+    },
+    {
+      "name": "3.2 Wake",
+      "success": true,
+      "duration_seconds": 59.808128118515015,
+      "cost_usd": 0.00363832779387633,
+      "details": {
+        "wake_time": 57.20647883415222,
+        "within_sla": true
+      },
+      "error": null
+    },
+    {
+      "name": "4.1 Large Snapshot",
+      "success": true,
+      "duration_seconds": 32.88473606109619,
+      "cost_usd": 0.0018046006394021302,
+      "details": {
+        "snapshot_size": 52439040,
+        "upload_time": 10.541150331497192,
+        "time_per_gb": 215.8827587890625
+      },
+      "error": null
+    },
+    {
+      "name": "4.2 Multiple Failovers",
+      "success": true,
+      "duration_seconds": 240.67916893959045,
+      "cost_usd": 0.0043361014887432995,
+      "details": {
+        "cycles": 3,
+        "avg_time": 61.81436936060587,
+        "failover_times": [
+          63.196041107177734,
+          53.54440093040466,
+          68.70266604423523
+        ]
+      },
+      "error": null
+    }
+  ]
+}

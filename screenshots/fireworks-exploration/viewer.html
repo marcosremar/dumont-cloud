@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fireworks.ai UI Exploration Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f9fafb;
+            color: #111827;
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .screenshot-card {
+            background: #f9fafb;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .screenshot-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .screenshot-card img {
+            width: 100%;
+            display: block;
+            cursor: pointer;
+        }
+
+        .screenshot-card .caption {
+            padding: 1rem;
+            background: white;
+        }
+
+        .screenshot-card h3 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .screenshot-card p {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .color-swatch {
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .color-box {
+            height: 80px;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        .color-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .component-example {
+            padding: 1.5rem;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #e5e7eb;
+        }
+
+        .btn-example {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #4f46e5;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #111827;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+        .checklist {
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        .checklist li {
+            padding: 0.5rem 0;
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        .checklist li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .checklist li.pending:before {
+            content: '⏳';
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        code {
+            background: #f3f4f6;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            color: #d946ef;
+        }
+
+        pre {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Fireworks.ai UI Exploration</h1>
+        <p>Visual documentation and component analysis - Generated 2026-01-03</p>
+    </header>
+
+    <div class="container">
+        <!-- Screenshots Section -->
+        <div class="section">
+            <h2>Captured Screenshots</h2>
+            <p>Click any screenshot to view full size</p>
+
+            <div class="screenshot-grid">
+                <div class="screenshot-card">
+                    <img src="01-homepage.png" alt="Homepage" onclick="openModal(this.src)">
+                    <div class="caption">
+                        <h3>01 - Homepage</h3>
+                        <p>Main landing page with hero section and login panel</p>
+                    </div>
+                </div>
+
+                <div class="screenshot-card">
+                    <img src="02-after-click-models.png" alt="Login Page" onclick="openModal(this.src)">
+                    <div class="caption">
+                        <h3>02 - Login Page</h3>
+                        <p>Authentication page with OAuth options</p>
+                    </div>
+                </div>
+
+                <div class="screenshot-card">
+                    <img src="03-current-page.png" alt="Current Page" onclick="openModal(this.src)">
+                    <div class="caption">
+                        <h3>03 - Current Page</h3>
+                        <p>Detailed view of login interface</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Color Palette Section -->
+        <div class="section">
+            <h2>Color Palette</h2>
+            <p>Primary colors extracted from Fireworks.ai interface</p>
+
+            <div class="color-palette">
+                <div class="color-swatch">
+                    <div class="color-box" style="background: #6366f1;"></div>
+                    <div class="color-label">Primary<br>#6366f1</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-box" style="background: #4f46e5;"></div>
+                    <div class="color-label">Primary Dark<br>#4f46e5</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-box" style="background: #f9fafb;"></div>
+                    <div class="color-label">Background<br>#f9fafb</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-box" style="background: #111827;"></div>
+                    <div class="color-label">Text<br>#111827</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-box" style="background: #6b7280;"></div>
+                    <div class="color-label">Text Gray<br>#6b7280</div>
+                </div>
+                <div class="color-swatch">
+                    <div class="color-box" style="background: #e5e7eb; border: 1px solid #d1d5db;"></div>
+                    <div class="color-label">Border<br>#e5e7eb</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Component Examples Section -->
+        <div class="section">
+            <h2>Component Patterns</h2>
+            <p>Reusable UI components observed in Fireworks.ai</p>
+
+            <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Buttons</h3>
+            <div class="component-example">
+                <button class="btn-example btn-primary">Primary Action</button>
+                <button class="btn-example btn-secondary">Secondary Action</button>
+                <button class="btn-example btn-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                    </svg>
+                    With Icon
+                </button>
+            </div>
+
+            <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Input Fields</h3>
+            <div class="component-example">
+                <div style="max-width: 400px;">
+                    <label style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px;">
+                        Label Text
+                    </label>
+                    <input type="text" placeholder="Placeholder text..."
+                           style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Typography Section -->
+        <div class="section">
+            <h2>Typography</h2>
+            <div style="space-y: 1rem;">
+                <h1 style="font-size: 48px; font-weight: 700; margin: 1rem 0;">
+                    Heading 1 - 48px Bold
+                </h1>
+                <h2 style="font-size: 32px; font-weight: 600; margin: 1rem 0;">
+                    Heading 2 - 32px Semibold
+                </h2>
+                <h3 style="font-size: 24px; font-weight: 600; margin: 1rem 0;">
+                    Heading 3 - 24px Semibold
+                </h3>
+                <p style="font-size: 16px; color: #374151; margin: 1rem 0;">
+                    Body text - 16px Regular (#374151)
+                </p>
+                <p style="font-size: 14px; color: #6b7280; margin: 1rem 0;">
+                    Small text - 14px Regular (#6b7280)
+                </p>
+            </div>
+        </div>
+
+        <!-- Exploration Checklist -->
+        <div class="section">
+            <h2>Exploration Progress</h2>
+
+            <h3 style="margin: 1.5rem 0 1rem;">Completed</h3>
+            <ul class="checklist">
+                <li>Homepage UI analysis</li>
+                <li>Login page documentation</li>
+                <li>Color palette extraction</li>
+                <li>Typography documentation</li>
+                <li>Button patterns</li>
+            </ul>
+
+            <h3 style="margin: 1.5rem 0 1rem;">Pending (Requires Authentication)</h3>
+            <ul class="checklist">
+                <li class="pending">Dashboard layout</li>
+                <li class="pending">Fine-tuning job creation form</li>
+                <li class="pending">Model selection interface</li>
+                <li class="pending">Dataset upload component</li>
+                <li class="pending">LoRA configuration panel</li>
+                <li class="pending">Job monitoring interface</li>
+                <li class="pending">Results/metrics display</li>
+            </ul>
+        </div>
+
+        <!-- Next Steps Section -->
+        <div class="section">
+            <h2>Next Steps</h2>
+            <p>To complete the exploration, run the authenticated script:</p>
+
+            <pre><code>npx playwright test tests/explore-fireworks-authenticated.spec.js --headed</code></pre>
+
+            <p style="margin-top: 1rem;">This will:</p>
+            <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                <li>Open a browser window</li>
+                <li>Wait for you to log in</li>
+                <li>Automatically navigate and document the fine-tuning interface</li>
+                <li>Capture all form fields and components</li>
+                <li>Export detailed JSON with all UI elements</li>
+            </ul>
+
+            <p style="margin-top: 1rem;">
+                <strong>Files:</strong><br>
+                <code>/Users/marcos/CascadeProjects/dumontcloud/screenshots/fireworks-exploration/</code>
+            </p>
+        </div>
+    </div>
+
+    <!-- Modal for full-size images -->
+    <div class="modal" id="imageModal" onclick="closeModal()">
+        <button class="modal-close" onclick="closeModal()">×</button>
+        <img id="modalImage" src="" alt="Full size screenshot">
+    </div>
+
+    <script>
+        function openModal(src) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.classList.add('active');
+            modalImg.src = src;
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('active');
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

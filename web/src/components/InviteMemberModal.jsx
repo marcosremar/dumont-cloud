@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserPlus, Mail } from 'lucide-react';
-import { apiPost, isDemoMode } from '../utils/api';
+import { apiPost } from '../utils/api';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -39,7 +39,6 @@ export default function InviteMemberModal({
   const [email, setEmail] = useState('');
   const [roleId, setRoleId] = useState('');
   const [loading, setLoading] = useState(false);
-  const isDemo = isDemoMode();
 
   const handleClose = () => {
     setEmail('');

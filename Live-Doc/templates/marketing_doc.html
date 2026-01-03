@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dumont Cloud - Documentacao</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        .sidebar { min-width: 280px; max-width: 280px; }
+        .content { max-width: 900px; }
+        .menu-item { cursor: pointer; transition: all 0.2s; }
+        .menu-item:hover { background-color: #f3f4f6; }
+        .menu-item.active { background-color: #e0e7ff; color: #4f46e5; font-weight: 600; }
+        .folder-icon::before { content: '📁 '; }
+        .folder-icon.open::before { content: '📂 '; }
+        .file-icon::before { content: '📄 '; }
+        .prose h1 { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; color: #1f2937; }
+        .prose h2 { font-size: 1.5rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.75rem; color: #374151; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
+        .prose h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #4b5563; }
+        .prose p { margin-bottom: 1rem; line-height: 1.75; }
+        .prose ul, .prose ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+        .prose li { margin-bottom: 0.25rem; }
+        .prose code { background-color: #f3f4f6; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-size: 0.875rem; }
+        .prose pre { background-color: #1f2937; color: #f9fafb; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 1rem; }
+        .prose pre code { background: none; padding: 0; color: inherit; }
+        .prose table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+        .prose th, .prose td { border: 1px solid #e5e7eb; padding: 0.75rem; text-align: left; }
+        .prose th { background-color: #f9fafb; font-weight: 600; }
+        .prose blockquote { border-left: 4px solid #6366f1; padding-left: 1rem; margin: 1rem 0; color: #6b7280; font-style: italic; }
+        .prose a { color: #4f46e5; text-decoration: underline; }
+        .prose hr { border: none; border-top: 1px solid #e5e7eb; margin: 2rem 0; }
+        .mermaid { background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="sidebar bg-white border-r border-gray-200 overflow-y-auto fixed h-full">
+            <div class="p-4 border-b border-gray-200">
+                <h1 class="text-xl font-bold text-indigo-600">Dumont Cloud</h1>
+                <p class="text-sm text-gray-500">Documentacao</p>
+            </div>
+            <nav id="menu" class="p-2"></nav>
+        </aside>
+
+        <!-- Content -->
+        <main class="flex-1 ml-[280px]">
+            <div class="content mx-auto p-8">
+                <article id="content" class="prose">
+                    <h1>Bem-vindo a Documentacao</h1>
+                    <p>Selecione um documento no menu lateral para comecar.</p>
+                </article>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: false, theme: 'default' });
+
+        let menuData = [];
+        let currentPath = null;
+
+        async function loadMenu() {
+            try {
+                const res = await fetch('/api/menu');
+                const data = await res.json();
+                menuData = data.menu;
+                renderMenu(menuData, document.getElementById('menu'));
+
+                // Check URL hash for initial doc
+                if (window.location.hash) {
+                    const path = window.location.hash.slice(1);
+                    loadContent(path);
+                }
+            } catch (e) {
+                console.error('Failed to load menu:', e);
+            }
+        }
+
+        function renderMenu(items, container, level = 0) {
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.style.paddingLeft = `${level * 12}px`;
+
+                if (item.type === 'dir') {
+                    const folder = document.createElement('div');
+                    folder.className = 'menu-item folder-icon p-2 rounded text-gray-700 font-medium';
+                    folder.textContent = item.name.replace(/^\d+_/, '').replace(/_/g, ' ');
+
+                    const children = document.createElement('div');
+                    children.className = 'hidden';
+
+                    folder.onclick = () => {
+                        children.classList.toggle('hidden');
+                        folder.classList.toggle('open');
+                    };
+
+                    div.appendChild(folder);
+                    div.appendChild(children);
+                    container.appendChild(div);
+
+                    if (item.children) {
+                        renderMenu(item.children, children, level + 1);
+                    }
+                } else {
+                    const file = document.createElement('div');
+                    file.className = 'menu-item file-icon p-2 rounded text-gray-600 text-sm';
+                    file.textContent = item.name.replace(/^\d+\s*/, '');
+                    file.dataset.path = item.path;
+                    file.onclick = () => loadContent(item.path);
+                    div.appendChild(file);
+                    container.appendChild(div);
+                }
+            });
+        }
+
+        async function loadContent(path) {
+            try {
+                // Update active state
+                document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+                const activeItem = document.querySelector(`[data-path="${path}"]`);
+                if (activeItem) activeItem.classList.add('active');
+
+                // Expand parent folders
+                let parent = activeItem?.parentElement;
+                while (parent) {
+                    const sibling = parent.previousElementSibling;
+                    if (sibling?.classList.contains('folder-icon')) {
+                        parent.classList.remove('hidden');
+                        sibling.classList.add('open');
+                    }
+                    parent = parent.parentElement?.parentElement;
+                }
+
+                const res = await fetch(`/api/content/${path}`);
+                const data = await res.json();
+
+                // Parse markdown
+                const html = marked.parse(data.content);
+                document.getElementById('content').innerHTML = html;
+
+                // Render mermaid diagrams
+                document.querySelectorAll('pre code.language-mermaid, pre code').forEach(block => {
+                    if (block.textContent.trim().startsWith('graph') ||
+                        block.textContent.trim().startsWith('sequenceDiagram') ||
+                        block.textContent.trim().startsWith('flowchart')) {
+                        const container = document.createElement('div');
+                        container.className = 'mermaid';
+                        container.textContent = block.textContent;
+                        block.parentElement.replaceWith(container);
+                    }
+                });
+                mermaid.run();
+
+                // Update URL
+                window.location.hash = path;
+                currentPath = path;
+            } catch (e) {
+                console.error('Failed to load content:', e);
+                document.getElementById('content').innerHTML = '<p class="text-red-500">Erro ao carregar documento.</p>';
+            }
+        }
+
+        // Handle hash changes
+        window.addEventListener('hashchange', () => {
+            const path = window.location.hash.slice(1);
+            if (path && path !== currentPath) {
+                loadContent(path);
+            }
+        });
+
+        loadMenu();
+    </script>
+</body>
+</html>
