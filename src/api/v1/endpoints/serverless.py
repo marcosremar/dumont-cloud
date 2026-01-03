@@ -76,9 +76,225 @@ class ServerlessListResponse(BaseModel):
     instances: List[Dict[str, Any]]
 
 
+class CreateServerlessEndpointRequest(BaseModel):
+    """Request para criar um endpoint serverless"""
+    name: str = Field(..., description="Nome do endpoint")
+    machine_type: str = Field("spot", description="Tipo de máquina: 'spot' ou 'on-demand'")
+    gpu_name: str = Field("RTX 4090", description="Nome da GPU")
+    region: str = Field("US", description="Região: US, EU, ASIA")
+    min_instances: int = Field(0, ge=0, le=10, description="Mínimo de instâncias")
+    max_instances: int = Field(5, ge=1, le=50, description="Máximo de instâncias")
+    target_latency_ms: int = Field(500, ge=50, le=5000, description="Latência alvo em ms")
+    timeout_seconds: int = Field(300, ge=30, le=3600, description="Timeout em segundos")
+    docker_image: str = Field(..., description="Imagem Docker a usar")
+    model_id: str = Field("", description="Model ID do HuggingFace")
+    env_vars: Dict[str, str] = Field(default_factory=dict, description="Variáveis de ambiente")
+
+
+class ServerlessEndpointResponse(BaseModel):
+    """Response com dados de um endpoint serverless"""
+    id: str
+    name: str
+    status: str
+    machine_type: str
+    gpu_name: str
+    region: str
+    created_at: str
+    metrics: Dict[str, Any]
+    pricing: Dict[str, Any]
+    auto_scaling: Dict[str, Any]
+
+
+class ServerlessStatsResponse(BaseModel):
+    """Response com estatísticas serverless"""
+    total_endpoints: int
+    total_requests_24h: int
+    avg_latency_ms: float
+    total_cost_24h: float
+    active_instances: int
+    cold_starts_24h: int
+
+
+# In-memory storage for serverless endpoints (would be database in production)
+_serverless_endpoints: Dict[str, Dict[str, Any]] = {}
+
+
 # ============================================================
 # ENDPOINTS
 # ============================================================
+
+@router.get("/endpoints")
+async def list_serverless_endpoints(
+    user_email: str = Depends(get_current_user_email),
+):
+    """
+    Lista todos os endpoints serverless do usuário.
+    """
+    user_endpoints = [
+        ep for ep in _serverless_endpoints.values()
+        if ep.get("user_email") == user_email
+    ]
+    return {"endpoints": user_endpoints}
+
+
+@router.post("/endpoints")
+async def create_serverless_endpoint(
+    request: CreateServerlessEndpointRequest,
+    user_email: str = Depends(get_current_user_email),
+):
+    """
+    Cria um novo endpoint serverless.
+
+    Deploy de modelo em GPU com auto-scaling e pricing otimizado.
+    """
+    import uuid
+    from datetime import datetime
+
+    # Get user's VAST API key
+    settings = get_settings()
+    user_repo = FileUserRepository(config_file=settings.app.config_file)
+    user = user_repo.get_user(user_email)
+
+    if not user or not user.vast_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vast.ai API key not configured"
+        )
+
+    # Generate endpoint ID
+    endpoint_id = f"ep-{uuid.uuid4().hex[:8]}"
+
+    # GPU pricing (spot vs on-demand)
+    gpu_prices = {
+        "RTX 4090": {"spot": 0.18, "on-demand": 0.31},
+        "RTX 4080": {"spot": 0.15, "on-demand": 0.25},
+        "RTX 3090": {"spot": 0.12, "on-demand": 0.20},
+        "RTX 3080": {"spot": 0.09, "on-demand": 0.15},
+        "A100 40GB": {"spot": 0.38, "on-demand": 0.64},
+        "A100 80GB": {"spot": 0.54, "on-demand": 0.90},
+        "H100 PCIe": {"spot": 0.72, "on-demand": 1.20},
+        "L40S": {"spot": 0.51, "on-demand": 0.85},
+    }
+
+    price_per_hour = gpu_prices.get(request.gpu_name, {"spot": 0.20, "on-demand": 0.30})
+    price = price_per_hour["spot"] if request.machine_type == "spot" else price_per_hour["on-demand"]
+
+    # Create endpoint data
+    endpoint_data = {
+        "id": endpoint_id,
+        "name": request.name,
+        "status": "provisioning",
+        "machine_type": request.machine_type,
+        "gpu_name": request.gpu_name,
+        "region": request.region,
+        "created_at": datetime.utcnow().isoformat() + "Z",
+        "user_email": user_email,
+        "docker_image": request.docker_image,
+        "model_id": request.model_id,
+        "env_vars": request.env_vars,
+        "metrics": {
+            "requests_per_sec": 0,
+            "avg_latency_ms": 0,
+            "p99_latency_ms": 0,
+            "cold_starts_24h": 0,
+            "total_requests_24h": 0,
+            "uptime_percent": 100,
+        },
+        "pricing": {
+            "price_per_hour": price,
+            "price_per_request": 0.00001,
+            "cost_24h": 0,
+        },
+        "auto_scaling": {
+            "enabled": True,
+            "min_instances": request.min_instances,
+            "max_instances": request.max_instances,
+            "current_instances": 0,
+        },
+    }
+
+    # Store endpoint
+    _serverless_endpoints[endpoint_id] = endpoint_data
+
+    logger.info(f"Created serverless endpoint {endpoint_id} by {user_email}: {request.name}")
+
+    # TODO: Actually provision GPU on VAST.ai
+    # For now, simulate provisioning by marking as running after a short delay
+    import asyncio
+
+    async def provision_endpoint():
+        await asyncio.sleep(2)  # Simulate provisioning time
+        if endpoint_id in _serverless_endpoints:
+            _serverless_endpoints[endpoint_id]["status"] = "running"
+            _serverless_endpoints[endpoint_id]["auto_scaling"]["current_instances"] = 1
+
+    asyncio.create_task(provision_endpoint())
+
+    return {
+        **endpoint_data,
+        "message": f"Endpoint '{request.name}' created successfully",
+    }
+
+
+@router.delete("/endpoints/{endpoint_id}")
+async def delete_serverless_endpoint(
+    endpoint_id: str,
+    user_email: str = Depends(get_current_user_email),
+):
+    """
+    Deleta um endpoint serverless.
+    """
+    if endpoint_id not in _serverless_endpoints:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Endpoint {endpoint_id} not found"
+        )
+
+    endpoint = _serverless_endpoints[endpoint_id]
+    if endpoint.get("user_email") != user_email:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this endpoint"
+        )
+
+    del _serverless_endpoints[endpoint_id]
+
+    logger.info(f"Deleted serverless endpoint {endpoint_id} by {user_email}")
+
+    return {"message": f"Endpoint {endpoint_id} deleted successfully"}
+
+
+@router.get("/stats", response_model=ServerlessStatsResponse)
+async def get_serverless_stats(
+    user_email: str = Depends(get_current_user_email),
+):
+    """
+    Retorna estatísticas dos endpoints serverless do usuário.
+    """
+    user_endpoints = [
+        ep for ep in _serverless_endpoints.values()
+        if ep.get("user_email") == user_email
+    ]
+
+    total_endpoints = len(user_endpoints)
+    total_requests = sum(ep.get("metrics", {}).get("total_requests_24h", 0) for ep in user_endpoints)
+
+    latencies = [ep.get("metrics", {}).get("avg_latency_ms", 0) for ep in user_endpoints if ep.get("metrics", {}).get("avg_latency_ms", 0) > 0]
+    avg_latency = sum(latencies) / len(latencies) if latencies else 0
+
+    total_cost = sum(ep.get("pricing", {}).get("cost_24h", 0) for ep in user_endpoints)
+    active_instances = sum(ep.get("auto_scaling", {}).get("current_instances", 0) for ep in user_endpoints)
+    cold_starts = sum(ep.get("metrics", {}).get("cold_starts_24h", 0) for ep in user_endpoints)
+
+    return ServerlessStatsResponse(
+        total_endpoints=total_endpoints,
+        total_requests_24h=total_requests,
+        avg_latency_ms=avg_latency,
+        total_cost_24h=total_cost,
+        active_instances=active_instances,
+        cold_starts_24h=cold_starts,
+    )
+
 
 @router.post("/enable/{instance_id}")
 async def enable_serverless(

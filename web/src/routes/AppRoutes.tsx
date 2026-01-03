@@ -185,6 +185,48 @@ export default function AppRoutes() {
         element={<ProtectedPage><NPSTrends /></ProtectedPage>}
       />
 
+      {/* Demo Routes - No auth required */}
+      <Route
+        path="/demo-app"
+        element={
+          <AppLayout user={null} onLogout={() => {}} dashboardStats={null}>
+            <Dashboard onStatsUpdate={() => {}} />
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/demo-app/serverless"
+        element={
+          <AppLayout user={null} onLogout={() => {}} dashboardStats={null}>
+            <Serverless />
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/demo-app/machines"
+        element={
+          <AppLayout user={null} onLogout={() => {}} dashboardStats={null}>
+            <Machines />
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/demo-app/gpu-offers"
+        element={
+          <AppLayout user={null} onLogout={() => {}} dashboardStats={null}>
+            <GpuOffers />
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/demo-app/chat-arena"
+        element={
+          <AppLayout user={null} onLogout={() => {}} dashboardStats={null}>
+            <ChatArena />
+          </AppLayout>
+        }
+      />
+
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

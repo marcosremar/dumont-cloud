@@ -27,21 +27,36 @@ import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Slider } from './ui/slider';
 
-// Supported models
+// Supported models - 10 lightweight models for fast fine-tuning
 const MODELS = [
-  { id: 'unsloth/llama-3-8b-bnb-4bit', name: 'Llama 3 8B', vram: '16GB', desc: 'Meta\'s latest 8B parameter model' },
-  { id: 'unsloth/mistral-7b-bnb-4bit', name: 'Mistral 7B', vram: '12GB', desc: 'Fast and efficient 7B model' },
-  { id: 'unsloth/gemma-7b-bnb-4bit', name: 'Gemma 7B', vram: '12GB', desc: 'Google\'s open-source 7B model' },
-  { id: 'unsloth/Qwen2-7B-bnb-4bit', name: 'Qwen 2 7B', vram: '12GB', desc: 'Alibaba\'s multilingual model' },
-  { id: 'unsloth/Phi-3-mini-4k-instruct-bnb-4bit', name: 'Phi-3 Mini', vram: '8GB', desc: 'Microsoft\'s compact but powerful model' },
+  // Ultra-lightweight (fastest training)
+  { id: 'unsloth/tinyllama-bnb-4bit', name: 'TinyLlama 1.1B', vram: '4GB', desc: 'Ultra-fast training, great for prototyping', category: 'ultra-light', speed: 'very-fast' },
+  { id: 'unsloth/stablelm-2-1_6b-bnb-4bit', name: 'StableLM 2 1.6B', vram: '6GB', desc: 'Stability AI\'s efficient small model', category: 'ultra-light', speed: 'very-fast' },
+  { id: 'unsloth/Phi-3-mini-4k-instruct-bnb-4bit', name: 'Phi-3 Mini', vram: '8GB', desc: 'Microsoft\'s compact but powerful model', category: 'ultra-light', speed: 'very-fast' },
+  // Lightweight (fast training)
+  { id: 'unsloth/mistral-7b-bnb-4bit', name: 'Mistral 7B', vram: '12GB', desc: 'Fast and efficient 7B model', category: 'light', speed: 'fast' },
+  { id: 'unsloth/gemma-7b-bnb-4bit', name: 'Gemma 7B', vram: '12GB', desc: 'Google\'s open-source 7B model', category: 'light', speed: 'fast' },
+  { id: 'unsloth/Qwen2-7B-bnb-4bit', name: 'Qwen 2 7B', vram: '12GB', desc: 'Alibaba\'s multilingual model', category: 'light', speed: 'fast' },
+  { id: 'unsloth/llama-3-8b-bnb-4bit', name: 'Llama 3 8B', vram: '16GB', desc: 'Meta\'s latest 8B parameter model', category: 'light', speed: 'fast' },
+  { id: 'unsloth/zephyr-7b-beta-bnb-4bit', name: 'Zephyr 7B Beta', vram: '12GB', desc: 'HuggingFace\'s fine-tuned Mistral', category: 'light', speed: 'fast' },
+  { id: 'unsloth/openhermes-2.5-mistral-7b-bnb-4bit', name: 'OpenHermes 2.5', vram: '12GB', desc: 'Excellent for chat & instruction', category: 'light', speed: 'fast' },
+  { id: 'unsloth/codellama-7b-bnb-4bit', name: 'CodeLlama 7B', vram: '12GB', desc: 'Specialized for code generation', category: 'light', speed: 'fast' },
 ];
 
-// GPU options
+// GPU options - Various runtimes for different budgets
 const GPU_OPTIONS = [
-  { value: 'RTX4090', label: 'RTX 4090', vram: '24GB', price: '~$0.80/hr' },
-  { value: 'A100', label: 'A100 40GB', vram: '40GB', price: '~$1.50/hr' },
-  { value: 'A100-80GB', label: 'A100 80GB', vram: '80GB', price: '~$2.50/hr' },
-  { value: 'H100', label: 'H100 80GB', vram: '80GB', price: '~$3.50/hr' },
+  // Budget-friendly (fast GPUs)
+  { value: 'RTX3060', label: 'RTX 3060', vram: '12GB', price: '~$0.20/hr', category: 'budget' },
+  { value: 'RTX3090', label: 'RTX 3090', vram: '24GB', price: '~$0.40/hr', category: 'budget' },
+  { value: 'RTX4070', label: 'RTX 4070', vram: '12GB', price: '~$0.35/hr', category: 'budget' },
+  // Standard (balanced)
+  { value: 'RTX4080', label: 'RTX 4080', vram: '16GB', price: '~$0.55/hr', category: 'standard' },
+  { value: 'RTX4090', label: 'RTX 4090', vram: '24GB', price: '~$0.80/hr', category: 'standard' },
+  { value: 'L4', label: 'L4', vram: '24GB', price: '~$0.65/hr', category: 'standard' },
+  // Professional (high performance)
+  { value: 'A100', label: 'A100 40GB', vram: '40GB', price: '~$1.50/hr', category: 'professional' },
+  { value: 'A100-80GB', label: 'A100 80GB', vram: '80GB', price: '~$2.50/hr', category: 'professional' },
+  { value: 'H100', label: 'H100 80GB', vram: '80GB', price: '~$3.50/hr', category: 'professional' },
 ];
 
 // Dataset format options
@@ -49,6 +64,46 @@ const FORMAT_OPTIONS = [
   { value: 'alpaca', label: 'Alpaca', desc: 'instruction, input, output' },
   { value: 'sharegpt', label: 'ShareGPT', desc: 'conversations array' },
 ];
+
+// Validation constants
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+const ALLOWED_EXTENSIONS = ['.json', '.jsonl'];
+const MIN_JOB_NAME_LENGTH = 3;
+const MAX_JOB_NAME_LENGTH = 50;
+
+// Error prevention utilities
+const validateJobName = (name) => {
+  if (!name.trim()) return 'Job name is required';
+  if (name.length < MIN_JOB_NAME_LENGTH) return `Job name must be at least ${MIN_JOB_NAME_LENGTH} characters`;
+  if (name.length > MAX_JOB_NAME_LENGTH) return `Job name must be at most ${MAX_JOB_NAME_LENGTH} characters`;
+  if (!/^[a-zA-Z0-9_-]+$/.test(name.replace(/\s/g, '-'))) return 'Job name can only contain letters, numbers, hyphens and underscores';
+  return null;
+};
+
+const validateDatasetUrl = (url) => {
+  if (!url.trim()) return 'Dataset URL is required';
+  try {
+    new URL(url);
+  } catch {
+    return 'Please enter a valid URL';
+  }
+  if (!url.startsWith('https://')) return 'URL must use HTTPS for security';
+  return null;
+};
+
+const validateFile = (file) => {
+  if (!file) return 'Please select a file';
+  if (file.size > MAX_FILE_SIZE) return `File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`;
+  const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+  if (!ALLOWED_EXTENSIONS.includes(ext)) return `Only ${ALLOWED_EXTENSIONS.join(', ')} files are supported`;
+  return null;
+};
+
+const isGpuCompatible = (modelVramStr, gpuVramStr) => {
+  const modelVram = parseInt(modelVramStr) || 0;
+  const gpuVram = parseInt(gpuVramStr) || 0;
+  return gpuVram >= modelVram;
+};
 
 export default function FineTuningModal({ isOpen, onClose, onSuccess }) {
   const [step, setStep] = useState(1);
@@ -89,10 +144,17 @@ export default function FineTuningModal({ isOpen, onClose, onSuccess }) {
     }
   }, [isOpen]);
 
-  // Handle file upload
+  // Handle file upload with validation
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Validate file before upload
+    const fileError = validateFile(file);
+    if (fileError) {
+      setError(fileError);
+      return;
+    }
 
     setUploadedFile(file);
     setUploading(true);
@@ -103,36 +165,78 @@ export default function FineTuningModal({ isOpen, onClose, onSuccess }) {
       formData.append('file', file);
 
       const token = localStorage.getItem('auth_token');
+
+      // Add timeout for large file uploads
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000); // 5 min timeout
+
       const res = await fetch('/api/v1/finetune/jobs/upload-dataset', {
         method: 'POST',
         body: formData,
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.detail || 'Upload failed');
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || `Upload failed (HTTP ${res.status})`);
       }
 
       const data = await res.json();
       setDatasetPath(data.dataset_path);
     } catch (err) {
-      setError('Failed to upload dataset: ' + err.message);
+      if (err.name === 'AbortError') {
+        setError('Upload timed out. Please try again with a smaller file.');
+      } else if (err.message.includes('fetch')) {
+        setError('Network error. Please check your connection and try again.');
+      } else {
+        setError('Failed to upload dataset: ' + err.message);
+      }
       setUploadedFile(null);
     } finally {
       setUploading(false);
     }
   };
 
-  // Launch fine-tuning job
+  // Launch fine-tuning job with comprehensive validation
   const handleLaunch = async () => {
-    if (!jobName.trim()) {
-      setError('Please enter a job name');
+    // Prevent double submission
+    if (loading) return;
+
+    // Validate job name
+    const jobNameError = validateJobName(jobName);
+    if (jobNameError) {
+      setError(jobNameError);
       return;
     }
+
+    // Validate dataset
     if (!datasetPath) {
       setError('Please upload a dataset or provide a URL');
       return;
+    }
+
+    // Validate URL if using URL source
+    if (datasetSource === 'url') {
+      const urlError = validateDatasetUrl(datasetPath);
+      if (urlError) {
+        setError(urlError);
+        return;
+      }
+    }
+
+    // Warn about GPU compatibility (but don't block)
+    const selectedModel = MODELS.find(m => m.id === baseModel);
+    const selectedGpu = GPU_OPTIONS.find(g => g.value === gpuType);
+    if (selectedModel && selectedGpu && !isGpuCompatible(selectedModel.vram, selectedGpu.vram)) {
+      const confirmProceed = window.confirm(
+        `Warning: ${selectedModel.name} requires ${selectedModel.vram} VRAM, ` +
+        `but ${selectedGpu.label} only has ${selectedGpu.vram}. ` +
+        `Training may fail or be very slow. Continue anyway?`
+      );
+      if (!confirmProceed) return;
     }
 
     setLoading(true);
@@ -140,6 +244,11 @@ export default function FineTuningModal({ isOpen, onClose, onSuccess }) {
 
     try {
       const token = localStorage.getItem('auth_token');
+
+      // Add timeout for job creation
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 sec timeout
+
       const res = await fetch('/api/v1/finetune/jobs', {
         method: 'POST',
         headers: {
@@ -147,7 +256,7 @@ export default function FineTuningModal({ isOpen, onClose, onSuccess }) {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          name: jobName,
+          name: jobName.trim().replace(/\s+/g, '-'),
           base_model: baseModel,
           dataset_source: datasetSource,
           dataset_path: datasetPath,
@@ -156,18 +265,34 @@ export default function FineTuningModal({ isOpen, onClose, onSuccess }) {
           gpu_type: gpuType,
           num_gpus: 1,
         }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.detail || 'Failed to create job');
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+          throw new Error('Session expired. Please login again.');
+        } else if (res.status === 429) {
+          throw new Error('Too many requests. Please wait a moment and try again.');
+        } else if (res.status >= 500) {
+          throw new Error('Server error. Please try again later.');
+        }
+        throw new Error(data.detail || `Failed to create job (HTTP ${res.status})`);
       }
 
       const job = await res.json();
       onSuccess && onSuccess(job);
       onClose();
     } catch (err) {
-      setError(err.message);
+      if (err.name === 'AbortError') {
+        setError('Request timed out. Please try again.');
+      } else if (err.message.includes('fetch') || err.message.includes('network')) {
+        setError('Network error. Please check your connection and try again.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -235,33 +360,84 @@ export default function FineTuningModal({ isOpen, onClose, onSuccess }) {
                 Choose a pre-trained model to fine-tune. All models use 4-bit quantization for 80% less VRAM.
               </p>
 
+              {/* Ultra-light models section */}
               <div className="space-y-2">
-                {MODELS.map(model => (
+                <div className="flex items-center gap-2 mb-2">
+                  <Zap className="w-4 h-4 text-yellow-400" />
+                  <span className="text-sm font-medium text-yellow-400">Ultra-Fast Training (1-4B params)</span>
+                </div>
+                {MODELS.filter(m => m.category === 'ultra-light').map(model => (
                   <div
                     key={model.id}
                     onClick={() => setBaseModel(model.id)}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
                       baseModel === model.id
                         ? 'border-purple-500 bg-purple-500/10'
                         : 'border-gray-700 hover:border-gray-600 bg-gray-800/50'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium text-white">{model.name}</h4>
-                        <p className="text-sm text-gray-400">{model.desc}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-white">{model.name}</h4>
+                          <span className="text-xs bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded">
+                            {model.speed}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-400">{model.desc}</p>
                       </div>
-                      <div className="text-right">
+                      <div className="flex items-center gap-2">
                         <span className="text-xs bg-gray-700 px-2 py-1 rounded text-gray-300">
-                          Min {model.vram} VRAM
+                          {model.vram}
                         </span>
                         {baseModel === model.id && (
-                          <Check className="w-5 h-5 text-purple-400 mt-1 ml-auto" />
+                          <Check className="w-5 h-5 text-purple-400" />
                         )}
                       </div>
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Light models section */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Brain className="w-4 h-4 text-blue-400" />
+                  <span className="text-sm font-medium text-blue-400">Fast Training (7-8B params)</span>
+                </div>
+                <div className="max-h-[200px] overflow-y-auto space-y-2 pr-2">
+                  {MODELS.filter(m => m.category === 'light').map(model => (
+                    <div
+                      key={model.id}
+                      onClick={() => setBaseModel(model.id)}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                        baseModel === model.id
+                          ? 'border-purple-500 bg-purple-500/10'
+                          : 'border-gray-700 hover:border-gray-600 bg-gray-800/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium text-white">{model.name}</h4>
+                            <span className="text-xs bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded">
+                              {model.speed}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-400">{model.desc}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs bg-gray-700 px-2 py-1 rounded text-gray-300">
+                            {model.vram}
+                          </span>
+                          {baseModel === model.id && (
+                            <Check className="w-5 h-5 text-purple-400" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -397,27 +573,126 @@ export default function FineTuningModal({ isOpen, onClose, onSuccess }) {
                 />
               </div>
 
-              {/* GPU selection */}
-              <div className="space-y-2">
+              {/* GPU selection with categories */}
+              <div className="space-y-3">
                 <Label className="text-sm text-gray-400">GPU Type</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {GPU_OPTIONS.map(gpu => (
-                    <button
-                      key={gpu.value}
-                      onClick={() => setGpuType(gpu.value)}
-                      className={`p-3 rounded-lg border text-left transition-all ${
-                        gpuType === gpu.value
-                          ? 'border-purple-500 bg-purple-500/10'
-                          : 'border-gray-700 hover:border-gray-600'
-                      }`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <span className="font-medium text-white">{gpu.label}</span>
-                        <span className="text-xs text-gray-400">{gpu.price}</span>
+
+                {/* GPU compatibility check */}
+                {(() => {
+                  const model = MODELS.find(m => m.id === baseModel);
+                  const modelVram = parseInt(model?.vram || '0');
+                  const gpu = GPU_OPTIONS.find(g => g.value === gpuType);
+                  const gpuVram = parseInt(gpu?.vram || '0');
+                  const isCompatible = gpuVram >= modelVram;
+
+                  if (!isCompatible && gpu) {
+                    return (
+                      <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-2 flex items-start gap-2">
+                        <Info className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-orange-400">
+                          {model?.name} requires {model?.vram} VRAM, but {gpu.label} has only {gpu.vram}.
+                          Consider a larger GPU or a smaller model.
+                        </p>
                       </div>
-                      <span className="text-xs text-gray-400">{gpu.vram} VRAM</span>
-                    </button>
-                  ))}
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* Budget GPUs */}
+                <div>
+                  <span className="text-xs text-green-400 mb-1 block">Budget (Best for ultra-light models)</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {GPU_OPTIONS.filter(g => g.category === 'budget').map(gpu => {
+                      const model = MODELS.find(m => m.id === baseModel);
+                      const modelVram = parseInt(model?.vram || '0');
+                      const gpuVram = parseInt(gpu.vram);
+                      const isCompatible = gpuVram >= modelVram;
+
+                      return (
+                        <button
+                          key={gpu.value}
+                          onClick={() => setGpuType(gpu.value)}
+                          className={`p-2 rounded-lg border text-left transition-all ${
+                            gpuType === gpu.value
+                              ? 'border-purple-500 bg-purple-500/10'
+                              : isCompatible
+                                ? 'border-gray-700 hover:border-gray-600'
+                                : 'border-gray-700/50 opacity-50'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <span className="font-medium text-white text-sm">{gpu.label}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-xs text-gray-400">{gpu.vram}</span>
+                            <span className="text-xs text-green-400">{gpu.price}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Standard GPUs */}
+                <div>
+                  <span className="text-xs text-blue-400 mb-1 block">Standard (Recommended)</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {GPU_OPTIONS.filter(g => g.category === 'standard').map(gpu => {
+                      const model = MODELS.find(m => m.id === baseModel);
+                      const modelVram = parseInt(model?.vram || '0');
+                      const gpuVram = parseInt(gpu.vram);
+                      const isCompatible = gpuVram >= modelVram;
+
+                      return (
+                        <button
+                          key={gpu.value}
+                          onClick={() => setGpuType(gpu.value)}
+                          className={`p-2 rounded-lg border text-left transition-all ${
+                            gpuType === gpu.value
+                              ? 'border-purple-500 bg-purple-500/10'
+                              : isCompatible
+                                ? 'border-gray-700 hover:border-gray-600'
+                                : 'border-gray-700/50 opacity-50'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <span className="font-medium text-white text-sm">{gpu.label}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-xs text-gray-400">{gpu.vram}</span>
+                            <span className="text-xs text-blue-400">{gpu.price}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Professional GPUs */}
+                <div>
+                  <span className="text-xs text-purple-400 mb-1 block">Professional (Fastest training)</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {GPU_OPTIONS.filter(g => g.category === 'professional').map(gpu => (
+                      <button
+                        key={gpu.value}
+                        onClick={() => setGpuType(gpu.value)}
+                        className={`p-2 rounded-lg border text-left transition-all ${
+                          gpuType === gpu.value
+                            ? 'border-purple-500 bg-purple-500/10'
+                            : 'border-gray-700 hover:border-gray-600'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <span className="font-medium text-white text-sm">{gpu.label}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-xs text-gray-400">{gpu.vram}</span>
+                          <span className="text-xs text-purple-400">{gpu.price}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

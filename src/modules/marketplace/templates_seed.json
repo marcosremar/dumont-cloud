@@ -80,5 +80,68 @@
     "documentation_url": "/docs/templates/vllm",
     "is_active": true,
     "is_verified": false
+  },
+  {
+    "id": 5,
+    "name": "Ollama",
+    "slug": "ollama",
+    "description": "Run large language models locally with Ollama. Simple API, automatic model management, and support for Llama, Mistral, Qwen, and many more models. Perfect for Chat Arena.",
+    "docker_image": "ollama/ollama:latest",
+    "gpu_min_vram": 4,
+    "gpu_recommended_vram": 8,
+    "cuda_version": "11.8",
+    "ports": [11434],
+    "volumes": ["/root/.ollama"],
+    "launch_command": "ollama serve",
+    "env_vars": {
+      "OLLAMA_HOST": "0.0.0.0"
+    },
+    "category": "llm_inference",
+    "icon_url": "",
+    "documentation_url": "/docs/templates/ollama",
+    "is_active": true,
+    "is_verified": true
+  },
+  {
+    "id": 6,
+    "name": "Ollama + Llama 3.2 3B",
+    "slug": "ollama-llama32",
+    "description": "Ollama pre-configured with Llama 3.2 3B model. Lightweight, fast responses, ideal for Chat Arena comparisons. Auto-pulls model on first start.",
+    "docker_image": "ollama/ollama:latest",
+    "gpu_min_vram": 4,
+    "gpu_recommended_vram": 6,
+    "cuda_version": "11.8",
+    "ports": [11434],
+    "volumes": ["/root/.ollama"],
+    "launch_command": "bash -c 'ollama serve & sleep 5 && ollama pull llama3.2:3b && wait'",
+    "env_vars": {
+      "OLLAMA_HOST": "0.0.0.0"
+    },
+    "category": "llm_inference",
+    "icon_url": "",
+    "documentation_url": "/docs/templates/ollama",
+    "is_active": true,
+    "is_verified": true
+  },
+  {
+    "id": 7,
+    "name": "Ollama + Qwen 2.5 3B",
+    "slug": "ollama-qwen25",
+    "description": "Ollama pre-configured with Qwen 2.5 3B model. Excellent for multilingual tasks and coding. Perfect for Chat Arena model comparisons.",
+    "docker_image": "ollama/ollama:latest",
+    "gpu_min_vram": 4,
+    "gpu_recommended_vram": 6,
+    "cuda_version": "11.8",
+    "ports": [11434],
+    "volumes": ["/root/.ollama"],
+    "launch_command": "bash -c 'ollama serve & sleep 5 && ollama pull qwen2.5:3b && wait'",
+    "env_vars": {
+      "OLLAMA_HOST": "0.0.0.0"
+    },
+    "category": "llm_inference",
+    "icon_url": "",
+    "documentation_url": "/docs/templates/ollama",
+    "is_active": true,
+    "is_verified": true
   }
 ]

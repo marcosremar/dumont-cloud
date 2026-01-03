@@ -20,34 +20,52 @@ from ..models.finetune_job import (
 )
 from ...infrastructure.providers.skypilot_provider import get_skypilot_provider
 from ...infrastructure.providers.finetune_storage import get_finetune_storage
+from ...infrastructure.providers.vast_finetune_provider import get_vast_finetune_provider
 
 logger = logging.getLogger(__name__)
 
 # Template directory
 TEMPLATE_DIR = Path(__file__).parent.parent.parent / "templates"
 
-# Supported base models for fine-tuning
+# Supported base models for fine-tuning (10 lightweight models for fast training)
 SUPPORTED_MODELS = [
+    # Ultra-lightweight models (< 4B params) - Fastest training
     {
-        "id": "unsloth/llama-3-8b-bnb-4bit",
-        "name": "Llama 3 8B",
-        "parameters": "8B",
-        "min_vram": "16GB",
-        "recommended_gpu": "RTX 4090, A100",
+        "id": "unsloth/Phi-3-mini-4k-instruct-bnb-4bit",
+        "name": "Phi-3 Mini 4K",
+        "parameters": "3.8B",
+        "min_vram": "8GB",
+        "recommended_gpu": "RTX 3080, RTX 4070",
+        "category": "ultra-light",
+        "training_speed": "very-fast",
     },
     {
-        "id": "unsloth/llama-3-70b-bnb-4bit",
-        "name": "Llama 3 70B",
-        "parameters": "70B",
-        "min_vram": "48GB",
-        "recommended_gpu": "A100 80GB, H100",
+        "id": "unsloth/tinyllama-bnb-4bit",
+        "name": "TinyLlama 1.1B",
+        "parameters": "1.1B",
+        "min_vram": "4GB",
+        "recommended_gpu": "RTX 3060, RTX 4060",
+        "category": "ultra-light",
+        "training_speed": "very-fast",
     },
+    {
+        "id": "unsloth/stablelm-2-1_6b-bnb-4bit",
+        "name": "StableLM 2 1.6B",
+        "parameters": "1.6B",
+        "min_vram": "6GB",
+        "recommended_gpu": "RTX 3060, RTX 4060",
+        "category": "ultra-light",
+        "training_speed": "very-fast",
+    },
+    # Lightweight models (4-8B params) - Fast training
     {
         "id": "unsloth/mistral-7b-bnb-4bit",
         "name": "Mistral 7B",
         "parameters": "7B",
         "min_vram": "12GB",
         "recommended_gpu": "RTX 3090, RTX 4090",
+        "category": "light",
+        "training_speed": "fast",
     },
     {
         "id": "unsloth/gemma-7b-bnb-4bit",
@@ -55,6 +73,8 @@ SUPPORTED_MODELS = [
         "parameters": "7B",
         "min_vram": "12GB",
         "recommended_gpu": "RTX 3090, RTX 4090",
+        "category": "light",
+        "training_speed": "fast",
     },
     {
         "id": "unsloth/Qwen2-7B-bnb-4bit",
@@ -62,13 +82,44 @@ SUPPORTED_MODELS = [
         "parameters": "7B",
         "min_vram": "12GB",
         "recommended_gpu": "RTX 3090, RTX 4090",
+        "category": "light",
+        "training_speed": "fast",
     },
     {
-        "id": "unsloth/Phi-3-mini-4k-instruct-bnb-4bit",
-        "name": "Phi-3 Mini 4K",
-        "parameters": "3.8B",
-        "min_vram": "8GB",
-        "recommended_gpu": "RTX 3080, RTX 4070",
+        "id": "unsloth/llama-3-8b-bnb-4bit",
+        "name": "Llama 3 8B",
+        "parameters": "8B",
+        "min_vram": "16GB",
+        "recommended_gpu": "RTX 4090, A100",
+        "category": "light",
+        "training_speed": "fast",
+    },
+    {
+        "id": "unsloth/zephyr-7b-beta-bnb-4bit",
+        "name": "Zephyr 7B Beta",
+        "parameters": "7B",
+        "min_vram": "12GB",
+        "recommended_gpu": "RTX 3090, RTX 4090",
+        "category": "light",
+        "training_speed": "fast",
+    },
+    {
+        "id": "unsloth/openhermes-2.5-mistral-7b-bnb-4bit",
+        "name": "OpenHermes 2.5 7B",
+        "parameters": "7B",
+        "min_vram": "12GB",
+        "recommended_gpu": "RTX 3090, RTX 4090",
+        "category": "light",
+        "training_speed": "fast",
+    },
+    {
+        "id": "unsloth/codellama-7b-bnb-4bit",
+        "name": "CodeLlama 7B",
+        "parameters": "7B",
+        "min_vram": "12GB",
+        "recommended_gpu": "RTX 3090, RTX 4090",
+        "category": "light",
+        "training_speed": "fast",
     },
 ]
 
@@ -82,6 +133,7 @@ class FineTuningService:
     def __init__(self):
         """Initialize fine-tuning service"""
         self.skypilot = get_skypilot_provider()
+        self.vast_finetune = get_vast_finetune_provider()
         self.storage = get_finetune_storage()
         self.template_dir = TEMPLATE_DIR
 
@@ -89,6 +141,16 @@ class FineTuningService:
     def is_skypilot_available(self) -> bool:
         """Check if SkyPilot is available for launching jobs"""
         return self.skypilot.is_available
+
+    @property
+    def is_vast_available(self) -> bool:
+        """Check if VAST.ai fine-tuning is available"""
+        return self.vast_finetune.is_available
+
+    @property
+    def is_finetune_available(self) -> bool:
+        """Check if any fine-tuning backend is available"""
+        return self.is_skypilot_available or self.is_vast_available
 
     def create_job(
         self,
@@ -169,6 +231,60 @@ class FineTuningService:
 
         # Update status
         self.storage.update_job_status(job_id, FineTuneStatus.QUEUED)
+
+        # Try SkyPilot first, then VAST.ai as fallback
+        if self.is_skypilot_available:
+            success = self._start_job_skypilot(job)
+            if success:
+                return True
+            # If SkyPilot failed (e.g., no cloud provider configured), try VAST.ai
+            job = self.storage.get_job(job_id)  # Refresh job state
+            if job and job.status == FineTuneStatus.FAILED and self.is_vast_available:
+                self.storage.add_job_log(job_id, "Falling back to VAST.ai backend...")
+                self.storage.update_job_status(job_id, FineTuneStatus.QUEUED)
+                return self._start_job_vast(job)
+            return False
+        elif self.is_vast_available:
+            return self._start_job_vast(job)
+        else:
+            error_msg = "No fine-tuning backend available. Install SkyPilot or configure VAST.ai API key."
+            self.storage.update_job_status(job_id, FineTuneStatus.FAILED, error_message=error_msg)
+            self.storage.add_job_log(job_id, f"Error: {error_msg}")
+            return False
+
+    def _start_job_skypilot(self, job) -> bool:
+        """Start job via SkyPilot"""
+        job_id = job.id
+        self.storage.add_job_log(job_id, "Using SkyPilot backend...")
+
+        # Check if any cloud provider is configured
+        self.storage.add_job_log(job_id, "Checking cloud provider configuration...")
+        clouds_to_check = ["vast", "gcp", "aws", "azure", "lambda"]
+        enabled_cloud = None
+
+        for cloud in clouds_to_check:
+            check_result = self.skypilot.check_cloud(cloud)
+            if check_result.get("enabled"):
+                enabled_cloud = cloud
+                self.storage.add_job_log(job_id, f"Cloud provider '{cloud}' is configured and enabled")
+                break
+
+        if not enabled_cloud:
+            error_msg = (
+                "No cloud provider configured in SkyPilot. "
+                "Please configure a cloud provider (vast, gcp, aws, azure) "
+                "using 'sky check' or set up VAST.ai credentials. "
+                "Run 'sky check' to see cloud configuration status."
+            )
+            logger.error(f"Job {job_id}: {error_msg}")
+            self.storage.update_job_status(
+                job_id,
+                FineTuneStatus.FAILED,
+                error_message=error_msg
+            )
+            self.storage.add_job_log(job_id, f"Error: {error_msg}")
+            return False
+
         self.storage.add_job_log(job_id, "Generating SkyPilot task configuration...")
 
         try:
@@ -217,6 +333,70 @@ class FineTuningService:
 
         except Exception as e:
             logger.exception(f"Error starting job {job_id}")
+            self.storage.update_job_status(
+                job_id,
+                FineTuneStatus.FAILED,
+                error_message=str(e)
+            )
+            self.storage.add_job_log(job_id, f"Error: {str(e)}")
+            return False
+
+    def _start_job_vast(self, job) -> bool:
+        """Start job via VAST.ai directly"""
+        job_id = job.id
+        self.storage.add_job_log(job_id, "Using VAST.ai backend...")
+        self.storage.add_job_log(job_id, f"Searching for {job.gpu_type} GPU on VAST.ai...")
+
+        try:
+            # Generate unique job name
+            vast_job_name = f"finetune-{job.id}-{job.name[:20].replace(' ', '-').lower()}"
+
+            # Launch via VAST.ai
+            result = self.vast_finetune.launch_finetune_job(
+                job_name=vast_job_name,
+                base_model=job.config.base_model,
+                dataset_path=job.dataset_path,
+                dataset_format=job.dataset_format,
+                gpu_type=job.gpu_type,
+                config={
+                    "lora_rank": job.config.lora_rank,
+                    "lora_alpha": job.config.lora_alpha,
+                    "epochs": job.config.epochs,
+                    "batch_size": job.config.batch_size,
+                    "learning_rate": job.config.learning_rate,
+                    "max_seq_length": job.config.max_seq_length,
+                },
+            )
+
+            if not result.get("success"):
+                error_msg = result.get("error", "Unknown error")
+                logger.error(f"Failed to launch job {job_id}: {error_msg}")
+                self.storage.update_job_status(
+                    job_id,
+                    FineTuneStatus.FAILED,
+                    error_message=error_msg
+                )
+                self.storage.add_job_log(job_id, f"Launch failed: {error_msg}")
+                return False
+
+            # Update job with VAST.ai info
+            instance_id = result.get("instance_id")
+            self.storage.update_job_status(
+                job_id,
+                FineTuneStatus.RUNNING,
+                skypilot_job_id=instance_id,  # Reuse field for VAST instance ID
+                skypilot_job_name=vast_job_name,
+            )
+            self.storage.add_job_log(
+                job_id,
+                f"Job launched on VAST.ai. Instance ID: {instance_id}, GPU: {job.gpu_type}, "
+                f"Cost: ${result.get('cost_per_hour', 0):.2f}/hr"
+            )
+
+            return True
+
+        except Exception as e:
+            logger.exception(f"Error starting job {job_id} on VAST.ai")
             self.storage.update_job_status(
                 job_id,
                 FineTuneStatus.FAILED,

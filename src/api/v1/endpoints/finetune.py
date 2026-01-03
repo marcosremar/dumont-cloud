@@ -32,11 +32,23 @@ async def get_finetune_status(
     """
     Get fine-tuning system status.
 
-    Returns whether SkyPilot is available for launching jobs.
+    Returns whether SkyPilot or VAST.ai is available for launching jobs.
     """
+    skypilot_ok = service.is_skypilot_available
+    vast_ok = service.is_vast_available
+    finetune_ok = service.is_finetune_available
+
+    if finetune_ok:
+        backend = "SkyPilot" if skypilot_ok else "VAST.ai"
+        message = f"Fine-tuning ready via {backend}"
+    else:
+        message = "No fine-tuning backend available. Install SkyPilot or configure VAST_API_KEY"
+
     return {
-        "skypilot_available": service.is_skypilot_available,
-        "message": "Fine-tuning ready" if service.is_skypilot_available else "SkyPilot not available - install with: pip install skypilot"
+        "skypilot_available": skypilot_ok,
+        "vast_available": vast_ok,
+        "finetune_available": finetune_ok,
+        "message": message
     }
 
 

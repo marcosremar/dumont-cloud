@@ -24,11 +24,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import { isDemoMode } from '../utils/api'
 
-// Demo models for testing
+// Demo models for testing - uses local Ollama if available
 const DEMO_MODELS = [
-    { id: 'demo-1', gpu: 'RTX 4090 - Llama 3.1 70B', name: 'llama3.1:70b', ip: '192.168.1.100', ollama_url: null },
-    { id: 'demo-2', gpu: 'RTX 3090 - Mistral 7B', name: 'mistral:7b', ip: '192.168.1.101', ollama_url: null },
-    { id: 'demo-3', gpu: 'A100 - CodeLlama 34B', name: 'codellama:34b', ip: '192.168.1.102', ollama_url: null },
+    { id: 'demo-1', gpu: 'Local CPU - Qwen 2.5 0.5B', name: 'qwen2.5:0.5b', ip: null, ollama_url: '/ollama' },
+    { id: 'demo-2', gpu: 'Local CPU - Llama 3.2 1B', name: 'llama3.2:1b', ip: null, ollama_url: '/ollama' },
 ]
 
 // Demo responses for simulation
@@ -134,29 +133,33 @@ export default function ChatArena() {
     const messagesEndRef = useRef(null)
     const modelSelectorRef = useRef(null)
 
-    // Fetch available models from API
+    // Fetch available models from API (includes local Ollama + remote GPUs)
     const fetchModels = async () => {
         setRefreshing(true)
         try {
-            // Demo mode: use local demo data
-            if (isDemo) {
-                await new Promise(r => setTimeout(r, 300))
-                setModels(DEMO_MODELS)
-                setRefreshing(false)
-                return
-            }
-
+            // Always fetch from API - it returns local Ollama models too
             const token = localStorage.getItem('auth_token')
-            const res = await fetch('/api/v1/chat/models', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
+            const headers = token ? { Authorization: `Bearer ${token}` } : {}
+            const res = await fetch('/api/v1/chat/models', { headers })
             const data = await res.json()
-            if (data.models) {
-                setModels(data.models)
-                setSelectedModels(prev => prev.filter(id => data.models.find(m => m.id === id)))
+            if (data.models && data.models.length > 0) {
+                // For local models, use the proxy to avoid CORS
+                const modelsWithProxy = data.models.map(m => ({
+                    ...m,
+                    ollama_url: m.is_local ? '/ollama' : m.ollama_url
+                }))
+                setModels(modelsWithProxy)
+                setSelectedModels(prev => prev.filter(id => modelsWithProxy.find(m => m.id === id)))
+            } else if (isDemo) {
+                // Fallback to demo models only if API returns nothing
+                setModels(DEMO_MODELS)
             }
         } catch (err) {
             console.error('Failed to fetch models:', err)
+            // Fallback to demo models on error
+            if (isDemo) {
+                setModels(DEMO_MODELS)
+            }
         } finally {
             setRefreshing(false)
         }
@@ -204,48 +207,68 @@ export default function ChatArena() {
         return Math.ceil(text.split(/\s+/).length * 1.3)
     }
 
-    const sendMessageToModel = async (model, userMsg, messageHistory, systemPrompt) => {
-        const startTime = Date.now()
+    // Helper: fetch with timeout and retry
+    const fetchWithTimeout = async (url, options = {}, timeoutMs = 60000, retries = 2) => {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
-        // Demo mode: simulate response
-        if (isDemo) {
-            const delay = 800 + Math.random() * 1500 // 0.8-2.3s delay
-            await new Promise(r => setTimeout(r, delay))
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                })
+                clearTimeout(timeoutId)
+                return response
+            } catch (error) {
+                clearTimeout(timeoutId)
 
-            const responseTime = Date.now() - startTime
-            const responseIdx = Math.floor(Math.random() * DEMO_RESPONSES.length)
-            const content = DEMO_RESPONSES[responseIdx]
-            const totalTokens = estimateTokens(content)
-            const tokensPerSecond = totalTokens / (responseTime / 1000)
-
-            return {
-                content,
-                stats: {
-                    responseTime,
-                    timeToFirst: Math.floor(delay * 0.3),
-                    totalTokens,
-                    tokensPerSecond,
-                    modelUsed: model.name || 'demo-model'
+                if (error.name === 'AbortError') {
+                    if (attempt < retries) continue
+                    throw new Error(`Timeout: servidor demorou mais de ${timeoutMs/1000}s`)
                 }
+
+                // CORS or network error
+                if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+                    throw new Error('Erro de conexão: verifique se o modelo está online e acessível')
+                }
+
+                if (attempt < retries) continue
+                throw error
             }
         }
+    }
 
+    // Helper: check if model is healthy
+    const checkModelHealth = async (baseUrl) => {
+        try {
+            const res = await fetchWithTimeout(`${baseUrl}/api/tags`, {}, 5000, 1)
+            if (!res.ok) return { healthy: false, error: 'Ollama não respondeu' }
+            const data = await res.json()
+            if (!data.models || data.models.length === 0) {
+                return { healthy: false, error: 'Nenhum modelo instalado', models: [] }
+            }
+            return { healthy: true, models: data.models }
+        } catch (e) {
+            return { healthy: false, error: e.message }
+        }
+    }
+
+    const sendMessageToModel = async (model, userMsg, messageHistory, systemPrompt) => {
+        const startTime = Date.now()
         const baseUrl = getOllamaUrl(model)
-        if (!baseUrl) throw new Error("No URL available")
+        if (!baseUrl) throw new Error("URL do modelo não disponível")
 
         let timeToFirst = null
 
-        // Get model name from instance
-        let modelName = 'llama3:latest'
-        try {
-            const tagsRes = await fetch(`${baseUrl}/api/tags`)
-            if (tagsRes.ok) {
-                const tagsData = await tagsRes.json()
-                if (tagsData.models && tagsData.models.length > 0) {
-                    modelName = tagsData.models[0].name
-                }
-            }
-        } catch (e) { }
+        // Check model health first
+        const health = await checkModelHealth(baseUrl)
+        if (!health.healthy) {
+            throw new Error(health.error || 'Modelo offline')
+        }
+
+        // Use model's specified name, fallback to first available
+        const modelName = model.name || health.models[0]?.name || 'llama3:latest'
 
         // Build messages array with system prompt if provided
         const messages = []
@@ -254,25 +277,43 @@ export default function ChatArena() {
         }
         messages.push(...messageHistory, userMsg)
 
-        const response = await fetch(`${baseUrl}/api/chat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: modelName,
-                messages,
-                stream: false
-            })
-        })
+        // Send chat request with timeout
+        const response = await fetchWithTimeout(
+            `${baseUrl}/api/chat`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: modelName,
+                    messages,
+                    stream: false
+                })
+            },
+            120000, // 2 min timeout for long responses
+            1 // 1 retry
+        )
 
         timeToFirst = Date.now() - startTime
 
         if (!response.ok) {
-            throw new Error(`Request failed: ${response.statusText}`)
+            const errorText = await response.text().catch(() => response.statusText)
+            throw new Error(`Erro ${response.status}: ${errorText}`)
         }
 
-        const data = await response.json()
+        let data
+        try {
+            data = await response.json()
+        } catch (e) {
+            throw new Error('Resposta inválida do modelo')
+        }
+
         const responseTime = Date.now() - startTime
-        const content = data.message?.content || 'No response'
+        const content = data.message?.content || data.response || 'Sem resposta'
+
+        if (!content || content === 'Sem resposta') {
+            throw new Error('Modelo retornou resposta vazia')
+        }
+
         const totalTokens = estimateTokens(content)
         const tokensPerSecond = totalTokens / (responseTime / 1000)
 
@@ -548,8 +589,8 @@ export default function ChatArena() {
                                                         {selectedModels.includes(model.id) && <FiCheck className="w-3 h-3" />}
                                                     </div>
                                                     <div className="flex-1 text-left">
-                                                        <p className="text-sm font-medium text-gray-200">{model.gpu || model.name || 'Unknown'}</p>
-                                                        <p className="text-xs text-gray-500">{model.ip}</p>
+                                                        <p className="text-sm font-medium text-gray-200">{model.is_local ? model.name : (model.gpu || model.name || 'Unknown')}</p>
+                                                        <p className="text-xs text-gray-500">{model.is_local ? 'Local Ollama' : model.ip}</p>
                                                     </div>
                                                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                                                 </button>
@@ -613,7 +654,7 @@ export default function ChatArena() {
                                     <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-[#0d1117]/50">
                                         <div className="flex items-center gap-2">
                                             <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                                            <span className="text-sm font-medium text-gray-200">{model.gpu || model.name || 'Model'}</span>
+                                            <span className="text-sm font-medium text-gray-200">{model.is_local ? model.name : (model.gpu || model.name || 'Model')}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <button

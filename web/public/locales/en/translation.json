@@ -389,7 +389,19 @@
     "confirmCancel": "Are you sure you want to cancel this job? The GPU will be destroyed.",
     "errors": {
       "createError": "Error creating job",
-      "unknownError": "Unknown error"
+      "unknownError": "Unknown error",
+      "networkError": "Network error. Please check your connection.",
+      "nameRequired": "Job name is required",
+      "nameTooLong": "Job name must be 100 characters or less",
+      "hfRepoRequired": "Hugging Face repository is required",
+      "hfRepoInvalid": "Invalid format. Use: owner/repo-name",
+      "gitUrlRequired": "Git URL is required",
+      "gitUrlInvalid": "Invalid Git URL format",
+      "commandRequired": "Command is required for command-only jobs",
+      "diskSizeMin": "Disk size must be at least 10 GB",
+      "diskSizeMax": "Disk size cannot exceed 500 GB",
+      "timeoutMin": "Timeout must be at least 10 minutes",
+      "timeoutMax": "Timeout cannot exceed 24 hours (1440 minutes)"
     },
     "howItWorks": {
       "title": "How does Job mode work?",

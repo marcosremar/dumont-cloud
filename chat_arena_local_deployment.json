@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-01-03T10:42:00",
+  "environment": "LOCAL",
+  "total_cost_per_hour": 0,
+  "test_status": "SUCCESS",
+  "instances": [
+    {
+      "instance_id": "local-1",
+      "model_name": "Qwen 2.5 0.5B",
+      "ollama_model": "qwen2.5:0.5b",
+      "gpu_name": "CPU (Local Mac)",
+      "dph_total": 0,
+      "ollama_endpoint": "/ollama",
+      "status": "online",
+      "test_success": true,
+      "sample_response": "IA significa Interpretação e Automação..."
+    },
+    {
+      "instance_id": "local-2",
+      "model_name": "Llama 3.2 1B",
+      "ollama_model": "llama3.2:1b",
+      "gpu_name": "CPU (Local Mac)",
+      "dph_total": 0,
+      "ollama_endpoint": "/ollama",
+      "status": "online",
+      "test_success": true,
+      "sample_response": "Sistema de inteligência artificial."
+    }
+  ]
+}

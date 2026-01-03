@@ -1,9 +1,38 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+import httpx
+import os
 from ..dependencies import get_current_user_email, get_user_repository
 from ....services.gpu.vast import VastService
 
 router = APIRouter()
+
+# Local Ollama configuration
+LOCAL_OLLAMA_URL = os.getenv("LOCAL_OLLAMA_URL", "http://localhost:11434")
+
+async def get_local_ollama_models() -> List[Dict]:
+    """Get models from local Ollama instance"""
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(f"{LOCAL_OLLAMA_URL}/api/tags")
+            if resp.status_code == 200:
+                data = resp.json()
+                models = []
+                for m in data.get("models", []):
+                    models.append({
+                        "id": f"local-{m['name'].replace(':', '-')}",
+                        "name": m["name"],
+                        "gpu": "Local CPU/GPU",
+                        "status": "online",
+                        "ip": "localhost",
+                        "ollama_url": LOCAL_OLLAMA_URL,
+                        "size_gb": round(m.get("size", 0) / 1e9, 1),
+                        "is_local": True
+                    })
+                return models
+    except Exception as e:
+        print(f"Local Ollama not available: {e}")
+    return []
 
 def get_vast_service_local(
     user_email: str = Depends(get_current_user_email),
@@ -26,68 +55,57 @@ def get_vast_service_local(
     return VastService(api_key=user.vast_api_key)
 
 @router.get("/models")
-def list_models(
-    vast_service: VastService = Depends(get_vast_service_local)
+async def list_models(
+    include_local: bool = True
 ):
     """
-    List available Chat Models (LLMs) running on instances.
-    Detects instances with exposed Ollama port (11434).
+    List available Chat Models (LLMs).
+    Includes:
+    - Local Ollama models (if running)
+    - Remote VAST.ai instances with Ollama (if configured)
     """
+    models = []
+
+    # 1. Get local Ollama models first (always available for testing)
+    if include_local:
+        local_models = await get_local_ollama_models()
+        models.extend(local_models)
+
+    # 2. Try to get VAST.ai instances (optional, may fail if no API key)
     try:
-        # Get all instances
-        instances = vast_service.get_my_instances()
+        vast_api_key = os.getenv("VAST_API_KEY")
+        if vast_api_key:
+            vast_service = VastService(api_key=vast_api_key)
+            instances = vast_service.get_my_instances()
 
-        models = []
-        for inst in instances:
-            # Filter for running instances
-            if inst.get("actual_status") == "running" and inst.get("public_ipaddr"):
+            for inst in instances:
+                if inst.get("actual_status") == "running" and inst.get("public_ipaddr"):
+                    ports = inst.get("ports", {})
+                    ollama_url = None
 
-                # Check ports
-                ports = inst.get("ports", {})
-                ollama_url = None
-                is_ollama = False
+                    if ports and "11434/tcp" in ports:
+                        mappings = ports["11434/tcp"]
+                        if mappings:
+                            host_port = mappings[0].get("HostPort")
+                            if host_port:
+                                ollama_url = f"http://{inst['public_ipaddr']}:{host_port}"
 
-                # Check for 11434 mapping
-                if ports and "11434/tcp" in ports:
-                    mappings = ports["11434/tcp"]
-                    if mappings:
-                        host_port = mappings[0].get("HostPort")
-                        if host_port:
-                            ollama_url = f"http://{inst['public_ipaddr']}:{host_port}"
-                            is_ollama = True
-
-                if is_ollama:
-                     models.append({
-                        "id": inst.get("id"),
-                        "name": f"{inst.get('gpu_name', 'GPU')} (Instance {inst.get('id')})",
-                        "gpu": inst.get("gpu_name"),
-                        "status": "online",
-                        "ip": inst.get("public_ipaddr"),
-                        "ollama_url": ollama_url,
-                        "raw_ports": ports
-                    })
-
-        return {
-            "success": True,
-            "models": models,
-            "count": len(models)
-        }
-
-    except HTTPException:
-        # Re-raise HTTP exceptions (like auth errors)
-        raise
+                                models.append({
+                                    "id": str(inst.get("id")),
+                                    "name": f"{inst.get('gpu_name', 'GPU')}",
+                                    "gpu": inst.get("gpu_name"),
+                                    "status": "online",
+                                    "ip": inst.get("public_ipaddr"),
+                                    "ollama_url": ollama_url,
+                                    "is_local": False
+                                })
     except Exception as e:
-        import traceback
-        error_details = {
-            "success": False,
-            "error": "Failed to list chat models",
-            "message": str(e),
-            "details": "Could not fetch instances from Vast.ai. Please check your API key and network connection.",
-            "models": []
-        }
-        print(f"Error listing chat models: {e}")
-        print(traceback.format_exc())
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=error_details
-        )
+        print(f"VAST.ai models not available: {e}")
+
+    return {
+        "success": True,
+        "models": models,
+        "count": len(models),
+        "has_local": any(m.get("is_local") for m in models),
+        "has_remote": any(not m.get("is_local") for m in models)
+    }

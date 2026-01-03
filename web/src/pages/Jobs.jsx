@@ -27,6 +27,8 @@ const Jobs = () => {
   const [creating, setCreating] = useState(false);
   const [expandedJob, setExpandedJob] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [formError, setFormError] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
 
   // Form state
   const [formData, setFormData] = useState({
@@ -43,6 +45,54 @@ const Jobs = () => {
     disk_size: 50,
     timeout_minutes: 480,
   });
+
+  // Validate form before submission
+  const validateForm = () => {
+    const errors = {};
+
+    // Name validation
+    if (!formData.name || formData.name.trim().length === 0) {
+      errors.name = t('jobs.errors.nameRequired') || 'Job name is required';
+    } else if (formData.name.length > 100) {
+      errors.name = t('jobs.errors.nameTooLong') || 'Job name must be 100 characters or less';
+    }
+
+    // Source-specific validation
+    if (formData.source === 'huggingface') {
+      if (!formData.hf_repo || formData.hf_repo.trim().length === 0) {
+        errors.hf_repo = t('jobs.errors.hfRepoRequired') || 'Hugging Face repository is required';
+      } else if (!formData.hf_repo.includes('/')) {
+        errors.hf_repo = t('jobs.errors.hfRepoInvalid') || 'Invalid format. Use: owner/repo-name';
+      }
+    } else if (formData.source === 'git') {
+      if (!formData.git_url || formData.git_url.trim().length === 0) {
+        errors.git_url = t('jobs.errors.gitUrlRequired') || 'Git URL is required';
+      } else if (!formData.git_url.startsWith('http') && !formData.git_url.startsWith('git@')) {
+        errors.git_url = t('jobs.errors.gitUrlInvalid') || 'Invalid Git URL format';
+      }
+    } else if (formData.source === 'command') {
+      if (!formData.command || formData.command.trim().length === 0) {
+        errors.command = t('jobs.errors.commandRequired') || 'Command is required for command-only jobs';
+      }
+    }
+
+    // Disk size validation
+    if (formData.disk_size < 10) {
+      errors.disk_size = t('jobs.errors.diskSizeMin') || 'Disk size must be at least 10 GB';
+    } else if (formData.disk_size > 500) {
+      errors.disk_size = t('jobs.errors.diskSizeMax') || 'Disk size cannot exceed 500 GB';
+    }
+
+    // Timeout validation
+    if (formData.timeout_minutes < 10) {
+      errors.timeout_minutes = t('jobs.errors.timeoutMin') || 'Timeout must be at least 10 minutes';
+    } else if (formData.timeout_minutes > 1440) {
+      errors.timeout_minutes = t('jobs.errors.timeoutMax') || 'Timeout cannot exceed 24 hours (1440 minutes)';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   // Fetch jobs
   const fetchJobs = useCallback(async () => {
@@ -82,30 +132,39 @@ const Jobs = () => {
 
   const handleCreateJob = async (e) => {
     e.preventDefault();
+    setFormError(null);
+
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
+
     setCreating(true);
 
     try {
       const payload = {
-        name: formData.name,
+        name: formData.name.trim(),
         source: formData.source,
-        command: formData.command,
+        command: formData.command.trim(),
         gpu_type: formData.gpu_type,
-        disk_size: formData.disk_size,
-        timeout_minutes: formData.timeout_minutes,
-        pip_packages: formData.pip_packages ? formData.pip_packages.split(',').map(p => p.trim()) : [],
+        disk_size: Math.max(10, Math.min(500, parseInt(formData.disk_size) || 50)),
+        timeout_minutes: Math.max(10, Math.min(1440, parseInt(formData.timeout_minutes) || 480)),
+        pip_packages: formData.pip_packages
+          ? formData.pip_packages.split(',').map(p => p.trim()).filter(p => p.length > 0)
+          : [],
       };
 
       // Add source-specific fields
       if (formData.source === 'huggingface') {
-        payload.hf_repo = formData.hf_repo;
-        payload.hf_revision = formData.hf_revision || undefined;
+        payload.hf_repo = formData.hf_repo.trim();
+        payload.hf_revision = formData.hf_revision?.trim() || undefined;
       } else if (formData.source === 'git') {
-        payload.git_url = formData.git_url;
-        payload.git_branch = formData.git_branch || undefined;
+        payload.git_url = formData.git_url.trim();
+        payload.git_branch = formData.git_branch?.trim() || undefined;
       }
 
-      if (formData.setup_script) {
-        payload.setup_script = formData.setup_script;
+      if (formData.setup_script?.trim()) {
+        payload.setup_script = formData.setup_script.trim();
       }
 
       const response = await fetch('/api/v1/jobs', {
@@ -119,6 +178,8 @@ const Jobs = () => {
 
       if (response.ok) {
         setShowCreateForm(false);
+        setValidationErrors({});
+        setFormError(null);
         setFormData({
           name: '',
           source: 'huggingface',
@@ -135,12 +196,22 @@ const Jobs = () => {
         });
         fetchJobs();
       } else {
-        const error = await response.json();
-        alert(`${t('jobs.errors.createError')}: ${error.detail || t('jobs.errors.unknownError')}`);
+        let errorMessage = t('jobs.errors.unknownError');
+        try {
+          const error = await response.json();
+          errorMessage = error.detail || errorMessage;
+        } catch {
+          // Response wasn't JSON
+        }
+        setFormError(`${t('jobs.errors.createError')}: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error creating job:', error);
-      alert(t('jobs.errors.createError'));
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+        setFormError(t('jobs.errors.networkError') || 'Network error. Please check your connection.');
+      } else {
+        setFormError(t('jobs.errors.createError'));
+      }
     } finally {
       setCreating(false);
     }
@@ -229,6 +300,14 @@ const Jobs = () => {
               </div>
 
               <form onSubmit={handleCreateJob} className="space-y-5">
+                {/* Form Error Alert */}
+                {formError && (
+                  <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-red-400">{formError}</div>
+                  </div>
+                )}
+
                 {/* Nome */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1.5">
@@ -238,10 +317,20 @@ const Jobs = () => {
                     type="text"
                     required
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      if (validationErrors.name) {
+                        setValidationErrors({ ...validationErrors, name: null });
+                      }
+                    }}
                     placeholder={t('jobs.form.jobNamePlaceholder')}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50"
+                    className={`w-full px-3 py-2 rounded-lg bg-white/5 border text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50 ${
+                      validationErrors.name ? 'border-red-500/50' : 'border-white/10'
+                    }`}
                   />
+                  {validationErrors.name && (
+                    <p className="mt-1 text-xs text-red-400">{validationErrors.name}</p>
+                  )}
                 </div>
 
                 {/* Source Type */}
@@ -282,10 +371,20 @@ const Jobs = () => {
                         type="text"
                         required
                         value={formData.hf_repo}
-                        onChange={(e) => setFormData({ ...formData, hf_repo: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, hf_repo: e.target.value });
+                          if (validationErrors.hf_repo) {
+                            setValidationErrors({ ...validationErrors, hf_repo: null });
+                          }
+                        }}
                         placeholder={t('jobs.form.hfRepoPlaceholder')}
-                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50"
+                        className={`w-full px-3 py-2 rounded-lg bg-white/5 border text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50 ${
+                          validationErrors.hf_repo ? 'border-red-500/50' : 'border-white/10'
+                        }`}
                       />
+                      {validationErrors.hf_repo && (
+                        <p className="mt-1 text-xs text-red-400">{validationErrors.hf_repo}</p>
+                      )}
                       <p className="text-xs text-gray-500 mt-1">
                         {t('jobs.form.hfRepoHint')}
                       </p>
@@ -315,10 +414,20 @@ const Jobs = () => {
                         type="text"
                         required
                         value={formData.git_url}
-                        onChange={(e) => setFormData({ ...formData, git_url: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, git_url: e.target.value });
+                          if (validationErrors.git_url) {
+                            setValidationErrors({ ...validationErrors, git_url: null });
+                          }
+                        }}
                         placeholder="https://github.com/user/repo.git"
-                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50"
+                        className={`w-full px-3 py-2 rounded-lg bg-white/5 border text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50 ${
+                          validationErrors.git_url ? 'border-red-500/50' : 'border-white/10'
+                        }`}
                       />
+                      {validationErrors.git_url && (
+                        <p className="mt-1 text-xs text-red-400">{validationErrors.git_url}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-1.5">
@@ -338,18 +447,29 @@ const Jobs = () => {
                 {/* Command */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                    {t('jobs.form.commandLabel')} {formData.source !== 'command' && t('jobs.form.commandOptional')}
+                    {t('jobs.form.commandLabel')} {formData.source === 'command' ? '*' : t('jobs.form.commandOptional')}
                   </label>
                   <textarea
                     value={formData.command}
-                    onChange={(e) => setFormData({ ...formData, command: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, command: e.target.value });
+                      if (validationErrors.command) {
+                        setValidationErrors({ ...validationErrors, command: null });
+                      }
+                    }}
                     placeholder={formData.source === 'huggingface'
                       ? "python model/train.py --epochs 10"
                       : "python train.py --epochs 10"
                     }
                     rows={3}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50 font-mono"
+                    required={formData.source === 'command'}
+                    className={`w-full px-3 py-2 rounded-lg bg-white/5 border text-gray-200 text-sm placeholder:text-gray-500 focus:ring-1 focus:ring-brand-500/50 font-mono ${
+                      validationErrors.command ? 'border-red-500/50' : 'border-white/10'
+                    }`}
                   />
+                  {validationErrors.command && (
+                    <p className="mt-1 text-xs text-red-400">{validationErrors.command}</p>
+                  )}
                   <p className="text-xs text-gray-500 mt-1">
                     {t('jobs.form.commandHint')}
                   </p>
