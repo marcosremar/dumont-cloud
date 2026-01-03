@@ -27,7 +27,8 @@ import {
   FiServer,
   FiCloud,
   FiHelpCircle,
-  FiTerminal
+  FiTerminal,
+  FiDatabase
 } from 'react-icons/fi'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
@@ -54,10 +55,10 @@ function InfoTooltip({ text }) {
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 5 }}
-            className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-[#1c2128] border border-white/10 rounded-lg shadow-xl text-xs text-gray-300 whitespace-nowrap z-50"
+            className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-dark-surface-card border border-white/10 rounded-lg shadow-xl text-xs text-gray-300 whitespace-nowrap z-50"
           >
             {text}
-            <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-[#1c2128] border-r border-b border-white/10 transform rotate-45 -mt-1" />
+            <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-dark-surface-card border-r border-b border-white/10 transform rotate-45 -mt-1" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -101,7 +102,7 @@ print(response.choices[0].message.content)`
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative bg-[#161b22] border border-white/10 rounded-xl shadow-2xl w-full max-w-2xl mx-4 p-5"
+        className="relative bg-dark-surface-card border border-white/10 rounded-xl shadow-2xl w-full max-w-2xl mx-4 p-5"
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -119,7 +120,7 @@ print(response.choices[0].message.content)`
         </div>
 
         <div className="relative">
-          <pre className="bg-[#0d1117] border border-white/10 rounded-lg p-4 overflow-x-auto text-sm text-gray-300 font-mono">
+          <pre className="bg-dark-surface border border-white/10 rounded-lg p-4 overflow-x-auto text-sm text-gray-300 font-mono">
             <code>{code}</code>
           </pre>
           <button
@@ -298,7 +299,7 @@ function ModelSelector({ selectedModel, onSelect, serverlessModels = [] }) {
     <div ref={dropdownRef} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 bg-[#161b22] border border-white/10 rounded-lg hover:border-purple-500/50 transition-all min-w-[200px]"
+        className="flex items-center gap-2 px-3 py-2 bg-dark-surface-card border border-white/10 rounded-lg hover:border-purple-500/50 transition-all min-w-[200px]"
       >
         {selected?.category === 'serverless' ? (
           <FiServer className="text-green-400" />
@@ -317,10 +318,10 @@ function ModelSelector({ selectedModel, onSelect, serverlessModels = [] }) {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full mt-2 left-0 right-0 bg-[#161b22] border border-white/10 rounded-lg shadow-xl z-50 max-h-[400px] overflow-hidden"
+            className="absolute top-full mt-2 left-0 right-0 bg-dark-surface-card border border-white/10 rounded-lg shadow-xl z-50 max-h-[400px] overflow-hidden"
           >
             <div className="p-2 border-b border-white/10">
-              <div className="flex items-center gap-2 px-2 py-1.5 bg-[#0d1117] rounded-md">
+              <div className="flex items-center gap-2 px-2 py-1.5 bg-dark-surface rounded-md">
                 <FiSearch className="text-gray-500" />
                 <input
                   type="text"
@@ -390,7 +391,7 @@ function ParametersPanel({ params, onChange }) {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 bg-[#161b22] border border-white/10 rounded-lg hover:border-white/20 transition-all text-xs text-gray-400"
+        className="flex items-center gap-2 px-3 py-2 bg-dark-surface-card border border-white/10 rounded-lg hover:border-white/20 transition-all text-xs text-gray-400"
       >
         <span>temperature: {params.temperature}</span>
         <span className="text-white/20">|</span>
@@ -405,7 +406,7 @@ function ParametersPanel({ params, onChange }) {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full mt-2 left-0 bg-[#161b22] border border-white/10 rounded-lg shadow-xl z-50 p-4 min-w-[280px]"
+            className="absolute top-full mt-2 left-0 bg-dark-surface-card border border-white/10 rounded-lg shadow-xl z-50 p-4 min-w-[280px]"
           >
             <div className="space-y-4">
               <div>
@@ -479,7 +480,7 @@ function ToolsSelector({ selectedTools, onToggle }) {
             className={`p-2 rounded-lg transition-all ${
               isSelected
                 ? `bg-white/10 ${tool.color}`
-                : 'bg-[#161b22] text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                : 'bg-dark-surface-card text-gray-500 hover:text-gray-300 hover:bg-white/5'
             }`}
           >
             <Icon size={16} />
@@ -531,7 +532,7 @@ function FunctionsEditor({ functions, onAdd, onRemove, onUpdate }) {
       <div className="flex items-center gap-2">
         <button
           onClick={() => setShowAddModal(true)}
-          className="p-2 bg-[#161b22] rounded-lg text-gray-500 hover:text-purple-400 hover:bg-white/5 transition-all"
+          className="p-2 bg-dark-surface-card rounded-lg text-gray-500 hover:text-purple-400 hover:bg-white/5 transition-all"
         >
           <FiPlus size={16} />
         </button>
@@ -544,7 +545,7 @@ function FunctionsEditor({ functions, onAdd, onRemove, onUpdate }) {
       {functions.length > 0 && (
         <div className="mt-2 space-y-1">
           {functions.map((func, idx) => (
-            <div key={idx} className="flex items-center gap-2 px-2 py-1 bg-[#0d1117] rounded text-xs">
+            <div key={idx} className="flex items-center gap-2 px-2 py-1 bg-dark-surface rounded text-xs">
               <FiCode className="text-blue-400" />
               <span className="text-gray-300 flex-1">{func.name}</span>
               <button onClick={() => onRemove(idx)} className="text-gray-500 hover:text-red-400">
@@ -564,7 +565,7 @@ function FunctionsEditor({ functions, onAdd, onRemove, onUpdate }) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative bg-[#161b22] border border-white/10 rounded-xl shadow-2xl w-full max-w-lg mx-4 p-5"
+              className="relative bg-dark-surface-card border border-white/10 rounded-xl shadow-2xl w-full max-w-lg mx-4 p-5"
             >
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -584,7 +585,7 @@ function FunctionsEditor({ functions, onAdd, onRemove, onUpdate }) {
                     Examples <FiChevronDown />
                   </button>
                   {showExamples && (
-                    <div className="absolute top-full right-0 mt-1 bg-[#0d1117] border border-white/10 rounded-lg shadow-xl z-10 py-1 min-w-[150px]">
+                    <div className="absolute top-full right-0 mt-1 bg-dark-surface border border-white/10 rounded-lg shadow-xl z-10 py-1 min-w-[150px]">
                       {FUNCTION_EXAMPLES.map(ex => (
                         <button
                           key={ex.name}
@@ -607,7 +608,7 @@ function FunctionsEditor({ functions, onAdd, onRemove, onUpdate }) {
                     placeholder="e.g. get_weather"
                     value={newFunc.name}
                     onChange={(e) => setNewFunc({ ...newFunc, name: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#0d1117] border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-purple-500/50"
+                    className="w-full px-3 py-2 bg-dark-surface border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-brand-500/50"
                   />
                 </div>
                 <div>
@@ -617,7 +618,7 @@ function FunctionsEditor({ functions, onAdd, onRemove, onUpdate }) {
                     placeholder="e.g. Get current weather for a location"
                     value={newFunc.description}
                     onChange={(e) => setNewFunc({ ...newFunc, description: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#0d1117] border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-purple-500/50"
+                    className="w-full px-3 py-2 bg-dark-surface border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-brand-500/50"
                   />
                 </div>
                 <div className="flex items-center gap-3">
@@ -639,7 +640,7 @@ function FunctionsEditor({ functions, onAdd, onRemove, onUpdate }) {
                     value={newFunc.parameters}
                     onChange={(e) => setNewFunc({ ...newFunc, parameters: e.target.value })}
                     rows={6}
-                    className="w-full px-3 py-2 bg-[#0d1117] border border-white/10 rounded-lg text-sm text-gray-200 font-mono focus:outline-none focus:border-purple-500/50 resize-none"
+                    className="w-full px-3 py-2 bg-dark-surface border border-white/10 rounded-lg text-sm text-gray-200 font-mono focus:outline-none focus:border-brand-500/50 resize-none"
                   />
                 </div>
               </div>
@@ -682,7 +683,7 @@ function ResponseFormatSelector({ format, onChange }) {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 bg-[#161b22] border border-white/10 rounded-lg hover:border-white/20 transition-all min-w-[100px]"
+        className="flex items-center gap-2 px-3 py-2 bg-dark-surface-card border border-white/10 rounded-lg hover:border-white/20 transition-all min-w-[100px]"
       >
         <span className="text-gray-200 text-sm">{format === 'json' ? 'JSON' : 'Text'}</span>
         <FiChevronDown className="text-gray-500" />
@@ -693,7 +694,7 @@ function ResponseFormatSelector({ format, onChange }) {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full mt-2 left-0 bg-[#161b22] border border-white/10 rounded-lg shadow-xl z-50 py-1 min-w-[180px]"
+            className="absolute top-full mt-2 left-0 bg-dark-surface-card border border-white/10 rounded-lg shadow-xl z-50 py-1 min-w-[180px]"
           >
             {formats.map(f => (
               <button
@@ -721,23 +722,59 @@ function ResponseFormatSelector({ format, onChange }) {
 // COMPONENTE: Create Agent Modal
 // =============================================================================
 
+// Memory Provider Options
+const MEMORY_PROVIDERS = [
+  {
+    id: 'gcp',
+    name: 'Google Cloud',
+    description: 'Vertex AI Embeddings + Vector Search',
+    icon: '🔷',
+    available: true
+  },
+  {
+    id: 'pinecone',
+    name: 'Pinecone',
+    description: 'High-performance vector database',
+    icon: '🌲',
+    available: false // Future
+  },
+  {
+    id: 'chroma',
+    name: 'Chroma',
+    description: 'Open-source, self-hosted',
+    icon: '🎨',
+    available: false // Future
+  }
+]
+
 function CreateAgentModal({ isOpen, onClose, onCreate, agentConfig }) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [enableMemory, setEnableMemory] = useState(false)
+  const [memoryProvider, setMemoryProvider] = useState('gcp')
+  const [showProviderDropdown, setShowProviderDropdown] = useState(false)
 
   const handleCreate = () => {
     if (!name) return
     onCreate({
       name,
       description,
-      config: agentConfig
+      config: agentConfig,
+      memory: enableMemory ? {
+        enabled: true,
+        provider: memoryProvider
+      } : null
     })
     setName('')
     setDescription('')
+    setEnableMemory(false)
+    setMemoryProvider('gcp')
     onClose()
   }
 
   if (!isOpen) return null
+
+  const selectedProvider = MEMORY_PROVIDERS.find(p => p.id === memoryProvider)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -746,7 +783,7 @@ function CreateAgentModal({ isOpen, onClose, onCreate, agentConfig }) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative bg-[#161b22] border border-white/10 rounded-xl shadow-2xl w-full max-w-md mx-4 p-5"
+        className="relative bg-dark-surface-card border border-white/10 rounded-xl shadow-2xl w-full max-w-md mx-4 p-5"
       >
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 bg-purple-500/20 rounded-lg">
@@ -766,7 +803,7 @@ function CreateAgentModal({ isOpen, onClose, onCreate, agentConfig }) {
               placeholder="Enter agent name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0d1117] border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-purple-500/50"
+              className="w-full px-3 py-2 bg-dark-surface border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-brand-500/50"
               autoFocus
             />
           </div>
@@ -777,8 +814,112 @@ function CreateAgentModal({ isOpen, onClose, onCreate, agentConfig }) {
               placeholder="Enter agent description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0d1117] border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-purple-500/50"
+              className="w-full px-3 py-2 bg-dark-surface border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-brand-500/50"
             />
+          </div>
+
+          {/* Memory Toggle */}
+          <div className="border-t border-white/10 pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <FiDatabase className={enableMemory ? 'text-green-400' : 'text-gray-500'} size={16} />
+                <span className="text-sm text-gray-300">Enable Memory</span>
+              </div>
+              <button
+                onClick={() => setEnableMemory(!enableMemory)}
+                className={`relative w-11 h-6 rounded-full transition-colors ${
+                  enableMemory ? 'bg-green-500' : 'bg-gray-600'
+                }`}
+              >
+                <span
+                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                    enableMemory ? 'left-6' : 'left-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {enableMemory && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-3"
+              >
+                <p className="text-xs text-gray-500">
+                  Memory allows the agent to remember facts, preferences, and conversation history across sessions.
+                </p>
+
+                {/* Provider Selector */}
+                <div className="relative">
+                  <label className="text-xs text-gray-400 block mb-1">Memory Provider</label>
+                  <button
+                    onClick={() => setShowProviderDropdown(!showProviderDropdown)}
+                    className="w-full flex items-center justify-between px-3 py-2 bg-dark-surface border border-white/10 rounded-lg text-sm text-gray-200 hover:border-white/20"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>{selectedProvider?.icon}</span>
+                      <span>{selectedProvider?.name}</span>
+                    </div>
+                    <FiChevronDown className={`text-gray-500 transition-transform ${showProviderDropdown ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {showProviderDropdown && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="absolute top-full left-0 right-0 mt-1 bg-dark-surface border border-white/10 rounded-lg shadow-xl z-10 overflow-hidden"
+                      >
+                        {MEMORY_PROVIDERS.map(provider => (
+                          <button
+                            key={provider.id}
+                            onClick={() => {
+                              if (provider.available) {
+                                setMemoryProvider(provider.id)
+                                setShowProviderDropdown(false)
+                              }
+                            }}
+                            disabled={!provider.available}
+                            className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-all ${
+                              provider.available
+                                ? memoryProvider === provider.id
+                                  ? 'bg-green-500/20 text-green-300'
+                                  : 'hover:bg-white/5 text-gray-300'
+                                : 'opacity-50 cursor-not-allowed text-gray-500'
+                            }`}
+                          >
+                            <span className="text-lg">{provider.icon}</span>
+                            <div className="flex-1">
+                              <div className="text-sm flex items-center gap-2">
+                                {provider.name}
+                                {!provider.available && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-gray-700 rounded text-gray-400">
+                                    Em breve
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-500">{provider.description}</div>
+                            </div>
+                            {memoryProvider === provider.id && provider.available && (
+                              <FiCheck className="text-green-400" />
+                            )}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="flex items-center gap-2 p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <FiInfo className="text-blue-400 shrink-0" size={14} />
+                  <p className="text-xs text-blue-300">
+                    Using GCP Vertex AI for embeddings. Make sure GCP credentials are configured.
+                  </p>
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
 
@@ -893,7 +1034,7 @@ function CodeExecutionResult({ result, code }) {
   }
 
   return (
-    <div className="mt-2 p-3 bg-[#0d1117] rounded-lg border border-white/10">
+    <div className="mt-2 p-3 bg-dark-surface rounded-lg border border-white/10">
       {/* Header */}
       <div className="flex items-center gap-2 mb-2 text-xs text-gray-500">
         <FiTerminal size={12} />
@@ -1446,7 +1587,7 @@ function ChatPlayground({ agentConfig, disabled, hasApiKey, onNeedApiKey }) {
                       ? 'bg-purple-600 text-white'
                       : msg.isError
                         ? 'bg-red-900/20 text-red-300 border border-red-500/20'
-                        : 'bg-[#161b22] text-gray-200 border border-white/10'
+                        : 'bg-dark-surface-card text-gray-200 border border-white/10'
                   }`}
                 >
                   <div className="text-sm prose prose-invert prose-sm max-w-none">
@@ -1461,7 +1602,7 @@ function ChatPlayground({ agentConfig, disabled, hasApiKey, onNeedApiKey }) {
         {/* Streaming content */}
         {streamingContent && (
           <div className="flex justify-start">
-            <div className="max-w-[80%] px-4 py-2 rounded-lg bg-[#161b22] text-gray-200 border border-white/10">
+            <div className="max-w-[80%] px-4 py-2 rounded-lg bg-dark-surface-card text-gray-200 border border-white/10">
               <div className="text-sm prose prose-invert prose-sm max-w-none">
                 <ReactMarkdown>{streamingContent}</ReactMarkdown>
               </div>
@@ -1471,7 +1612,7 @@ function ChatPlayground({ agentConfig, disabled, hasApiKey, onNeedApiKey }) {
 
         {isLoading && !streamingContent && (
           <div className="flex justify-start">
-            <div className="px-4 py-3 bg-[#161b22] border border-white/10 rounded-lg">
+            <div className="px-4 py-3 bg-dark-surface-card border border-white/10 rounded-lg">
               <div className="flex gap-1">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -1494,7 +1635,7 @@ function ChatPlayground({ agentConfig, disabled, hasApiKey, onNeedApiKey }) {
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
             placeholder={hasApiKey ? "Type a message..." : "Add API key to chat..."}
             disabled={disabled || isLoading || !hasApiKey}
-            className="flex-1 px-4 py-2.5 bg-[#0d1117] border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
+            className="flex-1 px-4 py-2.5 bg-dark-surface border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-brand-500/50 disabled:opacity-50"
           />
           <button
             onClick={sendMessage}
@@ -1535,7 +1676,7 @@ function ApiKeyModal({ isOpen, onClose, currentKey, onSave }) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative bg-[#161b22] border border-white/10 rounded-xl shadow-2xl w-full max-w-md mx-4 p-5"
+        className="relative bg-dark-surface-card border border-white/10 rounded-xl shadow-2xl w-full max-w-md mx-4 p-5"
       >
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 bg-blue-500/20 rounded-lg">
@@ -1556,7 +1697,7 @@ function ApiKeyModal({ isOpen, onClose, currentKey, onSave }) {
                 placeholder="sk-or-v1-..."
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                className="w-full px-3 py-2 pr-10 bg-[#0d1117] border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-purple-500/50 font-mono"
+                className="w-full px-3 py-2 pr-10 bg-dark-surface border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-brand-500/50 font-mono"
                 autoFocus
               />
               <button
@@ -1743,83 +1884,77 @@ export default function Agents() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-gray-100">
-      {/* Header */}
-      <div className="border-b border-white/10 bg-[#161b22]">
-        <div className="max-w-[1600px] mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/20 rounded-lg">
-                <FiCpu className="text-purple-400" size={20} />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-100">Agents</h1>
-                <p className="text-sm text-gray-500">Assistentes de IA especializados para tarefas específicas</p>
-              </div>
+    <div className="page-container">
+      {/* Page Header - TailAdmin Style */}
+      <div className="page-header">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center border border-purple-500/20">
+              <FiCpu className="w-6 h-6 text-purple-400" />
+            </div>
+            <div className="flex flex-col justify-center">
+              <h1 className="page-title leading-tight">Agents</h1>
+              <p className="page-subtitle mt-0.5">AI assistants specialized for specific tasks</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* View Toggle */}
+            <div className="flex items-center bg-white/5 rounded-lg p-1">
+              <button
+                onClick={() => setView('playground')}
+                className={`filter-tab ${view === 'playground' ? 'filter-tab-active' : ''}`}
+              >
+                <FiPlay className="inline mr-1.5" size={14} />
+                Playground
+              </button>
+              <button
+                onClick={() => setView('list')}
+                className={`filter-tab ${view === 'list' ? 'filter-tab-active' : ''}`}
+              >
+                <FiCpu className="inline mr-1.5" size={14} />
+                My Agents
+              </button>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* View Toggle */}
-              <div className="flex items-center bg-[#0d1117] rounded-lg p-1">
+            {view === 'playground' && (
+              <>
                 <button
-                  onClick={() => setView('playground')}
-                  className={`px-3 py-1.5 text-sm rounded-md transition-all ${
-                    view === 'playground' ? 'bg-purple-500/20 text-purple-300' : 'text-gray-500 hover:text-gray-300'
+                  onClick={() => setShowApiKeyModal(true)}
+                  className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm transition-all ${
+                    hasApiKey
+                      ? 'bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20'
+                      : 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/20'
                   }`}
                 >
-                  <FiPlay className="inline mr-1.5" size={14} />
-                  Playground
+                  <FiSettings size={14} />
+                  {hasApiKey ? 'API Key ✓' : 'Add API Key'}
                 </button>
                 <button
-                  onClick={() => setView('list')}
-                  className={`px-3 py-1.5 text-sm rounded-md transition-all ${
-                    view === 'list' ? 'bg-purple-500/20 text-purple-300' : 'text-gray-500 hover:text-gray-300'
-                  }`}
+                  onClick={() => setShowCodeModal(true)}
+                  className="ta-btn ta-btn-secondary"
                 >
-                  <FiCpu className="inline mr-1.5" size={14} />
-                  Meus Agentes
+                  <FiTerminal size={14} />
+                  Code
                 </button>
-              </div>
-
-              {view === 'playground' && (
-                <>
-                  <button
-                    onClick={() => setShowApiKeyModal(true)}
-                    className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm transition-all ${
-                      hasApiKey
-                        ? 'bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20'
-                        : 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/20'
-                    }`}
-                  >
-                    <FiSettings size={14} />
-                    {hasApiKey ? 'API Key ✓' : 'Add API Key'}
-                  </button>
-                  <button
-                    onClick={() => setShowCodeModal(true)}
-                    className="ta-btn ta-btn-secondary"
-                  >
-                    <FiTerminal size={14} />
-                    Code
-                  </button>
-                  <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="ta-btn ta-btn-primary"
-                  >
-                    <FiPlus size={16} />
-                    Create Agent
-                  </button>
-                </>
-              )}
-            </div>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="ta-btn ta-btn-primary"
+                >
+                  <FiPlus size={16} />
+                  Create Agent
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-[1600px] mx-auto px-6 py-6">
-        {view === 'list' ? (
-          /* Agents List View */
-          <div className="bg-[#161b22] border border-white/10 rounded-xl p-6">
+      {view === 'list' ? (
+        /* Agents List View */
+        <div className="ta-card">
+          <div className="ta-card-body">
             <AgentsList
               agents={agents}
               onSelect={selectAgent}
@@ -1827,11 +1962,13 @@ export default function Agents() {
               selectedAgentId={selectedAgent?.id}
             />
           </div>
-        ) : (
-          /* Playground View */
-          <div className="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-180px)]">
-            {/* Left: Configuration Panel */}
-            <div className="bg-[#161b22] border border-white/10 rounded-xl p-5 overflow-y-auto">
+        </div>
+      ) : (
+        /* Playground View */
+        <div className="grid grid-cols-1 lg:grid-cols-[400px,1fr] gap-6 h-[calc(100vh-200px)]">
+          {/* Left: Configuration Panel */}
+          <div className="ta-card overflow-y-auto">
+            <div className="ta-card-body">
               <div className="space-y-6">
                 {/* Model */}
                 <div>
@@ -1896,24 +2033,24 @@ export default function Agents() {
                     onChange={(e) => setInstructions(e.target.value)}
                     placeholder="Describe desired model behavior (tone, tool usage, response style)..."
                     rows={4}
-                    className="w-full px-3 py-2 bg-[#0d1117] border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500/50 resize-none"
+                    className="w-full px-3 py-2 bg-dark-surface border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-brand-500/50 resize-none"
                   />
                 </div>
               </div>
             </div>
-
-            {/* Right: Chat Playground */}
-            <div className="bg-[#161b22] border border-white/10 rounded-xl overflow-hidden">
-              <ChatPlayground
-                              agentConfig={currentAgentConfig}
-                              disabled={!selectedModel}
-                              hasApiKey={hasApiKey}
-                              onNeedApiKey={() => setShowApiKeyModal(true)}
-                            />
-            </div>
           </div>
-        )}
-      </div>
+
+          {/* Right: Chat Playground */}
+          <div className="ta-card overflow-hidden">
+            <ChatPlayground
+              agentConfig={currentAgentConfig}
+              disabled={!selectedModel}
+              hasApiKey={hasApiKey}
+              onNeedApiKey={() => setShowApiKeyModal(true)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Create Agent Modal */}
       <CreateAgentModal

@@ -179,11 +179,11 @@ export default function StandbyConfig({ getAuthHeaders }) {
                         disabled={!config.enabled}
                         data-testid="standby-config-machine-type"
                     >
-                        <option value="e2-micro">e2-micro (2 vCPU, 1 GB)</option>
-                        <option value="e2-small">e2-small (2 vCPU, 2 GB)</option>
-                        <option value="e2-medium">e2-medium (2 vCPU, 4 GB)</option>
-                        <option value="e2-standard-2">e2-standard-2 (2 vCPU, 8 GB)</option>
-                        <option value="e2-standard-4">e2-standard-4 (4 vCPU, 16 GB)</option>
+                        <option value="e2-micro">e2-micro (0.25 vCPU, 1 GB) ~$0.008/h</option>
+                        <option value="e2-small">e2-small (0.5 vCPU, 2 GB) ~$0.017/h</option>
+                        <option value="e2-medium">e2-medium (1 vCPU, 4 GB) ~$0.034/h</option>
+                        <option value="e2-standard-2">e2-standard-2 (2 vCPU, 8 GB) ~$0.067/h</option>
+                        <option value="e2-standard-4">e2-standard-4 (4 vCPU, 16 GB) ~$0.134/h</option>
                     </select>
                 </div>
 

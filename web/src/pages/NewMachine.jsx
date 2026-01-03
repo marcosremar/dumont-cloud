@@ -13,8 +13,8 @@ import {
 } from '../store/slices/instancesSlice'
 
 /**
- * Página dedicada para criar nova máquina GPU
- * Separada da página de Machines para melhor UX
+ * Dedicated page for creating a new GPU machine
+ * Separated from Machines page for better UX
  */
 export default function NewMachine() {
   const navigate = useNavigate()
@@ -25,10 +25,13 @@ export default function NewMachine() {
   // Base path for navigation
   const basePath = '/app'
 
+  // Check if demo mode
+  const isDemo = location.pathname.startsWith('/demo-app') || localStorage.getItem('dumont_demo_mode') === 'true'
+
   // Wizard state
   const [wizardLoading, setWizardLoading] = useState(false)
   const [searchCountry, setSearchCountry] = useState('')
-  const [selectedLocation, setSelectedLocation] = useState(null)
+  const [selectedLocations, setSelectedLocations] = useState([]) // Multi-select: array of locations
   const [selectedGPU, setSelectedGPU] = useState('any')
   const [selectedGPUCategory, setSelectedGPUCategory] = useState('any')
   const [selectedTier, setSelectedTier] = useState(null)
@@ -42,34 +45,51 @@ export default function NewMachine() {
     setSearchCountry(value)
   }
 
-  // Handle country click (from map or search)
+  // Handle country click (from map or search) - multi-select
   const handleCountryClick = (locationData) => {
-    setSelectedLocation(locationData)
+    setSelectedLocations(prev => {
+      // Check if already selected (by name)
+      const exists = prev.some(loc => loc.name === locationData.name)
+      if (exists) {
+        // Remove if already selected
+        return prev.filter(loc => loc.name !== locationData.name)
+      }
+      // Add to selections
+      return [...prev, locationData]
+    })
     setSearchCountry('')
   }
 
-  // Handle clear selection
+  // Handle clear single selection
+  const handleClearSingleSelection = (locationName) => {
+    setSelectedLocations(prev => prev.filter(loc => loc.name !== locationName))
+  }
+
+  // Handle clear all selections
   const handleClearSelection = () => {
-    setSelectedLocation(null)
+    setSelectedLocations([])
     setSearchCountry('')
   }
 
-  // Region data mapping (same as COUNTRY_DATA in constants)
+  // Region data mapping (same as COUNTRY_DATA in constants) - English names
   const REGION_DATA = {
-    'eua': { codes: ['US', 'CA', 'MX'], name: 'EUA', isRegion: true },
-    'europa': { codes: ['GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'BE', 'CH', 'AT', 'IE', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'GR', 'HU', 'RO'], name: 'Europa', isRegion: true },
-    'asia': { codes: ['JP', 'CN', 'KR', 'SG', 'IN', 'TH', 'VN', 'ID', 'MY', 'PH', 'TW'], name: 'Ásia', isRegion: true },
-    'america do sul': { codes: ['BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'UY', 'PY', 'BO'], name: 'América do Sul', isRegion: true },
+    'usa': { codes: ['US', 'CA', 'MX'], name: 'USA', isRegion: true },
+    'europe': { codes: ['GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'BE', 'CH', 'AT', 'IE', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'GR', 'HU', 'RO'], name: 'Europe', isRegion: true },
+    'asia': { codes: ['JP', 'CN', 'KR', 'SG', 'IN', 'TH', 'VN', 'ID', 'MY', 'PH', 'TW'], name: 'Asia', isRegion: true },
+    'south america': { codes: ['BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'UY', 'PY', 'BO'], name: 'South America', isRegion: true },
   }
 
-  // Handle region select
+  // Handle region select - multi-select
   const handleRegionSelect = (regionKey) => {
     const regionData = REGION_DATA[regionKey]
     if (regionData) {
-      setSelectedLocation(regionData)
-    } else {
-      // Fallback for unknown regions
-      setSelectedLocation({ codes: [], name: regionKey, isRegion: true })
+      setSelectedLocations(prev => {
+        const exists = prev.some(loc => loc.name === regionData.name)
+        if (exists) {
+          return prev.filter(loc => loc.name !== regionData.name)
+        }
+        return [...prev, regionData]
+      })
     }
     setSearchCountry('')
   }
@@ -112,7 +132,7 @@ export default function NewMachine() {
     // Validate we have an offer_id
     const offerId = data?.offerId
     if (!offerId) {
-      toast?.error('Erro: Nenhuma máquina selecionada')
+      toast?.error('Error: No machine selected')
       console.error('[NewMachine] No offerId provided:', data)
       return
     }
@@ -147,15 +167,15 @@ export default function NewMachine() {
         }
 
         setRaceWinner(instance)
-        toast?.success('Máquina criada com sucesso!')
+        toast?.success('Machine created successfully!')
       } else {
         const error = await res.json()
         console.error('[NewMachine] Failed to create instance:', error)
-        toast?.error(error.detail || 'Erro ao criar máquina')
+        toast?.error(error.detail || 'Failed to create machine')
       }
     } catch (err) {
       console.error('[NewMachine] Error creating instance:', err)
-      toast?.error('Erro de conexão')
+      toast?.error('Connection error')
     } finally {
       setWizardLoading(false)
     }
@@ -215,8 +235,8 @@ export default function NewMachine() {
           <div className="flex items-center gap-4">
             <Plus className="w-9 h-9 flex-shrink-0 text-brand-400" />
             <div className="flex flex-col justify-center">
-              <h1 className="page-title leading-tight">Nova Máquina GPU</h1>
-              <p className="page-subtitle mt-0.5">Configure e provisione uma nova instância</p>
+              <h1 className="page-title leading-tight">New GPU Machine</h1>
+              <p className="page-subtitle mt-0.5">Configure and provision a new instance</p>
             </div>
           </div>
           <button
@@ -224,7 +244,7 @@ export default function NewMachine() {
             className="ta-btn ta-btn-secondary"
           >
             <ArrowLeft className="w-4 h-4" />
-            Voltar
+            Back
           </button>
         </div>
       </div>
@@ -233,12 +253,13 @@ export default function NewMachine() {
       <div className="ta-card">
         <div className="ta-card-body">
           <WizardForm
-            selectedLocation={selectedLocation}
+            selectedLocations={selectedLocations}
             onSearchChange={handleSearchChange}
             searchCountry={searchCountry}
             onRegionSelect={handleRegionSelect}
             onCountryClick={handleCountryClick}
             onClearSelection={handleClearSelection}
+            onClearSingleSelection={handleClearSingleSelection}
             selectedGPU={selectedGPU}
             onSelectGPU={setSelectedGPU}
             selectedGPUCategory={selectedGPUCategory}

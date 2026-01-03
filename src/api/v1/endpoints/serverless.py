@@ -264,6 +264,125 @@ async def delete_serverless_endpoint(
     return {"message": f"Endpoint {endpoint_id} deleted successfully"}
 
 
+@router.post("/endpoints/{endpoint_id}/pause")
+async def pause_serverless_endpoint(
+    endpoint_id: str,
+    user_email: str = Depends(get_current_user_email),
+):
+    """
+    Pausa um endpoint serverless.
+    """
+    if endpoint_id not in _serverless_endpoints:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Endpoint {endpoint_id} not found"
+        )
+
+    endpoint = _serverless_endpoints[endpoint_id]
+    if endpoint.get("user_email") != user_email:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to pause this endpoint"
+        )
+
+    _serverless_endpoints[endpoint_id]["status"] = "paused"
+    _serverless_endpoints[endpoint_id]["auto_scaling"]["current_instances"] = 0
+
+    logger.info(f"Paused serverless endpoint {endpoint_id} by {user_email}")
+
+    return {"message": f"Endpoint {endpoint_id} paused successfully", "status": "paused"}
+
+
+@router.post("/endpoints/{endpoint_id}/resume")
+async def resume_serverless_endpoint(
+    endpoint_id: str,
+    user_email: str = Depends(get_current_user_email),
+):
+    """
+    Resume um endpoint serverless pausado.
+    """
+    if endpoint_id not in _serverless_endpoints:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Endpoint {endpoint_id} not found"
+        )
+
+    endpoint = _serverless_endpoints[endpoint_id]
+    if endpoint.get("user_email") != user_email:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to resume this endpoint"
+        )
+
+    _serverless_endpoints[endpoint_id]["status"] = "running"
+    _serverless_endpoints[endpoint_id]["auto_scaling"]["current_instances"] = 1
+
+    logger.info(f"Resumed serverless endpoint {endpoint_id} by {user_email}")
+
+    return {"message": f"Endpoint {endpoint_id} resumed successfully", "status": "running"}
+
+
+class UpdateServerlessEndpointRequest(BaseModel):
+    """Request para atualizar configuração de endpoint serverless"""
+    min_instances: Optional[int] = Field(None, ge=0, le=10, description="Mínimo de instâncias")
+    max_instances: Optional[int] = Field(None, ge=1, le=50, description="Máximo de instâncias")
+    machine_type: Optional[str] = Field(None, description="Tipo de máquina: 'spot' ou 'on-demand'")
+
+
+@router.put("/endpoints/{endpoint_id}")
+async def update_serverless_endpoint(
+    endpoint_id: str,
+    request: UpdateServerlessEndpointRequest,
+    user_email: str = Depends(get_current_user_email),
+):
+    """
+    Atualiza configuração de um endpoint serverless.
+    """
+    if endpoint_id not in _serverless_endpoints:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Endpoint {endpoint_id} not found"
+        )
+
+    endpoint = _serverless_endpoints[endpoint_id]
+    if endpoint.get("user_email") != user_email:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this endpoint"
+        )
+
+    # Update auto_scaling settings
+    if request.min_instances is not None:
+        _serverless_endpoints[endpoint_id]["auto_scaling"]["min_instances"] = request.min_instances
+    if request.max_instances is not None:
+        _serverless_endpoints[endpoint_id]["auto_scaling"]["max_instances"] = request.max_instances
+
+    # Update machine type and recalculate pricing
+    if request.machine_type is not None:
+        _serverless_endpoints[endpoint_id]["machine_type"] = request.machine_type
+        gpu_name = endpoint.get("gpu_name", "RTX 4090")
+        gpu_prices = {
+            "RTX 4090": {"spot": 0.18, "on-demand": 0.31},
+            "RTX 4080": {"spot": 0.15, "on-demand": 0.25},
+            "RTX 3090": {"spot": 0.12, "on-demand": 0.20},
+            "RTX 3080": {"spot": 0.09, "on-demand": 0.15},
+            "A100 40GB": {"spot": 0.38, "on-demand": 0.64},
+            "A100 80GB": {"spot": 0.54, "on-demand": 0.90},
+            "H100 PCIe": {"spot": 0.72, "on-demand": 1.20},
+            "L40S": {"spot": 0.51, "on-demand": 0.85},
+        }
+        price_per_hour = gpu_prices.get(gpu_name, {"spot": 0.20, "on-demand": 0.30})
+        price = price_per_hour["spot"] if request.machine_type == "spot" else price_per_hour["on-demand"]
+        _serverless_endpoints[endpoint_id]["pricing"]["price_per_hour"] = price
+
+    logger.info(f"Updated serverless endpoint {endpoint_id} by {user_email}")
+
+    return {
+        **_serverless_endpoints[endpoint_id],
+        "message": f"Endpoint {endpoint_id} updated successfully"
+    }
+
+
 @router.get("/stats", response_model=ServerlessStatsResponse)
 async def get_serverless_stats(
     user_email: str = Depends(get_current_user_email),

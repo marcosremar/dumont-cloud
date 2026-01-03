@@ -9,7 +9,7 @@ import {
 import { Label, CardContent } from '../tailadmin-ui';
 import { Button } from '../ui/button';
 import { WorldMap, GPUSelector } from './';
-import { COUNTRY_DATA, PERFORMANCE_TIERS, DEMO_OFFERS } from './constants';
+import { COUNTRY_DATA, COUNTRY_NAMES, PERFORMANCE_TIERS, DEMO_OFFERS } from './constants';
 import { apiGet, isDemoMode } from '../../utils/api';
 
 // Componente Tooltip simples
@@ -40,13 +40,14 @@ const WizardForm = ({
   sourceMachine = null,
   targetType = null,
   initialStep = 1,
-  // Step 1: Location
+  // Step 1: Location - multi-select support
   searchCountry,
-  selectedLocation,
+  selectedLocations = [], // Array of selected locations
   onSearchChange,
   onRegionSelect,
   onCountryClick,
   onClearSelection,
+  onClearSingleSelection, // Clear a single location from multi-select
   // Step 2: Hardware
   selectedGPU,
   onSelectGPU,
@@ -89,6 +90,7 @@ const WizardForm = ({
   const [dockerImage, setDockerImage] = useState('pytorch/pytorch:latest');
   const [exposedPorts, setExposedPorts] = useState([
     { port: '22', protocol: 'TCP' },
+    { port: '8080', protocol: 'TCP' },  // code-server (VS Code Online)
     { port: '8888', protocol: 'TCP' },
     { port: '6006', protocol: 'TCP' },
   ]);
@@ -283,32 +285,13 @@ const WizardForm = ({
       )
     : allGPUs;
 
-  const COUNTRY_NAMES = {
-    'US': 'Estados Unidos',
-    'CA': 'Canadá',
-    'MX': 'México',
-    'GB': 'Reino Unido',
-    'FR': 'França',
-    'DE': 'Alemanha',
-    'ES': 'Espanha',
-    'IT': 'Itália',
-    'PT': 'Portugal',
-    'JP': 'Japão',
-    'CN': 'China',
-    'KR': 'Coreia do Sul',
-    'SG': 'Singapura',
-    'IN': 'Índia',
-    'BR': 'Brasil',
-    'AR': 'Argentina',
-    'CL': 'Chile',
-    'CO': 'Colômbia',
-  };
+  // COUNTRY_NAMES imported from ./constants
 
   const steps = [
-    { id: 1, name: 'Região', icon: Globe, description: 'Localização' },
-    { id: 2, name: 'Hardware', icon: Cpu, description: 'GPU e performance' },
-    { id: 3, name: 'Estratégia', icon: Shield, description: 'Failover' },
-    { id: 4, name: 'Provisionar', icon: Rocket, description: 'Conectando' },
+    { id: 1, name: 'Region', icon: Globe, description: 'Location' },
+    { id: 2, name: 'Hardware', icon: Cpu, description: 'GPU & performance' },
+    { id: 3, name: 'Strategy', icon: Shield, description: 'Failover' },
+    { id: 4, name: 'Provision', icon: Rocket, description: 'Connecting' },
   ];
 
   // Estratégias REAIS de failover - custos são ADICIONAIS ao custo da GPU
@@ -369,6 +352,28 @@ const WizardForm = ({
       available: true,
     },
     {
+      id: 'tensordock',
+      name: 'TensorDock Failover',
+      provider: 'TensorDock + B2',
+      icon: Network,
+      description: 'Failover para GPU TensorDock. Preços competitivos com recuperação rápida.',
+      recoveryTime: '1-3 min',
+      dataLoss: 'Mínima',
+      costHour: '+$0.02/h',
+      costMonth: '~$15/mês',
+      costDetail: 'GPU TensorDock standby $0.02/h + B2 ~$0.50/mês',
+      howItWorks: 'GPU secundária fica em standby no TensorDock. Snapshots automáticos a cada 60min para B2. Em caso de falha, failover para TensorDock.',
+      features: [
+        'GPU standby TensorDock',
+        'Preços competitivos',
+        'Snapshots B2 automáticos',
+        'Recuperação rápida',
+      ],
+      requirements: 'API Key TensorDock configurada',
+      recommended: false,
+      available: true,
+    },
+    {
       id: 'no_failover',
       name: 'Sem Failover',
       provider: 'Apenas GPU',
@@ -410,32 +415,37 @@ const WizardForm = ({
 
         // Map region selection to API-expected codes (US, EU, ASIA)
         // API expects: US, EU, ASIA - not individual country codes
-        let regionCode = '';
-        if (selectedLocation?.isRegion) {
-          const regionName = selectedLocation.name?.toLowerCase();
-          if (regionName === 'eua' || regionName === 'usa' || regionName === 'estados unidos') {
-            regionCode = 'US';
-          } else if (regionName === 'europa' || regionName === 'europe') {
-            regionCode = 'EU';
-          } else if (regionName === 'ásia' || regionName === 'asia') {
-            regionCode = 'ASIA';
-          } else if (regionName === 'américa do sul' || regionName === 'south america') {
-            regionCode = 'SA';  // Try SA for South America
-          }
-        } else if (selectedLocation?.codes?.[0]) {
-          // For individual country selections, map to their region
-          const countryCode = selectedLocation.codes[0];
-          const usCountries = ['US', 'CA', 'MX'];
-          const euCountries = ['GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'BE', 'CH', 'AT', 'IE', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'GR', 'HU', 'RO'];
-          const asiaCountries = ['JP', 'CN', 'KR', 'SG', 'IN', 'TH', 'VN', 'ID', 'MY', 'PH', 'TW'];
-          const saCountries = ['BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'UY', 'PY', 'BO'];
+        // Support multi-select: collect all region codes
+        const regionCodes = [];
+        const usCountries = ['US', 'CA', 'MX'];
+        const euCountries = ['GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'BE', 'CH', 'AT', 'IE', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'GR', 'HU', 'RO'];
+        const asiaCountries = ['JP', 'CN', 'KR', 'SG', 'IN', 'TH', 'VN', 'ID', 'MY', 'PH', 'TW'];
+        const saCountries = ['BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'UY', 'PY', 'BO'];
 
-          if (usCountries.includes(countryCode)) regionCode = 'US';
-          else if (euCountries.includes(countryCode)) regionCode = 'EU';
-          else if (asiaCountries.includes(countryCode)) regionCode = 'ASIA';
-          else if (saCountries.includes(countryCode)) regionCode = 'SA';
-          else regionCode = countryCode;  // Fallback to country code
+        for (const loc of selectedLocations) {
+          if (loc?.isRegion) {
+            const regionName = loc.name?.toLowerCase();
+            if (regionName === 'usa' || regionName === 'eua' || regionName === 'united states') {
+              if (!regionCodes.includes('US')) regionCodes.push('US');
+            } else if (regionName === 'europe' || regionName === 'europa') {
+              if (!regionCodes.includes('EU')) regionCodes.push('EU');
+            } else if (regionName === 'asia' || regionName === 'ásia') {
+              if (!regionCodes.includes('ASIA')) regionCodes.push('ASIA');
+            } else if (regionName === 'south america' || regionName === 'américa do sul') {
+              if (!regionCodes.includes('SA')) regionCodes.push('SA');
+            }
+          } else if (loc?.codes?.[0]) {
+            // For individual country selections, map to their region
+            const countryCode = loc.codes[0];
+            if (usCountries.includes(countryCode) && !regionCodes.includes('US')) regionCodes.push('US');
+            else if (euCountries.includes(countryCode) && !regionCodes.includes('EU')) regionCodes.push('EU');
+            else if (asiaCountries.includes(countryCode) && !regionCodes.includes('ASIA')) regionCodes.push('ASIA');
+            else if (saCountries.includes(countryCode) && !regionCodes.includes('SA')) regionCodes.push('SA');
+            else if (!regionCodes.includes(countryCode)) regionCodes.push(countryCode);
+          }
         }
+        // Use first region code for API call (API may not support multiple)
+        const regionCode = regionCodes[0] || '';
 
         // In demo mode, use DEMO_OFFERS instead of real API
         if (isDemoMode()) {
@@ -460,7 +470,9 @@ const WizardForm = ({
             filteredOffers = filteredOffers.filter(o =>
               o.geolocation === regionCode ||
               (regionCode === 'US' && ['US', 'CA', 'MX'].includes(o.geolocation)) ||
-              (regionCode === 'EU' && ['EU', 'GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'PL', 'CZ', 'AT', 'CH', 'BE', 'SE', 'NO', 'DK', 'FI', 'IE'].includes(o.geolocation))
+              (regionCode === 'EU' && ['EU', 'GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'PL', 'CZ', 'AT', 'CH', 'BE', 'SE', 'NO', 'DK', 'FI', 'IE'].includes(o.geolocation)) ||
+              (regionCode === 'ASIA' && ['ASIA', 'JP', 'CN', 'KR', 'SG', 'IN', 'TH', 'VN', 'ID', 'MY', 'PH', 'TW'].includes(o.geolocation)) ||
+              (regionCode === 'SA' && ['SA', 'BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'UY', 'PY', 'BO'].includes(o.geolocation))
             );
           }
 
@@ -471,10 +483,12 @@ const WizardForm = ({
           const labeled = filteredOffers.slice(0, 3).map((offer, idx) => ({
             ...offer,
             provider: 'Vast.ai',
-            location: offer.geolocation === 'US' ? 'Estados Unidos' :
-                      offer.geolocation === 'EU' ? 'Europa' : offer.geolocation,
+            location: offer.geolocation === 'US' ? 'United States' :
+                      offer.geolocation === 'EU' ? 'Europe' :
+                      offer.geolocation === 'ASIA' ? 'Asia' :
+                      offer.geolocation === 'SA' ? 'South America' : offer.geolocation,
             reliability: offer.verified ? 99 : 95,
-            label: idx === 0 ? 'Mais econômico' : idx === 1 ? 'Melhor custo-benefício' : 'Mais rápido'
+            label: idx === 0 ? 'Most economical' : idx === 1 ? 'Best value' : 'Fastest'
           }));
 
           if (labeled.length > 0) {
@@ -512,32 +526,120 @@ const WizardForm = ({
             // Add labels to first 3 offers
             const labeled = data.offers.slice(0, 3).map((offer, idx) => ({
               ...offer,
-              label: idx === 0 ? 'Mais econômico' : idx === 1 ? 'Melhor custo-benefício' : 'Mais rápido'
+              label: idx === 0 ? 'Most economical' : idx === 1 ? 'Best value' : 'Fastest'
             }));
             setRecommendedMachines(labeled);
             return;
           }
         }
 
-        // No offers available
-        setApiError('api_empty');
-        setRecommendedMachines([]);
+        // API returned no results - fallback to DEMO_OFFERS for demonstration
+        console.log('[WizardForm] API returned no offers, using demo fallback');
+        let fallbackOffers = [...DEMO_OFFERS];
+
+        // Apply same filters as demo mode
+        if (tier?.filter) {
+          if (tier.filter.cpu_only) {
+            fallbackOffers = fallbackOffers.filter(o => o.num_gpus === 0);
+          }
+          if (tier.filter.min_gpu_ram) {
+            fallbackOffers = fallbackOffers.filter(o => o.gpu_ram >= tier.filter.min_gpu_ram);
+          }
+          if (tier.filter.max_price) {
+            fallbackOffers = fallbackOffers.filter(o => o.dph_total <= tier.filter.max_price);
+          }
+        }
+
+        // Filter by region if specified
+        if (regionCode) {
+          fallbackOffers = fallbackOffers.filter(o =>
+            o.geolocation === regionCode ||
+            (regionCode === 'US' && ['US', 'CA', 'MX'].includes(o.geolocation)) ||
+            (regionCode === 'EU' && ['EU', 'GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'PL', 'CZ', 'AT', 'CH', 'BE', 'SE', 'NO', 'DK', 'FI', 'IE'].includes(o.geolocation)) ||
+            (regionCode === 'ASIA' && ['ASIA', 'JP', 'CN', 'KR', 'SG', 'IN', 'TH', 'VN', 'ID', 'MY', 'PH', 'TW'].includes(o.geolocation)) ||
+            (regionCode === 'SA' && ['SA', 'BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'UY', 'PY', 'BO'].includes(o.geolocation))
+          );
+        }
+
+        fallbackOffers.sort((a, b) => a.dph_total - b.dph_total);
+
+        const labeled = fallbackOffers.slice(0, 3).map((offer, idx) => ({
+          ...offer,
+          provider: 'Vast.ai',
+          location: offer.geolocation === 'US' ? 'United States' :
+                    offer.geolocation === 'EU' ? 'Europe' :
+                    offer.geolocation === 'ASIA' ? 'Asia' :
+                    offer.geolocation === 'SA' ? 'South America' : offer.geolocation,
+          reliability: offer.verified ? 99 : 95,
+          label: idx === 0 ? 'Most economical' : idx === 1 ? 'Best value' : 'Fastest'
+        }));
+
+        if (labeled.length > 0) {
+          setRecommendedMachines(labeled);
+        } else {
+          setApiError('api_empty');
+          setRecommendedMachines([]);
+        }
       } catch (err) {
         console.error('Failed to fetch offers:', err);
-        setApiError('api_error');
-        setRecommendedMachines([]);
+
+        // On error, also try fallback to DEMO_OFFERS
+        console.log('[WizardForm] API error, using demo fallback');
+        let fallbackOffers = [...DEMO_OFFERS];
+
+        if (tier?.filter) {
+          if (tier.filter.cpu_only) {
+            fallbackOffers = fallbackOffers.filter(o => o.num_gpus === 0);
+          }
+          if (tier.filter.min_gpu_ram) {
+            fallbackOffers = fallbackOffers.filter(o => o.gpu_ram >= tier.filter.min_gpu_ram);
+          }
+          if (tier.filter.max_price) {
+            fallbackOffers = fallbackOffers.filter(o => o.dph_total <= tier.filter.max_price);
+          }
+        }
+
+        if (regionCode) {
+          fallbackOffers = fallbackOffers.filter(o =>
+            o.geolocation === regionCode ||
+            (regionCode === 'US' && ['US', 'CA', 'MX'].includes(o.geolocation)) ||
+            (regionCode === 'EU' && ['EU', 'GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'PL', 'CZ', 'AT', 'CH', 'BE', 'SE', 'NO', 'DK', 'FI', 'IE'].includes(o.geolocation)) ||
+            (regionCode === 'ASIA' && ['ASIA', 'JP', 'CN', 'KR', 'SG', 'IN', 'TH', 'VN', 'ID', 'MY', 'PH', 'TW'].includes(o.geolocation)) ||
+            (regionCode === 'SA' && ['SA', 'BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'UY', 'PY', 'BO'].includes(o.geolocation))
+          );
+        }
+
+        fallbackOffers.sort((a, b) => a.dph_total - b.dph_total);
+
+        const labeled = fallbackOffers.slice(0, 3).map((offer, idx) => ({
+          ...offer,
+          provider: 'Vast.ai',
+          location: offer.geolocation === 'US' ? 'United States' :
+                    offer.geolocation === 'EU' ? 'Europe' :
+                    offer.geolocation === 'ASIA' ? 'Asia' :
+                    offer.geolocation === 'SA' ? 'South America' : offer.geolocation,
+          reliability: offer.verified ? 99 : 95,
+          label: idx === 0 ? 'Most economical' : idx === 1 ? 'Best value' : 'Fastest'
+        }));
+
+        if (labeled.length > 0) {
+          setRecommendedMachines(labeled);
+        } else {
+          setApiError('api_error');
+          setRecommendedMachines([]);
+        }
       } finally {
         setLoadingMachines(false);
       }
     };
 
     fetchRecommendedMachines();
-  }, [selectedTier, selectedLocation]);
+  }, [selectedTier, selectedLocations]);
 
   // Verifica se os dados do step estão preenchidos
   const isStepDataComplete = (stepId) => {
     // In migration mode, step 1 is always considered complete (location is pre-selected)
-    if (stepId === 1) return !!selectedLocation || migrationMode;
+    if (stepId === 1) return selectedLocations.length > 0 || migrationMode;
     if (stepId === 2) return !!selectedTier;
     if (stepId === 3) return !!failoverStrategy;
     if (stepId === 4) return !!provisioningWinner;
@@ -638,32 +740,32 @@ const WizardForm = ({
 
   const handleStartProvisioning = () => {
     console.log('[WizardForm] handleStartProvisioning called');
-    console.log('[WizardForm] selectedLocation:', selectedLocation);
+    console.log('[WizardForm] selectedLocations:', selectedLocations);
     console.log('[WizardForm] selectedTier:', selectedTier);
     console.log('[WizardForm] failoverStrategy:', failoverStrategy);
     const errors = [];
-    const MIN_BALANCE = 0.10; // Saldo mínimo necessário ($0.10)
+    const MIN_BALANCE = 0.10; // Minimum balance required ($0.10)
 
-    if (!selectedLocation) {
-      errors.push('Por favor, selecione uma localização para sua máquina');
+    if (selectedLocations.length === 0) {
+      errors.push('Please select a location for your machine');
     }
 
     if (!selectedTier) {
-      errors.push('Por favor, selecione um tier de performance');
+      errors.push('Please select a performance tier');
     }
 
-    // Validar saldo mínimo (skip in demo mode)
-    console.log('[WizardForm] isDemoMode:'());
+    // Validate minimum balance (skip in demo mode)
+    console.log('[WizardForm] isDemoMode:', isDemoMode());
     console.log('[WizardForm] userBalance:', userBalance);
     if (!isDemoMode() && userBalance !== null && userBalance < MIN_BALANCE) {
-      errors.push(`Saldo insuficiente. Você precisa de pelo menos $${MIN_BALANCE.toFixed(2)} para criar uma máquina. Saldo atual: $${userBalance.toFixed(2)}`);
+      errors.push(`Insufficient balance. You need at least $${MIN_BALANCE.toFixed(2)} to create a machine. Current balance: $${userBalance.toFixed(2)}`);
     }
 
     console.log('[WizardForm] validation errors:', errors);
     if (errors.length > 0) {
       console.log('[WizardForm] VALIDATION FAILED - returning early');
       setValidationErrors(errors);
-      if (!selectedLocation) setCurrentStep(1);
+      if (selectedLocations.length === 0) setCurrentStep(1);
       else if (!selectedTier) setCurrentStep(2);
       return;
     }
@@ -672,7 +774,7 @@ const WizardForm = ({
     console.log('[WizardForm] onSubmit function exists:', typeof onSubmit === 'function');
     console.log('[WizardForm] selectedMachine:', selectedMachine);
     setValidationErrors([]);
-    // V5: Ir direto para provisioning sem modal de confirmação
+    // V5: Go directly to provisioning without confirmation modal
     setCurrentStep(4);
     if (typeof onSubmit === 'function') {
       console.log('[WizardForm] Calling onSubmit NOW with selectedMachine');
@@ -682,7 +784,7 @@ const WizardForm = ({
         offerId: selectedMachine?.id,
         failoverStrategy,
         tier: selectedTier,
-        region: selectedLocation,
+        regions: selectedLocations, // Pass all selected locations
       });
     } else {
       console.error('[WizardForm] ERROR: onSubmit is not a function!');
@@ -690,7 +792,7 @@ const WizardForm = ({
   };
 
   const handleConfirmPayment = () => {
-    // V5: Mantido para compatibilidade mas não usado mais
+    // V5: Kept for compatibility but not used anymore
     setShowPaymentConfirm(false);
     setCurrentStep(4);
     onSubmit({
@@ -698,7 +800,7 @@ const WizardForm = ({
       offerId: selectedMachine?.id,
       failoverStrategy,
       tier: selectedTier,
-      region: selectedLocation,
+      regions: selectedLocations,
     });
   };
 
@@ -1008,16 +1110,16 @@ const WizardForm = ({
                 <span className="text-sm font-medium text-white">{selectedTier}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Região</span>
-                <span className="text-sm font-medium text-white">{selectedLocation?.name || 'Global'}</span>
+                <span className="text-sm text-gray-400">Region</span>
+                <span className="text-sm font-medium text-white">{selectedLocations.map(l => l.name).join(', ') || 'Global'}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Estratégia</span>
+                <span className="text-sm text-gray-400">Strategy</span>
                 <span className="text-sm font-medium text-white">{selectedFailover?.name || '-'}</span>
               </div>
               <div className="border-t border-gray-700 my-2" />
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Custo estimado/hora</span>
+                <span className="text-sm text-gray-400">Estimated cost/hour</span>
                 <span className="text-lg font-bold text-brand-400">${getEstimatedCost().hourly}/h</span>
               </div>
               <div className="flex justify-between items-center">
@@ -1164,15 +1266,15 @@ const WizardForm = ({
       {/* Selection Summary Bar - Shows selections from previous steps */}
       {currentStep > 1 && (
         <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/10 mb-4">
-          <span className="text-xs text-gray-500 mr-1">Selecionado:</span>
+          <span className="text-xs text-gray-500 mr-1">Selected:</span>
 
-          {/* Location Tag */}
-          {selectedLocation && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-500/10 border border-brand-500/30 text-brand-400 rounded-full text-xs font-medium">
-              {selectedLocation.isRegion ? <Globe className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
-              <span>{selectedLocation.name}</span>
+          {/* Location Tags */}
+          {selectedLocations.map((loc, idx) => (
+            <div key={loc.name + idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-500/10 border border-brand-500/30 text-brand-400 rounded-full text-xs font-medium">
+              {loc.isRegion ? <Globe className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
+              <span>{loc.name}</span>
             </div>
-          )}
+          ))}
 
           {/* Tier Tag - Show if step > 1 and tier selected */}
           {currentStep > 2 && selectedTier && (
@@ -1200,63 +1302,148 @@ const WizardForm = ({
         </div>
       )}
 
-      {/* Step 1: Localização */}
+      {/* Step 1: Location */}
       {currentStep === 1 && (
         <div className="space-y-5 animate-fadeIn">
           <div className="space-y-4">
             <div className="flex flex-col gap-3">
+              {/* Search with Autocomplete */}
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10">
                   <Search className="w-4 h-4 text-gray-500" />
                 </div>
                 <input
                   type="text"
-                  placeholder="Buscar país ou região (ex: Brasil, Europa, Japão...)"
-                  className="w-full pl-11 pr-4 py-3 text-sm text-gray-200 bg-white/5 border border-white/10 rounded-lg focus:ring-1 focus:ring-white/20 focus:border-white/20 placeholder:text-gray-500 transition-all"
+                  placeholder="Type country or region (e.g., Brazil, Europe, Japan...)"
+                  className="w-full pl-11 pr-4 py-3 text-sm text-gray-200 bg-white/5 border border-white/10 rounded-lg focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500/30 placeholder:text-gray-500 transition-all"
                   value={searchCountry}
                   onChange={(e) => onSearchChange(e.target.value)}
                 />
+
+                {/* Autocomplete Dropdown */}
+                {searchCountry && searchCountry.length >= 2 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-dark-surface-card border border-white/10 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                    {(() => {
+                      const query = searchCountry.toLowerCase().trim();
+                      const matches = Object.entries(COUNTRY_DATA)
+                        .filter(([key, data]) => key.includes(query) || data.name.toLowerCase().includes(query))
+                        .slice(0, 10) // Limit to 10 results
+                        .reduce((acc, [key, data]) => {
+                          // Deduplicate by name
+                          if (!acc.some(item => item.name === data.name)) {
+                            acc.push(data);
+                          }
+                          return acc;
+                        }, []);
+
+                      if (matches.length === 0) {
+                        return (
+                          <div className="px-4 py-3 text-sm text-gray-500 flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4" />
+                            No countries found for "{searchCountry}"
+                          </div>
+                        );
+                      }
+
+                      return matches.map((data, idx) => {
+                        const isAlreadySelected = selectedLocations.some(loc => loc.name === data.name);
+                        return (
+                          <button
+                            key={data.name + idx}
+                            onClick={() => {
+                              if (!isAlreadySelected) {
+                                onCountryClick(data);
+                              }
+                            }}
+                            disabled={isAlreadySelected}
+                            className={`w-full px-4 py-2.5 text-left flex items-center gap-3 transition-all ${
+                              isAlreadySelected
+                                ? 'bg-brand-500/10 text-brand-400 cursor-default'
+                                : 'hover:bg-white/5 text-gray-300'
+                            }`}
+                          >
+                            {data.isRegion ? (
+                              <Globe className="w-4 h-4 text-brand-400 flex-shrink-0" />
+                            ) : (
+                              <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">{data.name}</div>
+                              <div className="text-[10px] text-gray-500">
+                                {data.isRegion ? `Region • ${data.codes.length} countries` : `Country • ${data.codes[0]}`}
+                              </div>
+                            </div>
+                            {isAlreadySelected && (
+                              <Check className="w-4 h-4 text-brand-400 flex-shrink-0" />
+                            )}
+                          </button>
+                        );
+                      });
+                    })()}
+                  </div>
+                )}
               </div>
 
-              {selectedLocation && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">
-                    {selectedLocation.isRegion ? 'Região:' : 'País:'}
-                  </span>
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 text-gray-200 rounded-full text-sm font-medium">
-                    {selectedLocation.isRegion ? <Globe className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
-                    <span>{selectedLocation.name}</span>
+              {/* Selected locations - multi-select display */}
+              {selectedLocations.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-gray-500">Selected:</span>
+                  {selectedLocations.map((loc, idx) => (
+                    <div key={loc.name + idx} className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 text-gray-200 rounded-full text-sm font-medium">
+                      {loc.isRegion ? <Globe className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
+                      <span>{loc.name}</span>
+                      <button
+                        onClick={() => onClearSingleSelection?.(loc.name)}
+                        className="ml-1 p-0.5 rounded-full hover:bg-white/10 transition-colors"
+                        title="Remove"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  {selectedLocations.length > 1 && (
                     <button
                       onClick={onClearSelection}
-                      className="ml-1 p-0.5 rounded-full hover:bg-white/10 transition-colors"
+                      className="text-xs text-gray-500 hover:text-gray-300 underline ml-2"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      Clear all
                     </button>
-                  </div>
+                  )}
                 </div>
               )}
 
-              {!selectedLocation && (
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-xs text-gray-500 mr-1 self-center">Regiões:</span>
-                  {['eua', 'europa', 'asia', 'america do sul'].map((regionKey) => (
+              {/* Region quick-select buttons */}
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs text-gray-500 mr-1 self-center">Regions:</span>
+                {[
+                  { key: 'usa', name: 'USA' },
+                  { key: 'europe', name: 'Europe' },
+                  { key: 'asia', name: 'Asia' },
+                  { key: 'south america', name: 'South America' }
+                ].map((region) => {
+                  const isSelected = selectedLocations.some(loc => loc.name === region.name)
+                  return (
                     <button
-                      key={regionKey}
-                      data-testid={`region-${regionKey.replace(' ', '-')}`}
-                      onClick={() => onRegionSelect(regionKey)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:border-white/20 hover:text-gray-200 transition-all cursor-pointer"
+                      key={region.key}
+                      data-testid={`region-${region.key.replace(' ', '-')}`}
+                      onClick={() => onRegionSelect(region.key)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-brand-500/20 text-brand-400 border-brand-500/50'
+                          : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:border-white/20 hover:text-gray-200'
+                      }`}
                     >
                       <Globe className="w-3 h-3" />
-                      {countryData[regionKey].name}
+                      {region.name}
                     </button>
-                  ))}
-                </div>
-              )}
+                  )
+                })}
+              </div>
             </div>
 
             <div className="h-64 rounded-lg overflow-hidden border border-white/10 bg-dark-surface-card relative">
               <WorldMap
-                selectedCodes={selectedLocation?.codes || []}
+                selectedCodes={selectedLocations.flatMap(loc => loc.codes || [])}
                 onCountryClick={(code) => {
                   if (COUNTRY_NAMES[code]) {
                     onCountryClick({ codes: [code], name: COUNTRY_NAMES[code], isRegion: false });
@@ -1275,17 +1462,17 @@ const WizardForm = ({
           {/* Seção 1: O que você vai fazer? */}
           <div className="space-y-3">
             <div>
-              <Label className="text-gray-300 text-sm font-medium">O que você vai fazer?</Label>
-              <p className="text-xs text-gray-500 mt-1">Selecione seu objetivo para recomendarmos o hardware ideal</p>
+              <Label className="text-gray-300 text-sm font-medium">What will you do?</Label>
+              <p className="text-xs text-gray-500 mt-1">Select your goal to recommend the ideal hardware</p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               {[
-                { id: 'cpu_only', label: 'Apenas CPU', icon: Server, tier: 'CPU', desc: 'Sem GPU', isCPU: true },
-                { id: 'test', label: 'Experimentar', icon: Lightbulb, tier: 'Lento', desc: 'Testes rápidos' },
-                { id: 'develop', label: 'Desenvolver', icon: Code, tier: 'Medio', desc: 'Dev diário' },
-                { id: 'train', label: 'Treinar modelo', icon: Zap, tier: 'Rapido', desc: 'Fine-tuning' },
-                { id: 'production', label: 'Produção', icon: Sparkles, tier: 'Ultra', desc: 'LLMs grandes' }
+                { id: 'cpu_only', label: 'CPU Only', icon: Server, tier: 'CPU', desc: 'No GPU', isCPU: true },
+                { id: 'test', label: 'Experiment', icon: Lightbulb, tier: 'Slow', desc: 'Quick tests' },
+                { id: 'develop', label: 'Develop', icon: Code, tier: 'Medium', desc: 'Daily dev' },
+                { id: 'train', label: 'Train model', icon: Zap, tier: 'Fast', desc: 'Fine-tuning' },
+                { id: 'production', label: 'Production', icon: Sparkles, tier: 'Ultra', desc: 'Large LLMs' }
               ].map((useCase) => {
                 const isSelected = selectedTier === useCase.tier;
                 const UseCaseIcon = useCase.icon;
@@ -1321,20 +1508,20 @@ const WizardForm = ({
             </div>
           </div>
 
-          {/* Seção 2: Seleção de GPU */}
+          {/* Section 2: GPU Selection */}
           {selectedTier && (
             <div className="space-y-3">
               <div>
-                <Label className="text-gray-300 text-sm font-medium">Seleção de GPU</Label>
-                <p className="text-xs text-gray-500 mt-1">Escolha uma das máquinas recomendadas</p>
+                <Label className="text-gray-300 text-sm font-medium">GPU Selection</Label>
+                <p className="text-xs text-gray-500 mt-1">Choose one of the recommended machines</p>
               </div>
 
-              {/* 3 máquinas recomendadas - Layout horizontal */}
+              {/* 3 recommended machines - Horizontal layout */}
               <div>
                 {loadingMachines ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-5 h-5 animate-spin text-gray-400 mr-2" />
-                    <span className="text-sm text-gray-400">Buscando máquinas disponíveis...</span>
+                    <span className="text-sm text-gray-400">Searching for available machines...</span>
                   </div>
                 ) : recommendedMachines.length > 0 ? (
                   <>
@@ -1343,9 +1530,9 @@ const WizardForm = ({
                       {recommendedMachines.map((machine, index) => {
                         const isSelected = selectedMachine?.id === machine.id;
                         const labelIcons = {
-                          'Mais econômico': DollarSign,
-                          'Melhor custo-benefício': TrendingUp,
-                          'Mais rápido': Zap,
+                          'Most economical': DollarSign,
+                          'Best value': TrendingUp,
+                          'Fastest': Zap,
                         };
                         const LabelIcon = labelIcons[machine.label] || Star;
                         const isCenterCard = index === 1;
@@ -1429,11 +1616,11 @@ const WizardForm = ({
                 ) : (
                   <div className="text-center py-6 text-gray-500 text-sm">
                     <AlertCircle className="w-5 h-5 mx-auto mb-2 opacity-50" />
-                    Nenhuma máquina encontrada para esta configuração
+                    No machines found for this configuration
                   </div>
                 )}
 
-                {/* Botão expandir busca manual */}
+                {/* Toggle manual selection button */}
                 <button
                   onClick={() => setSelectionMode(selectionMode === 'manual' ? 'recommended' : 'manual')}
                   className="w-full p-2 text-xs text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded-lg transition-all flex items-center justify-center gap-1.5"
@@ -1442,25 +1629,25 @@ const WizardForm = ({
                   {selectionMode === 'manual' ? (
                     <>
                       <ChevronUp className="w-3.5 h-3.5" />
-                      Ocultar opções avançadas
+                      Hide advanced options
                     </>
                   ) : (
                     <>
                       <ChevronDown className="w-3.5 h-3.5" />
-                      Ver mais opções
+                      See more options
                     </>
                   )}
                 </button>
 
-                {/* Busca manual expandida (aparece abaixo) */}
+                {/* Manual search expanded (appears below) */}
                 {selectionMode === 'manual' && (
                   <div className="pt-3 border-t border-white/10 space-y-3">
-                    {/* Campo de busca */}
+                    {/* Search field */}
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                       <input
                         type="text"
-                        placeholder="Buscar GPU (ex: RTX 4090, A100, H100...)"
+                        placeholder="Search GPU (e.g., RTX 4090, A100, H100...)"
                         className="w-full pl-10 pr-4 py-2.5 text-sm text-gray-200 bg-white/5 border border-white/10 rounded-lg focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500/50 placeholder:text-gray-500 transition-all"
                         value={gpuSearchQuery}
                         onChange={(e) => setGpuSearchQuery(e.target.value)}
@@ -1649,11 +1836,11 @@ const WizardForm = ({
               </div>
 
               <div className="pt-3 border-t border-white/10">
-                <h4 className="text-xs font-medium text-gray-400 mb-2">Resumo da configuração</h4>
+                <h4 className="text-xs font-medium text-gray-400 mb-2">Configuration summary</h4>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Região</span>
-                    <span className="text-gray-300">{selectedLocation?.name || '-'}</span>
+                    <span className="text-gray-500">Region</span>
+                    <span className="text-gray-300">{selectedLocations.map(l => l.name).join(', ') || '-'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Performance</span>
@@ -1664,7 +1851,7 @@ const WizardForm = ({
                     <span className="text-gray-300">{selectedFailover.name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Custo extra</span>
+                    <span className="text-gray-500">Extra cost</span>
                     <span className="text-gray-300">{selectedFailover.costHour}</span>
                   </div>
                 </div>

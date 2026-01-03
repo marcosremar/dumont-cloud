@@ -480,20 +480,8 @@ export default function Machines() {
   }
 
   const handleMigrate = (machine) => {
-    // Se tem CPU Standby ativo, fazer failover instantâneo (manter modal)
-    if (machine.cpu_standby?.enabled) {
-      setMigrationTarget(machine)
-      return
-    }
-
-    // Sem CPU Standby - ir para o Wizard
-    navigate('/app', {
-      state: {
-        wizardMode: 'migrate',
-        sourceMachine: machine,
-        targetType: machine.num_gpus > 0 ? 'cpu' : 'gpu'
-      }
-    })
+    // Always open the migration modal - it handles both CPU Standby and regular migration
+    setMigrationTarget(machine)
   }
 
   const handleMigrationSuccess = (result) => {

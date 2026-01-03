@@ -125,7 +125,7 @@ const MODEL_TEMPLATES = [
   },
 ]
 
-export default function CreateServerlessModal({ onClose, onCreate }) {
+export default function CreateServerlessModal({ onClose, onCreate, error }) {
   const [step, setStep] = useState(1)
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [config, setConfig] = useState({
@@ -477,21 +477,29 @@ export default function CreateServerlessModal({ onClose, onCreate }) {
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-dark-surface-card border-t border-white/10 px-6 py-4 flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={onClose}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSubmit}
-            disabled={!config.name || !config.docker_image}
-            icon={CheckCircle2}
-          >
-            Create Endpoint
-          </Button>
+        <div className="sticky bottom-0 bg-dark-surface-card border-t border-white/10 px-6 py-4">
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
+              <span className="text-sm text-red-400">{error}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSubmit}
+              disabled={!config.name || !config.docker_image}
+              icon={CheckCircle2}
+            >
+              Create Endpoint
+            </Button>
+          </div>
         </div>
       </AlertDialogContent>
     </AlertDialog>

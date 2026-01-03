@@ -1,5 +1,5 @@
 /**
- * Chat Arena Test - Local Ollama at localhost:4896
+ * Chat Arena Test - Local Ollama at localhost:4892
  * Tests the Chat Arena UI with real local Ollama models
  */
 
@@ -12,7 +12,7 @@ test.describe('Chat Arena - Local Ollama UI Test', () => {
 
     // Step 1: Navigate to the Chat Arena page
     console.log('Step 1: Navigating to Chat Arena...');
-    await page.goto('http://localhost:4896/chat-arena');
+    await page.goto('http://localhost:4892/chat-arena');
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000); // Wait for models to load
     console.log('  ✓ Navigated to Chat Arena');
@@ -203,7 +203,7 @@ test.describe('Chat Arena - Local Ollama UI Test', () => {
   test('should export conversation as JSON', async ({ page }) => {
     console.log('\n=== Testing Export Functionality ===\n');
 
-    await page.goto('http://localhost:4896/chat-arena');
+    await page.goto('http://localhost:4892/chat-arena');
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
 

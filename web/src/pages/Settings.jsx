@@ -15,6 +15,16 @@ const validators = {
     if (value.length < 20) return { valid: false, message: 'API key muito curta' }
     return { valid: true, message: 'Formato válido' }
   },
+  tensordock_api_key: (value) => {
+    if (!value) return null
+    if (value.length < 20) return { valid: false, message: 'API key muito curta' }
+    return { valid: true, message: 'Formato válido' }
+  },
+  tensordock_api_token: (value) => {
+    if (!value) return null
+    if (value.length < 20) return { valid: false, message: 'API token muito curto' }
+    return { valid: true, message: 'Formato válido' }
+  },
   r2_access_key: (value) => {
     if (!value) return null
     if (value.length < 10) return { valid: false, message: 'Access key muito curta' }
@@ -41,6 +51,12 @@ const validators = {
     if (!value) return null
     if (value.length < 8) return { valid: false, message: 'Senha muito curta (min. 8 caracteres)' }
     return { valid: true, message: 'Senha válida' }
+  },
+  hf_token: (value) => {
+    if (!value) return null
+    if (!value.startsWith('hf_')) return { valid: false, message: 'Token deve começar com "hf_"' }
+    if (value.length < 20) return { valid: false, message: 'Token muito curto' }
+    return { valid: true, message: 'Token válido' }
   }
 }
 
@@ -295,6 +311,9 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState(tabFromUrl || 'apis')
   const [settings, setSettings] = useState({
     vast_api_key: '',
+    hf_token: '',
+    tensordock_api_key: '',
+    tensordock_api_token: '',
     r2_access_key: '',
     r2_secret_key: '',
     r2_endpoint: '',
@@ -342,6 +361,9 @@ export default function Settings() {
   const validations = useMemo(() => {
     return {
       vast_api_key: validators.vast_api_key(settings.vast_api_key),
+      hf_token: validators.hf_token(settings.hf_token),
+      tensordock_api_key: validators.tensordock_api_key(settings.tensordock_api_key),
+      tensordock_api_token: validators.tensordock_api_token(settings.tensordock_api_token),
       r2_access_key: validators.r2_access_key(settings.r2_access_key),
       r2_secret_key: validators.r2_secret_key(settings.r2_secret_key),
       r2_endpoint: validators.r2_endpoint(settings.r2_endpoint),
@@ -642,6 +664,28 @@ export default function Settings() {
           {/* APIs & Credenciais Tab */}
           {activeTab === 'apis' && (
             <div className="space-y-6">
+              {/* Save Button - Top */}
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={saving || !isFormValid}
+                  data-testid="settings-apis-save-top"
+                  className="ta-btn ta-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? (
+                    <>
+                      <span className="spinner" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Salvar Configurações
+                    </>
+                  )}
+                </button>
+              </div>
+
           {/* Vast.ai Configuration */}
           <Card
             className="border-white/10 bg-dark-surface-card"
@@ -664,6 +708,90 @@ export default function Settings() {
                 placeholder="Enter your vast.ai API key"
                 validation={validations.vast_api_key}
               />
+            </div>
+          </Card>
+
+          {/* Hugging Face Configuration */}
+          <Card
+            className="border-white/10 bg-dark-surface-card"
+            header={
+              <div className="flex items-center gap-3">
+                <span className="text-2xl flex-shrink-0">🤗</span>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Hugging Face</h3>
+                  <p className="text-gray-500 text-sm">Token para acessar modelos gated (requerem aprovação)</p>
+                </div>
+              </div>
+            }
+          >
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Access Token</label>
+                <SecretInput
+                  name="hf_token"
+                  value={settings.hf_token}
+                  onChange={handleChange}
+                  placeholder="hf_xxxxxxxxxxxxxxxxxxxx"
+                  validation={validations.hf_token}
+                  testId="input-hf-token"
+                />
+              </div>
+              <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-sm">
+                <p className="text-yellow-300">
+                  <strong>Para que serve:</strong> Alguns modelos no Hugging Face são "gated" e requerem aprovação.
+                  Com seu token configurado, você pode fazer deploy desses modelos diretamente após aprovar os termos de uso.
+                </p>
+                <p className="text-gray-400 mt-2">
+                  Obtenha seu token em <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" className="underline hover:text-yellow-200">huggingface.co/settings/tokens</a>
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* TensorDock Configuration */}
+          <Card
+            className="border-white/10 bg-dark-surface-card"
+            header={
+              <div className="flex items-center gap-3">
+                <Server className="w-6 h-6 text-purple-400 flex-shrink-0" />
+                <div>
+                  <h3 className="text-lg font-semibold text-white">TensorDock</h3>
+                  <p className="text-gray-500 text-sm">GPU cloud provider alternativo com preços competitivos</p>
+                </div>
+              </div>
+            }
+          >
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">API Key</label>
+                  <SecretInput
+                    name="tensordock_api_key"
+                    value={settings.tensordock_api_key}
+                    onChange={handleChange}
+                    placeholder="Enter your TensorDock API key"
+                    validation={validations.tensordock_api_key}
+                    testId="input-tensordock-api-key"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">API Token</label>
+                  <SecretInput
+                    name="tensordock_api_token"
+                    value={settings.tensordock_api_token}
+                    onChange={handleChange}
+                    placeholder="Enter your TensorDock API token"
+                    validation={validations.tensordock_api_token}
+                    testId="input-tensordock-api-token"
+                  />
+                </div>
+              </div>
+              <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg text-sm">
+                <p className="text-purple-300">
+                  <strong>Nota:</strong> TensorDock oferece GPUs on-demand com preços competitivos.
+                  Obtenha suas credenciais em <a href="https://dashboard.tensordock.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-purple-200">dashboard.tensordock.com</a>
+                </p>
+              </div>
             </div>
           </Card>
 
@@ -722,12 +850,62 @@ export default function Settings() {
               </div>
             </div>
           </Card>
+
+              {/* Save Button - Bottom */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <button
+                  type="submit"
+                  disabled={saving || !isFormValid}
+                  data-testid="settings-apis-save-bottom"
+                  className="ta-btn ta-btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? (
+                    <>
+                      <span className="spinner" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Salvar Configurações
+                    </>
+                  )}
+                </button>
+                {!isFormValid && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 flex items-center gap-2 text-red-400 text-sm">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>Corrija os erros antes de salvar</span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           {/* Storage Tab */}
           {activeTab === 'storage' && (
             <div className="space-y-6">
+              {/* Save Button - Top */}
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={saving || !isFormValid}
+                  data-testid="settings-storage-save-top"
+                  className="ta-btn ta-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? (
+                    <>
+                      <span className="spinner" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Salvar Configurações
+                    </>
+                  )}
+                </button>
+              </div>
+
           {/* Restic Configuration */}
           <Card
             className="border-white/10 bg-dark-surface-card"
@@ -751,6 +929,28 @@ export default function Settings() {
               />
             </div>
           </Card>
+
+              {/* Save Button - Bottom */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <button
+                  type="submit"
+                  disabled={saving || !isFormValid}
+                  data-testid="settings-storage-save-bottom"
+                  className="ta-btn ta-btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? (
+                    <>
+                      <span className="spinner" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Salvar Configurações
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           )}
 

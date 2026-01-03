@@ -1,7 +1,7 @@
 // Dashboard Constants - GPU Options, Categories, Regions, etc.
 
 export const GPU_OPTIONS = [
-  { value: 'any', label: 'Qualquer GPU' },
+  { value: 'any', label: 'Any GPU' },
   // Consumer
   { value: 'RTX_3060', label: 'RTX 3060' },
   { value: 'RTX_3060_Ti', label: 'RTX 3060 Ti' },
@@ -43,21 +43,21 @@ export const GPU_OPTIONS = [
 export const GPU_CATEGORIES = [
   {
     id: 'any',
-    name: 'Automático',
+    name: 'Automatic',
     icon: 'auto',
-    description: 'Melhor custo-benefício',
+    description: 'Best value',
     gpus: []
   },
   {
     id: 'inference',
-    name: 'Inferência',
+    name: 'Inference',
     icon: 'inference',
-    description: 'Deploy de modelos / APIs',
+    description: 'Model deployment / APIs',
     gpus: ['RTX_4060', 'RTX_4060_Ti', 'RTX_4070', 'RTX_3060', 'RTX_3060_Ti', 'RTX_3070', 'RTX_3070_Ti', 'Tesla_T4', 'A4000', 'L40']
   },
   {
     id: 'training',
-    name: 'Treinamento',
+    name: 'Training',
     icon: 'training',
     description: 'Fine-tuning / ML Training',
     gpus: ['RTX_4080', 'RTX_4080_Super', 'RTX_4090', 'RTX_3080', 'RTX_3080_Ti', 'RTX_3090', 'RTX_3090_Ti', 'RTX_5090', 'A5000', 'A6000', 'L40S']
@@ -66,23 +66,23 @@ export const GPU_CATEGORIES = [
     id: 'hpc',
     name: 'HPC / LLMs',
     icon: 'hpc',
-    description: 'Modelos grandes / Multi-GPU',
+    description: 'Large models / Multi-GPU',
     gpus: ['A100', 'A100_PCIE', 'A100_SXM4', 'A100_80GB', 'H100', 'H100_PCIe', 'H100_SXM5', 'V100', 'V100_SXM2']
   },
 ];
 
 export const REGION_OPTIONS = [
-  { value: 'any', label: 'Todas as Regiões' },
-  { value: 'US', label: 'Estados Unidos' },
-  { value: 'EU', label: 'Europa' },
-  { value: 'ASIA', label: 'Ásia' },
-  { value: 'SA', label: 'América do Sul' },
+  { value: 'any', label: 'All Regions' },
+  { value: 'US', label: 'United States' },
+  { value: 'EU', label: 'Europe' },
+  { value: 'ASIA', label: 'Asia' },
+  { value: 'SA', label: 'South America' },
   { value: 'OC', label: 'Oceania' },
-  { value: 'AF', label: 'África' },
+  { value: 'AF', label: 'Africa' },
 ];
 
 export const CUDA_OPTIONS = [
-  { value: 'any', label: 'Qualquer versão' },
+  { value: 'any', label: 'Any version' },
   { value: '11.0', label: 'CUDA 11.0+' },
   { value: '11.7', label: 'CUDA 11.7+' },
   { value: '11.8', label: 'CUDA 11.8+' },
@@ -93,11 +93,11 @@ export const CUDA_OPTIONS = [
 ];
 
 export const ORDER_OPTIONS = [
-  { value: 'dph_total', label: 'Preço (menor primeiro)' },
-  { value: 'dlperf', label: 'DL Performance (maior)' },
-  { value: 'gpu_ram', label: 'GPU RAM (maior)' },
-  { value: 'inet_down', label: 'Download (maior)' },
-  { value: 'reliability', label: 'Confiabilidade' },
+  { value: 'dph_total', label: 'Price (lowest first)' },
+  { value: 'dlperf', label: 'DL Performance (highest)' },
+  { value: 'gpu_ram', label: 'GPU RAM (highest)' },
+  { value: 'inet_down', label: 'Download (highest)' },
+  { value: 'reliability', label: 'Reliability' },
   { value: 'pcie_bw', label: 'PCIe Bandwidth' },
 ];
 
@@ -113,14 +113,14 @@ export const PERFORMANCE_TIERS = [
     color: 'blue',
     speed: '100-500 Mbps',
     time: '~1 min',
-    gpu: 'Sem GPU',
+    gpu: 'No GPU',
     vram: 'N/A',
     priceRange: '$0.01 - $0.05/hr',
-    description: 'Apenas CPU. Para tarefas que não precisam de GPU.',
+    description: 'CPU only. For tasks that don\'t need GPU.',
     filter: { max_price: 0.10, cpu_only: true }
   },
   {
-    name: 'Lento',
+    name: 'Slow',
     level: 1,
     color: 'slate',
     speed: '100-250 Mbps',
@@ -128,11 +128,11 @@ export const PERFORMANCE_TIERS = [
     gpu: 'RTX 3070/3080',
     vram: '8-12GB VRAM',
     priceRange: '$0.05 - $0.25/hr',
-    description: 'Econômico. Ideal para tarefas básicas e testes.',
+    description: 'Budget-friendly. Ideal for basic tasks and testing.',
     filter: { max_price: 0.25, min_gpu_ram: 8 }
   },
   {
-    name: 'Medio',
+    name: 'Medium',
     level: 2,
     color: 'amber',
     speed: '500-1000 Mbps',
@@ -140,11 +140,11 @@ export const PERFORMANCE_TIERS = [
     gpu: 'RTX 4070/4080',
     vram: '12-16GB VRAM',
     priceRange: '$0.25 - $0.50/hr',
-    description: 'Balanceado. Bom para desenvolvimento diário.',
+    description: 'Balanced. Good for daily development.',
     filter: { max_price: 0.50, min_gpu_ram: 12 }
   },
   {
-    name: 'Rapido',
+    name: 'Fast',
     level: 3,
     color: 'lime',
     speed: '1000-2000 Mbps',
@@ -152,7 +152,7 @@ export const PERFORMANCE_TIERS = [
     gpu: 'RTX 4090',
     vram: '24GB VRAM',
     priceRange: '$0.50 - $1.00/hr',
-    description: 'Alta performance. Treinamentos e workloads pesados.',
+    description: 'High performance. Training and heavy workloads.',
     filter: { max_price: 1.00, min_gpu_ram: 24 }
   },
   {
@@ -164,85 +164,124 @@ export const PERFORMANCE_TIERS = [
     gpu: 'A100/H100',
     vram: '40-80GB VRAM',
     priceRange: '$1.00 - $10.00/hr',
-    description: 'Máxima potência. Para as tarefas mais exigentes.',
+    description: 'Maximum power. For the most demanding tasks.',
     filter: { max_price: 10.0, min_gpu_ram: 40 }
   }
 ];
 
 export const COUNTRY_DATA = {
-  // Regiões (selecionam múltiplos países)
-  'eua': { codes: ['US', 'CA', 'MX'], name: 'EUA', isRegion: true },
-  'europa': { codes: ['GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'BE', 'CH', 'AT', 'IE', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'GR', 'HU', 'RO'], name: 'Europa', isRegion: true },
-  'asia': { codes: ['JP', 'CN', 'KR', 'SG', 'IN', 'TH', 'VN', 'ID', 'MY', 'PH', 'TW'], name: 'Ásia', isRegion: true },
-  'america do sul': { codes: ['BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'UY', 'PY', 'BO'], name: 'América do Sul', isRegion: true },
+  // Regions (select multiple countries)
+  'usa': { codes: ['US', 'CA', 'MX'], name: 'USA', isRegion: true },
+  'europe': { codes: ['GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'BE', 'CH', 'AT', 'IE', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'GR', 'HU', 'RO'], name: 'Europe', isRegion: true },
+  'asia': { codes: ['JP', 'CN', 'KR', 'SG', 'IN', 'TH', 'VN', 'ID', 'MY', 'PH', 'TW'], name: 'Asia', isRegion: true },
+  'south america': { codes: ['BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'UY', 'PY', 'BO'], name: 'South America', isRegion: true },
 
-  // Países individuais
-  'estados unidos': { codes: ['US'], name: 'Estados Unidos', isRegion: false },
-  'usa': { codes: ['US'], name: 'Estados Unidos', isRegion: false },
-  'united states': { codes: ['US'], name: 'Estados Unidos', isRegion: false },
-  'canada': { codes: ['CA'], name: 'Canadá', isRegion: false },
-  'canadá': { codes: ['CA'], name: 'Canadá', isRegion: false },
-  'mexico': { codes: ['MX'], name: 'México', isRegion: false },
-  'méxico': { codes: ['MX'], name: 'México', isRegion: false },
-  'brasil': { codes: ['BR'], name: 'Brasil', isRegion: false },
-  'brazil': { codes: ['BR'], name: 'Brasil', isRegion: false },
+  // Individual countries (multiple search keys for same country)
+  'united states': { codes: ['US'], name: 'United States', isRegion: false },
+  'usa': { codes: ['US'], name: 'United States', isRegion: false },
+  'estados unidos': { codes: ['US'], name: 'United States', isRegion: false },
+  'canada': { codes: ['CA'], name: 'Canada', isRegion: false },
+  'canadá': { codes: ['CA'], name: 'Canada', isRegion: false },
+  'mexico': { codes: ['MX'], name: 'Mexico', isRegion: false },
+  'méxico': { codes: ['MX'], name: 'Mexico', isRegion: false },
+  'brazil': { codes: ['BR'], name: 'Brazil', isRegion: false },
+  'brasil': { codes: ['BR'], name: 'Brazil', isRegion: false },
   'argentina': { codes: ['AR'], name: 'Argentina', isRegion: false },
   'chile': { codes: ['CL'], name: 'Chile', isRegion: false },
-  'colombia': { codes: ['CO'], name: 'Colômbia', isRegion: false },
-  'colômbia': { codes: ['CO'], name: 'Colômbia', isRegion: false },
-  'reino unido': { codes: ['GB'], name: 'Reino Unido', isRegion: false },
-  'uk': { codes: ['GB'], name: 'Reino Unido', isRegion: false },
-  'united kingdom': { codes: ['GB'], name: 'Reino Unido', isRegion: false },
-  'england': { codes: ['GB'], name: 'Reino Unido', isRegion: false },
-  'inglaterra': { codes: ['GB'], name: 'Reino Unido', isRegion: false },
-  'frança': { codes: ['FR'], name: 'França', isRegion: false },
-  'france': { codes: ['FR'], name: 'França', isRegion: false },
-  'alemanha': { codes: ['DE'], name: 'Alemanha', isRegion: false },
-  'germany': { codes: ['DE'], name: 'Alemanha', isRegion: false },
-  'espanha': { codes: ['ES'], name: 'Espanha', isRegion: false },
-  'spain': { codes: ['ES'], name: 'Espanha', isRegion: false },
-  'itália': { codes: ['IT'], name: 'Itália', isRegion: false },
-  'italia': { codes: ['IT'], name: 'Itália', isRegion: false },
-  'italy': { codes: ['IT'], name: 'Itália', isRegion: false },
+  'colombia': { codes: ['CO'], name: 'Colombia', isRegion: false },
+  'colômbia': { codes: ['CO'], name: 'Colombia', isRegion: false },
+  'united kingdom': { codes: ['GB'], name: 'United Kingdom', isRegion: false },
+  'uk': { codes: ['GB'], name: 'United Kingdom', isRegion: false },
+  'reino unido': { codes: ['GB'], name: 'United Kingdom', isRegion: false },
+  'england': { codes: ['GB'], name: 'United Kingdom', isRegion: false },
+  'inglaterra': { codes: ['GB'], name: 'United Kingdom', isRegion: false },
+  'france': { codes: ['FR'], name: 'France', isRegion: false },
+  'frança': { codes: ['FR'], name: 'France', isRegion: false },
+  'germany': { codes: ['DE'], name: 'Germany', isRegion: false },
+  'alemanha': { codes: ['DE'], name: 'Germany', isRegion: false },
+  'spain': { codes: ['ES'], name: 'Spain', isRegion: false },
+  'espanha': { codes: ['ES'], name: 'Spain', isRegion: false },
+  'italy': { codes: ['IT'], name: 'Italy', isRegion: false },
+  'itália': { codes: ['IT'], name: 'Italy', isRegion: false },
+  'italia': { codes: ['IT'], name: 'Italy', isRegion: false },
   'portugal': { codes: ['PT'], name: 'Portugal', isRegion: false },
-  'japão': { codes: ['JP'], name: 'Japão', isRegion: false },
-  'japao': { codes: ['JP'], name: 'Japão', isRegion: false },
-  'japan': { codes: ['JP'], name: 'Japão', isRegion: false },
+  'japan': { codes: ['JP'], name: 'Japan', isRegion: false },
+  'japão': { codes: ['JP'], name: 'Japan', isRegion: false },
+  'japao': { codes: ['JP'], name: 'Japan', isRegion: false },
   'china': { codes: ['CN'], name: 'China', isRegion: false },
-  'coreia do sul': { codes: ['KR'], name: 'Coreia do Sul', isRegion: false },
-  'south korea': { codes: ['KR'], name: 'Coreia do Sul', isRegion: false },
-  'korea': { codes: ['KR'], name: 'Coreia do Sul', isRegion: false },
-  'singapura': { codes: ['SG'], name: 'Singapura', isRegion: false },
-  'singapore': { codes: ['SG'], name: 'Singapura', isRegion: false },
-  'índia': { codes: ['IN'], name: 'Índia', isRegion: false },
-  'india': { codes: ['IN'], name: 'Índia', isRegion: false },
+  'south korea': { codes: ['KR'], name: 'South Korea', isRegion: false },
+  'coreia do sul': { codes: ['KR'], name: 'South Korea', isRegion: false },
+  'korea': { codes: ['KR'], name: 'South Korea', isRegion: false },
+  'singapore': { codes: ['SG'], name: 'Singapore', isRegion: false },
+  'singapura': { codes: ['SG'], name: 'Singapore', isRegion: false },
+  'india': { codes: ['IN'], name: 'India', isRegion: false },
+  'índia': { codes: ['IN'], name: 'India', isRegion: false },
 };
 
 export const COUNTRY_NAMES = {
-  'US': 'Estados Unidos', 'CA': 'Canadá', 'MX': 'México',
-  'GB': 'Reino Unido', 'FR': 'França', 'DE': 'Alemanha', 'ES': 'Espanha', 'IT': 'Itália', 'PT': 'Portugal',
-  'JP': 'Japão', 'CN': 'China', 'KR': 'Coreia do Sul', 'SG': 'Singapura', 'IN': 'Índia',
-  'BR': 'Brasil', 'AR': 'Argentina', 'CL': 'Chile', 'CO': 'Colômbia',
+  'US': 'United States', 'CA': 'Canada', 'MX': 'Mexico',
+  'GB': 'United Kingdom', 'FR': 'France', 'DE': 'Germany', 'ES': 'Spain', 'IT': 'Italy', 'PT': 'Portugal',
+  'JP': 'Japan', 'CN': 'China', 'KR': 'South Korea', 'SG': 'Singapore', 'IN': 'India',
+  'BR': 'Brazil', 'AR': 'Argentina', 'CL': 'Chile', 'CO': 'Colombia',
 };
 
 export const DEMO_OFFERS = [
-  // Tier Lento (< $0.25) - 5 ofertas baratas
+  // ==================== CPU-ONLY TIER (< $0.10) ====================
+  // 6 offers (2 per major region: US, EU, ASIA)
+  { id: 2001, gpu_name: 'CPU Only', num_gpus: 0, gpu_ram: 0, cpu_cores: 4, cpu_ram: 16, disk_space: 50, dph_total: 0.02, inet_down: 200, verified: true, geolocation: 'US', isCPU: true },
+  { id: 2002, gpu_name: 'CPU Only', num_gpus: 0, gpu_ram: 0, cpu_cores: 8, cpu_ram: 32, disk_space: 100, dph_total: 0.04, inet_down: 300, verified: true, geolocation: 'EU', isCPU: true },
+  { id: 2003, gpu_name: 'CPU Only', num_gpus: 0, gpu_ram: 0, cpu_cores: 4, cpu_ram: 16, disk_space: 50, dph_total: 0.03, inet_down: 250, verified: true, geolocation: 'EU', isCPU: true },
+  { id: 2004, gpu_name: 'CPU Only', num_gpus: 0, gpu_ram: 0, cpu_cores: 8, cpu_ram: 32, disk_space: 100, dph_total: 0.05, inet_down: 350, verified: true, geolocation: 'US', isCPU: true },
+  { id: 2005, gpu_name: 'CPU Only', num_gpus: 0, gpu_ram: 0, cpu_cores: 6, cpu_ram: 24, disk_space: 80, dph_total: 0.04, inet_down: 300, verified: true, geolocation: 'ASIA', isCPU: true },
+  { id: 2006, gpu_name: 'CPU Only', num_gpus: 0, gpu_ram: 0, cpu_cores: 12, cpu_ram: 48, disk_space: 150, dph_total: 0.08, inet_down: 400, verified: true, geolocation: 'ASIA', isCPU: true },
+
+  // ==================== TIER SLOW (< $0.25) - min_gpu_ram: 8 ====================
+  // 9 offers (3 US, 3 EU, 3 ASIA)
   { id: 1001, gpu_name: 'RTX 3060', num_gpus: 1, gpu_ram: 12, cpu_cores: 8, cpu_ram: 32, disk_space: 100, dph_total: 0.08, inet_down: 500, verified: true, geolocation: 'EU' },
   { id: 1002, gpu_name: 'RTX 3060', num_gpus: 1, gpu_ram: 12, cpu_cores: 6, cpu_ram: 24, disk_space: 80, dph_total: 0.10, inet_down: 400, verified: false, geolocation: 'US' },
   { id: 1003, gpu_name: 'RTX 3060 Ti', num_gpus: 1, gpu_ram: 8, cpu_cores: 8, cpu_ram: 32, disk_space: 100, dph_total: 0.12, inet_down: 500, verified: true, geolocation: 'US' },
-  { id: 1004, gpu_name: 'RTX 4060', num_gpus: 1, gpu_ram: 8, cpu_cores: 8, cpu_ram: 32, disk_space: 100, dph_total: 0.12, inet_down: 600, verified: true, geolocation: 'US' },
+  { id: 1004, gpu_name: 'RTX 4060', num_gpus: 1, gpu_ram: 8, cpu_cores: 8, cpu_ram: 32, disk_space: 100, dph_total: 0.12, inet_down: 600, verified: true, geolocation: 'EU' },
   { id: 1005, gpu_name: 'RTX 3070', num_gpus: 1, gpu_ram: 8, cpu_cores: 8, cpu_ram: 32, disk_space: 120, dph_total: 0.15, inet_down: 600, verified: true, geolocation: 'EU' },
-  // Tier Medio ($0.25-$0.50) - 3 ofertas
+  { id: 1014, gpu_name: 'RTX 3070', num_gpus: 1, gpu_ram: 8, cpu_cores: 10, cpu_ram: 48, disk_space: 150, dph_total: 0.18, inet_down: 700, verified: true, geolocation: 'US' },
+  { id: 1025, gpu_name: 'RTX 3060', num_gpus: 1, gpu_ram: 12, cpu_cores: 8, cpu_ram: 32, disk_space: 100, dph_total: 0.09, inet_down: 450, verified: true, geolocation: 'ASIA' },
+  { id: 1026, gpu_name: 'RTX 3070', num_gpus: 1, gpu_ram: 8, cpu_cores: 8, cpu_ram: 32, disk_space: 100, dph_total: 0.14, inet_down: 550, verified: true, geolocation: 'ASIA' },
+  { id: 1027, gpu_name: 'RTX 4060', num_gpus: 1, gpu_ram: 8, cpu_cores: 10, cpu_ram: 48, disk_space: 120, dph_total: 0.16, inet_down: 600, verified: true, geolocation: 'ASIA' },
+
+  // ==================== TIER MEDIUM ($0.25-$0.50) - min_gpu_ram: 12 ====================
+  // 9 offers (3 US, 3 EU, 3 ASIA)
   { id: 1006, gpu_name: 'RTX 4070', num_gpus: 1, gpu_ram: 12, cpu_cores: 12, cpu_ram: 48, disk_space: 150, dph_total: 0.28, inet_down: 800, verified: true, geolocation: 'EU' },
+  { id: 1015, gpu_name: 'RTX 4070 Ti', num_gpus: 1, gpu_ram: 12, cpu_cores: 10, cpu_ram: 48, disk_space: 150, dph_total: 0.30, inet_down: 850, verified: true, geolocation: 'US' },
   { id: 1007, gpu_name: 'RTX 4080', num_gpus: 1, gpu_ram: 16, cpu_cores: 12, cpu_ram: 48, disk_space: 150, dph_total: 0.35, inet_down: 800, verified: true, geolocation: 'EU' },
+  { id: 1016, gpu_name: 'RTX 3090', num_gpus: 1, gpu_ram: 24, cpu_cores: 14, cpu_ram: 64, disk_space: 200, dph_total: 0.38, inet_down: 900, verified: true, geolocation: 'US' },
   { id: 1008, gpu_name: 'RTX 3090', num_gpus: 1, gpu_ram: 24, cpu_cores: 12, cpu_ram: 64, disk_space: 200, dph_total: 0.40, inet_down: 800, verified: true, geolocation: 'US' },
-  // Tier Rapido ($0.50-$1.00) - 2 ofertas
+  { id: 1017, gpu_name: 'RTX 4080', num_gpus: 1, gpu_ram: 16, cpu_cores: 16, cpu_ram: 64, disk_space: 200, dph_total: 0.45, inet_down: 1000, verified: true, geolocation: 'EU' },
+  { id: 1028, gpu_name: 'RTX 4070', num_gpus: 1, gpu_ram: 12, cpu_cores: 10, cpu_ram: 48, disk_space: 150, dph_total: 0.26, inet_down: 750, verified: true, geolocation: 'ASIA' },
+  { id: 1029, gpu_name: 'RTX 3090', num_gpus: 1, gpu_ram: 24, cpu_cores: 12, cpu_ram: 64, disk_space: 180, dph_total: 0.35, inet_down: 850, verified: true, geolocation: 'ASIA' },
+  { id: 1030, gpu_name: 'RTX 4080', num_gpus: 1, gpu_ram: 16, cpu_cores: 14, cpu_ram: 64, disk_space: 200, dph_total: 0.42, inet_down: 900, verified: true, geolocation: 'ASIA' },
+
+  // ==================== TIER FAST ($0.50-$1.00) - min_gpu_ram: 24 ====================
+  // 9 offers (3 US, 3 EU, 3 ASIA)
+  { id: 1018, gpu_name: 'RTX 4090', num_gpus: 1, gpu_ram: 24, cpu_cores: 12, cpu_ram: 48, disk_space: 150, dph_total: 0.55, inet_down: 1200, verified: true, geolocation: 'US' },
+  { id: 1019, gpu_name: 'RTX 4090', num_gpus: 1, gpu_ram: 24, cpu_cores: 14, cpu_ram: 64, disk_space: 180, dph_total: 0.60, inet_down: 1300, verified: true, geolocation: 'EU' },
   { id: 1009, gpu_name: 'RTX 4090', num_gpus: 1, gpu_ram: 24, cpu_cores: 16, cpu_ram: 64, disk_space: 200, dph_total: 0.65, inet_down: 1500, verified: true, geolocation: 'EU' },
   { id: 1010, gpu_name: 'RTX 4090', num_gpus: 1, gpu_ram: 24, cpu_cores: 24, cpu_ram: 128, disk_space: 500, dph_total: 0.70, inet_down: 2000, verified: true, geolocation: 'US' },
-  // Tier Ultra (> $1.00) - 3 ofertas
+  { id: 1020, gpu_name: 'RTX 4090', num_gpus: 1, gpu_ram: 24, cpu_cores: 20, cpu_ram: 96, disk_space: 300, dph_total: 0.80, inet_down: 1800, verified: true, geolocation: 'EU' },
+  { id: 1021, gpu_name: 'A5000', num_gpus: 1, gpu_ram: 24, cpu_cores: 16, cpu_ram: 64, disk_space: 250, dph_total: 0.85, inet_down: 1500, verified: true, geolocation: 'US' },
+  { id: 1031, gpu_name: 'RTX 4090', num_gpus: 1, gpu_ram: 24, cpu_cores: 12, cpu_ram: 48, disk_space: 150, dph_total: 0.52, inet_down: 1100, verified: true, geolocation: 'ASIA' },
+  { id: 1032, gpu_name: 'RTX 4090', num_gpus: 1, gpu_ram: 24, cpu_cores: 16, cpu_ram: 64, disk_space: 200, dph_total: 0.68, inet_down: 1400, verified: true, geolocation: 'ASIA' },
+  { id: 1033, gpu_name: 'A5000', num_gpus: 1, gpu_ram: 24, cpu_cores: 14, cpu_ram: 64, disk_space: 200, dph_total: 0.75, inet_down: 1300, verified: true, geolocation: 'ASIA' },
+
+  // ==================== TIER ULTRA (> $1.00) - min_gpu_ram: 40 ====================
+  // 9 offers (3 US, 3 EU, 3 ASIA)
   { id: 1011, gpu_name: 'A6000', num_gpus: 1, gpu_ram: 48, cpu_cores: 32, cpu_ram: 128, disk_space: 500, dph_total: 1.00, inet_down: 2000, verified: true, geolocation: 'US' },
-  { id: 1012, gpu_name: 'A100 80GB', num_gpus: 1, gpu_ram: 80, cpu_cores: 64, cpu_ram: 256, disk_space: 1000, dph_total: 2.50, inet_down: 5000, verified: true, geolocation: 'US' },
+  { id: 1022, gpu_name: 'A6000', num_gpus: 1, gpu_ram: 48, cpu_cores: 24, cpu_ram: 96, disk_space: 400, dph_total: 1.10, inet_down: 1800, verified: true, geolocation: 'EU' },
+  { id: 1023, gpu_name: 'A100 40GB', num_gpus: 1, gpu_ram: 40, cpu_cores: 32, cpu_ram: 128, disk_space: 500, dph_total: 1.50, inet_down: 3000, verified: true, geolocation: 'EU' },
+  { id: 1024, gpu_name: 'A100 40GB', num_gpus: 1, gpu_ram: 40, cpu_cores: 48, cpu_ram: 192, disk_space: 800, dph_total: 2.00, inet_down: 4000, verified: true, geolocation: 'US' },
+  { id: 1012, gpu_name: 'A100 80GB', num_gpus: 1, gpu_ram: 80, cpu_cores: 64, cpu_ram: 256, disk_space: 1000, dph_total: 2.50, inet_down: 5000, verified: true, geolocation: 'EU' },
   { id: 1013, gpu_name: 'H100 80GB', num_gpus: 1, gpu_ram: 80, cpu_cores: 96, cpu_ram: 512, disk_space: 2000, dph_total: 4.00, inet_down: 10000, verified: true, geolocation: 'US' },
+  { id: 1034, gpu_name: 'A6000', num_gpus: 1, gpu_ram: 48, cpu_cores: 24, cpu_ram: 96, disk_space: 400, dph_total: 1.05, inet_down: 1700, verified: true, geolocation: 'ASIA' },
+  { id: 1035, gpu_name: 'A100 40GB', num_gpus: 1, gpu_ram: 40, cpu_cores: 32, cpu_ram: 128, disk_space: 500, dph_total: 1.80, inet_down: 3500, verified: true, geolocation: 'ASIA' },
+  { id: 1036, gpu_name: 'A100 80GB', num_gpus: 1, gpu_ram: 80, cpu_cores: 48, cpu_ram: 192, disk_space: 800, dph_total: 3.00, inet_down: 6000, verified: true, geolocation: 'ASIA' },
 ];
 
 export const DEFAULT_FILTERS = {

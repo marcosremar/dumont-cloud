@@ -76,9 +76,20 @@ export async function apiDelete(endpoint) {
 
 /**
  * Check if currently in demo mode
- * Always returns false - demo routes were removed
+ * Detects based on URL path or localStorage flag
  */
 export function isDemoMode() {
+  // Check URL path
+  if (typeof window !== 'undefined') {
+    const pathname = window.location.pathname
+    if (pathname.startsWith('/demo-app') || pathname.startsWith('/demo')) {
+      return true
+    }
+    // Check localStorage flag (set when entering demo)
+    if (localStorage.getItem('dumont_demo_mode') === 'true') {
+      return true
+    }
+  }
   return false
 }
 

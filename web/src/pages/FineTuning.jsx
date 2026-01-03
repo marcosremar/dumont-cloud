@@ -114,7 +114,7 @@ function JobActionsMenu({ job, onViewLogs, onCancel, onDeploy, onDownload, onDel
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 top-8 w-48 bg-[#1e2330] border border-white/10 rounded-lg shadow-xl z-20 py-1">
+          <div className="absolute right-0 top-8 w-48 bg-dark-surface-card border border-white/10 rounded-lg shadow-xl z-20 py-1">
             <button
               onClick={() => { onViewLogs(job); setIsOpen(false); }}
               className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-white/5 flex items-center gap-2"
@@ -196,7 +196,7 @@ function LogsModal({ job, isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-[#1a1f2e] rounded-xl border border-white/10 w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl">
+      <div className="bg-dark-surface-card rounded-xl border border-white/10 w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl">
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <h3 className="text-lg font-semibold text-white">Logs: {job.name}</h3>
           <div className="flex gap-2">
@@ -277,7 +277,7 @@ function DeployModal({ job, isOpen, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-[#1a1f2e] rounded-xl border border-white/10 w-full max-w-lg shadow-2xl">
+      <div className="bg-dark-surface-card rounded-xl border border-white/10 w-full max-w-lg shadow-2xl">
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
             <Rocket className="w-5 h-5 text-green-400" />
@@ -289,7 +289,7 @@ function DeployModal({ job, isOpen, onClose, onSuccess }) {
         </div>
 
         <div className="p-6 space-y-6">
-          <div className="bg-[#0f1219] rounded-lg p-4 border border-white/5">
+          <div className="bg-dark-surface rounded-lg p-4 border border-white/5">
             <div className="flex items-center gap-3 mb-2">
               <Brain className="w-5 h-5 text-purple-400" />
               <span className="text-white font-medium">{job?.name}</span>
@@ -305,7 +305,7 @@ function DeployModal({ job, isOpen, onClose, onSuccess }) {
               type="text"
               value={instanceName}
               onChange={(e) => setInstanceName(e.target.value)}
-              className="w-full bg-[#0f1219] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-purple-500 outline-none"
+              className="w-full bg-dark-surface border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-purple-500 outline-none"
               placeholder="my-inference-instance"
             />
           </div>
@@ -371,11 +371,19 @@ export default function FineTuning() {
   const [showLogs, setShowLogs] = useState(false);
   const [showDeploy, setShowDeploy] = useState(false);
 
-  // Filters (like Fireworks.ai)
+  // Filters
   const [activeTab, setActiveTab] = useState('supervised');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+
+  // Stats calculation
+  const stats = {
+    total: jobs.length,
+    running: jobs.filter(j => ['pending', 'uploading', 'queued', 'running'].includes(j.status)).length,
+    completed: jobs.filter(j => j.status === 'completed').length,
+    failed: jobs.filter(j => j.status === 'failed').length,
+  };
 
   // Fetch jobs
   const fetchJobs = async () => {
@@ -498,129 +506,167 @@ export default function FineTuning() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0a0d0a] p-6">
-      {/* Header - Like Fireworks.ai */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+    <div className="page-container">
+      {/* Page Header - TailAdmin Style */}
+      <div className="page-header">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Brain className="w-9 h-9 flex-shrink-0" style={{ color: '#4caf50' }} />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center border border-purple-500/20">
+              <Brain className="w-6 h-6 text-purple-400" />
+            </div>
             <div className="flex flex-col justify-center">
-              <h1 className="text-2xl font-bold text-white leading-tight">Fine-Tuning Jobs</h1>
-              <p className="text-gray-400 mt-0.5">View your past fine-tuning jobs and create new ones.</p>
+              <h1 className="page-title leading-tight">Fine-Tuning</h1>
+              <p className="page-subtitle mt-0.5">View your past fine-tuning jobs and create new ones</p>
             </div>
           </div>
-          <Button
+          <button
             onClick={() => setShowMethodModal(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white gap-2"
+            className="ta-btn ta-btn-primary"
           >
             <Plus className="w-4 h-4" />
             Fine-tune a Model
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* Search and Filters - Like Fireworks.ai */}
-      <div className="mb-6 space-y-4">
-        {/* Search input */}
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by id, name, dataset, or created by"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#111411] border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-500 focus:border-purple-500 outline-none"
-          />
-        </div>
-
-        {/* Tabs and Status Filter */}
-        <div className="flex items-center justify-between">
-          {/* Tabs - Like Fireworks.ai */}
-          <div className="flex border-b border-white/10">
-            {[
-              { id: 'supervised', label: 'Supervised' },
-              { id: 'reinforcement', label: 'Reinforcement' },
-              { id: 'preference', label: 'Preference' },
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
-                  activeTab === tab.id
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-gray-300'
-                }`}
-              >
-                {tab.label}
-                {activeTab === tab.id && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />
-                )}
-              </button>
-            ))}
+      {/* Stats Summary */}
+      <div className="stats-grid mb-6">
+        <div className="stat-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="stat-card-label">Total Jobs</p>
+              <p className="stat-card-value">{stats.total}</p>
+            </div>
+            <Brain className="w-5 h-5 text-gray-400" />
           </div>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="stat-card-label">Running</p>
+              <p className="stat-card-value text-purple-400">{stats.running}</p>
+            </div>
+            <Loader2 className="w-5 h-5 text-purple-400" />
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="stat-card-label">Completed</p>
+              <p className="stat-card-value text-green-400">{stats.completed}</p>
+            </div>
+            <CheckCircle className="w-5 h-5 text-green-400" />
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="stat-card-label">Failed</p>
+              <p className="stat-card-value text-red-400">{stats.failed}</p>
+            </div>
+            <XCircle className="w-5 h-5 text-red-400" />
+          </div>
+        </div>
+      </div>
 
-          {/* Status Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-              className="flex items-center gap-2 px-4 py-2 bg-[#111411] border border-white/10 rounded-lg text-sm text-gray-300 hover:border-white/20"
-            >
-              {statusFilter === 'all' ? 'All' : STATUS_CONFIG[statusFilter]?.label || statusFilter}
-              <ChevronDown className="w-4 h-4" />
-            </button>
+      {/* Main Content Card */}
+      <div className="ta-card">
+        <div className="ta-card-header">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-2">
+              {[
+                { id: 'supervised', label: 'Supervised' },
+                { id: 'reinforcement', label: 'Reinforcement' },
+                { id: 'preference', label: 'Preference' },
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`filter-tab ${activeTab === tab.id ? 'filter-tab-active' : ''}`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-            {showStatusDropdown && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowStatusDropdown(false)}
+            {/* Search and Status Filter */}
+            <div className="flex items-center gap-3">
+              {/* Search input */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search jobs..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-64 bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:border-brand-500/50 outline-none"
                 />
-                <div className="absolute right-0 top-10 w-40 bg-[#1e2330] border border-white/10 rounded-lg shadow-xl z-20 py-1">
-                  {['all', 'running', 'completed', 'failed'].map(status => (
-                    <button
-                      key={status}
-                      onClick={() => { setStatusFilter(status); setShowStatusDropdown(false); }}
-                      className={`w-full px-4 py-2 text-left text-sm hover:bg-white/5 ${
-                        statusFilter === status ? 'text-purple-400' : 'text-gray-300'
-                      }`}
-                    >
-                      {status === 'all' ? 'All' : STATUS_CONFIG[status]?.label || status}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+              </div>
+
+              {/* Status Filter Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-300 hover:border-white/20"
+                >
+                  {statusFilter === 'all' ? 'All Status' : STATUS_CONFIG[statusFilter]?.label || statusFilter}
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+
+                {showStatusDropdown && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowStatusDropdown(false)}
+                    />
+                    <div className="absolute right-0 top-10 w-40 bg-dark-surface-card border border-white/10 rounded-lg shadow-xl z-20 py-1">
+                      {['all', 'running', 'completed', 'failed'].map(status => (
+                        <button
+                          key={status}
+                          onClick={() => { setStatusFilter(status); setShowStatusDropdown(false); }}
+                          className={`w-full px-4 py-2 text-left text-sm hover:bg-white/5 ${
+                            statusFilter === status ? 'text-brand-400' : 'text-gray-300'
+                          }`}
+                        >
+                          {status === 'all' ? 'All Status' : STATUS_CONFIG[status]?.label || status}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Jobs Table - Like Fireworks.ai */}
-      <div className="bg-[#111411] rounded-xl border border-white/10 overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
-          </div>
-        ) : filteredJobs.length === 0 ? (
-          <div className="text-center py-16">
-            <Brain className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">No Fine-Tuning Jobs</h3>
-            <p className="text-gray-400 mb-4">
-              {searchQuery || statusFilter !== 'all'
-                ? 'No jobs match your filters.'
-                : "You haven't created any fine-tuning jobs yet."}
-            </p>
-            {!searchQuery && statusFilter === 'all' && (
-              <Button
-                onClick={() => setShowMethodModal(true)}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Fine-tune a Model
-              </Button>
-            )}
-          </div>
-        ) : (
-          <table className="w-full">
+        <div className="ta-card-body p-0">
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="w-8 h-8 text-brand-400 animate-spin" />
+            </div>
+          ) : filteredJobs.length === 0 ? (
+            <div className="text-center py-16">
+              <Brain className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-white mb-2">No Fine-Tuning Jobs</h3>
+              <p className="text-gray-400 mb-4">
+                {searchQuery || statusFilter !== 'all'
+                  ? 'No jobs match your filters.'
+                  : "You haven't created any fine-tuning jobs yet."}
+              </p>
+              {!searchQuery && statusFilter === 'all' && (
+                <button
+                  onClick={() => setShowMethodModal(true)}
+                  className="ta-btn ta-btn-primary"
+                >
+                  <Plus className="w-4 h-4" />
+                  Fine-tune a Model
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
             <thead>
               <tr className="border-b border-white/10">
                 <th className="text-left px-4 py-3 text-sm font-medium text-gray-400">Fine-tuning jobs</th>
@@ -699,9 +745,11 @@ export default function FineTuning() {
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
-        )}
+              </tbody>
+            </table>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Method Selection Modal */}

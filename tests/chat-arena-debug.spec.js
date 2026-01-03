@@ -35,7 +35,7 @@ test.describe('Chat Arena - Debug Mode', () => {
 
     // Navigate
     console.log('1. Navigating to Chat Arena...');
-    await page.goto('http://localhost:4896/chat-arena');
+    await page.goto('http://localhost:4892/chat-arena');
     await page.waitForLoadState('domcontentloaded');
     console.log('   Page loaded');
 

@@ -1,6 +1,65 @@
-/* TailAdmin Theme Styles for Dumont Cloud */
-/* Clean, Professional Design - No Gamer Aesthetics */
+/* ═══════════════════════════════════════════════════════════════════════════
+   DUMONT CLOUD - TAILADMIN DESIGN SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════
+
+   STANDARD PAGE LAYOUT PATTERN:
+   ─────────────────────────────
+
+   <div className="page-container">
+     <!-- Page Header -->
+     <div className="page-header">
+       <div className="flex items-center gap-4">
+         <div className="page-header-icon">  <!-- or page-header-icon-emerald, etc -->
+           <Icon className="w-6 h-6 text-brand-400" />
+         </div>
+         <div>
+           <h1 className="page-title">Page Title</h1>
+           <p className="page-subtitle">Description text</p>
+         </div>
+       </div>
+       <button className="ta-btn ta-btn-primary">Action</button>
+     </div>
+
+     <!-- Stats Cards -->
+     <div className="stats-grid mb-6">
+       <div className="stat-card">
+         <p className="stat-card-label">Label</p>
+         <p className="stat-card-value">Value</p>
+       </div>
+     </div>
+
+     <!-- Main Content Card with Filter Tabs -->
+     <div className="ta-card">
+       <div className="ta-card-header">
+         <div className="filter-tabs">
+           <button className="filter-tab filter-tab-active">
+             Tab <span className="filter-tab-count">10</span>
+           </button>
+         </div>
+         <div className="auto-refresh-indicator">
+           <div className="auto-refresh-dot"></div>
+           <span>Auto-refresh</span>
+         </div>
+       </div>
+       <div className="ta-card-body">
+         <!-- Content here -->
+       </div>
+     </div>
+   </div>
+
+   COLOR VARIANTS:
+   - brand (green): Primary actions, success states
+   - emerald: Active/online states
+   - cyan: Info, protection, standby
+   - amber: Warnings, costs
+   - violet: Special features
+   - red: Errors, danger actions
+   - gray: Inactive, secondary
+
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
 /* Base Styles */
 .font-outfit {
@@ -86,10 +145,10 @@
   @apply px-5 py-4 border-t border-white/10 bg-dark-surface-secondary;
 }
 
-/* Stat Cards - Clean Style with transparent background */
+/* Stat Cards - Clean Style with subtle dark background */
 .stat-card {
   @apply rounded-lg border border-white/10 p-4 flex flex-col;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, transparent 100%);
+  background: rgba(20, 25, 20, 0.8);
 }
 
 .stat-card-icon {
@@ -380,6 +439,152 @@
   @apply grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   PAGE LAYOUT STANDARDS
+   Standard patterns for page headers, filter tabs, and content areas
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Page Header Icon Box - Standard */
+.page-header-icon {
+  @apply w-12 h-12 rounded-xl flex items-center justify-center border;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.1) 100%);
+  border-color: rgba(76, 175, 80, 0.2);
+}
+
+.page-header-icon-emerald {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.page-header-icon-brand {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.1) 100%);
+  border-color: rgba(76, 175, 80, 0.2);
+}
+
+.page-header-icon-cyan {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(6, 182, 212, 0.1) 100%);
+  border-color: rgba(6, 182, 212, 0.2);
+}
+
+.page-header-icon-amber {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.page-header-icon-violet {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+/* Filter Tabs - Standard Pattern */
+.filter-tabs {
+  @apply flex flex-wrap items-center gap-2;
+}
+
+.filter-tab {
+  @apply flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all;
+  @apply text-gray-400 hover:text-white hover:bg-gray-700/50 border border-transparent;
+}
+
+.filter-tab-active {
+  @apply bg-brand-500/20 text-brand-400 border-brand-500/30;
+}
+
+.filter-tab-count {
+  @apply px-1.5 py-0.5 rounded text-xs bg-gray-700 text-gray-400;
+}
+
+.filter-tab-active .filter-tab-count {
+  @apply bg-brand-500/30 text-brand-300;
+}
+
+/* Auto-refresh Indicator */
+.auto-refresh-indicator {
+  @apply flex items-center gap-2 text-xs text-gray-500;
+}
+
+.auto-refresh-dot {
+  @apply w-2 h-2 rounded-full bg-emerald-400 animate-pulse;
+}
+
+/* Compact Metrics Grid - Inside Cards */
+.metrics-grid-compact {
+  @apply grid gap-0.5 p-2 rounded-lg border;
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.metrics-grid-compact-4 {
+  @apply grid-cols-4;
+}
+
+.metrics-grid-compact-5 {
+  @apply grid-cols-5;
+}
+
+.metric-item {
+  @apply text-center;
+}
+
+.metric-item-value {
+  @apply font-mono text-xs font-bold text-white;
+}
+
+.metric-item-label {
+  @apply text-[8px] text-gray-500 uppercase;
+}
+
+/* Info Row - Compact tags/badges */
+.info-row {
+  @apply flex items-center gap-1 flex-wrap;
+}
+
+.info-tag {
+  @apply px-1.5 py-0.5 rounded text-[9px] border;
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.info-tag-clickable {
+  @apply cursor-pointer transition-all hover:bg-white/10;
+}
+
+.info-tag-success {
+  @apply bg-brand-500/20 text-brand-400 border-brand-500/30;
+}
+
+/* URL/Code Display Box */
+.url-display {
+  @apply flex items-center gap-2 p-2 rounded-lg border;
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.url-display-code {
+  @apply flex-1 text-xs text-brand-400 truncate font-mono;
+}
+
+/* Warning Banner */
+.warning-banner {
+  @apply p-2 rounded-lg border;
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.warning-banner-text {
+  @apply text-xs text-amber-400;
+}
+
+/* Section Footer */
+.card-footer-info {
+  @apply mt-3 pt-2 border-t border-white/5 text-[10px] text-gray-500;
+}
+
+/* Action Buttons Row */
+.action-buttons {
+  @apply flex gap-1.5;
+}
+
 /* Empty State - Clean Style */
 .ta-empty-state {
   @apply flex flex-col items-center justify-center py-12 px-4 text-center;
@@ -605,9 +810,6 @@
    COMMAND CENTER DASHBOARD STYLES
    Futuristic control room aesthetic with distinctive typography and effects
    ═══════════════════════════════════════════════════════════════════════════ */
-
-/* Import distinctive fonts */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
 /* Dashboard Container with Grid Background */
 .dashboard-command-center {

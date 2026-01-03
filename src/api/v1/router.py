@@ -5,7 +5,7 @@ from fastapi import APIRouter
 
 from .endpoints import auth, instances, snapshots, settings, metrics, ai_wizard, standby, agent, savings, advisor, hibernation, finetune, chat, reports
 from .endpoints import auth, oidc, instances, snapshots, settings, metrics, ai_wizard, standby, agent, savings, advisor, hibernation, finetune, chat
-from .endpoints import warmpool, failover_settings, failover, serverless, spot_deploy, machine_history, jobs, models
+from .endpoints import warmpool, failover_settings, failover, serverless, spot_deploy, machine_history, jobs, models, inference
 from .endpoints import market, hosts, templates
 from .endpoints import market, hosts
 from .endpoints import email_preferences, unsubscribe
@@ -14,7 +14,7 @@ from .endpoints import market, hosts, webhooks
 from .endpoints import market, hosts, currency
 from .endpoints import market, hosts, teams, roles, users
 from . import audit
-from .endpoints import market, hosts, reservations
+from .endpoints import market, hosts, reservations, memory, agents
 from .endpoints.settings import balance_router
 from .endpoints.spot import router as spot_router
 from .endpoints.metrics import reliability_router
@@ -73,6 +73,9 @@ api_router.include_router(jobs.router, tags=["Jobs"])
 # Models - Deploy and manage ML models (LLM, Whisper, Diffusion, Embeddings)
 api_router.include_router(models.router, tags=["Models"])
 
+# Inference - SDK client configuration and fallback models
+api_router.include_router(inference.router, tags=["Inference"])
+
 # Market - Price prediction and market analysis
 api_router.include_router(market.router, tags=["Market"])
 
@@ -108,3 +111,9 @@ api_router.include_router(audit.router, tags=["Audit Logs"])
 api_router.include_router(users.router, tags=["Users"])
 # GPU Reservations - Reserve GPU capacity with guaranteed availability
 api_router.include_router(reservations.router, tags=["Reservations"])
+
+# Memory - Agent memory and embeddings (GCP Vertex AI)
+api_router.include_router(memory.router, tags=["Agent Memory"])
+
+# Agents - AI Agents with memory support
+api_router.include_router(agents.router, tags=["AI Agents"])

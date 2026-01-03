@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-01-03T21:42:50.541Z",
+  "tests": [
+    {
+      "step": 1,
+      "status": "fail",
+      "details": {
+        "message": "Navigation failed: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4896/chat-arena\nCall log:\n\u001b[2m  - navigating to \"http://localhost:4896/chat-arena\", waiting until \"domcontentloaded\"\u001b[22m\n",
+        "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4896/chat-arena\nCall log:\n\u001b[2m  - navigating to \"http://localhost:4896/chat-arena\", waiting until \"domcontentloaded\"\u001b[22m\n"
+      },
+      "timestamp": "2026-01-03T21:42:51.426Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "99-error",
+      "path": "tests/screenshots/99-error.png",
+      "description": "Test error state"
+    }
+  ],
+  "errors": [
+    "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4896/chat-arena\nCall log:\n\u001b[2m  - navigating to \"http://localhost:4896/chat-arena\", waiting until \"domcontentloaded\"\u001b[22m\n",
+    "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4896/chat-arena\nCall log:\n\u001b[2m  - navigating to \"http://localhost:4896/chat-arena\", waiting until \"domcontentloaded\"\u001b[22m\n"
+  ],
+  "success": false
+}

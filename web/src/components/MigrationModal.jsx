@@ -78,7 +78,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
       const res = await apiPost(`/api/v1/instances/${instance.id}/migrate/estimate`, body);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || 'Erro ao buscar estimativa');
+        throw new Error(data.detail || 'Error fetching estimate');
       }
 
       const data = await res.json();
@@ -98,7 +98,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
       setLoading(true);
       setError(null);
       setMigrationStarted(true);
-      setProgress('Iniciando migração...');
+      setProgress('Starting migration...');
 
       const body = {
         target_type: targetType,
@@ -110,23 +110,23 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
         body.gpu_name = gpuName;
       }
 
-      setProgress('Criando snapshot...');
+      setProgress('Creating snapshot...');
 
       const res = await apiPost(`/api/v1/instances/${instance.id}/migrate`, body);
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.detail || 'Erro na migração');
+        throw new Error(data.detail || 'Migration error');
       }
 
       if (data.success) {
-        setProgress('Migração concluída!');
+        setProgress('Migration complete!');
         setTimeout(() => {
           onSuccess && onSuccess(data);
           onClose();
         }, 1500);
       } else {
-        throw new Error(data.error || 'Migração falhou');
+        throw new Error(data.error || 'Migration failed');
       }
     } catch (err) {
       console.error('Erro na migração:', err);
@@ -148,7 +148,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <RefreshCw className="w-5 h-5 text-brand-400" />
-            Migrar Instância
+            Migrate Instance
           </DialogTitle>
           <DialogDescription className="text-gray-400">
             {currentGpuName} (ID: {instance?.id})
@@ -197,7 +197,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
           {/* Target Type Selection (only show if can switch both ways) */}
           {!migrationStarted && (
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Tipo de Destino</Label>
+              <Label className="text-sm font-medium">Target Type</Label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setTargetType('cpu')}
@@ -230,7 +230,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
           {/* GPU Selection (only if migrating to GPU) */}
           {targetType === 'gpu' && !migrationStarted && (
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Modelo da GPU</Label>
+              <Label className="text-sm font-medium">GPU Model</Label>
               <select
                 value={gpuName}
                 onChange={(e) => setGpuName(e.target.value)}
@@ -250,21 +250,21 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
             <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
               <div className="flex items-center gap-2 mb-3">
                 <DollarSign className="w-4 h-4 text-yellow-400" />
-                <span className="text-sm font-medium">Comparação de Custos</span>
+                <span className="text-sm font-medium">Cost Comparison</span>
               </div>
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Atual</p>
+                  <p className="text-xs text-gray-500 mb-1">Current</p>
                   <p className="text-lg font-bold text-white">${currentCost.toFixed(3)}/h</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Novo</p>
+                  <p className="text-xs text-gray-500 mb-1">New</p>
                   <p className="text-lg font-bold text-green-400">${targetCost.toFixed(3)}/h</p>
                 </div>
               </div>
               {savings > 0 && (
                 <p className="text-center text-xs text-green-400 mt-2">
-                  Economia de ${savings.toFixed(3)}/h ({((savings / currentCost) * 100).toFixed(0)}%)
+                  Savings of ${savings.toFixed(3)}/h ({((savings / currentCost) * 100).toFixed(0)}%)
                 </p>
               )}
             </div>
@@ -274,14 +274,14 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
           {estimating && !migrationStarted && (
             <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Buscando ofertas...
+              Searching for offers...
             </div>
           )}
 
           {/* No offers available */}
           {estimate && !estimate.available && !migrationStarted && (
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
-              <p className="text-yellow-400 text-sm">{estimate.error || 'Nenhuma oferta disponível'}</p>
+              <p className="text-yellow-400 text-sm">{estimate.error || 'No offers available'}</p>
             </div>
           )}
 
@@ -301,18 +301,18 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
                   <div className="space-y-2 text-sm text-gray-400">
                     <p className="flex items-center gap-2">
                       <Zap className="w-3 h-3 text-green-400" />
-                      1. Ativando CPU Standby...
+                      1. Activating CPU Standby...
                     </p>
-                    <p>2. Destruindo instância GPU...</p>
-                    <p>3. Verificando conexão...</p>
+                    <p>2. Destroying GPU instance...</p>
+                    <p>3. Verifying connection...</p>
                   </div>
                 ) : (
                   <div className="space-y-2 text-sm text-gray-400">
-                    <p>1. Criando snapshot do workspace...</p>
-                    <p>2. Provisionando nova instância...</p>
-                    <p>3. Aguardando SSH ficar pronto...</p>
-                    <p>4. Restaurando snapshot...</p>
-                    <p>5. Destruindo instância antiga...</p>
+                    <p>1. Creating workspace snapshot...</p>
+                    <p>2. Provisioning new instance...</p>
+                    <p>3. Waiting for SSH to be ready...</p>
+                    <p>4. Restoring snapshot...</p>
+                    <p>5. Destroying old instance...</p>
                   </div>
                 )
               )}
@@ -330,26 +330,26 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
                 <>
                   <div className="flex items-center gap-2 mb-2">
                     <Zap className="w-4 h-4 text-green-400" />
-                    <span className="text-sm font-medium text-green-400">Failover Instantâneo</span>
+                    <span className="text-sm font-medium text-green-400">Instant Failover</span>
                   </div>
                   <p className="text-xs text-gray-300">
-                    <strong className="text-green-400">CPU Standby ativo!</strong> Seus dados já estão sincronizados.
+                    <strong className="text-green-400">CPU Standby active!</strong> Your data is already synced.
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
-                    Processo: Ativa CPU Standby → Destrói GPU. Tempo: ~10-20 segundos.
+                    Process: Activate CPU Standby → Destroy GPU. Time: ~10-20 seconds.
                   </p>
                 </>
               ) : (
                 <>
                   <div className="flex items-center gap-2 mb-2">
                     <HardDrive className="w-4 h-4 text-brand-400" />
-                    <span className="text-sm font-medium text-brand-400">Migração Completa</span>
+                    <span className="text-sm font-medium text-brand-400">Full Migration</span>
                   </div>
                   <p className="text-xs text-gray-300">
-                    <strong className="text-brand-400">Processo:</strong> Cria snapshot → Nova instância → Restaura → Destrói antiga
+                    <strong className="text-brand-400">Process:</strong> Create snapshot → New instance → Restore → Destroy old
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
-                    Tempo estimado: ~5 minutos. Seu workspace será preservado.
+                    Estimated time: ~5 minutes. Your workspace will be preserved.
                   </p>
                 </>
               )}
@@ -360,7 +360,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
           {!migrationStarted && (
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <Shield className="w-3 h-3" />
-              <span>Todos os seus arquivos e configurações serão preservados durante a migração.</span>
+              <span>All your files and settings will be preserved during migration.</span>
             </div>
           )}
         </div>
@@ -372,7 +372,7 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
             disabled={loading}
             className="text-gray-400 hover:text-white"
           >
-            Cancelar
+            Cancel
           </Button>
           <Button
             onClick={handleMigrate}
@@ -382,12 +382,12 @@ export default function MigrationModal({ instance, isOpen, onClose, onSuccess })
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Migrando...
+                Migrating...
               </>
             ) : (
               <>
                 <RefreshCw className="w-4 h-4" />
-                Migrar para {targetType === 'cpu' ? 'CPU' : 'GPU'}
+                Migrate to {targetType === 'cpu' ? 'CPU' : 'GPU'}
               </>
             )}
           </Button>

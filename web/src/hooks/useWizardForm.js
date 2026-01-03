@@ -26,6 +26,7 @@ export const DEFAULT_DOCKER_IMAGE = 'pytorch/pytorch:latest';
 
 export const DEFAULT_PORTS = [
   { port: '22', protocol: 'TCP' },
+  { port: '8080', protocol: 'TCP' },  // code-server (VS Code Online)
   { port: '8888', protocol: 'TCP' },
   { port: '6006', protocol: 'TCP' },
 ];

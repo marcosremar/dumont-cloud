@@ -50,7 +50,7 @@ test.describe('Chat Arena - Comprehensive E2E Test', () => {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
       try {
-        await page.goto('http://localhost:4896/chat-arena', {
+        await page.goto('http://localhost:4892/chat-arena', {
           waitUntil: 'domcontentloaded',
           timeout: 10000
         });

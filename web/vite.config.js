@@ -55,20 +55,20 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/ollama/, ""),
       },
       "/admin/doc/live": {
-        target: "http://localhost:8081",
+        target: "http://localhost:8000",
         changeOrigin: true,
       },
       "/api/docs": {
-        target: "http://localhost:8081",
+        target: "http://localhost:8000",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/docs/, "/api"),
       },
       "/api": {
-        target: "http://localhost:8081",
+        target: "http://localhost:8000",
         changeOrigin: true,
       },
       "/admin": {
-        target: "http://localhost:8081",
+        target: "http://localhost:8000",
         changeOrigin: true,
       },
     },
