@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useWizard } from '../WizardContext';
 import { WorldMap } from '../../dashboard';
-import { COUNTRY_DATA } from '../../dashboard/constants';
+import { COUNTRY_DATA, COUNTRY_NAMES } from '../../dashboard/constants';
 import { QUICK_REGIONS } from '../constants/regionMapping';
 
 export function LocationStep() {
@@ -164,11 +164,18 @@ export function LocationStep() {
         </div>
 
         {/* World Map */}
-        <div className="rounded-lg overflow-hidden border border-white/10 bg-white/[0.02]">
+        <div className="h-64 rounded-lg overflow-hidden border border-white/10 bg-dark-surface-card relative">
           <WorldMap
-            selectedCountries={selectedLocations.flatMap((loc) => loc.codes)}
-            onCountryClick={handleLocationSelect}
-            searchQuery={searchCountry}
+            selectedCodes={selectedLocations.flatMap((loc) => loc.codes || [])}
+            onCountryClick={(code: string) => {
+              if (COUNTRY_NAMES[code as keyof typeof COUNTRY_NAMES]) {
+                handleLocationSelect({
+                  codes: [code],
+                  name: COUNTRY_NAMES[code as keyof typeof COUNTRY_NAMES],
+                  isRegion: false,
+                });
+              }
+            }}
           />
         </div>
 
