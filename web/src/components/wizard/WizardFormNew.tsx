@@ -77,6 +77,7 @@ function WizardFormInner({
   const handleStepClick = useCallback(
     (step: WizardStep) => {
       if (isStepPassed(step) || step === currentStep) {
+        dispatch({ type: 'CLEAR_VALIDATION_ERRORS' });
         dispatch({ type: 'SET_STEP', payload: step });
       }
     },
@@ -85,6 +86,8 @@ function WizardFormInner({
 
   // Handle next step
   const handleNext = useCallback(() => {
+    dispatch({ type: 'CLEAR_VALIDATION_ERRORS' });
+
     if (currentStep < 3) {
       dispatch({ type: 'NEXT_STEP' });
       return;
@@ -145,6 +148,7 @@ function WizardFormInner({
 
   // Handle previous step
   const handlePrev = useCallback(() => {
+    dispatch({ type: 'CLEAR_VALIDATION_ERRORS' });
     if (currentStep === 4 && onCancelProvisioning) {
       onCancelProvisioning();
     }

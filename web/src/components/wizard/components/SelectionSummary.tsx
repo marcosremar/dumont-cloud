@@ -23,51 +23,40 @@ export function SelectionSummary({
   selectedGPU,
   failoverStrategy,
 }: SelectionSummaryProps) {
-  if (currentStep <= 1) return null;
+  // Only show from step 2 onwards and only if there are selections
+  if (currentStep <= 1 || selectedLocations.length === 0) return null;
 
   const failoverOption = getFailoverOption(failoverStrategy);
 
   return (
-    <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/10 mb-4">
-      <span className="text-xs text-gray-500 mr-1">Selected:</span>
+    <div className="flex flex-wrap items-center gap-1.5 mb-4 text-xs">
+      <span className="text-gray-500">Selected:</span>
 
       {/* Location Tags */}
       {selectedLocations.map((loc, idx) => (
-        <div
+        <span
           key={loc.name + idx}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-500/10 border border-brand-500/30 text-brand-400 rounded-full text-xs font-medium"
+          className="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-500/10 text-brand-400 rounded text-[11px]"
         >
-          {loc.isRegion ? (
-            <Globe className="w-3 h-3" />
-          ) : (
-            <MapPin className="w-3 h-3" />
-          )}
-          <span>{loc.name}</span>
-        </div>
+          {loc.isRegion ? <Globe className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
+          {loc.name}
+        </span>
       ))}
 
       {/* Tier Tag */}
-      {currentStep > 2 && selectedTier && (
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-400 rounded-full text-xs font-medium">
+      {currentStep >= 2 && selectedTier && (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded text-[11px]">
           <Cpu className="w-3 h-3" />
-          <span>{selectedTier}</span>
-        </div>
-      )}
-
-      {/* GPU Tag */}
-      {currentStep > 2 && selectedGPU && selectedGPU !== 'any' && (
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/10 border border-blue-500/30 text-blue-400 rounded-full text-xs font-medium">
-          <Server className="w-3 h-3" />
-          <span>{selectedGPU}</span>
-        </div>
+          {selectedTier}
+        </span>
       )}
 
       {/* Strategy Tag */}
-      {currentStep > 3 && failoverStrategy && (
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-full text-xs font-medium">
+      {currentStep >= 4 && failoverStrategy && (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 text-amber-400 rounded text-[11px]">
           <Shield className="w-3 h-3" />
-          <span>{failoverOption?.name || failoverStrategy}</span>
-        </div>
+          {failoverOption?.name || failoverStrategy}
+        </span>
       )}
     </div>
   );

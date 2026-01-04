@@ -28,9 +28,8 @@ export { default as AIWizardChat } from './AIWizardChat';
 // Form components
 export { default as AdvancedSearchForm } from './AdvancedSearchForm';
 
-// WizardForm - using original JSX with migration support
-// TODO: migrate to TypeScript feature module later
-export { default as WizardForm } from './WizardForm';
+// WizardForm - re-export from new wizard module
+export { WizardFormNew as WizardForm } from '../wizard';
 
 // Economy widget
 export { default as EconomyWidget } from './EconomyWidget';
