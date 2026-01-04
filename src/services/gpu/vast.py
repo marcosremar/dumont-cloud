@@ -18,6 +18,126 @@ from ..region_mapper import RegionMapper, ParsedGeolocation, get_region_mapper
 logger = logging.getLogger(__name__)
 
 
+# =============================================================================
+# HOST BLACKLIST SYSTEM
+# Tracks unreliable hosts to avoid provisioning failures
+# =============================================================================
+
+class HostBlacklist:
+    """
+    Manages a blacklist of unreliable GPU hosts.
+
+    Hosts are blacklisted for a configurable duration after failures.
+    This prevents repeated provisioning attempts on hosts that are known
+    to have issues (SSH failures, slow boot, etc).
+    """
+
+    def __init__(self, ttl_seconds: int = 3600):
+        """
+        Initialize blacklist.
+
+        Args:
+            ttl_seconds: How long to blacklist a host (default: 1 hour)
+        """
+        self._blacklist: Dict[int, Dict[str, Any]] = {}  # machine_id -> {reason, timestamp, failures}
+        self._ttl = ttl_seconds
+        self._lock = asyncio.Lock() if asyncio else None
+
+    def add(self, machine_id: int, reason: str = "unknown") -> None:
+        """Add a host to the blacklist."""
+        now = time.time()
+        if machine_id in self._blacklist:
+            entry = self._blacklist[machine_id]
+            entry["failures"] += 1
+            entry["reason"] = reason
+            entry["timestamp"] = now
+            # Extend TTL exponentially based on failures (max 24h)
+            entry["ttl"] = min(self._ttl * (2 ** (entry["failures"] - 1)), 86400)
+        else:
+            self._blacklist[machine_id] = {
+                "reason": reason,
+                "timestamp": now,
+                "failures": 1,
+                "ttl": self._ttl,
+            }
+        logger.warning(
+            f"[HostBlacklist] Added machine {machine_id} to blacklist: {reason} "
+            f"(failures: {self._blacklist[machine_id]['failures']})"
+        )
+
+    def is_blacklisted(self, machine_id: int) -> bool:
+        """Check if a host is blacklisted."""
+        if machine_id not in self._blacklist:
+            return False
+
+        entry = self._blacklist[machine_id]
+        elapsed = time.time() - entry["timestamp"]
+
+        # Check if TTL expired
+        if elapsed > entry["ttl"]:
+            del self._blacklist[machine_id]
+            logger.info(f"[HostBlacklist] Machine {machine_id} removed from blacklist (TTL expired)")
+            return False
+
+        return True
+
+    def remove(self, machine_id: int) -> None:
+        """Manually remove a host from blacklist."""
+        if machine_id in self._blacklist:
+            del self._blacklist[machine_id]
+            logger.info(f"[HostBlacklist] Machine {machine_id} manually removed from blacklist")
+
+    def get_blacklisted(self) -> List[int]:
+        """Get list of currently blacklisted machine IDs."""
+        self._cleanup_expired()
+        return list(self._blacklist.keys())
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Get blacklist statistics."""
+        self._cleanup_expired()
+        return {
+            "count": len(self._blacklist),
+            "machines": [
+                {
+                    "machine_id": mid,
+                    "reason": entry["reason"],
+                    "failures": entry["failures"],
+                    "remaining_seconds": int(entry["ttl"] - (time.time() - entry["timestamp"])),
+                }
+                for mid, entry in self._blacklist.items()
+            ]
+        }
+
+    def _cleanup_expired(self) -> None:
+        """Remove expired entries from blacklist."""
+        now = time.time()
+        expired = [
+            mid for mid, entry in self._blacklist.items()
+            if now - entry["timestamp"] > entry["ttl"]
+        ]
+        for mid in expired:
+            del self._blacklist[mid]
+
+
+# Global blacklist instance
+_host_blacklist = HostBlacklist(ttl_seconds=3600)  # 1 hour default
+
+
+def get_host_blacklist() -> HostBlacklist:
+    """Get the global host blacklist instance."""
+    return _host_blacklist
+
+
+def blacklist_host(machine_id: int, reason: str = "unknown") -> None:
+    """Convenience function to blacklist a host."""
+    _host_blacklist.add(machine_id, reason)
+
+
+def is_host_blacklisted(machine_id: int) -> bool:
+    """Convenience function to check if host is blacklisted."""
+    return _host_blacklist.is_blacklisted(machine_id)
+
+
 def _fire_webhook_from_sync(
     event_type: str,
     data: Dict[str, Any],
@@ -103,6 +223,101 @@ def retry_on_rate_limit(
             if last_exception:
                 raise last_exception
             return None  # Should not reach here
+        return wrapper
+    return decorator
+
+
+def retry_with_backoff(
+    max_retries: int = 5,
+    initial_delay: float = 1.0,
+    max_delay: float = 30.0,
+    backoff_factor: float = 2.0,
+    retryable_errors: tuple = (
+        requests.exceptions.Timeout,
+        requests.exceptions.ConnectionError,
+        requests.exceptions.HTTPError,
+    ),
+) -> Callable:
+    """
+    Enhanced retry decorator with exponential backoff for critical operations.
+
+    Features:
+    - Exponential backoff with jitter
+    - Respects Retry-After header
+    - Logs detailed failure information
+    - Configurable retryable exceptions
+
+    Args:
+        max_retries: Maximum retry attempts (default: 5)
+        initial_delay: Initial delay in seconds (default: 1.0)
+        max_delay: Maximum delay between retries (default: 30.0)
+        backoff_factor: Multiplier for each retry (default: 2.0)
+        retryable_errors: Tuple of exception types to retry on
+    """
+    import random
+
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> T:
+            last_exception = None
+            delay = initial_delay
+
+            for attempt in range(max_retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except retryable_errors as e:
+                    last_exception = e
+                    is_rate_limit = False
+                    retry_after = None
+
+                    # Check for rate limit
+                    if isinstance(e, requests.exceptions.HTTPError):
+                        if e.response is not None:
+                            if e.response.status_code == 429:
+                                is_rate_limit = True
+                                retry_after = e.response.headers.get("Retry-After")
+                            elif e.response.status_code >= 500:
+                                # Server error - retryable
+                                pass
+                            else:
+                                # Client error (4xx except 429) - don't retry
+                                raise
+
+                    if attempt < max_retries:
+                        # Calculate delay with jitter
+                        if retry_after:
+                            try:
+                                actual_delay = float(retry_after) + random.uniform(0, 1)
+                            except (ValueError, TypeError):
+                                actual_delay = delay
+                        else:
+                            # Add jitter: ±25% of delay
+                            jitter = delay * random.uniform(-0.25, 0.25)
+                            actual_delay = delay + jitter
+
+                        actual_delay = min(actual_delay, max_delay)
+
+                        logger.warning(
+                            f"[VastAPI] {func.__name__} failed "
+                            f"({'rate limit' if is_rate_limit else type(e).__name__}), "
+                            f"retrying in {actual_delay:.1f}s "
+                            f"(attempt {attempt + 1}/{max_retries}): {str(e)[:100]}"
+                        )
+
+                        time.sleep(actual_delay)
+                        delay = min(delay * backoff_factor, max_delay)
+                        continue
+
+                    # Max retries exceeded
+                    logger.error(
+                        f"[VastAPI] {func.__name__} failed after {max_retries} retries: {e}"
+                    )
+                    raise
+
+            if last_exception:
+                raise last_exception
+            return None
+
         return wrapper
     return decorator
 

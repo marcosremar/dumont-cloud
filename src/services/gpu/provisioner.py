@@ -18,6 +18,8 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 import requests
 
+from .vast import get_host_blacklist, blacklist_host, is_host_blacklisted
+
 logger = logging.getLogger(__name__)
 
 
@@ -73,11 +75,47 @@ class GPUProvisioner:
     # Default Docker image - Vast.ai's own image (pre-cached, boots in ~20s)
     DEFAULT_IMAGE = "vastai/pytorch"
 
-    # Minimal onstart - just install what's missing
-    DEFAULT_ONSTART = """
-pip install b2sdk lz4 --quiet 2>/dev/null
-curl -fsSL https://ollama.com/install.sh | sh 2>/dev/null
-ollama serve &
+    # Robust onstart with retries for reliability
+    DEFAULT_ONSTART = """#!/bin/bash
+set -e
+
+# Install Python dependencies with retry
+for i in 1 2 3; do
+    pip install b2sdk lz4 --quiet 2>/dev/null && break
+    echo "[onstart] pip install attempt $i failed, retrying..."
+    sleep 2
+done
+
+# Install Ollama with retry (3 attempts)
+OLLAMA_INSTALLED=false
+for i in 1 2 3; do
+    if curl -fsSL https://ollama.com/install.sh | sh 2>/dev/null; then
+        OLLAMA_INSTALLED=true
+        echo "[onstart] Ollama installed successfully on attempt $i"
+        break
+    fi
+    echo "[onstart] Ollama install attempt $i failed, retrying in 5s..."
+    sleep 5
+done
+
+if [ "$OLLAMA_INSTALLED" = false ]; then
+    echo "[onstart] WARNING: Ollama installation failed after 3 attempts"
+fi
+
+# Start Ollama server with proper environment
+export OLLAMA_HOST=0.0.0.0
+nohup ollama serve > /var/log/ollama.log 2>&1 &
+
+# Wait for Ollama to start (max 30s)
+for i in $(seq 1 30); do
+    if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
+        echo "[onstart] Ollama server ready after ${i}s"
+        break
+    fi
+    sleep 1
+done
+
+echo "[onstart] GPU initialization complete"
 """
 
     async def provision_fast(
@@ -195,7 +233,7 @@ ollama serve &
         max_price: float,
         limit: int
     ) -> List[Dict[str, Any]]:
-        """Search for available GPUs"""
+        """Search for available GPUs, excluding blacklisted hosts."""
         try:
             params = {
                 "verified": "true",
@@ -216,9 +254,28 @@ ollama serve &
             response.raise_for_status()
 
             offers = response.json().get("offers", [])
-            # Filter by price and limit
+
+            # Filter by price
             filtered = [o for o in offers if o.get("dph_total", 999) <= max_price]
-            return filtered[:limit]
+
+            # Filter out blacklisted hosts
+            blacklist = get_host_blacklist()
+            non_blacklisted = []
+            blacklisted_count = 0
+
+            for offer in filtered:
+                machine_id = offer.get("machine_id") or offer.get("id")
+                if machine_id and is_host_blacklisted(machine_id):
+                    blacklisted_count += 1
+                    continue
+                non_blacklisted.append(offer)
+
+            if blacklisted_count > 0:
+                logger.info(
+                    f"[GPUProvisioner] Filtered out {blacklisted_count} blacklisted hosts"
+                )
+
+            return non_blacklisted[:limit]
 
         except Exception as e:
             logger.error(f"[GPUProvisioner] Search failed: {e}")
@@ -308,14 +365,19 @@ ollama serve &
     ) -> Optional[GPUCandidate]:
         """
         Race all candidates - first to have SSH ready wins.
+        Blacklists hosts that fail SSH connectivity.
         """
         start_time = time.time()
+        ssh_attempts: Dict[int, int] = {}  # instance_id -> attempt count
 
         while time.time() - start_time < timeout:
             self._update_ssh_info(candidates)
 
             for candidate in candidates:
                 if candidate.ssh_host and candidate.ssh_port and not candidate.connected:
+                    # Track SSH attempts per candidate
+                    ssh_attempts[candidate.instance_id] = ssh_attempts.get(candidate.instance_id, 0) + 1
+
                     if self._test_ssh(candidate.ssh_host, candidate.ssh_port):
                         candidate.connected = True
                         candidate.status = "ready"
@@ -325,8 +387,26 @@ ollama serve &
                             f"{candidate.ssh_ready_time:.1f}s!"
                         )
                         return candidate
+                    else:
+                        # Mark as failed if too many attempts
+                        if ssh_attempts[candidate.instance_id] >= 5:
+                            candidate.status = "failed"
+                            logger.warning(
+                                f"[GPUProvisioner] {candidate.gpu_name} failed SSH after "
+                                f"{ssh_attempts[candidate.instance_id]} attempts"
+                            )
 
             await asyncio.sleep(check_interval)
+
+        # Blacklist all candidates that failed SSH
+        for candidate in candidates:
+            if not candidate.connected and candidate.ssh_host:
+                machine_id = candidate.offer_id  # Use offer_id as machine identifier
+                blacklist_host(machine_id, f"SSH failed after {timeout}s timeout")
+                logger.warning(
+                    f"[GPUProvisioner] Blacklisted machine {machine_id} "
+                    f"({candidate.gpu_name}) due to SSH failure"
+                )
 
         return None
 
@@ -351,27 +431,70 @@ ollama serve &
         except Exception as e:
             logger.warning(f"[GPUProvisioner] Failed to update SSH info: {e}")
 
-    def _test_ssh(self, host: str, port: int) -> bool:
-        """Test if SSH connection works"""
-        try:
-            result = subprocess.run(
-                [
-                    "ssh",
-                    "-p", str(port),
-                    "-o", "StrictHostKeyChecking=no",
-                    "-o", "UserKnownHostsFile=/dev/null",
-                    "-o", "ConnectTimeout=3",
-                    "-o", "BatchMode=yes",
-                    f"root@{host}",
-                    "echo ok"
-                ],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
-            return result.returncode == 0
-        except:
-            return False
+    def _test_ssh(self, host: str, port: int, retries: int = 3) -> bool:
+        """
+        Test if SSH connection works with health check.
+
+        Does multiple checks:
+        1. Basic SSH connectivity
+        2. Verify host is responsive (uptime check)
+        3. Retry with backoff on failure
+        """
+        for attempt in range(retries):
+            try:
+                # First: Basic SSH connectivity with echo
+                result = subprocess.run(
+                    [
+                        "ssh",
+                        "-p", str(port),
+                        "-o", "StrictHostKeyChecking=no",
+                        "-o", "UserKnownHostsFile=/dev/null",
+                        "-o", "ConnectTimeout=5",
+                        "-o", "BatchMode=yes",
+                        "-o", "ServerAliveInterval=5",
+                        "-o", "ServerAliveCountMax=2",
+                        f"root@{host}",
+                        "echo ok && uptime"
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=15
+                )
+
+                if result.returncode == 0 and "ok" in result.stdout:
+                    logger.debug(f"[GPUProvisioner] SSH health check passed for {host}:{port}")
+                    return True
+
+                # Log failure details for debugging
+                logger.warning(
+                    f"[GPUProvisioner] SSH health check failed for {host}:{port} "
+                    f"(attempt {attempt + 1}/{retries}): "
+                    f"rc={result.returncode}, stdout={result.stdout[:100]}, stderr={result.stderr[:100]}"
+                )
+
+            except subprocess.TimeoutExpired:
+                logger.warning(
+                    f"[GPUProvisioner] SSH timeout for {host}:{port} "
+                    f"(attempt {attempt + 1}/{retries})"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"[GPUProvisioner] SSH error for {host}:{port}: {e} "
+                    f"(attempt {attempt + 1}/{retries})"
+                )
+
+            # Backoff before retry
+            if attempt < retries - 1:
+                import asyncio
+                try:
+                    asyncio.get_event_loop().run_until_complete(
+                        asyncio.sleep(1 * (attempt + 1))
+                    )
+                except:
+                    import time
+                    time.sleep(1 * (attempt + 1))
+
+        return False
 
     def _test_deps_ready(self, host: str, port: int) -> bool:
         """Test if dependencies (b2sdk, lz4) are installed"""

@@ -1669,3 +1669,75 @@ async def trigger_instance_recovery(
         )
 
 
+# =============================================================================
+# HOST BLACKLIST MANAGEMENT
+# =============================================================================
+
+@router.get("/blacklist/status")
+async def get_blacklist_status():
+    """
+    Get current host blacklist status.
+
+    Returns list of blacklisted machines with:
+    - machine_id: The machine identifier
+    - reason: Why it was blacklisted
+    - failures: Number of failures recorded
+    - remaining_seconds: Time until removed from blacklist
+    """
+    from ....services.gpu.vast import get_host_blacklist
+
+    blacklist = get_host_blacklist()
+    stats = blacklist.get_stats()
+
+    return {
+        "success": True,
+        "blacklist": stats,
+        "message": f"{stats['count']} hosts currently blacklisted",
+    }
+
+
+@router.delete("/blacklist/{machine_id}")
+async def remove_from_blacklist(machine_id: int):
+    """
+    Manually remove a machine from the blacklist.
+
+    Use this when you know a previously problematic host is now reliable.
+    """
+    from ....services.gpu.vast import get_host_blacklist
+
+    blacklist = get_host_blacklist()
+
+    if not blacklist.is_blacklisted(machine_id):
+        return {
+            "success": False,
+            "message": f"Machine {machine_id} is not blacklisted",
+        }
+
+    blacklist.remove(machine_id)
+
+    return {
+        "success": True,
+        "message": f"Machine {machine_id} removed from blacklist",
+    }
+
+
+@router.post("/blacklist/{machine_id}")
+async def add_to_blacklist(
+    machine_id: int,
+    reason: str = Query(default="manual", description="Reason for blacklisting"),
+):
+    """
+    Manually add a machine to the blacklist.
+
+    Use this to prevent provisioning on known problematic hosts.
+    """
+    from ....services.gpu.vast import blacklist_host
+
+    blacklist_host(machine_id, reason)
+
+    return {
+        "success": True,
+        "message": f"Machine {machine_id} added to blacklist: {reason}",
+    }
+
+

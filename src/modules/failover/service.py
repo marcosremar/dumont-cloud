@@ -406,69 +406,118 @@ class FailoverService:
         ssh_port: int,
         model: str,
         prompt: str,
-        timeout: int = 60,
+        timeout: int = 120,  # Increased from 60s to 120s
+        warmup_retries: int = 3,
     ) -> Dict[str, Any]:
-        """Testa inferência Ollama na GPU"""
-        try:
-            # Verificar/iniciar Ollama
-            check_cmd = f"curl -s http://localhost:11434/api/tags"
-            result = subprocess.run(
-                [
-                    "ssh", "-p", str(ssh_port),
-                    "-o", "StrictHostKeyChecking=no",
-                    "-o", "UserKnownHostsFile=/dev/null",
-                    "-o", "ConnectTimeout=10",
-                    f"root@{ssh_host}",
-                    check_cmd
-                ],
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
+        """
+        Testa inferência Ollama na GPU com warmup e retry.
 
-            if result.returncode != 0:
+        Args:
+            ssh_host: SSH host address
+            ssh_port: SSH port
+            model: Model name to test
+            prompt: Test prompt
+            timeout: Inference timeout in seconds (default: 120s)
+            warmup_retries: Number of warmup retries if first inference fails
+        """
+        try:
+            # Step 1: Ensure Ollama is running with retry
+            for attempt in range(3):
+                check_cmd = "curl -s http://localhost:11434/api/tags"
+                result = subprocess.run(
+                    [
+                        "ssh", "-p", str(ssh_port),
+                        "-o", "StrictHostKeyChecking=no",
+                        "-o", "UserKnownHostsFile=/dev/null",
+                        "-o", "ConnectTimeout=15",
+                        "-o", "ServerAliveInterval=10",
+                        f"root@{ssh_host}",
+                        check_cmd
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+
+                if result.returncode == 0 and "models" in result.stdout:
+                    logger.info(f"[Failover] Ollama is running on {ssh_host}")
+                    break
+
+                # Start Ollama if not running
+                logger.info(f"[Failover] Starting Ollama on {ssh_host} (attempt {attempt + 1}/3)")
                 subprocess.run(
                     [
                         "ssh", "-p", str(ssh_port),
                         "-o", "StrictHostKeyChecking=no",
                         "-o", "UserKnownHostsFile=/dev/null",
                         f"root@{ssh_host}",
-                        "nohup ollama serve > /dev/null 2>&1 &"
+                        "export OLLAMA_HOST=0.0.0.0 && nohup ollama serve > /var/log/ollama.log 2>&1 &"
                     ],
                     capture_output=True,
-                    timeout=10
+                    timeout=15
                 )
                 await asyncio.sleep(5)
 
-            # Rodar inferência
-            inference_cmd = f'ollama run {model} "{prompt}"'
-            result = subprocess.run(
+            # Step 2: Run warmup inference (first inference is slow due to model loading)
+            logger.info(f"[Failover] Running warmup inference with {model}")
+            warmup_cmd = f'timeout 60 ollama run {model} "hi" 2>&1 || echo "WARMUP_TIMEOUT"'
+            subprocess.run(
                 [
                     "ssh", "-p", str(ssh_port),
                     "-o", "StrictHostKeyChecking=no",
                     "-o", "UserKnownHostsFile=/dev/null",
-                    "-o", "ConnectTimeout=10",
+                    "-o", "ConnectTimeout=15",
                     f"root@{ssh_host}",
-                    inference_cmd
+                    warmup_cmd
                 ],
                 capture_output=True,
                 text=True,
-                timeout=timeout
+                timeout=90  # Allow extra time for warmup
             )
+            await asyncio.sleep(2)  # Brief pause after warmup
 
-            if result.returncode == 0:
-                return {
-                    "success": True,
-                    "response": result.stdout.strip()[:500],
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": result.stderr.strip()[:200],
-                }
+            # Step 3: Run actual inference with retry
+            for retry in range(warmup_retries):
+                logger.info(f"[Failover] Running inference test (attempt {retry + 1}/{warmup_retries})")
+                inference_cmd = f'ollama run {model} "{prompt}"'
+                result = subprocess.run(
+                    [
+                        "ssh", "-p", str(ssh_port),
+                        "-o", "StrictHostKeyChecking=no",
+                        "-o", "UserKnownHostsFile=/dev/null",
+                        "-o", "ConnectTimeout=15",
+                        "-o", "ServerAliveInterval=15",
+                        f"root@{ssh_host}",
+                        inference_cmd
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout
+                )
+
+                if result.returncode == 0 and result.stdout.strip():
+                    logger.info(f"[Failover] Inference test passed on attempt {retry + 1}")
+                    return {
+                        "success": True,
+                        "response": result.stdout.strip()[:500],
+                        "attempts": retry + 1,
+                    }
+
+                logger.warning(
+                    f"[Failover] Inference attempt {retry + 1} failed: "
+                    f"rc={result.returncode}, stderr={result.stderr[:100]}"
+                )
+
+                if retry < warmup_retries - 1:
+                    await asyncio.sleep(3)  # Wait before retry
+
+            return {
+                "success": False,
+                "error": f"Inference failed after {warmup_retries} attempts: {result.stderr.strip()[:200]}",
+            }
 
         except subprocess.TimeoutExpired:
-            return {"success": False, "error": "Inference timeout"}
+            return {"success": False, "error": f"Inference timeout after {timeout}s"}
         except Exception as e:
             return {"success": False, "error": str(e)}
 
