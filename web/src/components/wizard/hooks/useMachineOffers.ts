@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { MachineOffer, SelectedLocation } from '../types/wizard.types';
 import { locationsToRegionCodes } from '../constants/regionMapping';
-import { PERFORMANCE_TIERS } from '../../dashboard/constants';
+import { PERFORMANCE_TIERS, DEMO_OFFERS } from '../../dashboard/constants';
 
 interface UseMachineOffersOptions {
   selectedTier: string | null;
@@ -54,12 +54,26 @@ export function useMachineOffers({
       params.set('limit', '50');
       params.set('order', 'dph_total');
 
-      // Add tier-based filters
-      if (tier) {
-        if (tier.minVram) params.set('min_gpu_ram', tier.minVram.toString());
-        if (tier.maxVram) params.set('max_gpu_ram', tier.maxVram.toString());
-        if (tier.minPrice) params.set('min_dph', tier.minPrice.toString());
-        if (tier.maxPrice) params.set('max_dph', tier.maxPrice.toString());
+      // Add tier-based filters (using filter object from PERFORMANCE_TIERS)
+      if (tier?.filter) {
+        const filter = tier.filter as {
+          max_price?: number;
+          min_gpu_ram?: number;
+          cpu_only?: boolean;
+          verified_only?: boolean;
+        };
+        if (filter.cpu_only) {
+          params.set('cpu_only', 'true');
+        }
+        if (filter.min_gpu_ram) {
+          params.set('min_gpu_ram', filter.min_gpu_ram.toString());
+        }
+        if (filter.max_price) {
+          params.set('max_price', filter.max_price.toString());
+        }
+        if (filter.verified_only) {
+          params.set('verified_only', 'true');
+        }
       }
 
       // Add region filter if selected
@@ -92,10 +106,34 @@ export function useMachineOffers({
 
       setRecommendedMachines(recommended.length > 0 ? recommended : offers.slice(0, 5));
     } catch (err) {
-      console.error('Failed to fetch machines:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch machines');
-      setRecommendedMachines([]);
-      setAllAvailableOffers([]);
+      console.error('Failed to fetch machines, using demo data:', err);
+
+      // Fallback to demo offers when API fails
+      const tier = PERFORMANCE_TIERS.find((t) => t.name === selectedTier);
+      const regionCodes = locationsToRegionCodes(selectedLocations);
+
+      let filteredDemo = DEMO_OFFERS.filter((offer: MachineOffer) => {
+        // Region filter
+        if (regionCodes.length > 0) {
+          const offerRegion = offer.geolocation || '';
+          if (!regionCodes.some(r => offerRegion.includes(r))) return false;
+        }
+
+        // Tier filter
+        if (tier?.filter) {
+          const filter = tier.filter as { max_price?: number; min_gpu_ram?: number; cpu_only?: boolean };
+          if (filter.cpu_only && !offer.isCPU) return false;
+          if (!filter.cpu_only && offer.isCPU) return false;
+          if (filter.min_gpu_ram && (offer.gpu_ram || 0) < filter.min_gpu_ram) return false;
+          if (filter.max_price && (offer.dph_total || 0) > filter.max_price) return false;
+        }
+
+        return true;
+      });
+
+      setAllAvailableOffers(filteredDemo);
+      setRecommendedMachines(filteredDemo.slice(0, 5));
+      setError(null); // Clear error since we have fallback data
     } finally {
       setLoading(false);
     }
