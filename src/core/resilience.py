@@ -51,11 +51,27 @@ class FailoverConfig:
     INFERENCE_TIMEOUT: int = int(os.getenv("FAILOVER_INFERENCE_TIMEOUT", "120"))
     VALIDATION_TIMEOUT: int = int(os.getenv("FAILOVER_VALIDATION_TIMEOUT", "60"))
 
-    # B2/S3 Storage
+    # B2/S3 Storage - Primary
     B2_ENDPOINT: str = os.getenv("B2_ENDPOINT", "https://s3.us-west-004.backblazeb2.com")
     B2_BUCKET: str = os.getenv("B2_BUCKET", "dumoncloud-snapshot")
     B2_ACCESS_KEY: str = os.getenv("B2_KEY_ID", "")
     B2_SECRET_KEY: str = os.getenv("B2_APP_KEY", "")
+
+    # R2/S3 Storage - Fallback
+    R2_ENDPOINT: str = os.getenv("R2_ENDPOINT", "")
+    R2_BUCKET: str = os.getenv("R2_BUCKET", "")
+    R2_ACCESS_KEY: str = os.getenv("R2_ACCESS_KEY_ID", "")
+    R2_SECRET_KEY: str = os.getenv("R2_SECRET_ACCESS_KEY", "")
+
+    # S3 Storage - Secondary Fallback
+    S3_ENDPOINT: str = os.getenv("S3_ENDPOINT", "")
+    S3_BUCKET: str = os.getenv("S3_BUCKET", "")
+    S3_ACCESS_KEY: str = os.getenv("AWS_ACCESS_KEY_ID", "")
+    S3_SECRET_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+
+    # Snapshot settings
+    SNAPSHOT_TIMEOUT_BASE: int = int(os.getenv("SNAPSHOT_TIMEOUT_BASE", "60"))  # Base timeout
+    SNAPSHOT_TIMEOUT_PER_GB: int = int(os.getenv("SNAPSHOT_TIMEOUT_PER_GB", "30"))  # Seconds per GB
 
     # Rate Limiting
     MAX_FAILOVERS_PER_MACHINE_24H: int = int(os.getenv("FAILOVER_MAX_PER_DAY", "5"))
@@ -80,11 +96,74 @@ class FailoverConfig:
             "validation_timeout": cls.VALIDATION_TIMEOUT,
             "b2_endpoint": cls.B2_ENDPOINT,
             "b2_bucket": cls.B2_BUCKET,
+            "r2_endpoint": cls.R2_ENDPOINT,
+            "r2_bucket": cls.R2_BUCKET,
+            "s3_endpoint": cls.S3_ENDPOINT,
+            "s3_bucket": cls.S3_BUCKET,
+            "snapshot_timeout_base": cls.SNAPSHOT_TIMEOUT_BASE,
+            "snapshot_timeout_per_gb": cls.SNAPSHOT_TIMEOUT_PER_GB,
             "max_failovers_per_day": cls.MAX_FAILOVERS_PER_MACHINE_24H,
             "min_interval_seconds": cls.MIN_SECONDS_BETWEEN_FAILOVERS,
             "circuit_breaker_threshold": cls.CIRCUIT_BREAKER_THRESHOLD,
             "circuit_breaker_timeout": cls.CIRCUIT_BREAKER_TIMEOUT,
         }
+
+    @classmethod
+    def get_storage_backends(cls) -> List[Dict[str, str]]:
+        """
+        Get list of available storage backends in priority order.
+        Returns only backends with configured credentials.
+        """
+        backends = []
+
+        # Primary: B2
+        if cls.B2_ENDPOINT and cls.B2_BUCKET:
+            backends.append({
+                "name": "b2",
+                "endpoint": cls.B2_ENDPOINT,
+                "bucket": cls.B2_BUCKET,
+                "access_key": cls.B2_ACCESS_KEY,
+                "secret_key": cls.B2_SECRET_KEY,
+            })
+
+        # Fallback 1: R2
+        if cls.R2_ENDPOINT and cls.R2_BUCKET:
+            backends.append({
+                "name": "r2",
+                "endpoint": cls.R2_ENDPOINT,
+                "bucket": cls.R2_BUCKET,
+                "access_key": cls.R2_ACCESS_KEY,
+                "secret_key": cls.R2_SECRET_KEY,
+            })
+
+        # Fallback 2: S3
+        if cls.S3_ENDPOINT and cls.S3_BUCKET:
+            backends.append({
+                "name": "s3",
+                "endpoint": cls.S3_ENDPOINT,
+                "bucket": cls.S3_BUCKET,
+                "access_key": cls.S3_ACCESS_KEY,
+                "secret_key": cls.S3_SECRET_KEY,
+            })
+
+        return backends
+
+    @classmethod
+    def calculate_snapshot_timeout(cls, size_gb: float) -> int:
+        """
+        Calculate dynamic snapshot timeout based on size.
+
+        Formula: base_timeout + (size_gb * seconds_per_gb)
+
+        Args:
+            size_gb: Size in gigabytes
+
+        Returns:
+            Timeout in seconds
+        """
+        timeout = cls.SNAPSHOT_TIMEOUT_BASE + int(size_gb * cls.SNAPSHOT_TIMEOUT_PER_GB)
+        # Minimum 60s, maximum 1 hour
+        return max(60, min(timeout, 3600))
 
 
 # =============================================================================
@@ -1015,3 +1094,567 @@ _snapshot_gc = SnapshotGarbageCollector()
 def get_snapshot_gc() -> SnapshotGarbageCollector:
     """Get global snapshot GC instance."""
     return _snapshot_gc
+
+
+# =============================================================================
+# STORAGE FALLBACK
+# =============================================================================
+
+class StorageBackendError(Exception):
+    """Raised when a storage backend fails."""
+    pass
+
+
+class StorageFallback:
+    """
+    Automatic storage fallback system.
+
+    Tries B2 first, then R2, then S3 if configured.
+    Tracks which backends are healthy.
+    """
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._backend_health: Dict[str, Dict[str, Any]] = {}
+        self._current_backend: Optional[str] = None
+
+    def get_healthy_backend(self) -> Optional[Dict[str, str]]:
+        """
+        Get the first healthy storage backend.
+
+        Returns None if no backends are available.
+        """
+        backends = FailoverConfig.get_storage_backends()
+
+        for backend in backends:
+            name = backend["name"]
+            if self._is_healthy(name):
+                self._current_backend = name
+                return backend
+
+        # All backends unhealthy, try primary anyway
+        if backends:
+            self._current_backend = backends[0]["name"]
+            return backends[0]
+
+        return None
+
+    def _is_healthy(self, name: str) -> bool:
+        """Check if a backend is healthy."""
+        with self._lock:
+            health = self._backend_health.get(name)
+            if not health:
+                return True  # Assume healthy if no data
+
+            # Unhealthy for 5 minutes after failure
+            if health.get("last_failure"):
+                if time.time() - health["last_failure"] < 300:
+                    return False
+
+            return True
+
+    def mark_failure(self, name: str, error: str) -> None:
+        """Mark a backend as failed."""
+        with self._lock:
+            if name not in self._backend_health:
+                self._backend_health[name] = {"failures": 0}
+
+            self._backend_health[name]["failures"] += 1
+            self._backend_health[name]["last_failure"] = time.time()
+            self._backend_health[name]["last_error"] = error
+
+        logger.warning(f"[StorageFallback] Backend {name} marked failed: {error}")
+
+    def mark_success(self, name: str) -> None:
+        """Mark a backend as healthy."""
+        with self._lock:
+            if name in self._backend_health:
+                self._backend_health[name]["last_success"] = time.time()
+                # Clear failure after 3 successes
+                if self._backend_health[name].get("failures", 0) > 0:
+                    self._backend_health[name]["failures"] -= 1
+
+    def get_next_backend(self, current: str) -> Optional[Dict[str, str]]:
+        """
+        Get next backend after a failure.
+
+        Args:
+            current: Name of the backend that just failed
+
+        Returns:
+            Next backend to try, or None if no more available
+        """
+        backends = FailoverConfig.get_storage_backends()
+        found_current = False
+
+        for backend in backends:
+            if backend["name"] == current:
+                found_current = True
+                continue
+            if found_current:
+                return backend
+
+        return None
+
+    def execute_with_fallback(
+        self,
+        operation: Callable,
+        *args,
+        **kwargs,
+    ) -> Any:
+        """
+        Execute operation with automatic fallback.
+
+        Args:
+            operation: Function that takes (endpoint, bucket, *args, **kwargs)
+
+        Returns:
+            Result from successful operation
+
+        Raises:
+            StorageBackendError: If all backends fail
+        """
+        backends = FailoverConfig.get_storage_backends()
+        last_error = None
+
+        for backend in backends:
+            name = backend["name"]
+            if not self._is_healthy(name):
+                continue
+
+            try:
+                result = operation(
+                    backend["endpoint"],
+                    backend["bucket"],
+                    *args,
+                    **kwargs,
+                )
+                self.mark_success(name)
+                return result
+
+            except Exception as e:
+                last_error = e
+                self.mark_failure(name, str(e))
+                logger.warning(f"[StorageFallback] {name} failed, trying next: {e}")
+
+        raise StorageBackendError(f"All storage backends failed. Last error: {last_error}")
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Get storage backend statistics."""
+        with self._lock:
+            backends = FailoverConfig.get_storage_backends()
+            return {
+                "current_backend": self._current_backend,
+                "backends": [
+                    {
+                        "name": b["name"],
+                        "endpoint": b["endpoint"],
+                        "bucket": b["bucket"],
+                        "healthy": self._is_healthy(b["name"]),
+                        "failures": self._backend_health.get(b["name"], {}).get("failures", 0),
+                        "last_failure": self._backend_health.get(b["name"], {}).get("last_failure"),
+                        "last_error": self._backend_health.get(b["name"], {}).get("last_error"),
+                    }
+                    for b in backends
+                ],
+            }
+
+
+# Global storage fallback
+_storage_fallback = StorageFallback()
+
+
+def get_storage_fallback() -> StorageFallback:
+    """Get global storage fallback instance."""
+    return _storage_fallback
+
+
+# =============================================================================
+# FAILOVER PROGRESS / HEARTBEAT
+# =============================================================================
+
+class FailoverPhase(str, Enum):
+    """Failover phases for progress tracking."""
+    VALIDATING = "validating"
+    CREATING_SNAPSHOT = "creating_snapshot"
+    PROVISIONING_GPU = "provisioning_gpu"
+    RESTORING_SNAPSHOT = "restoring_snapshot"
+    VALIDATING_RESTORE = "validating_restore"
+    TESTING_INFERENCE = "testing_inference"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+@dataclass
+class ProgressUpdate:
+    """Progress update for a failover operation."""
+    failover_id: str
+    phase: FailoverPhase
+    progress_percent: int  # 0-100
+    message: str
+    timestamp: float
+    details: Dict[str, Any] = field(default_factory=dict)
+
+
+class FailoverProgress:
+    """
+    Tracks and broadcasts failover progress.
+
+    Supports:
+    - Progress updates per phase
+    - Subscribers for real-time updates (SSE/WebSocket)
+    - History for reconnection
+    """
+
+    def __init__(self, max_history: int = 100):
+        self._lock = threading.Lock()
+        self._progress: Dict[str, List[ProgressUpdate]] = {}
+        self._subscribers: Dict[str, List[Callable]] = {}
+        self._max_history = max_history
+
+    def update(
+        self,
+        failover_id: str,
+        phase: FailoverPhase,
+        progress_percent: int,
+        message: str,
+        **details,
+    ) -> None:
+        """
+        Record a progress update.
+
+        Args:
+            failover_id: Unique failover ID
+            phase: Current phase
+            progress_percent: 0-100 progress within phase
+            message: Human-readable message
+            **details: Additional details
+        """
+        update = ProgressUpdate(
+            failover_id=failover_id,
+            phase=phase,
+            progress_percent=max(0, min(100, progress_percent)),
+            message=message,
+            timestamp=time.time(),
+            details=details,
+        )
+
+        with self._lock:
+            if failover_id not in self._progress:
+                self._progress[failover_id] = []
+
+            self._progress[failover_id].append(update)
+
+            # Trim history
+            if len(self._progress[failover_id]) > self._max_history:
+                self._progress[failover_id] = self._progress[failover_id][-self._max_history:]
+
+            # Notify subscribers
+            subscribers = self._subscribers.get(failover_id, [])
+
+        # Call subscribers outside lock
+        for callback in subscribers:
+            try:
+                callback(update)
+            except Exception as e:
+                logger.error(f"[Progress] Subscriber error: {e}")
+
+        logger.debug(
+            f"[Progress] {failover_id}: {phase.value} {progress_percent}% - {message}"
+        )
+
+    def subscribe(self, failover_id: str, callback: Callable[[ProgressUpdate], None]) -> None:
+        """
+        Subscribe to progress updates for a failover.
+
+        Args:
+            failover_id: Failover to subscribe to
+            callback: Function to call on updates
+        """
+        with self._lock:
+            if failover_id not in self._subscribers:
+                self._subscribers[failover_id] = []
+            self._subscribers[failover_id].append(callback)
+
+    def unsubscribe(self, failover_id: str, callback: Callable) -> None:
+        """Unsubscribe from progress updates."""
+        with self._lock:
+            if failover_id in self._subscribers:
+                self._subscribers[failover_id] = [
+                    c for c in self._subscribers[failover_id] if c != callback
+                ]
+
+    def get_progress(self, failover_id: str) -> List[Dict[str, Any]]:
+        """Get progress history for a failover."""
+        with self._lock:
+            updates = self._progress.get(failover_id, [])
+            return [
+                {
+                    "phase": u.phase.value,
+                    "progress_percent": u.progress_percent,
+                    "message": u.message,
+                    "timestamp": u.timestamp,
+                    "details": u.details,
+                }
+                for u in updates
+            ]
+
+    def get_current(self, failover_id: str) -> Optional[Dict[str, Any]]:
+        """Get current progress for a failover."""
+        with self._lock:
+            updates = self._progress.get(failover_id, [])
+            if not updates:
+                return None
+
+            latest = updates[-1]
+            return {
+                "phase": latest.phase.value,
+                "progress_percent": latest.progress_percent,
+                "message": latest.message,
+                "timestamp": latest.timestamp,
+                "details": latest.details,
+            }
+
+    def get_all_active(self) -> Dict[str, Dict[str, Any]]:
+        """Get all active failovers with their current status."""
+        with self._lock:
+            result = {}
+            for failover_id, updates in self._progress.items():
+                if updates:
+                    latest = updates[-1]
+                    # Only include if not completed/failed recently
+                    if latest.phase not in (FailoverPhase.COMPLETED, FailoverPhase.FAILED):
+                        result[failover_id] = {
+                            "phase": latest.phase.value,
+                            "progress_percent": latest.progress_percent,
+                            "message": latest.message,
+                            "timestamp": latest.timestamp,
+                            "updates_count": len(updates),
+                        }
+                    elif time.time() - latest.timestamp < 300:  # 5 min window for completed
+                        result[failover_id] = {
+                            "phase": latest.phase.value,
+                            "progress_percent": latest.progress_percent,
+                            "message": latest.message,
+                            "timestamp": latest.timestamp,
+                            "updates_count": len(updates),
+                        }
+            return result
+
+    def cleanup(self, failover_id: str) -> None:
+        """Clean up progress and subscribers for completed failover."""
+        with self._lock:
+            self._progress.pop(failover_id, None)
+            self._subscribers.pop(failover_id, None)
+
+
+# Global progress tracker
+_failover_progress = FailoverProgress()
+
+
+def get_failover_progress() -> FailoverProgress:
+    """Get global failover progress instance."""
+    return _failover_progress
+
+
+# =============================================================================
+# PROMETHEUS METRICS
+# =============================================================================
+
+class PrometheusMetrics:
+    """
+    Prometheus-compatible metrics exporter.
+
+    Provides metrics in Prometheus text format for scraping.
+    """
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._counters: Dict[str, Dict[str, int]] = {}
+        self._gauges: Dict[str, Dict[str, float]] = {}
+        self._histograms: Dict[str, Dict[str, List[float]]] = {}
+
+        # SSH latency tracking
+        self._ssh_latencies: List[Dict[str, Any]] = []
+        self._max_latencies = 1000
+
+    def inc_counter(self, name: str, labels: Dict[str, str] = None, value: int = 1) -> None:
+        """Increment a counter metric."""
+        key = self._make_key(name, labels)
+        with self._lock:
+            if key not in self._counters:
+                self._counters[key] = {"value": 0, "labels": labels or {}}
+            self._counters[key]["value"] += value
+
+    def set_gauge(self, name: str, value: float, labels: Dict[str, str] = None) -> None:
+        """Set a gauge metric."""
+        key = self._make_key(name, labels)
+        with self._lock:
+            self._gauges[key] = {"value": value, "labels": labels or {}}
+
+    def observe_histogram(
+        self,
+        name: str,
+        value: float,
+        labels: Dict[str, str] = None,
+    ) -> None:
+        """Observe a value for histogram metric."""
+        key = self._make_key(name, labels)
+        with self._lock:
+            if key not in self._histograms:
+                self._histograms[key] = {"values": [], "labels": labels or {}}
+            self._histograms[key]["values"].append(value)
+            # Keep last 1000 values
+            if len(self._histograms[key]["values"]) > 1000:
+                self._histograms[key]["values"] = self._histograms[key]["values"][-1000:]
+
+    def record_ssh_latency(
+        self,
+        host: str,
+        port: int,
+        latency_ms: float,
+        success: bool,
+    ) -> None:
+        """
+        Record SSH connection latency.
+
+        Args:
+            host: SSH host
+            port: SSH port
+            latency_ms: Latency in milliseconds
+            success: Whether connection succeeded
+        """
+        with self._lock:
+            self._ssh_latencies.append({
+                "host": host,
+                "port": port,
+                "latency_ms": latency_ms,
+                "success": success,
+                "timestamp": time.time(),
+            })
+
+            # Trim
+            if len(self._ssh_latencies) > self._max_latencies:
+                self._ssh_latencies = self._ssh_latencies[-self._max_latencies:]
+
+        # Also record in histogram
+        self.observe_histogram(
+            "dumont_ssh_latency_ms",
+            latency_ms,
+            {"host": host, "success": str(success).lower()},
+        )
+
+    def get_ssh_latency_stats(self) -> Dict[str, Any]:
+        """Get SSH latency statistics."""
+        with self._lock:
+            if not self._ssh_latencies:
+                return {"count": 0}
+
+            now = time.time()
+            recent = [l for l in self._ssh_latencies if now - l["timestamp"] < 3600]
+
+            if not recent:
+                return {"count": 0}
+
+            latencies = [l["latency_ms"] for l in recent]
+            successful = [l for l in recent if l["success"]]
+
+            return {
+                "count": len(recent),
+                "success_rate": len(successful) / len(recent) * 100 if recent else 0,
+                "avg_ms": sum(latencies) / len(latencies),
+                "min_ms": min(latencies),
+                "max_ms": max(latencies),
+                "p50_ms": sorted(latencies)[len(latencies) // 2],
+                "p99_ms": sorted(latencies)[int(len(latencies) * 0.99)] if len(latencies) > 10 else max(latencies),
+            }
+
+    def _make_key(self, name: str, labels: Dict[str, str] = None) -> str:
+        """Create unique key for metric + labels."""
+        if not labels:
+            return name
+        label_str = ",".join(f'{k}="{v}"' for k, v in sorted(labels.items()))
+        return f"{name}{{{label_str}}}"
+
+    def export_prometheus(self) -> str:
+        """
+        Export metrics in Prometheus text format.
+
+        Returns:
+            Prometheus-formatted metrics string
+        """
+        lines = []
+
+        with self._lock:
+            # Counters
+            for key, data in self._counters.items():
+                lines.append(f"# TYPE {key.split('{')[0]} counter")
+                lines.append(f"{key} {data['value']}")
+
+            # Gauges
+            for key, data in self._gauges.items():
+                lines.append(f"# TYPE {key.split('{')[0]} gauge")
+                lines.append(f"{key} {data['value']}")
+
+            # Histograms (simplified - just avg/count)
+            for key, data in self._histograms.items():
+                base_name = key.split('{')[0]
+                values = data["values"]
+                if values:
+                    lines.append(f"# TYPE {base_name} histogram")
+                    lines.append(f"{base_name}_count {len(values)}")
+                    lines.append(f"{base_name}_sum {sum(values)}")
+                    lines.append(f"{base_name}_avg {sum(values) / len(values):.2f}")
+
+            # Failover metrics from main metrics
+            metrics = get_metrics()
+            stats = metrics.get_stats()
+
+            lines.append("# TYPE dumont_failovers_total counter")
+            lines.append(f"dumont_failovers_total{{status=\"success\"}} {stats['total']['successful']}")
+            lines.append(f"dumont_failovers_total{{status=\"failure\"}} {stats['total']['failed']}")
+
+            for strategy, s_stats in stats.get("by_strategy", {}).items():
+                lines.append(
+                    f"dumont_failovers_total{{strategy=\"{strategy}\",status=\"success\"}} {s_stats['success']}"
+                )
+                lines.append(
+                    f"dumont_failovers_total{{strategy=\"{strategy}\",status=\"failure\"}} {s_stats['failure']}"
+                )
+
+            # Circuit breaker states
+            cb = get_circuit_breaker()
+            cb_stats = cb.get_stats()
+            for strategy, c_stats in cb_stats.items():
+                state_value = 0 if c_stats["state"] == "closed" else 1
+                lines.append(
+                    f"dumont_circuit_breaker_open{{strategy=\"{strategy}\"}} {state_value}"
+                )
+
+        return "\n".join(lines)
+
+    def get_all_stats(self) -> Dict[str, Any]:
+        """Get all metrics as JSON."""
+        return {
+            "counters": self._counters,
+            "gauges": self._gauges,
+            "histograms": {
+                k: {
+                    "count": len(v["values"]),
+                    "sum": sum(v["values"]) if v["values"] else 0,
+                    "avg": sum(v["values"]) / len(v["values"]) if v["values"] else 0,
+                    "labels": v["labels"],
+                }
+                for k, v in self._histograms.items()
+            },
+            "ssh_latency": self.get_ssh_latency_stats(),
+        }
+
+
+# Global Prometheus metrics
+_prometheus_metrics = PrometheusMetrics()
+
+
+def get_prometheus_metrics() -> PrometheusMetrics:
+    """Get global Prometheus metrics instance."""
+    return _prometheus_metrics

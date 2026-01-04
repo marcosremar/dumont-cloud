@@ -22,6 +22,9 @@ from ....core.resilience import (
     get_metrics,
     get_audit_logger,
     get_snapshot_gc,
+    get_storage_fallback,
+    get_failover_progress,
+    get_prometheus_metrics,
 )
 from ..dependencies import require_auth
 
@@ -322,5 +325,143 @@ async def resilience_health():
             "success_rate": f"{stats['total']['success_rate']:.1f}%",
             "circuits_open": sum(1 for c in circuits.values() if c["state"] == "open"),
             "pending_cleanups": len(pending),
+        },
+    }
+
+
+# =============================================================================
+# STORAGE FALLBACK
+# =============================================================================
+
+@router.get("/storage")
+async def get_storage_status():
+    """
+    Get storage backend status with fallback information.
+
+    Returns:
+    - Configured backends (B2, R2, S3)
+    - Health status of each backend
+    - Current active backend
+    - Failure history
+    """
+    storage = get_storage_fallback()
+    return {
+        "success": True,
+        "storage": storage.get_stats(),
+    }
+
+
+@router.post("/storage/{backend}/reset")
+async def reset_storage_backend(backend: str):
+    """
+    Reset failure status for a storage backend.
+
+    Available backends: b2, r2, s3
+    """
+    storage = get_storage_fallback()
+    storage.mark_success(backend)
+    return {
+        "success": True,
+        "message": f"Storage backend {backend} marked as healthy",
+    }
+
+
+# =============================================================================
+# FAILOVER PROGRESS
+# =============================================================================
+
+@router.get("/progress/{failover_id}")
+async def get_progress(failover_id: str):
+    """
+    Get progress updates for a failover operation.
+
+    Returns chronological list of progress updates with:
+    - Phase (validating, creating_snapshot, provisioning_gpu, etc.)
+    - Progress percentage
+    - Status message
+    - Timestamp
+    """
+    progress = get_failover_progress()
+    updates = progress.get_progress(failover_id)
+    current = progress.get_current(failover_id)
+
+    return {
+        "success": True,
+        "failover_id": failover_id,
+        "current": current,
+        "history": updates,
+    }
+
+
+@router.get("/progress")
+async def list_active_failovers():
+    """
+    List all active failover operations with their current status.
+    """
+    progress = get_failover_progress()
+    return {
+        "success": True,
+        "active_failovers": progress.get_all_active(),
+    }
+
+
+# =============================================================================
+# PROMETHEUS METRICS
+# =============================================================================
+
+@router.get("/prometheus")
+async def get_prometheus_export():
+    """
+    Export metrics in Prometheus format.
+
+    Returns plain text metrics that can be scraped by Prometheus.
+    """
+    from fastapi.responses import PlainTextResponse
+
+    prom = get_prometheus_metrics()
+    return PlainTextResponse(
+        content=prom.export_prometheus(),
+        media_type="text/plain",
+    )
+
+
+@router.get("/metrics/ssh")
+async def get_ssh_latency_metrics():
+    """
+    Get SSH connection latency metrics.
+
+    Returns:
+    - Average latency by host
+    - Success/failure counts
+    - P50, P95, P99 latencies
+    """
+    prom = get_prometheus_metrics()
+    return {
+        "success": True,
+        "ssh_latency": prom.get_ssh_latency_stats(),
+    }
+
+
+# =============================================================================
+# SNAPSHOT TIMEOUT CALCULATOR
+# =============================================================================
+
+@router.get("/snapshot-timeout")
+async def calculate_timeout(size_gb: float = Query(..., description="Snapshot size in GB")):
+    """
+    Calculate recommended timeout for a snapshot operation.
+
+    Uses dynamic calculation based on data size:
+    - Base timeout + (size_gb * seconds_per_gb)
+    - Minimum 60s, maximum 3600s (1 hour)
+    """
+    timeout = FailoverConfig.calculate_snapshot_timeout(size_gb)
+    return {
+        "success": True,
+        "size_gb": size_gb,
+        "recommended_timeout_seconds": timeout,
+        "config": {
+            "base_timeout": FailoverConfig.SNAPSHOT_TIMEOUT_BASE,
+            "seconds_per_gb": FailoverConfig.SNAPSHOT_TIMEOUT_PER_GB,
         },
     }

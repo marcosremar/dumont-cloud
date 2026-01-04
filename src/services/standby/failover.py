@@ -37,6 +37,8 @@ from ...core.resilience import (
     get_cleanup_manager,
     get_metrics,
     audit_log,
+    get_failover_progress,
+    FailoverPhase,
 )
 
 logger = logging.getLogger(__name__)
@@ -130,6 +132,7 @@ class FailoverService:
         self._metrics = get_metrics()
         self._rate_limiter = get_rate_limiter()
         self._circuit_breaker = get_circuit_breaker()
+        self._progress = get_failover_progress()
 
     async def execute_failover(
         self,
@@ -193,6 +196,10 @@ class FailoverService:
             # PHASE 0: Validation and Pre-checks
             # ==============================================================
             logger.info(f"[{failover_id}] Phase 0: Validating input...")
+            self._progress.update(
+                failover_id, FailoverPhase.VALIDATING, 0,
+                "Validating input parameters..."
+            )
 
             # Validate input parameters
             validate_failover_input(gpu_instance_id, ssh_host, ssh_port, workspace_path)
@@ -213,10 +220,19 @@ class FailoverService:
                 user_id=user_id,
                 failover_id=failover_id,
             )
+            self._progress.update(
+                failover_id, FailoverPhase.VALIDATING, 100,
+                "Pre-checks passed, starting failover"
+            )
+
             # ============================================================
             # PHASE 1: Create Snapshot (Incremental if base exists)
             # ============================================================
             logger.info(f"[{failover_id}] Phase 1: Creating snapshot...")
+            self._progress.update(
+                failover_id, FailoverPhase.CREATING_SNAPSHOT, 0,
+                "Creating snapshot of current workspace..."
+            )
             phase_start = time.time()
 
             snapshot_name = f"failover-{failover_id}"
@@ -265,11 +281,21 @@ class FailoverService:
                 f"[{failover_id}] Snapshot created ({result.snapshot_type}): "
                 f"{result.snapshot_id} ({result.snapshot_size_bytes} bytes) in {result.snapshot_creation_ms}ms"
             )
+            self._progress.update(
+                failover_id, FailoverPhase.CREATING_SNAPSHOT, 100,
+                f"Snapshot created: {result.snapshot_size_bytes} bytes",
+                snapshot_id=result.snapshot_id,
+                snapshot_type=result.snapshot_type
+            )
 
             # ============================================================
             # PHASE 2: Provision New GPU (Race Strategy)
             # ============================================================
             logger.info(f"[{failover_id}] Phase 2: Provisioning new GPU...")
+            self._progress.update(
+                failover_id, FailoverPhase.PROVISIONING_GPU, 0,
+                "Searching for available GPUs..."
+            )
             phase_start = time.time()
 
             provision_result = await self.gpu_provisioner.provision_fast(
@@ -300,11 +326,21 @@ class FailoverService:
                 f"[{failover_id}] GPU provisioned: {result.new_gpu_name} "
                 f"({result.new_ssh_host}:{result.new_ssh_port}) in {result.gpu_provisioning_ms}ms"
             )
+            self._progress.update(
+                failover_id, FailoverPhase.PROVISIONING_GPU, 100,
+                f"GPU provisioned: {result.new_gpu_name}",
+                gpu_id=result.new_gpu_id,
+                gpus_tried=result.gpus_tried
+            )
 
             # ============================================================
             # PHASE 3: Restore Snapshot
             # ============================================================
             logger.info(f"[{failover_id}] Phase 3: Restoring snapshot...")
+            self._progress.update(
+                failover_id, FailoverPhase.RESTORING_SNAPSHOT, 0,
+                "Restoring workspace to new GPU..."
+            )
             phase_start = time.time()
 
             restore_info = self.snapshot_service.restore_snapshot(
@@ -318,11 +354,19 @@ class FailoverService:
             result.restore_ms = phase_timings["restore"]
 
             logger.info(f"[{failover_id}] Snapshot restored in {result.restore_ms}ms")
+            self._progress.update(
+                failover_id, FailoverPhase.RESTORING_SNAPSHOT, 100,
+                f"Snapshot restored in {result.restore_ms}ms"
+            )
 
             # ============================================================
             # PHASE 3.5: Validate Restore
             # ============================================================
             logger.info(f"[{failover_id}] Phase 3.5: Validating restore...")
+            self._progress.update(
+                failover_id, FailoverPhase.VALIDATING_RESTORE, 0,
+                "Validating restored files..."
+            )
             phase_start = time.time()
 
             validation_result = self._validate_restore(
@@ -341,12 +385,20 @@ class FailoverService:
                 f"[{failover_id}] Restore validated: {validation_result.get('files_count', 0)} files "
                 f"in {phase_timings['validation']}ms"
             )
+            self._progress.update(
+                failover_id, FailoverPhase.VALIDATING_RESTORE, 100,
+                f"Validated: {validation_result.get('files_count', 0)} files OK"
+            )
 
             # ============================================================
             # PHASE 4: Test Inference (Optional)
             # ============================================================
             if model:
                 logger.info(f"[{failover_id}] Phase 4: Testing inference with {model}...")
+                self._progress.update(
+                    failover_id, FailoverPhase.TESTING_INFERENCE, 0,
+                    f"Testing inference with {model}..."
+                )
                 phase_start = time.time()
 
                 inference_result = await self._test_inference(
@@ -365,15 +417,30 @@ class FailoverService:
                     logger.info(
                         f"[{failover_id}] Inference test passed in {result.inference_test_ms}ms"
                     )
+                    self._progress.update(
+                        failover_id, FailoverPhase.TESTING_INFERENCE, 100,
+                        f"Inference test passed in {result.inference_test_ms}ms"
+                    )
                 else:
                     logger.warning(
                         f"[{failover_id}] Inference test failed: {inference_result.get('error')}"
+                    )
+                    self._progress.update(
+                        failover_id, FailoverPhase.TESTING_INFERENCE, 100,
+                        f"Inference test failed (non-critical): {inference_result.get('error')}"
                     )
 
             # ============================================================
             # SUCCESS
             # ============================================================
             result.success = True
+            self._progress.update(
+                failover_id, FailoverPhase.COMPLETED, 100,
+                f"Failover completed successfully in {int((time.time() - start_time) * 1000)}ms",
+                new_gpu_id=result.new_gpu_id,
+                new_ssh_host=result.new_ssh_host,
+                new_ssh_port=result.new_ssh_port
+            )
             result.total_ms = int((time.time() - start_time) * 1000)
             result.phase_timings = phase_timings
 
@@ -419,6 +486,12 @@ class FailoverService:
             result.error = str(e)
             result.total_ms = int((time.time() - start_time) * 1000)
             result.failed_phase = "validation"
+
+            self._progress.update(
+                failover_id, FailoverPhase.FAILED, 0,
+                f"Rejected: {type(e).__name__}: {e}",
+                error_type=type(e).__name__
+            )
 
             audit_log(
                 "failover",
@@ -501,6 +574,14 @@ class FailoverService:
         error: str,
     ) -> None:
         """Handle failover failure - cleanup, metrics, audit."""
+        # Update progress to FAILED
+        self._progress.update(
+            failover_id, FailoverPhase.FAILED, 0,
+            f"Failed at {failed_phase}: {error[:100]}",
+            failed_phase=failed_phase,
+            duration_ms=duration_ms
+        )
+
         # Record failure in circuit breaker
         self._circuit_breaker.record_failure(strategy)
 

@@ -19,6 +19,7 @@ from dataclasses import dataclass
 import requests
 
 from .vast import get_host_blacklist, blacklist_host, is_host_blacklisted
+from ...core.resilience import get_prometheus_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -439,8 +440,14 @@ echo "[onstart] GPU initialization complete"
         1. Basic SSH connectivity
         2. Verify host is responsive (uptime check)
         3. Retry with backoff on failure
+        4. Records latency metrics for Prometheus
         """
+        prom_metrics = get_prometheus_metrics()
+
         for attempt in range(retries):
+            start_time = time.time()
+            success = False
+
             try:
                 # First: Basic SSH connectivity with echo
                 result = subprocess.run(
@@ -461,8 +468,12 @@ echo "[onstart] GPU initialization complete"
                     timeout=15
                 )
 
+                latency_ms = int((time.time() - start_time) * 1000)
+
                 if result.returncode == 0 and "ok" in result.stdout:
                     logger.debug(f"[GPUProvisioner] SSH health check passed for {host}:{port}")
+                    # Record successful SSH latency
+                    prom_metrics.record_ssh_latency(host, port, latency_ms, success=True)
                     return True
 
                 # Log failure details for debugging
@@ -471,13 +482,19 @@ echo "[onstart] GPU initialization complete"
                     f"(attempt {attempt + 1}/{retries}): "
                     f"rc={result.returncode}, stdout={result.stdout[:100]}, stderr={result.stderr[:100]}"
                 )
+                # Record failed SSH attempt
+                prom_metrics.record_ssh_latency(host, port, latency_ms, success=False)
 
             except subprocess.TimeoutExpired:
+                latency_ms = int((time.time() - start_time) * 1000)
+                prom_metrics.record_ssh_latency(host, port, latency_ms, success=False)
                 logger.warning(
                     f"[GPUProvisioner] SSH timeout for {host}:{port} "
                     f"(attempt {attempt + 1}/{retries})"
                 )
             except Exception as e:
+                latency_ms = int((time.time() - start_time) * 1000)
+                prom_metrics.record_ssh_latency(host, port, latency_ms, success=False)
                 logger.warning(
                     f"[GPUProvisioner] SSH error for {host}:{port}: {e} "
                     f"(attempt {attempt + 1}/{retries})"
@@ -491,7 +508,6 @@ echo "[onstart] GPU initialization complete"
                         asyncio.sleep(1 * (attempt + 1))
                     )
                 except:
-                    import time
                     time.sleep(1 * (attempt + 1))
 
         return False
