@@ -16,11 +16,24 @@ import {
   TrendingUp,
   DollarSign,
   HardDrive,
+  Server,
+  Lightbulb,
+  Code,
+  Zap,
+  Sparkles,
 } from 'lucide-react';
 import { useWizard } from '../WizardContext';
-import { PERFORMANCE_TIERS } from '../../dashboard/constants';
 import { GPU_LIST, filterGPUs } from '../constants/gpuData';
 import type { MachineOffer } from '../types/wizard.types';
+
+// Use cases for tier selection (matching original WizardForm)
+const USE_CASES = [
+  { id: 'cpu_only', label: 'CPU Only', icon: Server, tier: 'CPU', desc: 'No GPU' },
+  { id: 'test', label: 'Experiment', icon: Lightbulb, tier: 'Slow', desc: 'Quick tests' },
+  { id: 'develop', label: 'Develop', icon: Code, tier: 'Medium', desc: 'Daily dev' },
+  { id: 'train', label: 'Train model', icon: Zap, tier: 'Fast', desc: 'Fine-tuning' },
+  { id: 'production', label: 'Production', icon: Sparkles, tier: 'Ultra', desc: 'Large LLMs' },
+];
 
 export function HardwareStep() {
   const {
@@ -66,65 +79,57 @@ export function HardwareStep() {
 
   return (
     <div className="space-y-5 animate-fadeIn">
-      {/* Performance Tier Selection */}
+      {/* Use Case / Performance Tier Selection */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-medium text-gray-300">Performance Tier</h3>
+            <h3 className="text-sm font-medium text-gray-300">What will you use it for?</h3>
             <p className="text-xs text-gray-500 mt-0.5">
               Select based on your workload requirements
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {PERFORMANCE_TIERS.map((tier) => {
-            const isSelected = selectedTier === tier.name;
-            const TierIcon = tier.icon;
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          {USE_CASES.map((useCase) => {
+            const isSelected = selectedTier === useCase.tier;
+            const UseCaseIcon = useCase.icon;
 
             return (
               <button
-                key={tier.name}
-                onClick={() => handleTierSelect(tier.name)}
-                data-testid={`tier-${tier.name.toLowerCase()}`}
-                className={`p-4 rounded-lg border text-left transition-all ${
+                key={useCase.id}
+                onClick={() => handleTierSelect(useCase.tier)}
+                data-testid={`use-case-${useCase.id}`}
+                className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-brand-500/10 border-brand-500'
                     : 'bg-white/5 border-white/10 hover:bg-white/[0.07] hover:border-white/20'
                 }`}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex flex-col items-center gap-2 text-center">
                   <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    className={`w-8 h-8 rounded-md flex items-center justify-center ${
                       isSelected
                         ? 'bg-brand-500/20 text-brand-400'
                         : 'bg-white/5 text-gray-500'
                     }`}
                   >
-                    <TierIcon className="w-5 h-5" />
+                    <UseCaseIcon className="w-4 h-4" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`text-sm font-medium ${
-                          isSelected ? 'text-brand-400' : 'text-gray-300'
-                        }`}
-                      >
-                        {tier.name}
-                      </span>
-                      {tier.recommended && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
-                          Popular
-                        </span>
-                      )}
+                  <div>
+                    <div
+                      className={`text-xs font-medium ${
+                        isSelected ? 'text-brand-400' : 'text-gray-300'
+                      }`}
+                    >
+                      {useCase.label}
                     </div>
-                    <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">
-                      {tier.description}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[10px] text-brand-400 font-medium">
-                        {tier.priceRange}
-                      </span>
+                    <div
+                      className={`text-[10px] ${
+                        isSelected ? 'text-gray-400' : 'text-gray-500'
+                      }`}
+                    >
+                      {useCase.desc}
                     </div>
                   </div>
                 </div>
