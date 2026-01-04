@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { WizardForm } from '../components/dashboard'
-import { apiPost } from '../utils/api'
+import { apiPost, apiGet, apiDelete } from '../utils/api'
 import { useToast } from '../components/Toast'
 import {
   addRacingInstance,
@@ -11,10 +11,12 @@ import {
   setRaceWinner,
   clearRacingInstances,
 } from '../store/slices/instancesSlice'
+import { useProvisioningRace, createDefaultApiService, RACE_STATUS } from '../hooks/useProvisioningRace'
 
 /**
  * Dedicated page for creating a new GPU machine
- * Separated from Machines page for better UX
+ * Uses provisioning race: creates 5 machines, picks the first to connect
+ * If none connect in 15 seconds, destroys all and tries another 5 (up to 3 rounds)
  */
 export default function NewMachine() {
   const navigate = useNavigate()
@@ -25,9 +27,6 @@ export default function NewMachine() {
   // Base path for navigation
   const basePath = '/app'
 
-  // Check if demo mode
-  const isDemo = location.pathname.startsWith('/demo-app') || localStorage.getItem('dumont_demo_mode') === 'true'
-
   // Wizard state
   const [wizardLoading, setWizardLoading] = useState(false)
   const [searchCountry, setSearchCountry] = useState('')
@@ -35,10 +34,35 @@ export default function NewMachine() {
   const [selectedGPU, setSelectedGPU] = useState('any')
   const [selectedGPUCategory, setSelectedGPUCategory] = useState('any')
   const [selectedTier, setSelectedTier] = useState(null)
-  const [raceCandidates, setRaceCandidates] = useState([])
-  const [raceWinner, setRaceWinner] = useState(null)
   const [provisioningMode, setProvisioningMode] = useState(false)
-  const [currentRound, setCurrentRound] = useState(1)
+
+  // API service for provisioning race
+  const apiService = useMemo(() => createDefaultApiService(''), [])
+
+  // Provisioning race hook - 5 candidates, 3 rounds, 15 second timeout per round
+  const {
+    candidates: raceCandidates,
+    winner: raceWinner,
+    raceStatus,
+    currentRound,
+    error: raceError,
+    elapsedTime,
+    maxRounds,
+    isRacing,
+    isCompleted,
+    isFailed,
+    startRace,
+    cancelRace,
+    completeRace,
+    reset: resetRace,
+    getCreatedInstanceIds,
+  } = useProvisioningRace(apiService, {
+    maxCandidates: 5,
+    maxRounds: 3,
+    pollIntervalMs: 2000,      // Poll every 2 seconds
+    timeoutMs: 15 * 1000,      // 15 seconds timeout per round
+    createDelayMs: 300,        // 300ms delay between creates
+  })
 
   // Handle search change
   const handleSearchChange = (value) => {
@@ -94,113 +118,88 @@ export default function NewMachine() {
     setSearchCountry('')
   }
 
-  // Handle wizard submit - start provisioning
+  // Handle wizard submit - start provisioning race
   const handleWizardSubmit = async (data) => {
     console.log('[NewMachine] handleWizardSubmit called with:', data)
 
-    if (isDemo) {
-      // Demo mode - simulate provisioning
-      setProvisioningMode(true)
-      setWizardLoading(true)
+    // Get all available offers for racing
+    const allOffers = data?.allOffers || []
 
-      // Generate demo instance IDs
-      const demoIds = [Date.now() + 1, Date.now() + 2, Date.now() + 3]
-
-      // Simulate finding candidates
-      setTimeout(() => {
-        const candidates = [
-          { id: demoIds[0], gpu: 'RTX 4090', price: 0.45, location: 'US', status: 'testing' },
-          { id: demoIds[1], gpu: 'RTX 4090', price: 0.48, location: 'EU', status: 'testing' },
-          { id: demoIds[2], gpu: 'RTX 4080', price: 0.35, location: 'US', status: 'testing' },
-        ]
-        setRaceCandidates(candidates)
-
-        // Add all candidates to racing state (hidden from Machines page)
-        dispatch(addRacingInstances(demoIds))
-      }, 1000)
-
-      // Simulate finding winner
-      setTimeout(() => {
-        const winner = { id: demoIds[0], gpu: 'RTX 4090', price: 0.45, location: 'US' }
-        setRaceWinner(winner)
-        setWizardLoading(false)
-      }, 3000)
-
+    if (allOffers.length === 0) {
+      toast?.error('Erro: Nenhuma máquina disponível')
+      console.error('[NewMachine] No offers available for racing')
       return
     }
 
-    // Validate we have an offer_id
-    const offerId = data?.offerId
-    if (!offerId) {
-      toast?.error('Error: No machine selected')
-      console.error('[NewMachine] No offerId provided:', data)
-      return
-    }
+    console.log('[NewMachine] Starting provisioning race with', allOffers.length, 'offers')
 
-    // Real provisioning
+    // Enter provisioning mode
     setProvisioningMode(true)
     setWizardLoading(true)
 
-    try {
-      // Build request params for creating instance
-      // API expects: offer_id, image, disk_size, label, ports, skip_standby
-      const params = {
-        offer_id: offerId,
-        label: `${data?.machine?.gpu_name || 'GPU'} - ${data?.tier || 'Standard'}`,
-        // Skip standby if failover is "no_failover"
-        skip_standby: data?.failoverStrategy === 'no_failover',
-      }
+    // Add all potential racing instance IDs to Redux (to hide from Machines page)
+    // Note: The hook will handle actual instance creation and tracking
 
-      console.log('[NewMachine] Creating instance with params:', params)
-
-      // Use correct endpoint: POST /api/v1/instances
-      const res = await apiPost('/api/v1/instances', params)
-
-      if (res.ok) {
-        const instance = await res.json()
-        console.log('[NewMachine] Instance created:', instance)
-
-        // Add instance to racing state (will be hidden from Machines page until confirmed)
-        const instanceId = instance.id || instance.instance_id
-        if (instanceId) {
-          dispatch(addRacingInstance(instanceId))
-        }
-
-        setRaceWinner(instance)
-        toast?.success('Machine created successfully!')
-      } else {
-        const error = await res.json()
-        console.error('[NewMachine] Failed to create instance:', error)
-        toast?.error(error.detail || 'Failed to create machine')
-      }
-    } catch (err) {
-      console.error('[NewMachine] Error creating instance:', err)
-      toast?.error('Connection error')
-    } finally {
-      setWizardLoading(false)
-    }
+    // Start the race with all available offers
+    // The hook will:
+    // - Create 5 machines in round 1
+    // - Poll their status every 2 seconds
+    // - If none connects in 15 seconds, destroy all and try round 2
+    // - Repeat up to 3 rounds
+    // - First machine to become 'running' wins
+    startRace(allOffers)
   }
 
+  // Sync racing instances with Redux when they're created
+  useEffect(() => {
+    if (isRacing) {
+      const instanceIds = getCreatedInstanceIds()
+      if (instanceIds.length > 0) {
+        dispatch(addRacingInstances(instanceIds))
+      }
+    }
+  }, [isRacing, raceCandidates, dispatch, getCreatedInstanceIds])
+
+  // Handle race completion
+  useEffect(() => {
+    if (isCompleted && raceWinner) {
+      setWizardLoading(false)
+      toast?.success('Máquina reservada com sucesso!')
+    }
+  }, [isCompleted, raceWinner, toast])
+
+  // Handle race failure
+  useEffect(() => {
+    if (isFailed && raceError) {
+      setWizardLoading(false)
+      toast?.error(raceError || 'Falha ao reservar máquina após 3 tentativas')
+    }
+  }, [isFailed, raceError, toast])
+
   // Cancel provisioning race
-  const cancelProvisioningRace = () => {
-    // Clear all racing instances from Redux (they will be destroyed by the API)
+  const cancelProvisioningRace = async () => {
+    // Cancel the race (hook will destroy all created instances)
+    await cancelRace()
+
+    // Clear all racing instances from Redux
     dispatch(clearRacingInstances())
 
     setProvisioningMode(false)
-    setRaceCandidates([])
-    setRaceWinner(null)
-    setCurrentRound(1)
+    setWizardLoading(false)
   }
 
   // Complete provisioning and go to machines
   const completeProvisioningRace = () => {
     // Mark winner in Redux - this removes it from racing list so it appears in Machines
     if (raceWinner) {
-      const winnerId = raceWinner.id || raceWinner.instance_id
+      const winnerId = raceWinner.instanceId || raceWinner.id
       if (winnerId) {
         dispatch(setRaceWinner(winnerId))
       }
     }
+
+    // Complete the race (cleanup)
+    completeRace()
 
     // Clear any remaining racing instances
     dispatch(clearRacingInstances())
@@ -209,9 +208,10 @@ export default function NewMachine() {
   }
 
   // Go back to machines page
-  const handleBack = () => {
-    // Clear racing instances if user goes back without completing
+  const handleBack = async () => {
+    // Cancel and cleanup racing instances if user goes back without completing
     if (provisioningMode) {
+      await cancelRace()
       dispatch(clearRacingInstances())
     }
     navigate(`${basePath}/machines`)
@@ -222,10 +222,11 @@ export default function NewMachine() {
     return () => {
       // Only clear if there's an active race (not completed)
       if (provisioningMode && !raceWinner) {
+        cancelRace()
         dispatch(clearRacingInstances())
       }
     }
-  }, [provisioningMode, raceWinner, dispatch])
+  }, [provisioningMode, raceWinner, dispatch, cancelRace])
 
   return (
     <div className="page-container">
@@ -272,6 +273,10 @@ export default function NewMachine() {
             provisioningCandidates={raceCandidates}
             provisioningWinner={raceWinner}
             currentRound={currentRound}
+            maxRounds={maxRounds}
+            elapsedTime={elapsedTime}
+            raceError={raceError}
+            isFailed={isFailed}
             onCancelProvisioning={cancelProvisioningRace}
             onCompleteProvisioning={completeProvisioningRace}
           />

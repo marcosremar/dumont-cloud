@@ -9,8 +9,8 @@ import {
 import { Label, CardContent } from '../tailadmin-ui';
 import { Button } from '../ui/button';
 import { WorldMap, GPUSelector } from './';
-import { COUNTRY_DATA, COUNTRY_NAMES, PERFORMANCE_TIERS, DEMO_OFFERS } from './constants';
-import { apiGet, isDemoMode } from '../../utils/api';
+import { COUNTRY_DATA, COUNTRY_NAMES, PERFORMANCE_TIERS } from './constants';
+import { apiGet } from '../../utils/api';
 
 // Componente Tooltip simples
 const Tooltip = ({ children, text }) => (
@@ -58,7 +58,7 @@ const WizardForm = ({
   // Actions
   loading,
   onSubmit,
-  // Provisioning (Step 4)
+  // Provisioning (Step 4) - Racing feature
   provisioningCandidates = [],
   provisioningWinner = null,
   isProvisioning = false,
@@ -66,6 +66,8 @@ const WizardForm = ({
   onCompleteProvisioning,
   currentRound = 1,
   maxRounds = 3,
+  raceError = null,
+  isFailed = false,
 }) => {
   const tiers = PERFORMANCE_TIERS;
   const countryData = COUNTRY_DATA;
@@ -94,6 +96,14 @@ const WizardForm = ({
     { port: '8888', protocol: 'TCP' },
     { port: '6006', protocol: 'TCP' },
   ]);
+
+  // Debug: Log provisioningCandidates changes
+  useEffect(() => {
+    console.log('[WizardForm] provisioningCandidates updated:', provisioningCandidates.length, 'candidates');
+    if (provisioningCandidates.length > 0) {
+      console.log('[WizardForm] First candidate:', provisioningCandidates[0]?.gpu_name, provisioningCandidates[0]?.status);
+    }
+  }, [provisioningCandidates]);
 
   // Track elapsed time during provisioning
   useEffect(() => {
@@ -148,6 +158,7 @@ const WizardForm = ({
   };
 
   const [recommendedMachines, setRecommendedMachines] = useState([]);
+  const [allAvailableOffers, setAllAvailableOffers] = useState([]); // All offers for racing
   const [loadingMachines, setLoadingMachines] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState(null);
   const [gpuSearchQuery, setGpuSearchQuery] = useState('');
@@ -203,14 +214,6 @@ const WizardForm = ({
           paths: ['/workspace'],
         },
       ];
-
-      // In demo mode, use mock snapshots directly
-      if (isDemoMode()) {
-        setAvailableSnapshots(mockSnapshots);
-        setSelectedSnapshot(mockSnapshots[0]); // Auto-select latest
-        setLoadingSnapshots(false);
-        return;
-      }
 
       try {
         // Fetch ALL snapshots globally from B2/R2 storage - not filtered by machine
@@ -447,63 +450,11 @@ const WizardForm = ({
         // Use first region code for API call (API may not support multiple)
         const regionCode = regionCodes[0] || '';
 
-        // In demo mode, use DEMO_OFFERS instead of real API
-        if (isDemoMode()) {
-          // Filter demo offers by tier
-          let filteredOffers = [...DEMO_OFFERS];
-
-          if (tier?.filter) {
-            if (tier.filter.cpu_only) {
-              // Filter for CPU-only machines (num_gpus === 0)
-              filteredOffers = filteredOffers.filter(o => o.num_gpus === 0);
-            }
-            if (tier.filter.min_gpu_ram) {
-              filteredOffers = filteredOffers.filter(o => o.gpu_ram >= tier.filter.min_gpu_ram);
-            }
-            if (tier.filter.max_price) {
-              filteredOffers = filteredOffers.filter(o => o.dph_total <= tier.filter.max_price);
-            }
-          }
-
-          // Filter by region if specified
-          if (regionCode) {
-            filteredOffers = filteredOffers.filter(o =>
-              o.geolocation === regionCode ||
-              (regionCode === 'US' && ['US', 'CA', 'MX'].includes(o.geolocation)) ||
-              (regionCode === 'EU' && ['EU', 'GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'PL', 'CZ', 'AT', 'CH', 'BE', 'SE', 'NO', 'DK', 'FI', 'IE'].includes(o.geolocation)) ||
-              (regionCode === 'ASIA' && ['ASIA', 'JP', 'CN', 'KR', 'SG', 'IN', 'TH', 'VN', 'ID', 'MY', 'PH', 'TW'].includes(o.geolocation)) ||
-              (regionCode === 'SA' && ['SA', 'BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'UY', 'PY', 'BO'].includes(o.geolocation))
-            );
-          }
-
-          // Sort by price
-          filteredOffers.sort((a, b) => a.dph_total - b.dph_total);
-
-          // Add metadata and labels
-          const labeled = filteredOffers.slice(0, 3).map((offer, idx) => ({
-            ...offer,
-            provider: 'Vast.ai',
-            location: offer.geolocation === 'US' ? 'United States' :
-                      offer.geolocation === 'EU' ? 'Europe' :
-                      offer.geolocation === 'ASIA' ? 'Asia' :
-                      offer.geolocation === 'SA' ? 'South America' : offer.geolocation,
-            reliability: offer.verified ? 99 : 95,
-            label: idx === 0 ? 'Most economical' : idx === 1 ? 'Best value' : 'Fastest'
-          }));
-
-          if (labeled.length > 0) {
-            setRecommendedMachines(labeled);
-          } else {
-            setApiError('api_empty');
-            setRecommendedMachines([]);
-          }
-          setLoadingMachines(false);
-          return;
-        }
-
-        // Build query params based on tier filter (for real API)
+        // Build query params based on tier filter
+        // Request 50 offers to ensure we have enough of the same GPU type for racing
+        // (after filtering by GPU type, we need at least 15 for 3 rounds of 5)
         const params = new URLSearchParams();
-        params.append('limit', '5');
+        params.append('limit', '50');
         params.append('order_by', 'dph_total');
         if (regionCode) params.append('region', regionCode);
 
@@ -523,7 +474,10 @@ const WizardForm = ({
         if (response.ok) {
           const data = await response.json();
           if (data.offers && data.offers.length > 0) {
-            // Add labels to first 3 offers
+            // Store ALL offers for racing (up to 15 for 3 rounds of 5)
+            setAllAvailableOffers(data.offers);
+
+            // Add labels to first 3 offers for display
             const labeled = data.offers.slice(0, 3).map((offer, idx) => ({
               ...offer,
               label: idx === 0 ? 'Most economical' : idx === 1 ? 'Best value' : 'Fastest'
@@ -533,101 +487,16 @@ const WizardForm = ({
           }
         }
 
-        // API returned no results - fallback to DEMO_OFFERS for demonstration
-        console.log('[WizardForm] API returned no offers, using demo fallback');
-        let fallbackOffers = [...DEMO_OFFERS];
-
-        // Apply same filters as demo mode
-        if (tier?.filter) {
-          if (tier.filter.cpu_only) {
-            fallbackOffers = fallbackOffers.filter(o => o.num_gpus === 0);
-          }
-          if (tier.filter.min_gpu_ram) {
-            fallbackOffers = fallbackOffers.filter(o => o.gpu_ram >= tier.filter.min_gpu_ram);
-          }
-          if (tier.filter.max_price) {
-            fallbackOffers = fallbackOffers.filter(o => o.dph_total <= tier.filter.max_price);
-          }
-        }
-
-        // Filter by region if specified
-        if (regionCode) {
-          fallbackOffers = fallbackOffers.filter(o =>
-            o.geolocation === regionCode ||
-            (regionCode === 'US' && ['US', 'CA', 'MX'].includes(o.geolocation)) ||
-            (regionCode === 'EU' && ['EU', 'GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'PL', 'CZ', 'AT', 'CH', 'BE', 'SE', 'NO', 'DK', 'FI', 'IE'].includes(o.geolocation)) ||
-            (regionCode === 'ASIA' && ['ASIA', 'JP', 'CN', 'KR', 'SG', 'IN', 'TH', 'VN', 'ID', 'MY', 'PH', 'TW'].includes(o.geolocation)) ||
-            (regionCode === 'SA' && ['SA', 'BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'UY', 'PY', 'BO'].includes(o.geolocation))
-          );
-        }
-
-        fallbackOffers.sort((a, b) => a.dph_total - b.dph_total);
-
-        const labeled = fallbackOffers.slice(0, 3).map((offer, idx) => ({
-          ...offer,
-          provider: 'Vast.ai',
-          location: offer.geolocation === 'US' ? 'United States' :
-                    offer.geolocation === 'EU' ? 'Europe' :
-                    offer.geolocation === 'ASIA' ? 'Asia' :
-                    offer.geolocation === 'SA' ? 'South America' : offer.geolocation,
-          reliability: offer.verified ? 99 : 95,
-          label: idx === 0 ? 'Most economical' : idx === 1 ? 'Best value' : 'Fastest'
-        }));
-
-        if (labeled.length > 0) {
-          setRecommendedMachines(labeled);
-        } else {
-          setApiError('api_empty');
-          setRecommendedMachines([]);
-        }
+        // API returned no results
+        console.log('[WizardForm] API returned no offers');
+        setApiError('api_empty');
+        setRecommendedMachines([]);
+        setAllAvailableOffers([]);
       } catch (err) {
         console.error('Failed to fetch offers:', err);
-
-        // On error, also try fallback to DEMO_OFFERS
-        console.log('[WizardForm] API error, using demo fallback');
-        let fallbackOffers = [...DEMO_OFFERS];
-
-        if (tier?.filter) {
-          if (tier.filter.cpu_only) {
-            fallbackOffers = fallbackOffers.filter(o => o.num_gpus === 0);
-          }
-          if (tier.filter.min_gpu_ram) {
-            fallbackOffers = fallbackOffers.filter(o => o.gpu_ram >= tier.filter.min_gpu_ram);
-          }
-          if (tier.filter.max_price) {
-            fallbackOffers = fallbackOffers.filter(o => o.dph_total <= tier.filter.max_price);
-          }
-        }
-
-        if (regionCode) {
-          fallbackOffers = fallbackOffers.filter(o =>
-            o.geolocation === regionCode ||
-            (regionCode === 'US' && ['US', 'CA', 'MX'].includes(o.geolocation)) ||
-            (regionCode === 'EU' && ['EU', 'GB', 'FR', 'DE', 'ES', 'IT', 'PT', 'NL', 'PL', 'CZ', 'AT', 'CH', 'BE', 'SE', 'NO', 'DK', 'FI', 'IE'].includes(o.geolocation)) ||
-            (regionCode === 'ASIA' && ['ASIA', 'JP', 'CN', 'KR', 'SG', 'IN', 'TH', 'VN', 'ID', 'MY', 'PH', 'TW'].includes(o.geolocation)) ||
-            (regionCode === 'SA' && ['SA', 'BR', 'AR', 'CL', 'CO', 'PE', 'VE', 'EC', 'UY', 'PY', 'BO'].includes(o.geolocation))
-          );
-        }
-
-        fallbackOffers.sort((a, b) => a.dph_total - b.dph_total);
-
-        const labeled = fallbackOffers.slice(0, 3).map((offer, idx) => ({
-          ...offer,
-          provider: 'Vast.ai',
-          location: offer.geolocation === 'US' ? 'United States' :
-                    offer.geolocation === 'EU' ? 'Europe' :
-                    offer.geolocation === 'ASIA' ? 'Asia' :
-                    offer.geolocation === 'SA' ? 'South America' : offer.geolocation,
-          reliability: offer.verified ? 99 : 95,
-          label: idx === 0 ? 'Most economical' : idx === 1 ? 'Best value' : 'Fastest'
-        }));
-
-        if (labeled.length > 0) {
-          setRecommendedMachines(labeled);
-        } else {
-          setApiError('api_error');
-          setRecommendedMachines([]);
-        }
+        setApiError('api_error');
+        setRecommendedMachines([]);
+        setAllAvailableOffers([]);
       } finally {
         setLoadingMachines(false);
       }
@@ -710,13 +579,6 @@ const WizardForm = ({
     setBalanceError(null);
 
     try {
-      // In demo mode, use mock balance
-      if (isDemoMode()) {
-        setUserBalance(10.00); // Mock sufficient balance for demo
-        setLoadingBalance(false);
-        return;
-      }
-
       const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/v1/balance', {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -754,10 +616,9 @@ const WizardForm = ({
       errors.push('Please select a performance tier');
     }
 
-    // Validate minimum balance (skip in demo mode)
-    console.log('[WizardForm] isDemoMode:', isDemoMode());
+    // Validate minimum balance
     console.log('[WizardForm] userBalance:', userBalance);
-    if (!isDemoMode() && userBalance !== null && userBalance < MIN_BALANCE) {
+    if (userBalance !== null && userBalance < MIN_BALANCE) {
       errors.push(`Insufficient balance. You need at least $${MIN_BALANCE.toFixed(2)} to create a machine. Current balance: $${userBalance.toFixed(2)}`);
     }
 
@@ -773,18 +634,83 @@ const WizardForm = ({
     console.log('[WizardForm] Validation passed! Advancing to step 4 and calling onSubmit');
     console.log('[WizardForm] onSubmit function exists:', typeof onSubmit === 'function');
     console.log('[WizardForm] selectedMachine:', selectedMachine);
+
+    // If no machine was explicitly selected, use the first recommended machine
+    const machineToUse = selectedMachine || recommendedMachines[0];
+
+    if (!machineToUse) {
+      console.error('[WizardForm] ERROR: No machine available for racing');
+      setValidationErrors(['No machines available. Please try a different region or tier.']);
+      setCurrentStep(2);
+      return;
+    }
+
+    console.log('[WizardForm] Machine to use for racing:', machineToUse.gpu_name, 'x', machineToUse.num_gpus);
+
     setValidationErrors([]);
     // V5: Go directly to provisioning without confirmation modal
     setCurrentStep(4);
     if (typeof onSubmit === 'function') {
-      console.log('[WizardForm] Calling onSubmit NOW with selectedMachine');
-      // Pass selectedMachine with offer_id, failover strategy, and tier
+      // Build offers for racing with progressive relaxation to get at least 5 machines
+      const MIN_RACING_MACHINES = 5;
+      const MAX_RACING_MACHINES = 15; // 5 per round x 3 rounds
+
+      // Priority 1: Exact match (same GPU name AND same GPU count)
+      const exactMatches = allAvailableOffers.filter(offer => {
+        const sameGpu = offer.gpu_name === machineToUse.gpu_name;
+        const sameGpuCount = offer.num_gpus === machineToUse.num_gpus;
+        const notSameMachine = offer.id !== machineToUse.id;
+        return sameGpu && sameGpuCount && notSameMachine;
+      });
+
+      // Priority 2: Same GPU name (any count)
+      const sameGpuMatches = allAvailableOffers.filter(offer => {
+        const sameGpu = offer.gpu_name === machineToUse.gpu_name;
+        const notSameMachine = offer.id !== machineToUse.id;
+        const notInExact = !exactMatches.some(e => e.id === offer.id);
+        return sameGpu && notSameMachine && notInExact;
+      });
+
+      // Priority 3: Any available machine from the tier (sorted by price)
+      const otherOffers = allAvailableOffers.filter(offer => {
+        const notSameMachine = offer.id !== machineToUse.id;
+        const notInExact = !exactMatches.some(e => e.id === offer.id);
+        const notInSameGpu = !sameGpuMatches.some(e => e.id === offer.id);
+        return notSameMachine && notInExact && notInSameGpu;
+      }).sort((a, b) => (a.dph_total || 0) - (b.dph_total || 0));
+
+      // Combine: selected machine first, then exact matches, then same GPU, then others
+      let offersForRacing = [machineToUse, ...exactMatches];
+
+      // Add more if we don't have enough
+      if (offersForRacing.length < MIN_RACING_MACHINES) {
+        const needed = MIN_RACING_MACHINES - offersForRacing.length;
+        offersForRacing = [...offersForRacing, ...sameGpuMatches.slice(0, needed)];
+      }
+
+      // Still not enough? Add from other offers
+      if (offersForRacing.length < MIN_RACING_MACHINES) {
+        const needed = MIN_RACING_MACHINES - offersForRacing.length;
+        offersForRacing = [...offersForRacing, ...otherOffers.slice(0, needed)];
+      }
+
+      // Limit to max (for 3 rounds)
+      offersForRacing = offersForRacing.slice(0, MAX_RACING_MACHINES);
+
+      console.log('[WizardForm] Racing offers breakdown:');
+      console.log('  - Selected machine:', machineToUse.gpu_name, 'x', machineToUse.num_gpus);
+      console.log('  - Exact matches:', exactMatches.length);
+      console.log('  - Same GPU matches:', sameGpuMatches.length);
+      console.log('  - Other offers:', otherOffers.length);
+      console.log('  - Total for racing:', offersForRacing.length);
+
       onSubmit({
-        machine: selectedMachine,
-        offerId: selectedMachine?.id,
+        machine: machineToUse,
+        offerId: machineToUse.id,
         failoverStrategy,
         tier: selectedTier,
-        regions: selectedLocations, // Pass all selected locations
+        regions: selectedLocations,
+        allOffers: offersForRacing,
       });
     } else {
       console.error('[WizardForm] ERROR: onSubmit is not a function!');
@@ -794,13 +720,59 @@ const WizardForm = ({
   const handleConfirmPayment = () => {
     // V5: Kept for compatibility but not used anymore
     setShowPaymentConfirm(false);
+
+    // Use selected machine or first recommended
+    const machineToUse = selectedMachine || recommendedMachines[0];
+    if (!machineToUse) return;
+
     setCurrentStep(4);
+
+    // Build offers for racing with progressive relaxation to get at least 5 machines
+    const MIN_RACING_MACHINES = 5;
+    const MAX_RACING_MACHINES = 15;
+
+    const exactMatches = allAvailableOffers.filter(offer => {
+      const sameGpu = offer.gpu_name === machineToUse.gpu_name;
+      const sameGpuCount = offer.num_gpus === machineToUse.num_gpus;
+      const notSameMachine = offer.id !== machineToUse.id;
+      return sameGpu && sameGpuCount && notSameMachine;
+    });
+
+    const sameGpuMatches = allAvailableOffers.filter(offer => {
+      const sameGpu = offer.gpu_name === machineToUse.gpu_name;
+      const notSameMachine = offer.id !== machineToUse.id;
+      const notInExact = !exactMatches.some(e => e.id === offer.id);
+      return sameGpu && notSameMachine && notInExact;
+    });
+
+    const otherOffers = allAvailableOffers.filter(offer => {
+      const notSameMachine = offer.id !== machineToUse.id;
+      const notInExact = !exactMatches.some(e => e.id === offer.id);
+      const notInSameGpu = !sameGpuMatches.some(e => e.id === offer.id);
+      return notSameMachine && notInExact && notInSameGpu;
+    }).sort((a, b) => (a.dph_total || 0) - (b.dph_total || 0));
+
+    let offersForRacing = [machineToUse, ...exactMatches];
+
+    if (offersForRacing.length < MIN_RACING_MACHINES) {
+      const needed = MIN_RACING_MACHINES - offersForRacing.length;
+      offersForRacing = [...offersForRacing, ...sameGpuMatches.slice(0, needed)];
+    }
+
+    if (offersForRacing.length < MIN_RACING_MACHINES) {
+      const needed = MIN_RACING_MACHINES - offersForRacing.length;
+      offersForRacing = [...offersForRacing, ...otherOffers.slice(0, needed)];
+    }
+
+    offersForRacing = offersForRacing.slice(0, MAX_RACING_MACHINES);
+
     onSubmit({
-      machine: selectedMachine,
-      offerId: selectedMachine?.id,
+      machine: machineToUse,
+      offerId: machineToUse.id,
       failoverStrategy,
       tier: selectedTier,
       regions: selectedLocations,
+      allOffers: offersForRacing,
     });
   };
 
