@@ -14,7 +14,7 @@ from .endpoints import market, hosts, webhooks
 from .endpoints import market, hosts, currency
 from .endpoints import market, hosts, teams, roles, users
 from . import audit
-from .endpoints import market, hosts, reservations, memory, agents
+from .endpoints import market, hosts, reservations, memory, agents, resilience
 from .endpoints.settings import balance_router
 from .endpoints.spot import router as spot_router
 from .endpoints.metrics import reliability_router
@@ -117,3 +117,6 @@ api_router.include_router(memory.router, tags=["Agent Memory"])
 
 # Agents - AI Agents with memory support
 api_router.include_router(agents.router, tags=["AI Agents"])
+
+# Resilience - Failover metrics, rate limiting, circuit breaker, cleanup
+api_router.include_router(resilience.router, tags=["Resilience"])

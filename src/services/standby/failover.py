@@ -6,17 +6,38 @@ This service coordinates:
 2. GPU provisioning with race strategy (GPUProvisioner)
 3. Snapshot restoration
 4. Inference testing
+
+Resilience features:
+- Input validation
+- Rate limiting
+- Circuit breaker
+- Resource cleanup on failure
+- Metrics collection
+- Audit logging
 """
 
 import asyncio
 import time
 import logging
 import subprocess
+import requests.exceptions
 from typing import Optional, Dict, Any
 from dataclasses import dataclass, field
 
 from ..gpu.provisioner import GPUProvisioner, ProvisionResult
 from ..gpu.snapshot import GPUSnapshotService
+from ...core.resilience import (
+    FailoverConfig,
+    validate_failover_input,
+    ValidationError,
+    get_rate_limiter,
+    RateLimitExceeded,
+    get_circuit_breaker,
+    CircuitOpenError,
+    get_cleanup_manager,
+    get_metrics,
+    audit_log,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -70,12 +91,15 @@ class FailoverService:
     """
     Orchestrates complete GPU failover process.
 
+    Features:
+    - Input validation
+    - Rate limiting (max 5 failovers per machine per 24h)
+    - Circuit breaker (skip failing strategies)
+    - Resource cleanup on failure
+    - Metrics and audit logging
+
     Usage:
-        service = FailoverService(
-            vast_api_key="...",
-            b2_endpoint="https://s3.us-west-004.backblazeb2.com",
-            b2_bucket="dumont-snapshots"
-        )
+        service = FailoverService(vast_api_key="...")
 
         result = await service.execute_failover(
             gpu_instance_id=12345,
@@ -85,19 +109,27 @@ class FailoverService:
         )
 
         if result.success:
-            print(f"Failover complete! New GPU: {result.new_ssh_host}:{result.new_ssh_port}")
-            print(f"Total time: {result.total_ms}ms")
+            logger.info(f"Failover complete! New GPU: {result.new_ssh_host}:{result.new_ssh_port}")
     """
 
     def __init__(
         self,
         vast_api_key: str,
-        b2_endpoint: str = "https://s3.us-west-004.backblazeb2.com",
-        b2_bucket: str = "dumoncloud-snapshot",
+        b2_endpoint: str = None,
+        b2_bucket: str = None,
     ):
         self.vast_api_key = vast_api_key
         self.gpu_provisioner = GPUProvisioner(vast_api_key)
+
+        # Use config from environment or defaults
+        b2_endpoint = b2_endpoint or FailoverConfig.B2_ENDPOINT
+        b2_bucket = b2_bucket or FailoverConfig.B2_BUCKET
+
         self.snapshot_service = GPUSnapshotService(b2_endpoint, b2_bucket)
+        self._cleanup = get_cleanup_manager()
+        self._metrics = get_metrics()
+        self._rate_limiter = get_rate_limiter()
+        self._circuit_breaker = get_circuit_breaker()
 
     async def execute_failover(
         self,
@@ -110,15 +142,18 @@ class FailoverService:
         test_prompt: str = "Hello",
         min_gpu_ram: int = 10000,
         max_gpu_price: float = 1.0,
+        user_id: Optional[str] = None,
+        skip_rate_limit: bool = False,
     ) -> FailoverResult:
         """
-        Execute a complete failover operation.
+        Execute a complete failover operation with resilience.
 
         Phases:
-        1. Create snapshot of current GPU
-        2. Provision new GPU using race strategy
-        3. Restore snapshot to new GPU
-        4. Test inference (if model specified)
+        1. Validate input and check rate limits
+        2. Create snapshot of current GPU
+        3. Provision new GPU using race strategy
+        4. Restore snapshot to new GPU
+        5. Test inference (if model specified)
 
         Args:
             gpu_instance_id: Current GPU instance ID
@@ -130,12 +165,20 @@ class FailoverService:
             test_prompt: Prompt for inference test
             min_gpu_ram: Minimum GPU RAM for new GPU
             max_gpu_price: Maximum price for new GPU
+            user_id: User who triggered failover (for audit)
+            skip_rate_limit: Skip rate limiting (for automated recovery)
 
         Returns:
             FailoverResult with all details
+
+        Raises:
+            ValidationError: If input parameters are invalid
+            RateLimitExceeded: If rate limit is exceeded
+            CircuitOpenError: If circuit breaker is open
         """
         start_time = time.time()
         phase_timings = {}
+        strategy = "cpu_standby"  # Strategy name for metrics
 
         result = FailoverResult(
             success=False,
@@ -146,6 +189,30 @@ class FailoverService:
         )
 
         try:
+            # ==============================================================
+            # PHASE 0: Validation and Pre-checks
+            # ==============================================================
+            logger.info(f"[{failover_id}] Phase 0: Validating input...")
+
+            # Validate input parameters
+            validate_failover_input(gpu_instance_id, ssh_host, ssh_port, workspace_path)
+
+            # Check rate limit
+            if not skip_rate_limit:
+                self._rate_limiter.check(gpu_instance_id)
+
+            # Check circuit breaker
+            self._circuit_breaker.check(strategy)
+
+            # Audit log start
+            audit_log(
+                "failover",
+                "start",
+                "initiated",
+                machine_id=gpu_instance_id,
+                user_id=user_id,
+                failover_id=failover_id,
+            )
             # ============================================================
             # PHASE 1: Create Snapshot (Incremental if base exists)
             # ============================================================
@@ -225,6 +292,9 @@ class FailoverService:
             result.new_ssh_host = provision_result.ssh_host
             result.new_ssh_port = provision_result.ssh_port
             result.new_gpu_name = provision_result.gpu_name
+
+            # Register new GPU for cleanup on failure
+            self._cleanup.register(failover_id, "gpu", str(result.new_gpu_id))
 
             logger.info(
                 f"[{failover_id}] GPU provisioned: {result.new_gpu_name} "
@@ -307,6 +377,33 @@ class FailoverService:
             result.total_ms = int((time.time() - start_time) * 1000)
             result.phase_timings = phase_timings
 
+            # Record success in circuit breaker and rate limiter
+            self._circuit_breaker.record_success(strategy)
+            self._rate_limiter.record(gpu_instance_id)
+
+            # Commit cleanup (don't clean up resources)
+            self._cleanup.commit(failover_id)
+
+            # Record metrics
+            self._metrics.record(
+                machine_id=gpu_instance_id,
+                strategy=strategy,
+                success=True,
+                duration_ms=result.total_ms,
+            )
+
+            # Audit log success
+            audit_log(
+                "failover",
+                "complete",
+                "success",
+                machine_id=gpu_instance_id,
+                user_id=user_id,
+                failover_id=failover_id,
+                duration_ms=result.total_ms,
+                new_gpu_id=result.new_gpu_id,
+            )
+
             logger.info(
                 f"[{failover_id}] FAILOVER COMPLETE in {result.total_ms}ms "
                 f"(snapshot: {result.snapshot_creation_ms}ms, "
@@ -316,23 +413,129 @@ class FailoverService:
 
             return result
 
+        except (ValidationError, RateLimitExceeded, CircuitOpenError) as e:
+            # Pre-check failures - don't record as circuit failure
+            logger.warning(f"[{failover_id}] FAILOVER REJECTED: {type(e).__name__}: {e}")
+            result.error = str(e)
+            result.total_ms = int((time.time() - start_time) * 1000)
+            result.failed_phase = "validation"
+
+            audit_log(
+                "failover",
+                "rejected",
+                type(e).__name__,
+                machine_id=gpu_instance_id,
+                user_id=user_id,
+                failover_id=failover_id,
+                error=str(e),
+            )
+
+            return result
+
+        except subprocess.TimeoutExpired as e:
+            # SSH/command timeout
+            logger.error(f"[{failover_id}] FAILOVER FAILED (timeout): {e}")
+            result.error = f"Timeout: {e}"
+            result.total_ms = int((time.time() - start_time) * 1000)
+            result.phase_timings = phase_timings
+            result.failed_phase = self._determine_failed_phase(phase_timings)
+
+            self._handle_failure(
+                failover_id, gpu_instance_id, user_id, strategy,
+                result.total_ms, result.failed_phase, result.error
+            )
+
+            return result
+
+        except requests.exceptions.RequestException as e:
+            # Network/API errors
+            logger.error(f"[{failover_id}] FAILOVER FAILED (network): {e}")
+            result.error = f"Network error: {e}"
+            result.total_ms = int((time.time() - start_time) * 1000)
+            result.phase_timings = phase_timings
+            result.failed_phase = self._determine_failed_phase(phase_timings)
+
+            self._handle_failure(
+                failover_id, gpu_instance_id, user_id, strategy,
+                result.total_ms, result.failed_phase, result.error
+            )
+
+            return result
+
         except Exception as e:
-            logger.error(f"[{failover_id}] FAILOVER FAILED: {e}")
+            # Generic error
+            logger.error(f"[{failover_id}] FAILOVER FAILED: {type(e).__name__}: {e}")
             result.error = str(e)
             result.total_ms = int((time.time() - start_time) * 1000)
             result.phase_timings = phase_timings
+            result.failed_phase = self._determine_failed_phase(phase_timings)
 
-            # Determine which phase failed
-            if "snapshot_creation" not in phase_timings:
-                result.failed_phase = "snapshot_creation"
-            elif "gpu_provisioning" not in phase_timings:
-                result.failed_phase = "gpu_provisioning"
-            elif "restore" not in phase_timings:
-                result.failed_phase = "restore"
-            else:
-                result.failed_phase = "inference_test"
+            self._handle_failure(
+                failover_id, gpu_instance_id, user_id, strategy,
+                result.total_ms, result.failed_phase, result.error
+            )
 
             return result
+
+    def _determine_failed_phase(self, phase_timings: Dict[str, int]) -> str:
+        """Determine which phase failed based on completed phases."""
+        if "snapshot_creation" not in phase_timings:
+            return "snapshot_creation"
+        elif "gpu_provisioning" not in phase_timings:
+            return "gpu_provisioning"
+        elif "restore" not in phase_timings:
+            return "restore"
+        elif "validation" not in phase_timings:
+            return "validation"
+        else:
+            return "inference_test"
+
+    def _handle_failure(
+        self,
+        failover_id: str,
+        machine_id: int,
+        user_id: Optional[str],
+        strategy: str,
+        duration_ms: int,
+        failed_phase: str,
+        error: str,
+    ) -> None:
+        """Handle failover failure - cleanup, metrics, audit."""
+        # Record failure in circuit breaker
+        self._circuit_breaker.record_failure(strategy)
+
+        # Rollback (cleanup orphaned resources)
+        from ..gpu.vast import VastService
+        try:
+            vast_service = VastService(api_key=self.vast_api_key)
+            cleanup_results = self._cleanup.rollback(failover_id, vast_service)
+            if cleanup_results:
+                logger.info(f"[{failover_id}] Cleaned up {len(cleanup_results)} orphaned resources")
+        except Exception as ce:
+            logger.error(f"[{failover_id}] Cleanup failed: {ce}")
+
+        # Record metrics
+        self._metrics.record(
+            machine_id=machine_id,
+            strategy=strategy,
+            success=False,
+            duration_ms=duration_ms,
+            phase_failed=failed_phase,
+            error=error,
+        )
+
+        # Audit log failure
+        audit_log(
+            "failover",
+            "failed",
+            "failure",
+            machine_id=machine_id,
+            user_id=user_id,
+            failover_id=failover_id,
+            error=error,
+            phase=failed_phase,
+            duration_ms=duration_ms,
+        )
 
     async def _test_inference(
         self,
