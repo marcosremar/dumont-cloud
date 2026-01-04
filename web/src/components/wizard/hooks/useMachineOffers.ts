@@ -81,9 +81,9 @@ export function useMachineOffers({
         params.set('geolocation', regionCodes.join(','));
       }
 
-      // Fetch from API
+      // Fetch from API (correct endpoint: /api/v1/instances/offers)
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`/api/v1/gpu/offers?${params.toString()}`, {
+      const response = await fetch(`/api/v1/instances/offers?${params.toString()}`, {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
