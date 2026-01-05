@@ -85,6 +85,7 @@ export function getTierFilterParams(tierName: TierName): TierFilter {
 
 /**
  * Calculate estimated cost from tier price range
+ * @deprecated Use getFullEstimatedCost instead for complete cost breakdown
  */
 export function getEstimatedCostFromTier(tierName: TierName): { hourly: string; daily: string } {
   const tier = getTierByName(tierName);
@@ -98,6 +99,24 @@ export function getEstimatedCostFromTier(tierName: TierName): { hourly: string; 
     hourly: minPrice.toFixed(2),
     daily: (minPrice * 24).toFixed(2),
   };
+}
+
+/**
+ * Parse hourly cost from string like "+$0.03/h" or "$0"
+ */
+export function parseHourlyCost(costString: string | undefined): number {
+  if (!costString) return 0;
+  const match = costString.match(/\$(\d+\.?\d*)/);
+  return match ? parseFloat(match[1]) : 0;
+}
+
+/**
+ * Parse monthly cost from string like "~$22/mês" or "$0"
+ */
+export function parseMonthlyCost(costString: string | undefined): number {
+  if (!costString) return 0;
+  const match = costString.match(/\$(\d+\.?\d*)/);
+  return match ? parseFloat(match[1]) : 0;
 }
 
 /**

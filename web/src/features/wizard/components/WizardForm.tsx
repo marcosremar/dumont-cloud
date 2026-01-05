@@ -5,7 +5,7 @@
  * This is a "thin" component - all logic is in hooks.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, X, Check, Loader2, Zap, AlertCircle } from 'lucide-react';
 import { WizardStep, ProvisioningCandidate } from '../types';
 import { useWizardForm, UseWizardFormOptions } from '../hooks';
@@ -13,6 +13,8 @@ import { useProvisioningTimer } from '../hooks/useProvisioningTimer';
 import { getStrategyById } from '../constants';
 import { WizardStepper } from './WizardStepper';
 import { LocationStep, HardwareStep, StrategyStep, ProvisioningStep } from './steps';
+import { ConfirmationModal } from './ConfirmationModal';
+import { FloatingCostCard } from './CostEstimator';
 
 // ============================================================================
 // Types
@@ -38,6 +40,7 @@ export const WizardForm: React.FC<WizardFormProps> = ({
   ...hookOptions
 }) => {
   const { state, actions, validation, computed } = useWizardForm(hookOptions);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const timer = useProvisioningTimer({
     isActive: state.currentStep === 4 && state.isProvisioning,
@@ -46,6 +49,22 @@ export const WizardForm: React.FC<WizardFormProps> = ({
   });
 
   const selectedFailoverData = getStrategyById(state.failoverStrategy);
+
+  // Handler for the confirmation modal
+  const handleShowConfirmation = () => {
+    if (validation.isStepComplete(3)) {
+      setShowConfirmModal(true);
+    }
+  };
+
+  const handleConfirmProvisioning = () => {
+    setShowConfirmModal(false);
+    actions.startProvisioning();
+  };
+
+  const handleCancelConfirmation = () => {
+    setShowConfirmModal(false);
+  };
 
   // ============================================================================
   // Render Helpers
@@ -90,6 +109,8 @@ export const WizardForm: React.FC<WizardFormProps> = ({
             failoverStrategy={state.failoverStrategy}
             selectedLocation={state.selectedLocation}
             selectedTier={state.selectedTier}
+            selectedGPUName={state.selectedMachine?.gpu_name || state.selectedGPU || undefined}
+            estimatedCost={computed.estimatedCost}
             showAdvancedSettings={state.showAdvancedSettings}
             dockerImage={state.dockerImage}
             exposedPorts={state.exposedPorts}
@@ -185,7 +206,7 @@ export const WizardForm: React.FC<WizardFormProps> = ({
           </button>
         ) : (
           <button
-            onClick={actions.startProvisioning}
+            onClick={handleShowConfirmation}
             disabled={!validation.isStepComplete(state.currentStep)}
             className="group relative px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 hover:scale-[1.02] active:scale-[0.98]"
           >
@@ -203,44 +224,106 @@ export const WizardForm: React.FC<WizardFormProps> = ({
   // Main Render
   // ============================================================================
 
+  // Show floating cost card after step 1 (when GPU might be selected)
+  const showFloatingCost = state.currentStep >= 2 && state.currentStep < 4;
+
   return (
-    <div className={`p-6 space-y-6 ${className}`}>
-      {/* Stepper */}
-      <WizardStepper
-        currentStep={state.currentStep}
-        isStepPassed={validation.isStepPassed}
-        canProceedToStep={validation.canProceedToStep}
-        onStepClick={actions.goToStep}
+    <>
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onConfirm={handleConfirmProvisioning}
+        onCancel={handleCancelConfirmation}
+        selectedLocation={state.selectedLocation}
+        selectedTier={state.selectedTier}
+        selectedMachine={state.selectedMachine}
+        failoverStrategy={state.failoverStrategy}
+        dockerImage={state.dockerImage}
+        exposedPorts={state.exposedPorts}
+        estimatedCost={computed.estimatedCost}
       />
 
-      {/* Validation Errors */}
-      {state.validationErrors.length > 0 && (
-        <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h4 className="text-sm font-medium text-red-400 mb-2">
-                Por favor, corrija os seguintes campos:
-              </h4>
-              <ul className="space-y-1">
-                {state.validationErrors.map((error, idx) => (
-                  <li key={idx} className="text-sm text-red-300/80 flex items-start gap-2">
-                    <span className="text-red-400/60 mt-1">•</span>
-                    <span>{error}</span>
-                  </li>
-                ))}
-              </ul>
+      <div className={`relative ${className}`}>
+        {/* Main Content */}
+        <div className="p-6 space-y-6 lg:pr-64">
+          {/* Stepper */}
+          <WizardStepper
+            currentStep={state.currentStep}
+            isStepPassed={validation.isStepPassed}
+            canProceedToStep={validation.canProceedToStep}
+            onStepClick={actions.goToStep}
+          />
+
+          {/* Validation Errors */}
+          {state.validationErrors.length > 0 && (
+            <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-red-400 mb-2">
+                    Por favor, corrija os seguintes campos:
+                  </h4>
+                  <ul className="space-y-1">
+                    {state.validationErrors.map((error, idx) => (
+                      <li key={idx} className="text-sm text-red-300/80 flex items-start gap-2">
+                        <span className="text-red-400/60 mt-1">•</span>
+                        <span>{error}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Current Step Content */}
+          {renderStep()}
+
+          {/* Navigation */}
+          {renderNavigationButtons()}
+        </div>
+
+        {/* Floating Cost Card - Desktop Sidebar */}
+        {showFloatingCost && (
+          <div className="hidden lg:block absolute top-6 right-6 w-56 sticky" style={{ top: '1.5rem' }}>
+            <FloatingCostCard
+              cost={computed.estimatedCost}
+              gpuName={state.selectedMachine?.gpu_name || state.selectedGPU || undefined}
+              failoverName={selectedFailoverData?.name}
+              locationName={state.selectedLocation?.name}
+              className="sticky top-6"
+            />
+          </div>
+        )}
+
+        {/* Floating Cost Card - Mobile Bottom Bar */}
+        {showFloatingCost && computed.estimatedCost.hourly > 0 && (
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 p-3 bg-gray-900/95 backdrop-blur-sm border-t border-white/10 shadow-2xl">
+            <div className="flex items-center justify-between max-w-lg mx-auto">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-brand-500/20 flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-brand-400" />
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">Custo estimado</div>
+                  <div className="text-sm font-bold text-gray-100">
+                    ${computed.estimatedCost.totalMonthly.toFixed(2)}/mês
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] text-gray-500">
+                  {state.selectedMachine?.gpu_name || 'Selecione GPU'}
+                </div>
+                <div className="text-xs text-gray-400">
+                  ${computed.estimatedCost.totalHourly.toFixed(2)}/hora
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Current Step Content */}
-      {renderStep()}
-
-      {/* Navigation */}
-      {renderNavigationButtons()}
-    </div>
+        )}
+      </div>
+    </>
   );
 };
 

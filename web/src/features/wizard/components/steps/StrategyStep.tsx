@@ -19,8 +19,12 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
-import { FailoverStrategyId, FailoverStrategy, PortConfig, Location, TierName } from '../../types';
+import { FailoverStrategyId, FailoverStrategy, PortConfig, Location, TierName, EstimatedCost } from '../../types';
 import { FAILOVER_STRATEGIES, getStrategyById } from '../../constants';
+import { CostEstimator } from '../CostEstimator';
+import { Tooltip, WIZARD_TOOLTIPS } from '../Tooltip';
+import { DockerImageSelector } from '../DockerImageSelector';
+import { PortSelector } from '../PortSelector';
 
 // ============================================================================
 // Types
@@ -30,13 +34,15 @@ export interface StrategyStepProps {
   failoverStrategy: FailoverStrategyId;
   selectedLocation: Location | null;
   selectedTier: TierName | null;
+  selectedGPUName?: string;
+  estimatedCost?: EstimatedCost;
   showAdvancedSettings: boolean;
   dockerImage: string;
   exposedPorts: PortConfig[];
   onSelectStrategy: (strategy: FailoverStrategyId) => void;
   onToggleAdvancedSettings: () => void;
   onDockerImageChange: (image: string) => void;
-  onAddPort: () => void;
+  onAddPort: (port?: PortConfig) => void;
   onRemovePort: (index: number) => void;
   onUpdatePort: (index: number, config: PortConfig) => void;
 }
@@ -44,21 +50,6 @@ export interface StrategyStepProps {
 // ============================================================================
 // Sub-components
 // ============================================================================
-
-interface TooltipProps {
-  children: React.ReactNode;
-  text: string;
-}
-
-const Tooltip: React.FC<TooltipProps> = ({ children, text }) => (
-  <span className="relative group inline-flex items-center">
-    {children}
-    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-[10px] text-gray-200 bg-gray-800 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
-      {text}
-      <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800" />
-    </span>
-  </span>
-);
 
 interface StrategyCardProps {
   strategy: FailoverStrategy;
@@ -208,6 +199,8 @@ export const StrategyStep: React.FC<StrategyStepProps> = ({
   failoverStrategy,
   selectedLocation,
   selectedTier,
+  selectedGPUName,
+  estimatedCost,
   showAdvancedSettings,
   dockerImage,
   exposedPorts,
@@ -226,9 +219,11 @@ export const StrategyStep: React.FC<StrategyStepProps> = ({
       <div>
         <div className="flex items-center gap-2">
           <label className="text-gray-300 text-sm font-medium">Estratégia de Failover</label>
-          <Tooltip text="Recuperação automática em caso de falha da GPU">
-            <HelpCircle className="w-3.5 h-3.5 text-gray-500 hover:text-gray-400 cursor-help" />
-          </Tooltip>
+          <Tooltip
+            title={WIZARD_TOOLTIPS.failover.title}
+            content={WIZARD_TOOLTIPS.failover.content}
+            variant={WIZARD_TOOLTIPS.failover.variant}
+          />
         </div>
         <p className="text-xs text-gray-500 mt-1">
           Como recuperar automaticamente se a máquina falhar?
@@ -246,6 +241,16 @@ export const StrategyStep: React.FC<StrategyStepProps> = ({
           />
         ))}
       </div>
+
+      {/* Cost Estimator */}
+      {estimatedCost && (
+        <CostEstimator
+          cost={estimatedCost}
+          gpuName={selectedGPUName}
+          failoverName={selectedStrategyData?.name}
+          showBreakdown={true}
+        />
+      )}
 
       {/* Selected Strategy Details */}
       {selectedStrategyData && (
@@ -305,86 +310,41 @@ export const StrategyStep: React.FC<StrategyStepProps> = ({
           </button>
 
           {showAdvancedSettings && (
-            <div className="pt-3 border-t border-white/10 space-y-4 animate-fadeIn">
+            <div className="pt-3 border-t border-white/10 space-y-5 animate-fadeIn">
               {/* Docker Image */}
               <div className="space-y-2">
                 <label className="text-gray-300 text-xs font-medium flex items-center gap-1.5">
                   <Code className="w-3.5 h-3.5" />
                   Template Docker
+                  <Tooltip
+                    title={WIZARD_TOOLTIPS.dockerImage.title}
+                    content={WIZARD_TOOLTIPS.dockerImage.content}
+                    variant={WIZARD_TOOLTIPS.dockerImage.variant}
+                  />
                 </label>
-                <input
-                  type="text"
+                <DockerImageSelector
                   value={dockerImage}
-                  onChange={(e) => onDockerImageChange(e.target.value)}
-                  placeholder="pytorch/pytorch:latest"
-                  className="w-full px-3 py-2 text-sm text-gray-200 bg-white/5 border border-white/10 rounded-lg focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500/50 placeholder:text-gray-500 transition-all font-mono"
-                  data-testid="docker-image-input"
+                  onChange={onDockerImageChange}
                 />
-                <p className="text-[10px] text-gray-500">Imagem Docker que será usada na máquina</p>
               </div>
 
               {/* Exposed Ports */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-gray-300 text-xs font-medium flex items-center gap-1.5">
-                    <Network className="w-3.5 h-3.5" />
-                    Portas Expostas
-                  </label>
-                  <button
-                    onClick={onAddPort}
-                    className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1 transition-all"
-                    data-testid="add-port-button"
-                  >
-                    <Plus className="w-3 h-3" />
-                    Adicionar porta
-                  </button>
-                </div>
-
-                <div className="space-y-2">
-                  {exposedPorts.map((portConfig, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={portConfig.port}
-                        onChange={(e) =>
-                          onUpdatePort(index, { ...portConfig, port: e.target.value })
-                        }
-                        placeholder="8080"
-                        className="flex-1 px-3 py-2 text-sm text-gray-200 bg-white/5 border border-white/10 rounded-lg focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500/50 placeholder:text-gray-500 transition-all font-mono"
-                        data-testid={`port-input-${index}`}
-                      />
-
-                      <select
-                        value={portConfig.protocol}
-                        onChange={(e) =>
-                          onUpdatePort(index, {
-                            ...portConfig,
-                            protocol: e.target.value as 'TCP' | 'UDP',
-                          })
-                        }
-                        className="px-3 py-2 text-sm text-gray-200 bg-white/5 border border-white/10 rounded-lg focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all font-mono"
-                        data-testid={`protocol-select-${index}`}
-                      >
-                        <option value="TCP">TCP</option>
-                        <option value="UDP">UDP</option>
-                      </select>
-
-                      {exposedPorts.length > 1 && (
-                        <button
-                          onClick={() => onRemovePort(index)}
-                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all"
-                          data-testid={`remove-port-${index}`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <p className="text-[10px] text-gray-500">
-                  Portas que estarão disponíveis para acesso externo.
-                </p>
+                <label className="text-gray-300 text-xs font-medium flex items-center gap-1.5">
+                  <Network className="w-3.5 h-3.5" />
+                  Portas Expostas
+                  <Tooltip
+                    title={WIZARD_TOOLTIPS.exposedPorts.title}
+                    content={WIZARD_TOOLTIPS.exposedPorts.content}
+                    variant={WIZARD_TOOLTIPS.exposedPorts.variant}
+                  />
+                </label>
+                <PortSelector
+                  ports={exposedPorts}
+                  onAddPort={onAddPort}
+                  onRemovePort={onRemovePort}
+                  onUpdatePort={onUpdatePort}
+                />
               </div>
             </div>
           )}

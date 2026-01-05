@@ -98,7 +98,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     case 'ADD_PORT':
       return {
         ...state,
-        exposedPorts: [...state.exposedPorts, { port: '', protocol: 'TCP' }],
+        exposedPorts: [...state.exposedPorts, action.payload ?? { port: '', protocol: 'TCP' }],
       };
 
     case 'REMOVE_PORT':
@@ -162,7 +162,7 @@ export interface UseWizardStateReturn {
   setLoadingMachines: (loading: boolean) => void;
   setFailoverStrategy: (strategy: FailoverStrategyId) => void;
   setDockerImage: (image: string) => void;
-  addPort: () => void;
+  addPort: (port?: PortConfig) => void;
   removePort: (index: number) => void;
   updatePort: (index: number, config: PortConfig) => void;
   setProvisioningCandidates: (candidates: ProvisioningCandidate[]) => void;
@@ -224,8 +224,8 @@ export function useWizardState(
     dispatch({ type: 'SET_DOCKER_IMAGE', payload: image });
   }, []);
 
-  const addPort = useCallback(() => {
-    dispatch({ type: 'ADD_PORT' });
+  const addPort = useCallback((port?: PortConfig) => {
+    dispatch({ type: 'ADD_PORT', payload: port });
   }, []);
 
   const removePort = useCallback((index: number) => {

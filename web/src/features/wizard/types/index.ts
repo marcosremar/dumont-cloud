@@ -198,7 +198,7 @@ export type WizardAction =
   | { type: 'SET_FAILOVER_STRATEGY'; payload: FailoverStrategyId }
   | { type: 'SET_DOCKER_IMAGE'; payload: string }
   | { type: 'SET_EXPOSED_PORTS'; payload: PortConfig[] }
-  | { type: 'ADD_PORT' }
+  | { type: 'ADD_PORT'; payload?: PortConfig }
   | { type: 'REMOVE_PORT'; payload: number }
   | { type: 'UPDATE_PORT'; payload: { index: number; config: PortConfig } }
   | { type: 'SET_PROVISIONING_CANDIDATES'; payload: ProvisioningCandidate[] }
@@ -272,9 +272,20 @@ export interface WizardValidation {
   hasMinimumBalance: (balance: number) => boolean;
 }
 
+export interface EstimatedCost {
+  hourly: number;
+  daily: number;
+  weekly: number;
+  monthly: number;
+  failoverHourly: number;
+  failoverMonthly: number;
+  totalHourly: number;
+  totalMonthly: number;
+}
+
 export interface WizardComputed {
   selectedTierData: PerformanceTier | undefined;
   selectedFailoverData: FailoverStrategy | undefined;
-  estimatedCost: { hourly: string; daily: string };
+  estimatedCost: EstimatedCost;
   progress: number;
 }

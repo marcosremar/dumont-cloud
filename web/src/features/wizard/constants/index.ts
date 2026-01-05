@@ -9,6 +9,8 @@ export {
   getTierByName,
   getTierFilterParams,
   getEstimatedCostFromTier,
+  parseHourlyCost,
+  parseMonthlyCost,
 } from './tiers';
 
 // Failover Strategies
@@ -41,6 +43,22 @@ export {
   getGPUByName,
   isDatacenterGPU,
 } from './gpus';
+
+// Docker & Port Presets
+export {
+  DOCKER_PRESETS,
+  PORT_PRESETS,
+  DEFAULT_DOCKER_IMAGE,
+  DEFAULT_PORTS,
+  getDockerPresetById,
+  getDockerPresetByImage,
+  getPortPresetByPort,
+  getPopularDockerPresets,
+  getCommonPorts,
+  getDockerPresetsByCategory,
+  type DockerImagePreset,
+  type PortPreset,
+} from './dockerPresets';
 
 /**
  * Default values

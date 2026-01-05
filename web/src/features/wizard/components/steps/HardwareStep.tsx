@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { TierName, MachineOffer, RecommendedMachine, PerformanceTier } from '../../types';
 import { PERFORMANCE_TIERS, GPU_OPTIONS, filterGPUs } from '../../constants';
+import { GPUFilters, DEFAULT_GPU_FILTERS, GPUFilterState } from '../GPUFilters';
 
 // ============================================================================
 // Types
@@ -210,8 +211,21 @@ export const HardwareStep: React.FC<HardwareStepProps> = ({
   onToggleSelectionMode,
 }) => {
   const [gpuSearchQuery, setGpuSearchQuery] = useState('');
+  const [gpuFilters, setGpuFilters] = useState<GPUFilterState>(DEFAULT_GPU_FILTERS);
   const filteredGPUs = filterGPUs(gpuSearchQuery);
   const selectedTierData = PERFORMANCE_TIERS.find((t) => t.name === selectedTier);
+
+  // Apply filters to recommended machines
+  const filteredMachines = recommendedMachines.filter((machine) => {
+    if (machine.gpu_ram < gpuFilters.minVram) return false;
+    if (machine.gpu_ram > gpuFilters.maxVram) return false;
+    if (machine.dph_total < gpuFilters.minPrice) return false;
+    if (machine.dph_total > gpuFilters.maxPrice) return false;
+    if (gpuFilters.minReliability > 0 && (machine.reliability ?? 0) < gpuFilters.minReliability) return false;
+    if (gpuFilters.providers.length > 0 && machine.provider && !gpuFilters.providers.includes(machine.provider)) return false;
+    if (gpuFilters.gpuCount !== null && machine.num_gpus !== gpuFilters.gpuCount) return false;
+    return true;
+  });
 
   return (
     <div className="space-y-5 animate-fadeIn">
@@ -244,14 +258,21 @@ export const HardwareStep: React.FC<HardwareStepProps> = ({
             <p className="text-xs text-gray-500 mt-1">Escolha uma das máquinas recomendadas</p>
           </div>
 
+          {/* GPU Filters */}
+          <GPUFilters
+            filters={gpuFilters}
+            onFiltersChange={setGpuFilters}
+            resultCount={filteredMachines.length}
+          />
+
           <div className="space-y-2">
             {loadingMachines ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-5 h-5 animate-spin text-gray-400 mr-2" />
                 <span className="text-sm text-gray-400">Buscando máquinas disponíveis...</span>
               </div>
-            ) : recommendedMachines.length > 0 ? (
-              recommendedMachines.map((machine, index) => (
+            ) : filteredMachines.length > 0 ? (
+              filteredMachines.map((machine, index) => (
                 <MachineCard
                   key={machine.id}
                   machine={machine}
@@ -260,6 +281,17 @@ export const HardwareStep: React.FC<HardwareStepProps> = ({
                   onClick={() => onSelectMachine(machine)}
                 />
               ))
+            ) : recommendedMachines.length > 0 ? (
+              <div className="text-center py-6 text-amber-500/80 text-sm">
+                <AlertCircle className="w-5 h-5 mx-auto mb-2 opacity-70" />
+                Nenhuma máquina corresponde aos filtros selecionados.
+                <button
+                  onClick={() => setGpuFilters(DEFAULT_GPU_FILTERS)}
+                  className="block mx-auto mt-2 text-xs text-brand-400 hover:text-brand-300"
+                >
+                  Limpar filtros
+                </button>
+              </div>
             ) : (
               <div className="text-center py-6 text-gray-500 text-sm">
                 <AlertCircle className="w-5 h-5 mx-auto mb-2 opacity-50" />

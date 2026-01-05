@@ -20,6 +20,7 @@ import {
   WizardValidation,
   WizardComputed,
   ProvisioningConfig,
+  EstimatedCost,
 } from '../types';
 import { useWizardState, UseWizardStateReturn } from './useWizardState';
 import { useWizardApi, UseWizardApiReturn, UseWizardApiOptions } from './useWizardApi';
@@ -38,6 +39,8 @@ import {
   getEstimatedCostFromTier,
   createLocationFromRegion,
   createLocationFromCountry,
+  parseHourlyCost,
+  parseMonthlyCost,
 } from '../constants';
 
 // ============================================================================
@@ -267,14 +270,48 @@ export function useWizardForm(options: UseWizardFormOptions = {}): UseWizardForm
   // Computed Values
   // ============================================================================
 
-  const computed: WizardComputed = useMemo(() => ({
-    selectedTierData: state.selectedTier ? getTierByName(state.selectedTier) : undefined,
-    selectedFailoverData: getStrategyById(state.failoverStrategy),
-    estimatedCost: state.selectedTier
-      ? getEstimatedCostFromTier(state.selectedTier)
-      : { hourly: '0.00', daily: '0.00' },
-    progress: ((state.currentStep - 1) / 3) * 100,
-  }), [state.selectedTier, state.failoverStrategy, state.currentStep]);
+  const computed: WizardComputed = useMemo(() => {
+    const tierData = state.selectedTier ? getTierByName(state.selectedTier) : undefined;
+    const failoverData = getStrategyById(state.failoverStrategy);
+
+    // Calculate base hourly cost from tier or selected machine
+    let baseHourly = 0;
+    if (state.selectedMachine) {
+      baseHourly = state.selectedMachine.dph_total;
+    } else if (tierData) {
+      // Extract min price from priceRange like "$0.10-0.30/h"
+      const match = tierData.priceRange.match(/\$(\d+\.?\d*)/);
+      baseHourly = match ? parseFloat(match[1]) : 0.20;
+    }
+
+    // Calculate failover costs
+    const failoverHourly = parseHourlyCost(failoverData?.costHour);
+    const failoverMonthly = parseMonthlyCost(failoverData?.costMonth);
+
+    // Calculate total costs
+    const totalHourly = baseHourly + failoverHourly;
+    const daily = totalHourly * 24;
+    const weekly = daily * 7;
+    const monthly = totalHourly * 24 * 30; // 30 days
+
+    const estimatedCost: EstimatedCost = {
+      hourly: baseHourly,
+      daily: baseHourly * 24,
+      weekly: baseHourly * 24 * 7,
+      monthly: baseHourly * 24 * 30,
+      failoverHourly,
+      failoverMonthly,
+      totalHourly,
+      totalMonthly: monthly + failoverMonthly,
+    };
+
+    return {
+      selectedTierData: tierData,
+      selectedFailoverData: failoverData,
+      estimatedCost,
+      progress: ((state.currentStep - 1) / 3) * 100,
+    };
+  }, [state.selectedTier, state.failoverStrategy, state.currentStep, state.selectedMachine]);
 
   // ============================================================================
   // Validation
